@@ -1,0 +1,12 @@
+BasedOnStyle: LLVM
+PointerAlignment: Right
+ColumnLimit: 79
+IndentWidth: 8
+TabWidth: 8
+ContinuationIndentWidth: 8
+ConstructorInitializerIndentWidth: 8
+AlwaysBreakAfterReturnType: TopLevelDefinitions
+BreakBeforeBraces: Linux
+IndentGotoLabels: false
+ForEachMacros: ["ARRAY_FOREACH", "VEC_FOREACH"]
+SpaceBeforeParens: ControlStatementsExceptControlMacros

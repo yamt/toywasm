@@ -1,0 +1,20 @@
+#include <stdint.h>
+
+struct expr;
+enum valtype;
+struct resulttype;
+struct load_context;
+struct module;
+
+int get_functype_for_blocktype(struct module *m, int64_t blocktype,
+                               struct resulttype **parameter,
+                               struct resulttype **result);
+int get_arity_for_blocktype(struct module *m, int64_t blocktype,
+                            uint32_t *parameter, uint32_t *result);
+
+int read_expr(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
+              uint32_t nlocals, const enum valtype *locals,
+              struct resulttype *, struct resulttype *,
+              struct load_context *lctx);
+int read_const_expr(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
+                    enum valtype type, struct load_context *lctx);
