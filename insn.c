@@ -25,7 +25,7 @@
  * https://webassembly.github.io/spec/core/appendix/algorithm.html
  */
 
-int
+static int
 push_val(const struct val *val, struct exec_context *ctx)
 {
         *VEC_PUSH(ctx->stack) = *val;
@@ -33,8 +33,7 @@ push_val(const struct val *val, struct exec_context *ctx)
         return 0;
 }
 
-int
-pop_val(struct val *val, struct exec_context *ctx)
+int static pop_val(struct val *val, struct exec_context *ctx)
 {
         assert(ctx->stack.lsize > 0);
         *val = *VEC_POP(ctx->stack);
@@ -42,7 +41,7 @@ pop_val(struct val *val, struct exec_context *ctx)
         return 0;
 }
 
-void
+static void
 push_label(struct exec_context *ctx)
 {
         const uint8_t *p = ctx->p - 1;
@@ -52,13 +51,7 @@ push_label(struct exec_context *ctx)
         l->height = ctx->stack.lsize;
 }
 
-void
-pop_label(struct exec_context *ctx)
-{
-        VEC_POP_DROP(ctx->labels);
-}
-
-float
+static float
 wasm_fminf(float a, float b)
 {
         if (isnan(a)) {
@@ -73,7 +66,7 @@ wasm_fminf(float a, float b)
         return fminf(a, b);
 }
 
-float
+static float
 wasm_fmaxf(float a, float b)
 {
         if (isnan(a)) {
@@ -88,7 +81,7 @@ wasm_fmaxf(float a, float b)
         return fmaxf(a, b);
 }
 
-double
+static double
 wasm_fmin(double a, double b)
 {
         if (isnan(a)) {
@@ -103,7 +96,7 @@ wasm_fmin(double a, double b)
         return fmin(a, b);
 }
 
-double
+static double
 wasm_fmax(double a, double b)
 {
         if (isnan(a)) {
@@ -118,7 +111,7 @@ wasm_fmax(double a, double b)
         return fmax(a, b);
 }
 
-uint32_t
+static uint32_t
 clz(uint32_t v)
 {
         if (v == 0) {
@@ -127,7 +120,7 @@ clz(uint32_t v)
         return __builtin_clz(v);
 }
 
-uint32_t
+static uint32_t
 ctz(uint32_t v)
 {
         if (v == 0) {
@@ -136,13 +129,13 @@ ctz(uint32_t v)
         return __builtin_ctz(v);
 }
 
-uint32_t
+static uint32_t
 popcount(uint32_t v)
 {
         return __builtin_popcount(v);
 }
 
-uint64_t
+static uint64_t
 clz64(uint64_t v)
 {
         if (v == 0) {
@@ -155,7 +148,7 @@ clz64(uint64_t v)
         return __builtin_clz(high);
 }
 
-uint64_t
+static uint64_t
 ctz64(uint64_t v)
 {
         if (v == 0) {
@@ -168,13 +161,13 @@ ctz64(uint64_t v)
         return __builtin_ctz(low);
 }
 
-uint64_t
+static uint64_t
 popcount64(uint64_t v)
 {
         return popcount(v) + popcount(v >> 32);
 }
 
-int
+static int
 get_functype(struct module *m, uint32_t typeidx, struct functype **ftp)
 {
         if (typeidx >= m->ntypes) {
@@ -275,7 +268,7 @@ struct memarg {
         uint32_t align;
 };
 
-int
+static int
 read_memarg(const uint8_t **pp, const uint8_t *ep, struct memarg *arg)
 {
         const uint8_t *p = *pp;

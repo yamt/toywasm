@@ -124,10 +124,6 @@ void resulttype_free(struct resulttype *p);
 
 /* execution */
 
-int push_val(const struct val *val, struct exec_context *ctx);
-int pop_val(struct val *val, struct exec_context *ctx);
-void pop_label(struct exec_context *ctx);
-void push_label(struct exec_context *ctx);
 int trap(struct exec_context *ctx, const char *fmt, ...)
         __attribute__((__format__(__printf__, 2, 3)));
 int trap_with_id(struct exec_context *ctx, enum trapid id, const char *fmt,

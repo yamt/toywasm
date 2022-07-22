@@ -13,7 +13,7 @@
 
 #include <inttypes.h>
 
-int
+static int
 read_leb(const uint8_t **pp, const uint8_t *ep, unsigned int bits,
          bool is_signed, uint64_t *resultp)
 {
