@@ -6,12 +6,22 @@
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
+#include <stddef.h>
 
-#include "decode.h"
 #include "leb128.h"
 #include "xlog.h"
 
 #include <inttypes.h>
+
+static int
+read_u8(const uint8_t **pp, const uint8_t *ep, uint8_t *resultp)
+{
+        if (ep != NULL && 1 > ep - *pp) {
+                return EINVAL;
+        }
+        *resultp = *(*pp)++;
+        return 0;
+}
 
 static int
 read_leb(const uint8_t **pp, const uint8_t *ep, unsigned int bits,
