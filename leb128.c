@@ -56,12 +56,14 @@ read_leb(const uint8_t **pp, const uint8_t *ep, unsigned int bits,
                                                     mask, bits, shift);
 #endif
                                         if (is_minus) {
-                                                if (ep == NULL && (((~v) & 0x7f) & mask) !=
-                                                    0) {
+                                                if (ep == NULL &&
+                                                    (((~v) & 0x7f) & mask) !=
+                                                            0) {
                                                         return E2BIG;
                                                 }
                                         } else {
-                                                if (error_check && (v & mask) != 0) {
+                                                if (error_check &&
+                                                    (v & mask) != 0) {
                                                         return E2BIG;
                                                 }
                                         }
