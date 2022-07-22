@@ -25,20 +25,19 @@
  * https://webassembly.github.io/spec/core/appendix/algorithm.html
  */
 
-static int
+static void
 push_val(const struct val *val, struct exec_context *ctx)
 {
         *VEC_PUSH(ctx->stack) = *val;
         xlog_trace("stack push %016" PRIx64, val->u.i64);
-        return 0;
 }
 
-int static pop_val(struct val *val, struct exec_context *ctx)
+static void
+pop_val(struct val *val, struct exec_context *ctx)
 {
         assert(ctx->stack.lsize > 0);
         *val = *VEC_POP(ctx->stack);
         xlog_trace("stack pop  %016" PRIx64, val->u.i64);
-        return 0;
 }
 
 static void

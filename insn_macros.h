@@ -35,10 +35,7 @@
         enum valtype type_##var;                                              \
         do {                                                                  \
                 if (EXECUTING) {                                              \
-                        ret = pop_val(&val_##var, ECTX);                      \
-                        if (ret != 0) {                                       \
-                                goto fail;                                    \
-                        }                                                     \
+                        pop_val(&val_##var, ECTX);                            \
                 } else if (VALIDATING) {                                      \
                         ret = pop_valtype(t, &type_##var, VCTX);              \
                         if (ret != 0) {                                       \
@@ -50,10 +47,7 @@
 #define PUSH_VAL(t, var)                                                      \
         do {                                                                  \
                 if (EXECUTING) {                                              \
-                        ret = push_val(&val_##var, ECTX);                     \
-                        if (ret != 0) {                                       \
-                                goto fail;                                    \
-                        }                                                     \
+                        push_val(&val_##var, ECTX);                           \
                 } else if (VALIDATING) {                                      \
                         ret = push_valtype(t, VCTX);                          \
                         if (ret != 0) {                                       \
