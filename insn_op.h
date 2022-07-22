@@ -109,9 +109,7 @@ fail:                                                                         \
                 struct memarg memarg;                                         \
                 int ret;                                                      \
                 ret = read_memarg(&p, ep, &memarg);                           \
-                if (ret != 0) {                                               \
-                        goto fail;                                            \
-                }                                                             \
+                CHECK_RET(ret);                                               \
                 uint32_t memidx = 0;                                          \
                 CHECK(memidx < m->nimportedmems + m->nmems);                  \
                 CHECK(1 <= (MEM / 8) >>                                       \
@@ -144,9 +142,7 @@ fail:                                                                         \
                 struct memarg memarg;                                         \
                 int ret;                                                      \
                 ret = read_memarg(&p, ep, &memarg);                           \
-                if (ret != 0) {                                               \
-                        goto fail;                                            \
-                }                                                             \
+                CHECK_RET(ret);                                               \
                 uint32_t memidx = 0;                                          \
                 CHECK(memidx < m->nimportedmems + m->nmems);                  \
                 CHECK(1 <= (MEM / 8) >>                                       \
@@ -206,9 +202,7 @@ fail:                                                                         \
                 uint##BITS##_t v;                                             \
                 int ret;                                                      \
                 ret = read_leb_i##BITS(&p, ep, &v);                           \
-                if (ret != 0) {                                               \
-                        goto fail;                                            \
-                }                                                             \
+                CHECK_RET(ret);                                               \
                 struct val val_c;                                             \
                 if (EXECUTING) {                                              \
                         val_c.u.i##BITS = v;                                  \
@@ -227,9 +221,7 @@ fail:                                                                         \
                 uint##BITS##_t v;                                             \
                 int ret;                                                      \
                 ret = read_u##BITS(&p, ep, &v);                               \
-                if (ret != 0) {                                               \
-                        goto fail;                                            \
-                }                                                             \
+                CHECK_RET(ret);                                               \
                 struct val val_c;                                             \
                 if (EXECUTING) {                                              \
                         val_c.u.i##BITS = v;                                  \

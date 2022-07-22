@@ -6,6 +6,17 @@
         ret = EFAULT;                                                         \
         goto fail
 
+#define CHECK_RET(ret)                                                        \
+        do {                                                                  \
+                if (VALIDATING) {                                             \
+                        if (ret != 0) {                                       \
+                                goto fail;                                    \
+                        }                                                     \
+                } else {                                                      \
+                        assert(ret == 0);                                     \
+                }                                                             \
+        } while (false)
+
 #define CHECK(cond)                                                           \
         do {                                                                  \
                 if (VALIDATING) {                                             \
