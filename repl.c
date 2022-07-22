@@ -489,9 +489,10 @@ repl_invoke(struct repl_state *state, const char *cmd)
                 xlog_printf("print_result failed\n");
                 goto fail;
         }
+        ret = 0;
 fail:
         free(cmd1);
-        return 0;
+        return ret;
 }
 
 int
