@@ -237,7 +237,7 @@ frame_exit(struct exec_context *ctx)
         frame_clear(frame);
 }
 
-const struct jump *
+static const struct jump *
 jump_lookup(const struct expr_exec_info *ei, uint32_t blockpc)
 {
         /* TODO binary search */
@@ -251,7 +251,7 @@ jump_lookup(const struct expr_exec_info *ei, uint32_t blockpc)
         assert(false);
 }
 
-int
+static int
 do_wasm_call(struct exec_context *ctx, const struct funcinst *finst)
 {
         int ret;
@@ -275,7 +275,7 @@ do_wasm_call(struct exec_context *ctx, const struct funcinst *finst)
         return 0;
 }
 
-int
+static int
 do_host_call(struct exec_context *ctx, const struct funcinst *finst)
 {
         const struct functype *ft = funcinst_functype(finst);
@@ -300,7 +300,7 @@ do_host_call(struct exec_context *ctx, const struct funcinst *finst)
         return 0;
 }
 
-int
+static int
 do_call(struct exec_context *ctx, const struct funcinst *finst)
 {
         if (finst->is_host) {
@@ -310,7 +310,7 @@ do_call(struct exec_context *ctx, const struct funcinst *finst)
         }
 }
 
-void
+static void
 do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
 {
         struct funcframe *frame = &VEC_LASTELEM(ctx->frames);
