@@ -8,14 +8,14 @@
 
 #define CHECK(cond)                                                           \
         do {                                                                  \
-                if (EXECUTING) {                                              \
-                        assert(cond);                                         \
-                } else if (VALIDATING) {                                      \
+                if (VALIDATING) {                                             \
                         if (!(cond)) {                                        \
                                 ret = validation_failure(                     \
                                         VCTX, "CHECK failed %s", #cond);      \
                                 goto fail;                                    \
                         }                                                     \
+                } else {                                                      \
+                        assert(cond);                                         \
                 }                                                             \
         } while (false)
 
