@@ -87,19 +87,16 @@ struct validation_context {
 
 struct exec_context {
         struct instance *instance; /* REVISIT: redundant */
-        bool trapped;              /* used with a combination with EFAULT */
-        enum trapid trapid;
-        char *trapmsg;
+        const uint8_t *p;
 
         VEC(, struct funcframe) frames;
-        struct val *stackvals;
-        uint32_t nstackallocated;
-        uint32_t nstackused;
-
+        VEC(, struct val) stack; /* operand stack */
         VEC(, struct label) labels;
         VEC(, struct val) locals;
 
-        const uint8_t *p;
+        bool trapped; /* used with a combination with EFAULT */
+        enum trapid trapid;
+        char *trapmsg;
 
         bool call_pending;
         const struct funcinst *call_func;

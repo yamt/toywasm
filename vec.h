@@ -23,6 +23,7 @@ void _vec_free(void *vec);
 #define VEC_FOREACH_IDX(i, it, v) for (i = 0, it = v.p; i < v.lsize; i++, it++)
 #define VEC_ELEM(v, idx) (v.p[idx])
 #define VEC_LASTELEM(v) (v.p[v.lsize - 1])
+#define VEC_NEXTELEM(v) (v.p[v.lsize])
 
 #define VEC_PUSH(v) (&v.p[v.lsize++])
 #define VEC_POP(v) (&v.p[--v.lsize])

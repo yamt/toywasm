@@ -10,7 +10,7 @@
 int
 push_val(const struct val *val, struct exec_context *ctx)
 {
-        ctx->stackvals[ctx->nstackused++] = *val;
+        *VEC_PUSH(ctx->stack) = *val;
         xlog_trace("stack push %016" PRIx64, val->u.i64);
         return 0;
 }
@@ -18,8 +18,8 @@ push_val(const struct val *val, struct exec_context *ctx)
 int
 pop_val(struct val *val, struct exec_context *ctx)
 {
-        assert(ctx->nstackused > 0);
-        *val = ctx->stackvals[--ctx->nstackused];
+        assert(ctx->stack.lsize > 0);
+        *val = *VEC_POP(ctx->stack);
         xlog_trace("stack pop  %016" PRIx64, val->u.i64);
         return 0;
 }
@@ -31,7 +31,7 @@ push_label(struct exec_context *ctx)
         uint32_t pc = ptr2pc(ctx->instance->module, p);
         struct label *l = VEC_PUSH(ctx->labels);
         l->pc = pc;
-        l->height = ctx->nstackused;
+        l->height = ctx->stack.lsize;
 }
 
 void

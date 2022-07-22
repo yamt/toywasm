@@ -108,6 +108,20 @@ frame_clear(struct funcframe *frame)
 {
 }
 
+int
+stack_prealloc(struct exec_context *ctx, uint32_t count)
+{
+        uint32_t needed = ctx->stack.lsize + count;
+        if (needed >= MAX_STACKVALS) {
+                if (needed >= MAX_STACKVALS) {
+                        return trap_with_id(
+                                ctx, TRAP_TOO_MANY_STACKVALS,
+                                "too many values on the operand stack");
+                }
+        }
+        return VEC_PREALLOC(ctx->stack, count);
+}
+
 /*
  * https://webassembly.github.io/spec/core/exec/instructions.html#function-calls
  * https://webassembly.github.io/spec/core/exec/runtime.html#default-val
@@ -119,7 +133,7 @@ frame_enter(struct exec_context *ctx, struct instance *inst,
             uint32_t nparams, uint32_t nresults, const struct val *params)
 {
         /*
-         * Note: params can be in ctx->stackvals.
+         * Note: params can be in ctx->stack.
          * Be careful when resizing the later.
          */
 
@@ -135,7 +149,7 @@ frame_enter(struct exec_context *ctx, struct instance *inst,
                 return ret;
         }
         const uint32_t nlocals = nparams + func_nlocals;
-        frame = &VEC_ELEM(ctx->frames, ctx->frames.lsize);
+        frame = &VEC_NEXTELEM(ctx->frames);
         frame->ei = ei;
 #if !defined(NDEBUG)
         frame->nlocals = nlocals;
@@ -155,6 +169,7 @@ frame_enter(struct exec_context *ctx, struct instance *inst,
                         return ret;
                 }
         }
+
         if (ctx->frames.lsize > 0) {
                 /*
                  * Note: ctx->instance can be different from
@@ -162,7 +177,7 @@ frame_enter(struct exec_context *ctx, struct instance *inst,
                  */
                 frame->callerpc = ptr2pc(ctx->instance->module, ctx->p);
         }
-        frame->height = ctx->nstackused;
+        frame->height = ctx->stack.lsize;
         uint32_t i;
         for (i = 0; i < nparams; i++) {
                 VEC_ELEM(ctx->locals, frame->localidx + i) = params[i];
@@ -182,20 +197,17 @@ frame_enter(struct exec_context *ctx, struct instance *inst,
                            VEC_ELEM(ctx->locals, frame->localidx + i).u.i64);
         }
 
-        uint32_t needed = ctx->nstackused + ei->maxvals;
-        if (needed > ctx->nstackallocated) {
-                if (needed >= MAX_STACKVALS) {
-                        return trap_with_id(
-                                ctx, TRAP_TOO_MANY_STACKVALS,
-                                "too many values on the operand stack");
-                }
-                ret = resize_array((void **)&ctx->stackvals,
-                                   sizeof(*ctx->stackvals), needed);
-                if (ret != 0) {
-                        return ret;
-                }
-                ctx->nstackallocated = needed;
+        /*
+         * As we've copied "params" above, now it's safe to resize stack.
+         */
+        ret = stack_prealloc(ctx, ei->maxvals);
+        if (ret != 0) {
+                return ret;
         }
+
+        /*
+         * commit changes.
+         */
         ctx->frames.lsize++;
         assert(ctx->locals.lsize + nlocals <= ctx->locals.psize);
         ctx->locals.lsize += nlocals;
@@ -252,10 +264,10 @@ do_wasm_call(struct exec_context *ctx, const struct funcinst *finst)
                 &callee->funcs[funcidx - callee->nimportedfuncs];
         uint32_t nparams = type->parameter.ntypes;
         uint32_t nresults = type->result.ntypes;
-        assert(ctx->nstackused >= nparams);
-        ctx->nstackused -= nparams;
+        assert(ctx->stack.lsize >= nparams);
+        ctx->stack.lsize -= nparams;
         ret = frame_enter(ctx, callee_inst, &func->e.ei, func->nlocals,
-                          nparams, nresults, &ctx->stackvals[ctx->nstackused]);
+                          nparams, nresults, &VEC_NEXTELEM(ctx->stack));
         if (ret != 0) {
                 return ret;
         }
@@ -270,29 +282,21 @@ do_host_call(struct exec_context *ctx, const struct funcinst *finst)
         uint32_t nparams = ft->parameter.ntypes;
         uint32_t nresults = ft->result.ntypes;
         int ret;
-        assert(ctx->nstackused >= nparams);
-        uint32_t needed = ctx->nstackused - nparams + nresults;
-        if (needed > ctx->nstackallocated) {
-                if (needed >= MAX_STACKVALS) {
-                        return trap_with_id(
-                                ctx, TRAP_TOO_MANY_STACKVALS,
-                                "too many values on the operand stack");
-                }
-                ret = resize_array((void **)&ctx->stackvals,
-                                   sizeof(*ctx->stackvals), needed);
+        assert(ctx->stack.lsize >= nparams);
+        if (nresults > nparams) {
+                ret = stack_prealloc(ctx, nresults - nparams);
                 if (ret != 0) {
                         return ret;
                 }
-                ctx->nstackallocated = needed;
         }
-        ctx->nstackused -= nparams;
-        ret = finst->u.host.func(ctx, ft, &ctx->stackvals[ctx->nstackused],
-                                 &ctx->stackvals[ctx->nstackused]);
+        ctx->stack.lsize -= nparams;
+        ret = finst->u.host.func(ctx, ft, &VEC_NEXTELEM(ctx->stack),
+                                 &VEC_NEXTELEM(ctx->stack));
         if (ret != 0) {
                 return ret;
         }
-        ctx->nstackused += nresults;
-        assert(ctx->nstackused <= ctx->nstackallocated);
+        ctx->stack.lsize += nresults;
+        assert(ctx->stack.lsize <= ctx->stack.psize);
         return 0;
 }
 
@@ -408,12 +412,12 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
          * rewind the operand stack.
          * move the return values.
          */
-        assert(height <= ctx->nstackused);
-        assert(arity <= ctx->nstackused);
-        memmove(&ctx->stackvals[height],
-                &ctx->stackvals[ctx->nstackused - arity],
-                arity * sizeof(*ctx->stackvals));
-        ctx->nstackused = height + arity;
+        assert(height <= ctx->stack.lsize);
+        assert(arity <= ctx->stack.lsize);
+        memmove(&VEC_ELEM(ctx->stack, height),
+                &VEC_ELEM(ctx->stack, ctx->stack.lsize - arity),
+                arity * sizeof(*ctx->stack.p));
+        ctx->stack.lsize = height + arity;
 }
 
 int
@@ -422,7 +426,7 @@ exec_expr(const struct expr *expr, uint32_t nlocals,
           const struct resulttype *resulttype, const struct val *params,
           struct val *results, struct exec_context *ctx)
 {
-        uint32_t nstackused_saved = ctx->nstackused;
+        uint32_t nstackused_saved = ctx->stack.lsize;
         int ret;
 
         assert(ctx->instance != NULL);
@@ -476,10 +480,10 @@ exec_expr(const struct expr *expr, uint32_t nlocals,
                 }
         }
         uint32_t nresults = resulttype->ntypes;
-        assert(ctx->nstackused == nstackused_saved + nresults);
-        memcpy(results, &ctx->stackvals[ctx->nstackused - nresults],
+        assert(ctx->stack.lsize == nstackused_saved + nresults);
+        memcpy(results, &VEC_ELEM(ctx->stack, ctx->stack.lsize - nresults),
                nresults * sizeof(*results));
-        ctx->nstackused -= nresults;
+        ctx->stack.lsize -= nresults;
         return 0;
 }
 
@@ -589,10 +593,10 @@ exec_context_clear(struct exec_context *ctx)
                 frame_clear(frame);
         }
         VEC_FREE(ctx->frames);
-        free(ctx->stackvals);
-        free(ctx->trapmsg);
+        VEC_FREE(ctx->stack);
         VEC_FREE(ctx->labels);
         VEC_FREE(ctx->locals);
+        free(ctx->trapmsg);
 }
 
 uint32_t

@@ -23,6 +23,7 @@ read_leb(const uint8_t **pp, const uint8_t *ep, unsigned int bits,
         unsigned int shift = 0;
         uint64_t result = 0;
         bool is_minus = false;
+        const bool error_check = ep != NULL;
 
         while (true) {
                 ret = read_u8(&p, ep, &u8);
@@ -31,7 +32,7 @@ read_leb(const uint8_t **pp, const uint8_t *ep, unsigned int bits,
                 }
                 uint8_t v = u8 & 0x7f;
                 if (shift >= bits) {
-                        if (v != (is_minus ? 0x7f : 0)) {
+                        if (error_check && v != (is_minus ? 0x7f : 0)) {
                                 return E2BIG;
                         }
                 } else {
@@ -55,19 +56,19 @@ read_leb(const uint8_t **pp, const uint8_t *ep, unsigned int bits,
                                                     mask, bits, shift);
 #endif
                                         if (is_minus) {
-                                                if ((((~v) & 0x7f) & mask) !=
+                                                if (ep == NULL && (((~v) & 0x7f) & mask) !=
                                                     0) {
                                                         return E2BIG;
                                                 }
                                         } else {
-                                                if ((v & mask) != 0) {
+                                                if (error_check && (v & mask) != 0) {
                                                         return E2BIG;
                                                 }
                                         }
                                 } else {
                                         uint8_t mask = ((unsigned int)-1)
                                                        << bits_left;
-                                        if ((v & mask) != 0) {
+                                        if (error_check && (v & mask) != 0) {
                                                 return E2BIG;
                                         }
                                 }
