@@ -42,7 +42,6 @@ SRCS += exec.c
 SRCS += fileio.c
 SRCS += import_object.c
 SRCS += insn.c
-SRCS += insn_exec.c
 SRCS += instance.c
 SRCS += repl.c
 SRCS += module.c
