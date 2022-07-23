@@ -8,8 +8,11 @@ on:
 
 jobs:
   build:
+    env:
+      CC: ${{matrix.compiler}}
     strategy:
       matrix:
+        compiler: [clang, gcc]
         BUILD_TYPE: [Release, Debug]
         TOYWASM_USE_SEPARATE_EXECUTE: [ON, OFF]
         TOYWASM_USE_TAILCALL: [ON, OFF]
@@ -24,8 +27,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Install wabt and cmocka
-      run: sudo apt-get update && sudo apt-get install -y wabt libcmocka-dev
+    - name: Install dependencies
+      run: sudo apt-get update && sudo apt-get install -y wabt libcmocka-dev clang lld llvm-dev
 
     - uses: actions/checkout@v3
 
