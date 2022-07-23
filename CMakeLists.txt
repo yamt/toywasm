@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.23)
-project(toy-wasm)
+project(toy-wasm LANGUAGES C)
+
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD_REQUIRED YES)
+set(CMAKE_C_EXTENSIONS NO)
 
 include(CTest)
 include(CheckIPOSupported)
