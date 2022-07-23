@@ -462,19 +462,23 @@ exec_expr(const struct expr *expr, uint32_t nlocals,
                         }
                         return ret;
                 }
-                if (ctx->call_pending) {
+                switch (ctx->event) {
+                case EXEC_EVENT_CALL:
                         assert(ctx->frames.lsize > 0);
-                        ret = do_call(ctx, ctx->call_func);
+                        ret = do_call(ctx, ctx->event_u.call.func);
                         if (ret != 0) {
                                 return ret;
                         }
-                        ctx->call_pending = false;
-                }
-                if (ctx->branch_pending) {
+                        break;
+                case EXEC_EVENT_BRANCH:
                         assert(ctx->frames.lsize > 0);
-                        do_branch(ctx, ctx->branch_index, ctx->branch_else);
-                        ctx->branch_pending = false;
+                        do_branch(ctx, ctx->event_u.branch.index,
+                                  ctx->event_u.branch.goto_else);
+                        break;
+                case EXEC_EVENT_NONE:
+                        break;
                 }
+                ctx->event = EXEC_EVENT_NONE;
                 if (ctx->frames.lsize == 0) {
                         break;
                 }

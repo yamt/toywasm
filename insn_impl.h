@@ -104,9 +104,9 @@ INSN_IMPL(if)
                 struct exec_context *ectx = ECTX;
                 push_label(ectx);
                 if (val_c.u.i32 == 0) {
-                        ectx->branch_index = 0;
-                        ectx->branch_else = true;
-                        ectx->branch_pending = true;
+                        ectx->event_u.branch.index = 0;
+                        ectx->event_u.branch.goto_else = true;
+                        ectx->event = EXEC_EVENT_BRANCH;
                 }
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
@@ -143,9 +143,9 @@ INSN_IMPL(else)
         if (EXECUTING) {
                 /* equivalent of "br 0" */
                 struct exec_context *ectx = ECTX;
-                ectx->branch_index = 0;
-                ectx->branch_else = false;
-                ectx->branch_pending = true;
+                ectx->event_u.branch.index = 0;
+                ectx->event_u.branch.goto_else = false;
+                ectx->event = EXEC_EVENT_BRANCH;
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
                 struct ctrlframe cframe;
@@ -207,9 +207,9 @@ INSN_IMPL(br)
         READ_LEB_U32(labelidx);
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
-                ectx->branch_index = labelidx;
-                ectx->branch_else = false;
-                ectx->branch_pending = true;
+                ectx->event_u.branch.index = labelidx;
+                ectx->event_u.branch.goto_else = false;
+                ectx->event = EXEC_EVENT_BRANCH;
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
                 const struct resulttype *rt;
@@ -239,9 +239,9 @@ INSN_IMPL(br_if)
         if (EXECUTING) {
                 if (val_l.u.i32 != 0) {
                         struct exec_context *ectx = ECTX;
-                        ectx->branch_index = labelidx;
-                        ectx->branch_else = false;
-                        ectx->branch_pending = true;
+                        ectx->event_u.branch.index = labelidx;
+                        ectx->event_u.branch.goto_else = false;
+                        ectx->event = EXEC_EVENT_BRANCH;
                 }
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
@@ -282,12 +282,12 @@ INSN_IMPL(br_table)
                 struct exec_context *ectx = ECTX;
                 uint32_t l = val_l.u.i32;
                 if (l < vec_count) {
-                        ectx->branch_index = table[l];
+                        ectx->event_u.branch.index = table[l];
                 } else {
-                        ectx->branch_index = defaultidx;
+                        ectx->event_u.branch.index = defaultidx;
                 }
-                ectx->branch_else = false;
-                ectx->branch_pending = true;
+                ectx->event_u.branch.goto_else = false;
+                ectx->event = EXEC_EVENT_BRANCH;
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
                 const struct resulttype *rt_default;
@@ -339,9 +339,9 @@ INSN_IMPL(return )
                 const struct funcframe *frame = &VEC_LASTELEM(ectx->frames);
                 uint32_t nlabels = ectx->labels.lsize - frame->labelidx;
                 xlog_trace("return as tr %" PRIu32, nlabels);
-                ectx->branch_index = nlabels;
-                ectx->branch_else = false;
-                ectx->branch_pending = true;
+                ectx->event_u.branch.index = nlabels;
+                ectx->event_u.branch.goto_else = false;
+                ectx->event = EXEC_EVENT_BRANCH;
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
                 ret = pop_valtypes(returntype(vctx), vctx);
@@ -366,8 +366,9 @@ INSN_IMPL(call)
         CHECK(funcidx < m->nimportedfuncs + m->nfuncs);
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
-                ectx->call_pending = true;
-                ectx->call_func = VEC_ELEM(ectx->instance->funcs, funcidx);
+                ectx->event_u.call.func =
+                        VEC_ELEM(ectx->instance->funcs, funcidx);
+                ectx->event = EXEC_EVENT_CALL;
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
                 const struct functype *ft = module_functype(m, funcidx);
@@ -437,8 +438,8 @@ INSN_IMPL(call_indirect)
                                 typeidx, tableidx, i);
                         goto fail;
                 }
-                ectx->call_pending = true;
-                ectx->call_func = ref->func;
+                ectx->event_u.call.func = ref->func;
+                ectx->event = EXEC_EVENT_CALL;
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
                 xlog_trace("call_indirect (table %u type %u) %u %u", tableidx,

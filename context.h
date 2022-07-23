@@ -85,6 +85,12 @@ struct validation_context {
         bool generate_jump_table;
 };
 
+enum exec_event {
+        EXEC_EVENT_NONE,
+        EXEC_EVENT_CALL,
+        EXEC_EVENT_BRANCH,
+};
+
 struct exec_context {
         struct instance *instance; /* REVISIT: redundant */
         const uint8_t *p;
@@ -98,11 +104,16 @@ struct exec_context {
         enum trapid trapid;
         char *trapmsg;
 
-        bool call_pending;
-        const struct funcinst *call_func;
-        bool branch_pending;
-        bool branch_else;
-        uint32_t branch_index;
+        enum exec_event event;
+        union {
+                struct {
+                        const struct funcinst *func;
+                } call;
+                struct {
+                        bool goto_else;
+                        uint32_t index;
+                } branch;
+        } event_u;
 };
 
 struct context {
