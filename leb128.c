@@ -230,3 +230,56 @@ read_leb_s(const uint8_t **pp, const uint8_t *ep, unsigned int bits,
         *resultp = (int64_t)r;
         return 0;
 }
+
+uint32_t
+read_leb_u32_nocheck(const uint8_t **pp)
+{
+        uint64_t r;
+        int ret;
+
+        ret = read_leb(pp, NULL, 32, false, &r);
+        assert(ret == 0);
+        assert(r <= UINT32_MAX);
+        return r;
+}
+
+uint32_t
+read_leb_i32_nocheck(const uint8_t **pp)
+{
+        uint64_t r;
+        int ret;
+
+        /*
+         * https://webassembly.github.io/spec/core/binary/values.html#integers
+         * uninterpreted integers are encodeded as signed
+         */
+        ret = read_leb(pp, NULL, 32, true, &r);
+        assert(ret == 0);
+        return r;
+}
+
+uint64_t
+read_leb_i64_nocheck(const uint8_t **pp)
+{
+        uint64_t r;
+        int ret;
+
+        /*
+         * https://webassembly.github.io/spec/core/binary/values.html#integers
+         * uninterpreted integers are encodeded as signed
+         */
+        ret = read_leb(pp, NULL, 64, true, &r);
+        assert(ret == 0);
+        return r;
+}
+
+int64_t
+read_leb_s33_nocheck(const uint8_t **pp)
+{
+        uint64_t r;
+        int ret;
+
+        ret = read_leb(pp, NULL, 33, true, &r);
+        assert(ret == 0);
+        return (int64_t)r;
+}
