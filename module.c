@@ -1250,14 +1250,15 @@ module_load(struct module *m, const uint8_t *p, const uint8_t *ep,
                         goto fail;
                 }
                 const struct section_type *t = get_section_type(s.id);
-                const char *name;
 
                 if (t == NULL) {
                         xlog_trace("unknown section %u", s.id);
                         ret = EINVAL;
                         goto fail;
                 }
-                name = t->name;
+#if defined(ENABLE_TRACING)
+                const char *name = t->name;
+#endif
                 /*
                  * sections except the custom section (id=0) should be
                  * seen in order, at most once.

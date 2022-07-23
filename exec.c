@@ -428,7 +428,9 @@ exec_next_insn(const uint8_t **pp, struct exec_context *ctx)
         assert(pp == &ctx->p);
         assert(ctx->event == EXEC_EVENT_NONE);
         assert(ctx->frames.lsize > 0);
+#if defined(ENABLE_TRACING)
         uint32_t pc = ptr2pc(ctx->instance->module, ctx->p);
+#endif
         uint32_t op = *ctx->p++;
         const struct instruction_desc *desc = &instructions[op];
         if (desc->next_table != NULL) {

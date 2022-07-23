@@ -107,13 +107,17 @@ read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
         while (true) {
                 const struct instruction_desc *desc;
 
+#if defined(ENABLE_TRACING)
                 uint32_t pc = ptr2pc(vctx->module, p);
+#endif
                 ret = read_op(&p, ep, &desc);
                 if (ret != 0) {
                         goto fail;
                 }
                 xlog_trace("inst %06" PRIx32 " %s", pc, desc->name);
+#if defined(ENABLE_TRACING)
                 uint32_t orig_n = vctx->nvaltypes;
+#endif
                 if (const_expr && (desc->flags & INSN_FLAG_CONST) == 0) {
                         xlog_trace("instruction not allowed in a const expr");
                         ret = EINVAL;
@@ -133,12 +137,14 @@ read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
                            vctx->cframes[vctx->ncframes - 1].height, orig_n,
                            vctx->nvaltypes);
         }
+#if defined(ENABLE_TRACING)
         for (i = 0; i < ei->njumps; i++) {
                 const struct jump *j = &ei->jumps[i];
                 xlog_trace("jump table [%" PRIu32 "] %06" PRIx32
                            " -> %06" PRIx32,
                            i, j->pc, j->targetpc);
         }
+#endif
         *pp = p;
         expr->end = p;
         xlog_trace("code size %zu, jump table size %zu, max labels %" PRIu32
