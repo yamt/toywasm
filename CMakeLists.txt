@@ -94,8 +94,26 @@ target_link_libraries(toywasm-cli toywasm-lib)
 set_target_properties(toywasm-cli PROPERTIES OUTPUT_NAME toywasm)
 
 add_test(NAME toywasm-cli-simple-module COMMAND
-	toywasm-cli --load ../spectest.wasm --invoke "print_i32 123"
+	toywasm-cli --load spectest.wasm --invoke "print_i32 123"
 )
+
+# sample wasm files
+
+if(BUILD_TESTING)
+set(wat_files
+	spectest.wat
+)
+
+foreach(wat ${wat_files})
+	get_filename_component(f ${wat} NAME_WLE)
+	set(wasm "${f}.wasm")
+	add_custom_command(OUTPUT ${wasm}
+		COMMAND wat2wasm -o ${wasm} ${CMAKE_CURRENT_SOURCE_DIR}/${wat}
+		MAIN_DEPENDENCY ${CMAKE_CURRENT_SOURCE_DIR}/${wat}
+		COMMENT "Building ${wasm}")
+	add_custom_target(build-${wasm} ALL DEPENDS ${wasm})
+endforeach()
+endif()
 
 # unit test
 
