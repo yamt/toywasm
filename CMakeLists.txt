@@ -97,7 +97,7 @@ set(cli_sources
 )
 
 add_executable(toywasm-cli ${cli_sources})
-target_link_libraries(toywasm-cli toywasm-lib)
+target_link_libraries(toywasm-cli toywasm-lib m)
 set_target_properties(toywasm-cli PROPERTIES OUTPUT_NAME toywasm)
 
 add_test(NAME toywasm-cli-simple-module COMMAND
@@ -141,7 +141,7 @@ set(test_sources
 )
 
 add_executable(toywasm-test ${test_sources})
-target_link_libraries(toywasm-test toywasm-lib ${CMOCKA_LIBRARY})
+target_link_libraries(toywasm-test toywasm-lib m ${CMOCKA_LIBRARY})
 
 add_test(NAME toywasm-test COMMAND toywasm-test)
 set_tests_properties(toywasm-test PROPERTIES ENVIRONMENT "${TEST_ENV}")
