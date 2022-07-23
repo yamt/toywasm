@@ -42,6 +42,8 @@ set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -fsanitize=add
 
 if (CMAKE_BUILD_TYPE MATCHES "Release")
 check_ipo_supported(RESULT USE_IPO)
+else()
+set(USE_IPO OFF)
 endif()
 
 list(APPEND TEST_ENV "ASAN_OPTIONS=detect_leaks=1:detect_stack_use_after_return=1")
