@@ -36,7 +36,13 @@ if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
 set(CMAKE_C_COMPILER /usr/local/opt/llvm@13/bin/clang)
 list(APPEND TEST_ENV "LSAN_OPTIONS=suppressions=${CMAKE_CURRENT_SOURCE_DIR}/lsan.supp:print_suppressions=0")
 list(APPEND TEST_ENV "MallocNanoZone=0")
-endif ()
+endif()
+
+if (CMAKE_SYSTEM_NAME MATCHES "Linux")
+if (CMAKE_C_COMPILER_ID MATCHES "Clang")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=lld")
+endif()
+endif()
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
 
