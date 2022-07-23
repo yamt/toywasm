@@ -13,7 +13,7 @@ enable_testing()
 endif()
 
 if(NOT CMAKE_BUILD_TYPE)
-set(CMAKE_BUILD_TYPE "Release")
+set(CMAKE_BUILD_TYPE "Release" CACHE STRING "default" FORCE)
 endif()
 
 option(TOYWASM_USE_SEPARATE_EXECUTE "Use separate execute callback" ON)
