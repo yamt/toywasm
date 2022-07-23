@@ -438,6 +438,9 @@ exec_next_insn(const uint8_t **pp, struct exec_context *ctx)
 #if defined(USE_SEPARATE_EXECUTE)
         __attribute__((musttail)) return desc->execute(&ctx->p, ctx);
 #else
+        struct context common_ctx;
+        memset(&common_ctx, 0, sizeof(common_ctx));
+        common_ctx.exec = ctx;
         return desc->process(&ctx->p, NULL, &common_ctx);
 #endif
 }
@@ -459,9 +462,6 @@ exec_expr(const struct expr *expr, uint32_t nlocals,
         if (ret != 0) {
                 return ret;
         }
-        struct context common_ctx;
-        memset(&common_ctx, 0, sizeof(common_ctx));
-        common_ctx.exec = ctx;
         ctx->p = expr->start;
         while (true) {
                 ret = exec_next_insn(&ctx->p, ctx);
