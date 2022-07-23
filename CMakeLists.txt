@@ -104,11 +104,12 @@ set(wat_files
 	spectest.wat
 )
 
+find_program(WAT2WASM wat2wasm REQUIRED)
 foreach(wat ${wat_files})
 	get_filename_component(f ${wat} NAME_WLE)
 	set(wasm "${f}.wasm")
 	add_custom_command(OUTPUT ${wasm}
-		COMMAND wat2wasm -o ${wasm} ${CMAKE_CURRENT_SOURCE_DIR}/${wat}
+		COMMAND ${WAT2WASM} -o ${wasm} ${CMAKE_CURRENT_SOURCE_DIR}/${wat}
 		MAIN_DEPENDENCY ${CMAKE_CURRENT_SOURCE_DIR}/${wat}
 		COMMENT "Building ${wasm}")
 	add_custom_target(build-${wasm} ALL DEPENDS ${wasm})
