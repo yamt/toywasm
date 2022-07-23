@@ -421,6 +421,25 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
 }
 
 int
+exec_next_insn(struct exec_context *ctx)
+{
+        uint32_t pc = ptr2pc(ctx->instance->module, ctx->p);
+        uint32_t op = *ctx->p++;
+        const struct instruction_desc *desc = &instructions[op];
+        if (desc->next_table != NULL) {
+                op = *ctx->p++;
+                desc = &desc->next_table[op];
+        }
+        xlog_trace("exec %06" PRIx32 ": %s", pc, desc->name);
+        assert(desc->process != NULL);
+#if defined(USE_SEPARATE_EXECUTE)
+        return desc->execute(&ctx->p, ctx);
+#else
+        return desc->process(&ctx->p, NULL, &common_ctx);
+#endif
+}
+
+int
 exec_expr(const struct expr *expr, uint32_t nlocals,
           const enum valtype *locals, const struct resulttype *parametertype,
           const struct resulttype *resulttype, const struct val *params,
@@ -442,20 +461,7 @@ exec_expr(const struct expr *expr, uint32_t nlocals,
         common_ctx.exec = ctx;
         ctx->p = expr->start;
         while (true) {
-                uint32_t pc = ptr2pc(ctx->instance->module, ctx->p);
-                uint32_t op = *ctx->p++;
-                const struct instruction_desc *desc = &instructions[op];
-                if (desc->next_table != NULL) {
-                        op = *ctx->p++;
-                        desc = &desc->next_table[op];
-                }
-                xlog_trace("exec %06" PRIx32 ": %s", pc, desc->name);
-                assert(desc->process != NULL);
-#if defined(USE_SEPARATE_EXECUTE)
-                ret = desc->execute(&ctx->p, ctx);
-#else
-                ret = desc->process(&ctx->p, NULL, &common_ctx);
-#endif
+                ret = exec_next_insn(ctx);
                 if (ret != 0) {
                         if (ctx->trapped) {
                                 xlog_trace("got a trap");
