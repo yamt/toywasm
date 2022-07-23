@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.23)
 project(toy-wasm)
 
 include(CTest)
+include(CheckIPOSupported)
 
 if(BUILD_TESTING)
 enable_testing()
@@ -10,10 +11,6 @@ endif()
 if(NOT CMAKE_BUILD_TYPE)
 set(CMAKE_BUILD_TYPE "Release")
 endif()
-
-message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
-message(STATUS "CMAKE_SYSTEM_NAME: ${CMAKE_SYSTEM_NAME}")
-message(STATUS "BUILD_TESTING: ${BUILD_TESTING}")
 
 # Use the homebrew version because xcode clang doesn't have detect_leaks
 if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
@@ -25,6 +22,15 @@ set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wno-unused-but-set-variable
 
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fsanitize=address -fsanitize=leak -g")
 set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -fsanitize=address -fsanitize=leak -g")
+
+if (CMAKE_BUILD_TYPE MATCHES "Release")
+check_ipo_supported(RESULT USE_IPO)
+endif()
+
+message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
+message(STATUS "CMAKE_SYSTEM_NAME: ${CMAKE_SYSTEM_NAME}")
+message(STATUS "BUILD_TESTING: ${BUILD_TESTING}")
+message(STATUS "USE_IPO: ${USE_IPO}")
 
 # lib
 
@@ -50,6 +56,9 @@ set(lib_sources
 
 add_library(toywasm-lib STATIC ${lib_sources})
 set_target_properties(toywasm-lib PROPERTIES OUTPUT_NAME toywasm)
+if (USE_IPO)
+set_property(TARGET toywasm-lib PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif()
 
 # cli
 
