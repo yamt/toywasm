@@ -27,7 +27,7 @@ map_file(const char *filename, void **pp, size_t *szp)
 
         void *vp;
         size_t sz = st.st_size;
-        vp = mmap(NULL, sz, PROT_READ, MAP_FILE | MAP_SHARED, fd, 0);
+        vp = mmap(NULL, sz, PROT_READ, MAP_SHARED, fd, 0);
         if (vp == (void *)MAP_FAILED) {
                 close(fd);
                 return errno;
