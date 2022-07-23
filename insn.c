@@ -15,6 +15,7 @@
 #include "insn_op.h"
 #include "insn_op_helpers.h"
 #include "leb128.h"
+#include "platform.h"
 #include "type.h"
 #include "util.h"
 #include "xlog.h"
@@ -317,7 +318,7 @@ fail:
 #define INSN_IMPL(NAME)                                                       \
         int execute_##NAME(const uint8_t **pp, struct exec_context *ctx)
 #if defined(USE_TAILCALL)
-#define INSN_SUCCESS __attribute__((musttail)) return exec_next_insn(pp, ctx)
+#define INSN_SUCCESS __musttail return exec_next_insn(pp, ctx)
 #else
 #define INSN_SUCCESS return 0
 #endif

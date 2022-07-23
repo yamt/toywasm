@@ -13,6 +13,7 @@
 #include "expr.h"
 #include "insn.h"
 #include "leb128.h"
+#include "platform.h"
 #include "type.h"
 #include "util.h"
 #include "xlog.h"
@@ -437,7 +438,7 @@ exec_next_insn(const uint8_t **pp, struct exec_context *ctx)
         xlog_trace("exec %06" PRIx32 ": %s", pc, desc->name);
         assert(desc->process != NULL);
 #if defined(USE_SEPARATE_EXECUTE)
-        __attribute__((musttail)) return desc->execute(&ctx->p, ctx);
+        __musttail return desc->execute(&ctx->p, ctx);
 #else
         struct context common_ctx;
         memset(&common_ctx, 0, sizeof(common_ctx));
