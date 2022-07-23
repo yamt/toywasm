@@ -25,7 +25,7 @@
                                         VCTX, "CHECK failed %s", #cond);      \
                                 goto fail;                                    \
                         }                                                     \
-                } else {                                                      \
+                } else if (EXECUTING) {                                       \
                         assert(cond);                                         \
                 }                                                             \
         } while (false)
