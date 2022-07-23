@@ -22,6 +22,11 @@ if (TOYWASM_USE_TAILCALL)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DUSE_TAILCALL")
 endif()
 
+option(TOYWASM_ENABLE_TRACING "Enable xlog_trace" OFF)
+if (TOYWASM_ENABLE_TRACING)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_TRACING")
+endif()
+
 # Use the homebrew version because xcode clang doesn't have detect_leaks
 if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
 set(CMAKE_C_COMPILER /usr/local/opt/llvm@13/bin/clang)
@@ -43,6 +48,7 @@ message(STATUS "BUILD_TESTING: ${BUILD_TESTING}")
 message(STATUS "USE_IPO: ${USE_IPO}")
 message(STATUS "TOYWASM_USE_SEPARATE_EXECUTE: ${TOYWASM_USE_SEPARATE_EXECUTE}")
 message(STATUS "TOYWASM_USE_TAILCALL: ${TOYWASM_USE_TAILCALL}")
+message(STATUS "TOYWASM_ENABLE_TRACING: ${TOYWASM_ENABLE_TRACING}")
 
 # lib
 

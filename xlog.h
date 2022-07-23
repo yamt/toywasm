@@ -11,9 +11,13 @@ void xlog_error(const char *, ...)
 
 extern int xlog_tracing;
 
+#if defined(ENABLE_TRACING)
 #define xlog_trace(...)                                                       \
         do {                                                                  \
                 if (xlog_tracing) {                                           \
                         xlog__trace(__VA_ARGS__);                             \
                 }                                                             \
-        } while (false)\
+        } while (false)
+#else
+#define xlog_trace(...)
+#endif
