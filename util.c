@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "util.h"
+
 int
 resize_array(void **p, size_t elem_size, uint32_t new_elem_count)
 {

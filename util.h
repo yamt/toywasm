@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include <stdint.h>
 
 #define ARRAYCOUNT(a) (sizeof(a) / sizeof(a[0]))
 
