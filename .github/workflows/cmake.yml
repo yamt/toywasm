@@ -14,6 +14,9 @@ jobs:
         TOYWASM_USE_SEPARATE_EXECUTE: [ON, OFF]
         TOYWASM_USE_TAILCALL: [ON, OFF]
         TOYWASM_ENABLE_TRACING: [ON, OFF]
+        exclude:
+          - TOYWASM_USE_SEPARATE_EXECUTE: OFF
+            TOYWASM_USE_TAILCALL: ON
 
     # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
     # You can convert this to a matrix build if you need cross-platform coverage.
