@@ -42,6 +42,10 @@ if (CMAKE_BUILD_TYPE MATCHES "Release")
 check_ipo_supported(RESULT USE_IPO)
 endif()
 
+list(APPEND TEST_ENV "ASAN_OPTIONS=detect_leaks=1:detect_stack_use_after_return=1")
+list(APPEND TEST_ENV "UBSAN_OPTIONS=print_stacktrace=1")
+list(APPEND TEST_ENV "MallocNanoZone=0")
+
 message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 message(STATUS "CMAKE_SYSTEM_NAME: ${CMAKE_SYSTEM_NAME}")
 message(STATUS "BUILD_TESTING: ${BUILD_TESTING}")
@@ -96,6 +100,7 @@ set_target_properties(toywasm-cli PROPERTIES OUTPUT_NAME toywasm)
 add_test(NAME toywasm-cli-simple-module COMMAND
 	toywasm-cli --load spectest.wasm --invoke "print_i32 123"
 )
+set_tests_properties(toywasm-cli-simple-module PROPERTIES ENVIRONMENT "${TEST_ENV}")
 
 # sample wasm files
 
@@ -130,4 +135,5 @@ add_executable(toywasm-test ${test_sources})
 target_link_libraries(toywasm-test toywasm-lib ${CMOCKA_LIBRARY})
 
 add_test(NAME toywasm-test COMMAND toywasm-test)
+set_tests_properties(toywasm-test PROPERTIES ENVIRONMENT "${TEST_ENV}")
 endif()
