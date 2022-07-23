@@ -30,6 +30,8 @@ endif()
 # Use the homebrew version because xcode clang doesn't have detect_leaks
 if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
 set(CMAKE_C_COMPILER /usr/local/opt/llvm@13/bin/clang)
+list(APPEND TEST_ENV "LSAN_OPTIONS=suppressions=${CMAKE_CURRENT_SOURCE_DIR}/lsan.supp:print_suppressions=0")
+list(APPEND TEST_ENV "MallocNanoZone=0")
 endif ()
 
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3 -fomit-frame-pointer")
@@ -44,7 +46,6 @@ endif()
 
 list(APPEND TEST_ENV "ASAN_OPTIONS=detect_leaks=1:detect_stack_use_after_return=1")
 list(APPEND TEST_ENV "UBSAN_OPTIONS=print_stacktrace=1")
-list(APPEND TEST_ENV "MallocNanoZone=0")
 
 message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 message(STATUS "CMAKE_SYSTEM_NAME: ${CMAKE_SYSTEM_NAME}")
