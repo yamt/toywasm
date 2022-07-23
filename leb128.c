@@ -107,7 +107,6 @@ read_leb(const uint8_t **pp, const uint8_t *ep, unsigned int bits,
 int
 read_leb_i32(const uint8_t **pp, const uint8_t *ep, uint32_t *resultp)
 {
-        const uint8_t *p = *pp;
         uint64_t r;
         int ret;
 
@@ -115,54 +114,48 @@ read_leb_i32(const uint8_t **pp, const uint8_t *ep, uint32_t *resultp)
          * https://webassembly.github.io/spec/core/binary/values.html#integers
          * uninterpreted integers are encodeded as signed
          */
-        ret = read_leb(&p, ep, 32, true, &r);
+        ret = read_leb(pp, ep, 32, true, &r);
         if (ret != 0) {
                 return ret;
         }
         *resultp = r;
-        *pp = p;
         return 0;
 }
 
 int
 read_leb_u32(const uint8_t **pp, const uint8_t *ep, uint32_t *resultp)
 {
-        const uint8_t *p = *pp;
         uint64_t r;
         int ret;
 
-        ret = read_leb(&p, ep, 32, false, &r);
+        ret = read_leb(pp, ep, 32, false, &r);
         if (ret != 0) {
                 return ret;
         }
         assert(r <= UINT32_MAX);
         *resultp = r;
-        *pp = p;
         return 0;
 }
 
 int
 read_leb_s32(const uint8_t **pp, const uint8_t *ep, int32_t *resultp)
 {
-        const uint8_t *p = *pp;
         uint64_t r;
         int ret;
 
-        ret = read_leb(&p, ep, 32, true, &r);
+        ret = read_leb(pp, ep, 32, true, &r);
         if (ret != 0) {
                 return ret;
         }
         int64_t s = (int64_t)r;
         assert(s <= INT32_MAX && s >= INT32_MIN);
         *resultp = (int32_t)s;
-        *pp = p;
         return 0;
 }
 
 int
 read_leb_i64(const uint8_t **pp, const uint8_t *ep, uint64_t *resultp)
 {
-        const uint8_t *p = *pp;
         uint64_t r;
         int ret;
 
@@ -170,44 +163,39 @@ read_leb_i64(const uint8_t **pp, const uint8_t *ep, uint64_t *resultp)
          * https://webassembly.github.io/spec/core/binary/values.html#integers
          * uninterpreted integers are encodeded as signed
          */
-        ret = read_leb(&p, ep, 64, true, &r);
+        ret = read_leb(pp, ep, 64, true, &r);
         if (ret != 0) {
                 return ret;
         }
         *resultp = r;
-        *pp = p;
         return 0;
 }
 
 int
 read_leb_u64(const uint8_t **pp, const uint8_t *ep, uint64_t *resultp)
 {
-        const uint8_t *p = *pp;
         uint64_t r;
         int ret;
 
-        ret = read_leb(&p, ep, 64, false, &r);
+        ret = read_leb(pp, ep, 64, false, &r);
         if (ret != 0) {
                 return ret;
         }
         *resultp = r;
-        *pp = p;
         return 0;
 }
 
 int
 read_leb_s64(const uint8_t **pp, const uint8_t *ep, int64_t *resultp)
 {
-        const uint8_t *p = *pp;
         uint64_t r;
         int ret;
 
-        ret = read_leb(&p, ep, 64, true, &r);
+        ret = read_leb(pp, ep, 64, true, &r);
         if (ret != 0) {
                 return ret;
         }
         *resultp = (int64_t)r;
-        *pp = p;
         return 0;
 }
 
@@ -232,15 +220,13 @@ int
 read_leb_s(const uint8_t **pp, const uint8_t *ep, unsigned int bits,
            int64_t *resultp)
 {
-        const uint8_t *p = *pp;
         uint64_t r;
         int ret;
 
-        ret = read_leb(&p, ep, bits, true, &r);
+        ret = read_leb(pp, ep, bits, true, &r);
         if (ret != 0) {
                 return ret;
         }
         *resultp = (int64_t)r;
-        *pp = p;
         return 0;
 }
