@@ -99,6 +99,17 @@ fail:                                                                         \
                 return ret;                                                   \
         }
 
+#define REINTERPRETOP(NAME, FROM_WTYPE, TO_WTYPE)                             \
+        INSN_IMPL(NAME)                                                       \
+        {                                                                     \
+                int ret;                                                      \
+                POP_VAL(TYPE_##FROM_WTYPE, a);                                \
+                PUSH_VAL(TYPE_##TO_WTYPE, a);                                 \
+                INSN_SUCCESS;                                                 \
+fail:                                                                         \
+                return ret;                                                   \
+        }
+
 #define LOADOP(NAME, MEM, STACK, CAST) LOADOP2(NAME, MEM, STACK, CAST, i)
 #define LOADOP_F(NAME, MEM, STACK, CAST) LOADOP2(NAME, MEM, STACK, CAST, f)
 #define LOADOP2(NAME, MEM, STACK, CAST, I_OR_F)                               \
