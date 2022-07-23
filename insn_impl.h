@@ -17,12 +17,8 @@ INSN_IMPL(block)
         int ret;
         struct resulttype *rt_parameter = NULL;
         struct resulttype *rt_result = NULL;
-        int64_t blocktype;
 
-        ret = read_leb_s(&p, ep, 33, &blocktype);
-        if (ret != 0) {
-                goto fail;
-        }
+        READ_LEB_S33(blocktype);
         if (EXECUTING) {
                 push_label(ECTX);
         } else if (VALIDATING) {
@@ -60,13 +56,9 @@ INSN_IMPL(loop)
         const uint8_t *p = *pp;
         struct resulttype *rt_parameter = NULL;
         struct resulttype *rt_result = NULL;
-        int64_t blocktype;
         int ret;
 
-        ret = read_leb_s(&p, ep, 33, &blocktype);
-        if (ret != 0) {
-                goto fail;
-        }
+        READ_LEB_S33(blocktype);
         if (EXECUTING) {
                 push_label(ECTX);
         } else if (VALIDATING) {
@@ -104,13 +96,9 @@ INSN_IMPL(if)
         const uint8_t *p = *pp;
         struct resulttype *rt_parameter = NULL;
         struct resulttype *rt_result = NULL;
-        int64_t blocktype;
         int ret;
 
-        ret = read_leb_s(&p, ep, 33, &blocktype);
-        if (ret != 0) {
-                goto fail;
-        }
+        READ_LEB_S33(blocktype);
         POP_VAL(TYPE_i32, c);
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
@@ -214,13 +202,9 @@ INSN_IMPL(end)
 INSN_IMPL(br)
 {
         const uint8_t *p = *pp;
-        uint32_t labelidx;
         int ret;
 
-        ret = read_leb_u32(&p, ep, &labelidx);
-        if (ret != 0) {
-                goto fail;
-        }
+        READ_LEB_U32(labelidx);
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
                 ectx->branch_index = labelidx;
@@ -248,13 +232,9 @@ fail:
 INSN_IMPL(br_if)
 {
         const uint8_t *p = *pp;
-        uint32_t labelidx;
         int ret;
 
-        ret = read_leb_u32(&p, ep, &labelidx);
-        if (ret != 0) {
-                goto fail;
-        }
+        READ_LEB_U32(labelidx);
         POP_VAL(TYPE_i32, l);
         if (EXECUTING) {
                 if (val_l.u.i32 != 0) {
@@ -290,17 +270,13 @@ INSN_IMPL(br_table)
         const uint8_t *p = *pp;
         uint32_t *table = NULL;
         uint32_t vec_count = 0;
-        uint32_t defaultidx;
         int ret;
 
         ret = read_vec_u32(&p, ep, &vec_count, &table);
         if (ret != 0) {
                 goto fail;
         }
-        ret = read_leb_u32(&p, ep, &defaultidx);
-        if (ret != 0) {
-                goto fail;
-        }
+        READ_LEB_U32(defaultidx);
         POP_VAL(TYPE_i32, l);
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
@@ -383,13 +359,9 @@ INSN_IMPL(call)
 {
         struct module *m;
         const uint8_t *p = *pp;
-        uint32_t funcidx;
         int ret;
 
-        ret = read_leb_u32(&p, ep, &funcidx);
-        if (ret != 0) {
-                goto fail;
-        }
+        READ_LEB_U32(funcidx);
         m = MODULE;
         CHECK(funcidx < m->nimportedfuncs + m->nfuncs);
         if (EXECUTING) {
@@ -418,18 +390,10 @@ INSN_IMPL(call_indirect)
 {
         struct module *m = MODULE;
         const uint8_t *p = *pp;
-        uint32_t tableidx;
-        uint32_t typeidx;
         int ret;
 
-        ret = read_leb_u32(&p, ep, &typeidx);
-        if (ret != 0) {
-                goto fail;
-        }
-        ret = read_leb_u32(&p, ep, &tableidx);
-        if (ret != 0) {
-                goto fail;
-        }
+        READ_LEB_U32(typeidx);
+        READ_LEB_U32(tableidx);
         CHECK(tableidx < m->nimportedtables + m->ntables);
         CHECK(typeidx < m->ntypes);
         const struct tabletype *tab;
@@ -522,13 +486,9 @@ fail:
 INSN_IMPL(local_get)
 {
         const uint8_t *p = *pp;
-        uint32_t localidx;
         int ret;
 
-        ret = read_leb_u32(&p, ep, &localidx);
-        if (ret != 0) {
-                goto fail;
-        }
+        READ_LEB_U32(localidx);
         struct val val_c;
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
@@ -549,13 +509,9 @@ fail:
 INSN_IMPL(local_set)
 {
         const uint8_t *p = *pp;
-        uint32_t localidx;
         int ret;
 
-        ret = read_leb_u32(&p, ep, &localidx);
-        if (ret != 0) {
-                goto fail;
-        }
+        READ_LEB_U32(localidx);
         if (VALIDATING) {
                 CHECK(localidx < VCTX->nlocals);
         }
@@ -577,13 +533,9 @@ fail:
 INSN_IMPL(local_tee)
 {
         const uint8_t *p = *pp;
-        uint32_t localidx;
         int ret;
 
-        ret = read_leb_u32(&p, ep, &localidx); /* localidx */
-        if (ret != 0) {
-                goto fail;
-        }
+        READ_LEB_U32(localidx);
         if (VALIDATING) {
                 CHECK(localidx < VCTX->nlocals);
         }
@@ -606,13 +558,9 @@ INSN_IMPL(global_get)
 {
         struct module *m = MODULE;
         const uint8_t *p = *pp;
-        uint32_t globalidx;
         int ret;
 
-        ret = read_leb_u32(&p, ep, &globalidx);
-        if (ret != 0) {
-                goto fail;
-        }
+        READ_LEB_U32(globalidx);
         CHECK(globalidx < m->nimportedglobals + m->nglobals);
         struct val val_c;
         if (EXECUTING) {
@@ -639,13 +587,9 @@ INSN_IMPL(global_set)
 {
         struct module *m = MODULE;
         const uint8_t *p = *pp;
-        uint32_t globalidx;
         int ret;
 
-        ret = read_leb_u32(&p, ep, &globalidx);
-        if (ret != 0) {
-                goto fail;
-        }
+        READ_LEB_U32(globalidx);
         CHECK(globalidx < m->nimportedglobals + m->nglobals);
         POP_VAL(m->globals[globalidx].type.t, a);
         if (EXECUTING) {

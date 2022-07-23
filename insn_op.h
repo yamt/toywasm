@@ -199,10 +199,8 @@ fail:                                                                         \
         INSN_IMPL(NAME)                                                       \
         {                                                                     \
                 const uint8_t *p = *pp;                                       \
-                uint##BITS##_t v;                                             \
                 int ret;                                                      \
-                ret = read_leb_i##BITS(&p, ep, &v);                           \
-                CHECK_RET(ret);                                               \
+                READ_LEB_I##BITS(v);                                          \
                 struct val val_c;                                             \
                 if (EXECUTING) {                                              \
                         val_c.u.i##BITS = v;                                  \

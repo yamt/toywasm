@@ -55,3 +55,32 @@
                         }                                                     \
                 }                                                             \
         } while (false)
+
+#define READ_IMM(TYPE, VAR, READ, READ_NOCHECK)                               \
+        TYPE VAR;                                                             \
+        do {                                                                  \
+                if (VALIDATING) {                                             \
+                        ret = READ;                                           \
+                        if (ret != 0) {                                       \
+                                goto fail;                                    \
+                        }                                                     \
+                } else {                                                      \
+                        VAR = READ_NOCHECK;                                   \
+                }                                                             \
+        } while (false)
+
+#define READ_LEB_S33(VAR)                                                     \
+        READ_IMM(int64_t, VAR, read_leb_s(&p, ep, 33, &VAR),                  \
+                 read_leb_s33_nocheck(&p))
+
+#define READ_LEB_U32(VAR)                                                     \
+        READ_IMM(uint32_t, VAR, read_leb_u32(&p, ep, &VAR),                   \
+                 read_leb_u32_nocheck(&p))
+
+#define READ_LEB_I32(VAR)                                                     \
+        READ_IMM(uint32_t, VAR, read_leb_i32(&p, ep, &VAR),                   \
+                 read_leb_i32_nocheck(&p))
+
+#define READ_LEB_I64(VAR)                                                     \
+        READ_IMM(uint64_t, VAR, read_leb_i64(&p, ep, &VAR),                   \
+                 read_leb_i64_nocheck(&p))
