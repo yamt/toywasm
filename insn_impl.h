@@ -224,7 +224,7 @@ INSN_IMPL(br)
                 mark_unreachable(vctx);
         }
         *pp = p;
-        ret = 0;
+        return 0;
 fail:
         return ret;
 }
@@ -260,7 +260,7 @@ INSN_IMPL(br_if)
                 }
         }
         *pp = p;
-        ret = 0;
+        return 0;
 fail:
         return ret;
 }
@@ -324,7 +324,8 @@ INSN_IMPL(br_table)
                 mark_unreachable(vctx);
         }
         *pp = p;
-        ret = 0;
+        free(table);
+        return 0;
 fail:
         free(table);
         return ret;
@@ -350,7 +351,7 @@ INSN_IMPL(return )
                 }
                 mark_unreachable(vctx);
         }
-        ret = 0;
+        return 0;
 fail:
         return ret;
 }
@@ -382,7 +383,7 @@ INSN_IMPL(call)
                 }
         }
         *pp = p;
-        ret = 0;
+        return 0;
 fail:
         return ret;
 }
@@ -454,7 +455,7 @@ INSN_IMPL(call_indirect)
                 }
         }
         *pp = p;
-        ret = 0;
+        return 0;
 fail:
         return ret;
 }
@@ -463,7 +464,7 @@ INSN_IMPL(drop)
 {
         int ret;
         POP_VAL(TYPE_UNKNOWN, a);
-        ret = 0;
+        INSN_SUCCESS;
 fail:
         return ret;
 }
@@ -479,7 +480,7 @@ INSN_IMPL(select)
                 val_c = val_cond.u.i32 != 0 ? val_v1 : val_v2;
         }
         PUSH_VAL(type_v2, c);
-        ret = 0;
+        INSN_SUCCESS;
 fail:
         return ret;
 }
@@ -502,7 +503,7 @@ INSN_IMPL(local_get)
         }
         PUSH_VAL(VCTX->locals[localidx], c);
         *pp = p;
-        ret = 0;
+        INSN_SUCCESS;
 fail:
         return ret;
 }
@@ -524,9 +525,8 @@ INSN_IMPL(local_set)
                 assert(localidx < ectx->locals.lsize - frame->localidx);
                 VEC_ELEM(ectx->locals, frame->localidx + localidx) = val_a;
         }
-
         *pp = p;
-        ret = 0;
+        INSN_SUCCESS;
 fail:
         return ret;
 }
@@ -550,7 +550,7 @@ INSN_IMPL(local_tee)
         }
         PUSH_VAL(VCTX->locals[localidx], a);
         *pp = p;
-        ret = 0;
+        INSN_SUCCESS;
 fail:
         return ret;
 }
@@ -579,7 +579,7 @@ INSN_IMPL(global_get)
         }
         PUSH_VAL(module_globaltype(m, globalidx)->t, c);
         *pp = p;
-        ret = 0;
+        INSN_SUCCESS;
 fail:
         return ret;
 }
@@ -597,7 +597,7 @@ INSN_IMPL(global_set)
                 VEC_ELEM(ECTX->instance->globals, globalidx)->val = val_a;
         }
         *pp = p;
-        ret = 0;
+        INSN_SUCCESS;
 fail:
         return ret;
 }
@@ -637,7 +637,7 @@ INSN_IMPL(memory_size)
         }
         PUSH_VAL(TYPE_i32, sz);
         *pp = p;
-        return 0;
+        INSN_SUCCESS;
 fail:
         return ret;
 }
@@ -665,7 +665,7 @@ INSN_IMPL(memory_grow)
         }
         PUSH_VAL(TYPE_i32, error);
         *pp = p;
-        return 0;
+        INSN_SUCCESS;
 fail:
         return ret;
 }

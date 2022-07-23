@@ -298,6 +298,7 @@ fail:
 #define INSN_IMPL(NAME)                                                       \
         int process_##NAME(const uint8_t **pp, const uint8_t *ep,             \
                            struct context *ctx)
+#define INSN_SUCCESS return 0
 
 #include "insn_impl.h"
 
@@ -306,6 +307,7 @@ fail:
 #undef ECTX
 #undef VCTX
 #undef INSN_IMPL
+#undef INSN_SUCCESS
 
 #if defined(USE_SEPARATE_EXECUTE)
 #define EXECUTING true
@@ -314,6 +316,11 @@ fail:
 #define VCTX ((struct validation_context *)NULL)
 #define INSN_IMPL(NAME)                                                       \
         int execute_##NAME(const uint8_t **pp, struct exec_context *ctx)
+#if defined(USE_TAILCALL)
+#define INSN_SUCCESS __attribute__((musttail)) return exec_next_insn(pp, ctx)
+#else
+#define INSN_SUCCESS return 0
+#endif
 #define ep NULL
 
 #include "insn_impl.h"
@@ -323,6 +330,7 @@ fail:
 #undef ECTX
 #undef VCTX
 #undef INSN_IMPL
+#undef INSN_SUCCESS
 #undef ep
 
 #define INSTRUCTION(b, n, f, FLAGS)                                           \

@@ -17,6 +17,11 @@ if (TOYWASM_USE_SEPARATE_EXECUTE)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DUSE_SEPARATE_EXECUTE")
 endif()
 
+option(TOYWASM_USE_TAILCALL "Use tailcall" ON)
+if (TOYWASM_USE_TAILCALL)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DUSE_TAILCALL")
+endif()
+
 # Use the homebrew version because xcode clang doesn't have detect_leaks
 if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
 set(CMAKE_C_COMPILER /usr/local/opt/llvm@13/bin/clang)
@@ -37,6 +42,7 @@ message(STATUS "CMAKE_SYSTEM_NAME: ${CMAKE_SYSTEM_NAME}")
 message(STATUS "BUILD_TESTING: ${BUILD_TESTING}")
 message(STATUS "USE_IPO: ${USE_IPO}")
 message(STATUS "TOYWASM_USE_SEPARATE_EXECUTE: ${TOYWASM_USE_SEPARATE_EXECUTE}")
+message(STATUS "TOYWASM_USE_TAILCALL: ${TOYWASM_USE_TAILCALL}")
 
 # lib
 

@@ -421,8 +421,11 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
 }
 
 int
-exec_next_insn(struct exec_context *ctx)
+exec_next_insn(const uint8_t **pp, struct exec_context *ctx)
 {
+        assert(pp == &ctx->p);
+        assert(ctx->event == EXEC_EVENT_NONE);
+        assert(ctx->frames.lsize > 0);
         uint32_t pc = ptr2pc(ctx->instance->module, ctx->p);
         uint32_t op = *ctx->p++;
         const struct instruction_desc *desc = &instructions[op];
@@ -433,7 +436,7 @@ exec_next_insn(struct exec_context *ctx)
         xlog_trace("exec %06" PRIx32 ": %s", pc, desc->name);
         assert(desc->process != NULL);
 #if defined(USE_SEPARATE_EXECUTE)
-        return desc->execute(&ctx->p, ctx);
+        __attribute__((musttail)) return desc->execute(&ctx->p, ctx);
 #else
         return desc->process(&ctx->p, NULL, &common_ctx);
 #endif
@@ -461,7 +464,7 @@ exec_expr(const struct expr *expr, uint32_t nlocals,
         common_ctx.exec = ctx;
         ctx->p = expr->start;
         while (true) {
-                ret = exec_next_insn(ctx);
+                ret = exec_next_insn(&ctx->p, ctx);
                 if (ret != 0) {
                         if (ctx->trapped) {
                                 xlog_trace("got a trap");

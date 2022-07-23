@@ -21,3 +21,4 @@ uint32_t memory_grow(struct exec_context *ctx, uint32_t memidx,
                      uint32_t newsize);
 
 bool skip_expr(const uint8_t **p, bool goto_else);
+int exec_next_insn(const uint8_t **pp, struct exec_context *ctx);

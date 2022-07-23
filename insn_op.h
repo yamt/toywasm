@@ -8,7 +8,7 @@
                         val_c.u.I_OR_F##BITS = OP(val_a.u.I_OR_F##BITS);      \
                 }                                                             \
                 PUSH_VAL(TYPE_##I_OR_F##BITS, c);                             \
-                return 0;                                                     \
+                INSN_SUCCESS;                                                 \
 fail:                                                                         \
                 return ret;                                                   \
         }
@@ -44,7 +44,7 @@ fail:                                                                         \
                         }                                                     \
                 }                                                             \
                 PUSH_VAL(TYPE_##I_OR_F##BITS, c);                             \
-                return 0;                                                     \
+                INSN_SUCCESS;                                                 \
 fail:                                                                         \
                 return ret;                                                   \
         }
@@ -59,7 +59,7 @@ fail:                                                                         \
                         val_b.u.I_OR_F##BITS = OP(val_a.u.I_OR_F##BITS);      \
                 }                                                             \
                 PUSH_VAL(TYPE_i32, b);                                        \
-                return 0;                                                     \
+                INSN_SUCCESS;                                                 \
 fail:                                                                         \
                 return ret;                                                   \
         }
@@ -79,7 +79,7 @@ fail:                                                                         \
                                         val_b.u.I_OR_F##BITS;                 \
                 }                                                             \
                 PUSH_VAL(TYPE_i32, c);                                        \
-                return 0;                                                     \
+                INSN_SUCCESS;                                                 \
 fail:                                                                         \
                 return ret;                                                   \
         }
@@ -94,7 +94,7 @@ fail:                                                                         \
                         val_b.u.TO_WTYPE = CCAST val_a.u.FROM_WTYPE;          \
                 }                                                             \
                 PUSH_VAL(TYPE_##TO_WTYPE, b);                                 \
-                ret = 0;                                                      \
+                INSN_SUCCESS;                                                 \
 fail:                                                                         \
                 return ret;                                                   \
         }
@@ -127,7 +127,7 @@ fail:                                                                         \
                 }                                                             \
                 PUSH_VAL(TYPE_##I_OR_F##STACK, c);                            \
                 *pp = p;                                                      \
-                ret = 0;                                                      \
+                INSN_SUCCESS;                                                 \
 fail:                                                                         \
                 return ret;                                                   \
         }
@@ -159,7 +159,7 @@ fail:                                                                         \
                         le##MEM##_encode(p, CAST val_v.u.i##STACK);           \
                 }                                                             \
                 *pp = p;                                                      \
-                ret = 0;                                                      \
+                INSN_SUCCESS;                                                 \
 fail:                                                                         \
                 return ret;                                                   \
         }
@@ -174,7 +174,7 @@ fail:                                                                         \
                         val_b.u.TYPE = OPE(val_a.u.TYPE);                     \
                 }                                                             \
                 PUSH_VAL(TYPE_##TYPE, b);                                     \
-                return 0;                                                     \
+                INSN_SUCCESS;                                                 \
 fail:                                                                         \
                 return ret;                                                   \
         }
@@ -190,7 +190,7 @@ fail:                                                                         \
                         OPE(val_b.u.T2, val_a.u.T1);                          \
                 }                                                             \
                 PUSH_VAL(TYPE_##T2, b);                                       \
-                return 0;                                                     \
+                INSN_SUCCESS;                                                 \
 fail:                                                                         \
                 return ret;                                                   \
         }
@@ -207,7 +207,7 @@ fail:                                                                         \
                 }                                                             \
                 PUSH_VAL(TYPE_##WTYPE, c);                                    \
                 *pp = p;                                                      \
-                ret = 0;                                                      \
+                INSN_SUCCESS;                                                 \
 fail:                                                                         \
                 return ret;                                                   \
         }
@@ -226,7 +226,7 @@ fail:                                                                         \
                 }                                                             \
                 PUSH_VAL(TYPE_##WTYPE, c);                                    \
                 *pp = p;                                                      \
-                ret = 0;                                                      \
+                INSN_SUCCESS;                                                 \
 fail:                                                                         \
                 return ret;                                                   \
         }
