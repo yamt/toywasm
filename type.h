@@ -1,3 +1,6 @@
+#if !defined(_TYPE_H)
+#define _TYPE_H
+
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -327,3 +330,5 @@ void functype_free(struct functype *ft);
 
 void clear_functype(struct functype *ft);
 void clear_resulttype(struct resulttype *ft);
+
+#endif /* defined(_TYPE_H) */
