@@ -158,7 +158,9 @@ wasi_fd_fdstat_get(struct exec_context *ctx, struct host_instance *hi,
                    const struct functype *ft, const struct val *params,
                    struct val *results)
 {
+#if defined(ENABLE_TRACING)
         uint32_t fd = params[0].u.i32;
+#endif
         xlog_trace("%s called for fd %" PRIu32, __func__, fd);
         // uint32_t stat_addr = params[1].u.i32;
 
