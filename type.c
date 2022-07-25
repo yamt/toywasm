@@ -1,8 +1,10 @@
 #include <assert.h>
 #include <errno.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "type.h"
+#include "xlog.h"
 
 bool
 is_numtype(enum valtype vt)
@@ -174,4 +176,89 @@ compare_functype(const struct functype *a, const struct functype *b)
                 return 1;
         }
         return compare_resulttype(&a->result, &b->result);
+}
+
+static int
+resulttype_from_string(const char *p, const char *ep, struct resulttype *t)
+{
+        size_t ntypes = ep - p;
+        int ret;
+        if (ntypes > UINT32_MAX) {
+                return EOVERFLOW;
+        }
+        t->ntypes = ntypes;
+        t->types = malloc(ntypes * sizeof(*t->types));
+        if (t->types == NULL) {
+                return ENOMEM;
+        }
+        size_t i;
+        for (i = 0; i < ntypes; i++) {
+                switch (p[i]) {
+                case 'i':
+                        t->types[i] = TYPE_i32;
+                        break;
+                case 'I':
+                        t->types[i] = TYPE_i64;
+                        break;
+                case 'f':
+                        t->types[i] = TYPE_f32;
+                        break;
+                case 'F':
+                        t->types[i] = TYPE_f64;
+                        break;
+                default:
+                        xlog_trace("unimplemented type %c", p[i]);
+                        ret = EINVAL;
+                        goto fail;
+                }
+        }
+        return 0;
+fail:
+        clear_resulttype(t);
+        t->types = NULL;
+        return ret;
+}
+
+void
+functype_free(struct functype *ft)
+{
+        clear_functype(ft);
+        free(ft);
+}
+
+int
+functype_from_string(const char *p, struct functype **resultp)
+{
+        struct functype *ft;
+        int ret;
+        ft = zalloc(sizeof(*ft));
+        if (ft == NULL) {
+                return ENOMEM;
+        }
+        if (p[0] != '(') {
+                ret = EINVAL;
+                goto fail;
+        }
+        p++;
+        const char *ep = strchr(p, ')');
+        if (ep == NULL) {
+                ret = EINVAL;
+                goto fail;
+        }
+        ret = resulttype_from_string(p, ep, &ft->parameter);
+        if (ret != 0) {
+                goto fail;
+        }
+        p = ep + 1;
+        ep = strchr(p, 0);
+        assert(ep != NULL);
+        ret = resulttype_from_string(p, ep, &ft->result);
+        if (ret != 0) {
+                goto fail;
+        }
+        *resultp = ft;
+        return 0;
+fail:
+        functype_free(ft);
+        return ret;
 }

@@ -9,6 +9,7 @@
 
 #include "endian.h"
 #include "leb128.h"
+#include "type.h"
 
 #define TEST_OK(type, encoded_bytes, expected_value)                          \
         p = encoded_bytes;                                                    \
@@ -339,12 +340,69 @@ test_endian(void **state)
         assert_int_equal(v, le8_decode(buf));
 }
 
+void
+test_functype(void **state)
+{
+        struct functype *ft;
+        int ret;
+
+        ret = functype_from_string("(iIi)fF", &ft);
+        assert_int_equal(ret, 0);
+        assert_int_equal(ft->parameter.ntypes, 3);
+        assert_int_equal(ft->parameter.types[0], TYPE_i32);
+        assert_int_equal(ft->parameter.types[1], TYPE_i64);
+        assert_int_equal(ft->parameter.types[2], TYPE_i32);
+        assert_int_equal(ft->result.ntypes, 2);
+        assert_int_equal(ft->result.types[0], TYPE_f32);
+        assert_int_equal(ft->result.types[1], TYPE_f64);
+        functype_free(ft);
+
+        ret = functype_from_string("()i", &ft);
+        assert_int_equal(ret, 0);
+        assert_int_equal(ft->parameter.ntypes, 0);
+        assert_int_equal(ft->result.ntypes, 1);
+        assert_int_equal(ft->result.types[0], TYPE_i32);
+        functype_free(ft);
+
+        ret = functype_from_string("(i)", &ft);
+        assert_int_equal(ret, 0);
+        assert_int_equal(ft->parameter.ntypes, 1);
+        assert_int_equal(ft->parameter.types[0], TYPE_i32);
+        assert_int_equal(ft->result.ntypes, 0);
+        functype_free(ft);
+
+        ret = functype_from_string("()", &ft);
+        assert_int_equal(ret, 0);
+        assert_int_equal(ft->parameter.ntypes, 0);
+        assert_int_equal(ft->result.ntypes, 0);
+        functype_free(ft);
+
+        ret = functype_from_string("", &ft);
+        assert_int_equal(ret, EINVAL);
+
+        ret = functype_from_string("(X)", &ft);
+        assert_int_equal(ret, EINVAL);
+
+        ret = functype_from_string("()X", &ft);
+        assert_int_equal(ret, EINVAL);
+
+        ret = functype_from_string("(i", &ft);
+        assert_int_equal(ret, EINVAL);
+
+        ret = functype_from_string("i)", &ft);
+        assert_int_equal(ret, EINVAL);
+
+        ret = functype_from_string("i", &ft);
+        assert_int_equal(ret, EINVAL);
+}
+
 int
 main(int argc, char **argv)
 {
         const struct CMUnitTest tests[] = {
                 cmocka_unit_test(test_leb128),
                 cmocka_unit_test(test_endian),
+                cmocka_unit_test(test_functype),
         };
         return cmocka_run_group_tests(tests, NULL, NULL);
 }
