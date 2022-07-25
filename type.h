@@ -240,6 +240,12 @@ struct module {
 };
 
 struct exec_context;
+struct host_instance;
+
+typedef int (*host_func_t)(struct exec_context *, struct host_instance *hi,
+                           const struct functype *ft, const struct val *params,
+                           struct val *results);
+
 struct funcinst {
         bool is_host;
         union {
@@ -248,11 +254,9 @@ struct funcinst {
                         uint32_t funcidx;
                 } wasm;
                 struct {
+                        struct host_instance *instance;
                         struct functype *type;
-                        int (*func)(struct exec_context *,
-                                    const struct functype *ft,
-                                    const struct val *params,
-                                    struct val *results);
+                        host_func_t func;
                 } host;
         } u;
 };

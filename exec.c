@@ -292,7 +292,8 @@ do_host_call(struct exec_context *ctx, const struct funcinst *finst)
                 }
         }
         ctx->stack.lsize -= nparams;
-        ret = finst->u.host.func(ctx, ft, &VEC_NEXTELEM(ctx->stack),
+        ret = finst->u.host.func(ctx, finst->u.host.instance, ft,
+                                 &VEC_NEXTELEM(ctx->stack),
                                  &VEC_NEXTELEM(ctx->stack));
         if (ret != 0) {
                 return ret;

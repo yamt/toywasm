@@ -30,7 +30,8 @@ invoke(uint32_t funcidx, const struct resulttype *paramtype,
         xlog_trace("func %u %u %u", funcidx, ft->parameter.ntypes,
                    ft->result.ntypes);
         if (finst->is_host) {
-                return finst->u.host.func(ctx, ft, params, results);
+                return finst->u.host.func(ctx, finst->u.host.instance, ft,
+                                          params, results);
         }
         struct module *m = inst->module;
         struct func *func = &m->funcs[funcidx - m->nimportedfuncs];
