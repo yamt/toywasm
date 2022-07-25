@@ -6,16 +6,10 @@
 #include "context.h"
 #include "type.h"
 
-/*
- * Note: resulttype_alloc/resulttype_free allocates the structure
- * differently from module.c.
- */
-int
-resulttype_alloc(uint32_t ntypes, const enum valtype *types,
-                 struct resulttype **resultp)
+static int
+resulttype_alloc0(uint32_t ntypes, struct resulttype **resultp)
 {
         struct resulttype *p;
-        uint32_t i;
         size_t bytesize1;
         size_t bytesize;
 
@@ -33,6 +27,25 @@ resulttype_alloc(uint32_t ntypes, const enum valtype *types,
         }
         p->ntypes = ntypes;
         p->types = (void *)p + sizeof(*p);
+        p->is_static = false;
+        *resultp = p;
+        return 0;
+}
+
+/*
+ * Note: resulttype_alloc/resulttype_free allocates the structure
+ * differently from module.c.
+ */
+int
+resulttype_alloc(uint32_t ntypes, const enum valtype *types,
+                 struct resulttype **resultp)
+{
+        struct resulttype *p;
+        uint32_t i;
+        int ret = resulttype_alloc0(ntypes, &p);
+        if (ret != 0) {
+                return ret;
+        }
         for (i = 0; i < ntypes; i++) {
                 p->types[i] = types[i];
         }
