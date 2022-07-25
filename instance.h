@@ -18,3 +18,4 @@ int import_object_create_for_exports(struct instance *inst,
                                      const char *module_name,
                                      struct import_object **resultp);
 void import_object_destroy(struct import_object *export);
+int import_object_alloc(uint32_t nentries, struct import_object **resultp);

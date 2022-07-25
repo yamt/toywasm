@@ -78,6 +78,7 @@ set(lib_sources
 	"exec.c"
 	"expr.c"
 	"fileio.c"
+	"host_instance.c"
 	"import_object.c"
 	"insn.c"
 	"instance.c"
@@ -88,6 +89,7 @@ set(lib_sources
 	"util.c"
 	"validation.c"
 	"vec.c"
+	"wasi.c"
 	"xlog.c"
 )
 

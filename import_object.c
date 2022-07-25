@@ -7,22 +7,36 @@
 #include "xlog.h"
 
 int
+import_object_alloc(uint32_t nentries, struct import_object **resultp)
+{
+        struct import_object *im;
+
+        im = zalloc(sizeof(*im));
+        if (im == NULL) {
+                return ENOMEM;
+        }
+        im->nentries = nentries;
+        im->entries = zalloc(nentries * sizeof(*im->entries));
+        if (im->entries == NULL) {
+                free(im);
+                return ENOMEM;
+        }
+        *resultp = im;
+        return 0;
+}
+
+int
 import_object_create_for_exports(struct instance *inst,
                                  const char *module_name,
                                  struct import_object **resultp)
 {
         struct module *m = inst->module;
         struct import_object *im;
+        int ret;
 
-        im = malloc(sizeof(*im));
-        if (im == NULL) {
-                return ENOMEM;
-        }
-        im->nentries = m->nexports;
-        im->entries = malloc(m->nexports * sizeof(*im->entries));
-        if (im->entries == NULL) {
-                free(im);
-                return ENOMEM;
+        ret = import_object_alloc(m->nexports, &im);
+        if (ret != 0) {
+                return ret;
         }
         uint32_t i;
         for (i = 0; i < m->nexports; i++) {
@@ -62,6 +76,9 @@ import_object_create_for_exports(struct instance *inst,
 void
 import_object_destroy(struct import_object *im)
 {
+        if (im->dtor != NULL) {
+                im->dtor(im);
+        }
         free(im->entries);
         free(im);
 }

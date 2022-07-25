@@ -25,6 +25,7 @@
 #include "module.h"
 #include "repl.h"
 #include "type.h"
+#include "wasi.h"
 #include "xlog.h"
 
 const char *g_repl_prompt = "toywasm";
@@ -46,6 +47,7 @@ struct repl_state {
         struct import_object *imports;
         struct val *param;
         struct val *result;
+        struct wasi_instance *wasi;
 };
 
 struct repl_state_checkpoint {
@@ -157,6 +159,36 @@ repl_reset(struct repl_state *state)
         struct repl_state_checkpoint cp;
         memset(&cp, 0, sizeof(cp));
         repl_rollback(state, &cp);
+
+        if (state->wasi != NULL) {
+                wasi_instance_destroy(state->wasi);
+                state->wasi = NULL;
+        }
+}
+
+int
+repl_load_wasi(struct repl_state *state)
+{
+        if (state->wasi != NULL) {
+                xlog_error("wasi is already loaded");
+                return EPROTO;
+        }
+        int ret;
+        ret = wasi_instance_create(&state->wasi);
+        if (ret != 0) {
+                goto fail;
+        }
+        struct import_object *im;
+        ret = import_object_create_for_wasi(state->wasi, &im);
+        if (ret != 0) {
+                goto fail;
+        }
+        im->next = state->imports;
+        state->imports = im;
+        return 0;
+fail:
+        xlog_error("failed to load wasi");
+        return ret;
 }
 
 int

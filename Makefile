@@ -43,6 +43,7 @@ SRCS += expr.c
 SRCS += exec.c
 SRCS += fileio.c
 SRCS += import_object.c
+SRCS += host_instance.c
 SRCS += insn.c
 SRCS += instance.c
 SRCS += repl.c
@@ -52,6 +53,7 @@ SRCS += type.c
 SRCS += util.c
 SRCS += validation.c
 SRCS += vec.c
+SRCS += wasi.c
 SRCS += xlog.c
 
 OBJS = $(SRCS:.c=.o)
@@ -63,7 +65,7 @@ TESTBIN = test_bin
 
 .PHONY: run
 run: $(MAINBIN)
-	./$(MAINBIN) --trace $(TEST_WASM)
+	./$(MAINBIN) --trace --wasi $(TEST_WASM)
 
 .PHONY: test
 test: $(TESTBIN)

@@ -9,3 +9,4 @@ void repl_reset(struct repl_state *state);
 int repl_load(struct repl_state *state, const char *filename);
 int repl_register(struct repl_state *state, const char *module_name);
 int repl_invoke(struct repl_state *state, const char *cmd);
+int repl_load_wasi(struct repl_state *state);

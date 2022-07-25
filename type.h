@@ -305,6 +305,8 @@ struct import_object_entry {
 struct import_object {
         size_t nentries;
         struct import_object_entry *entries;
+        void (*dtor)(struct import_object *im);
+        void *dtor_arg;
         struct import_object *next;
 };
 
