@@ -1,3 +1,5 @@
+#include <stdint.h>
+
 struct module;
 struct instance;
 struct exec_context;
