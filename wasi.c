@@ -1,3 +1,5 @@
+#define _POSIX_C_SOURCE 199309 /* clock_gettime */
+
 #include <sys/stat.h>
 #include <sys/uio.h>
 
