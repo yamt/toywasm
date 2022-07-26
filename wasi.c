@@ -214,25 +214,18 @@ wasi_fd_fdstat_get(struct exec_context *ctx, struct host_instance *hi,
         }
         struct wasi_fdstat st;
         memset(&st, 0, sizeof(st));
-        switch (stat.st_mode & S_IFMT) {
-        case S_IFDIR:
-                st.fs_filetype = WASI_FILETYPE_DIRECTORY;
-                break;
-        case S_IFREG:
+        if (S_ISREG(stat.st_mode)) {
                 st.fs_filetype = WASI_FILETYPE_REGULAR_FILE;
-                break;
-        case S_IFLNK:
-                st.fs_filetype = WASI_FILETYPE_SYMBOLIC_LINK;
-                break;
-        case S_IFCHR:
+        } else if (S_ISDIR(stat.st_mode)) {
+                st.fs_filetype = WASI_FILETYPE_DIRECTORY;
+        } else if (S_ISCHR(stat.st_mode)) {
                 st.fs_filetype = WASI_FILETYPE_CHARACTER_DEVICE;
-                break;
-        case S_IFBLK:
+        } else if (S_ISBLK(stat.st_mode)) {
                 st.fs_filetype = WASI_FILETYPE_BLOCK_DEVICE;
-                break;
-        default:
+        } else if (S_ISLNK(stat.st_mode)) {
+                st.fs_filetype = WASI_FILETYPE_SYMBOLIC_LINK;
+        } else {
                 st.fs_filetype = WASI_FILETYPE_UNKNOWN;
-                break;
         }
         /* TODO fs_flags */
         /* TODO fs_rights_base */
