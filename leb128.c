@@ -5,13 +5,11 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stddef.h>
 
 #include "leb128.h"
-#include "xlog.h"
-
-#include <inttypes.h>
 
 static int
 read_u8(const uint8_t **pp, const uint8_t *ep, uint8_t *resultp)
@@ -49,38 +47,25 @@ read_leb(const uint8_t **pp, const uint8_t *ep, unsigned int bits,
                         if (is_signed) {
                                 is_minus = v & 0x40;
                         }
-                        unsigned int bits_left = bits - shift;
-#if 0
-                        xlog_printf("sign %u u8 %x v %x bits %u shift %u\n",
-                                    is_signed, u8, v, bits, shift);
-#endif
-                        if (bits_left < 7) {
+                        unsigned int bits_left;
+                        if (error_check && (bits_left = bits - shift) < 7) {
                                 if (is_signed) {
                                         uint8_t mask = ((unsigned int)-1)
                                                        << (bits_left - 1);
-#if 0
-                                        xlog_printf("sign %u is_minus %u v %x "
-                                                    "mask %x bits %u "
-                                                    "shift %u\n",
-                                                    is_signed, is_minus, v,
-                                                    mask, bits, shift);
-#endif
                                         if (is_minus) {
-                                                if (error_check &&
-                                                    (((~v) & 0x7f) & mask) !=
-                                                            0) {
+                                                if ((((~v) & 0x7f) & mask) !=
+                                                    0) {
                                                         return E2BIG;
                                                 }
                                         } else {
-                                                if (error_check &&
-                                                    (v & mask) != 0) {
+                                                if ((v & mask) != 0) {
                                                         return E2BIG;
                                                 }
                                         }
                                 } else {
                                         uint8_t mask = ((unsigned int)-1)
                                                        << bits_left;
-                                        if (error_check && (v & mask) != 0) {
+                                        if ((v & mask) != 0) {
                                                 return E2BIG;
                                         }
                                 }
