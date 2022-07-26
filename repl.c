@@ -192,6 +192,16 @@ fail:
 }
 
 int
+repl_set_wasi_args(struct repl_state *state, int argc, char *const *argv)
+{
+        if (state->wasi == NULL) {
+                return EPROTO;
+        }
+        wasi_instance_set_args(state->wasi, argc, argv);
+        return 0;
+}
+
+int
 repl_load_from_buf(struct repl_state *state, struct repl_module_state *mod)
 {
         int ret;

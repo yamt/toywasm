@@ -1,3 +1,4 @@
+#include <sys/stat.h>
 #include <sys/uio.h>
 
 #include <errno.h>
@@ -5,6 +6,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "context.h"
@@ -18,12 +20,39 @@ struct wasi_instance {
         struct host_instance hi;
         int *fdtable;
         uint32_t nfds;
+        int argc;
+        char *const *argv;
 };
 
 struct wasi_iov {
         uint32_t iov_base;
         uint32_t iov_len;
 };
+
+#define WASI_FILETYPE_UNKNOWN 0
+#define WASI_FILETYPE_BLOCK_DEVICE 1
+#define WASI_FILETYPE_CHARACTER_DEVICE 2
+#define WASI_FILETYPE_DIRECTORY 3
+#define WASI_FILETYPE_REGULAR_FILE 4
+#define WASI_FILETYPE_SOCKET_DGRAM 5
+#define WASI_FILETYPE_SOCKET_STREAM 6
+#define WASI_FILETYPE_SYMBOLIC_LINK 7
+
+#define WASI_FDFLAG_APPEND 1
+#define WASI_FDFLAG_DSYNC 2
+#define WASI_FDFLAG_NONBLOCK 4
+#define WASI_FDFLAG_RSYNC 8
+#define WASI_FDFLAG_SYNC 16
+
+struct wasi_fdstat {
+        uint8_t fs_filetype;
+        uint8_t pad1;
+        uint16_t fs_flags;
+        uint8_t pad2[4];
+        uint64_t fs_rights_base;
+        uint64_t fs_rights_inheriting;
+};
+_Static_assert(sizeof(struct wasi_fdstat) == 24, "wasi_fdstat");
 
 static int
 wasi_fdlookup(struct wasi_instance *wasi, uint32_t wasifd, int *hostfdp)
@@ -44,7 +73,15 @@ static uint32_t
 wasi_convert_errno(int host_errno)
 {
         /* TODO implement */
-        return 29; /* EIO */
+        uint32_t wasmerrno;
+        switch (host_errno) {
+        case 0:
+                wasmerrno = 0;
+                break;
+        default:
+                wasmerrno = 29; /* EIO */
+        }
+        return wasmerrno;
 }
 
 static int
@@ -158,14 +195,55 @@ wasi_fd_fdstat_get(struct exec_context *ctx, struct host_instance *hi,
                    const struct functype *ft, const struct val *params,
                    struct val *results)
 {
-#if defined(ENABLE_TRACING)
-        uint32_t fd = params[0].u.i32;
-#endif
-        xlog_trace("%s called for fd %" PRIu32, __func__, fd);
-        // uint32_t stat_addr = params[1].u.i32;
-
-        /* TODO implement */
-        results[0].u.i32 = 0;
+        struct wasi_instance *wasi = (void *)hi;
+        uint32_t wasifd = params[0].u.i32;
+        xlog_trace("%s called for fd %" PRIu32, __func__, wasifd);
+        uint32_t stat_addr = params[1].u.i32;
+        int hostfd;
+        int ret;
+        ret = wasi_fdlookup(wasi, wasifd, &hostfd);
+        if (ret != 0) {
+                goto fail;
+        }
+        struct stat stat;
+        ret = fstat(hostfd, &stat);
+        if (ret != 0) {
+                goto fail;
+        }
+        struct wasi_fdstat st;
+        memset(&st, 0, sizeof(st));
+        switch (stat.st_mode & S_IFMT) {
+        case S_IFDIR:
+                st.fs_filetype = WASI_FILETYPE_DIRECTORY;
+                break;
+        case S_IFREG:
+                st.fs_filetype = WASI_FILETYPE_REGULAR_FILE;
+                break;
+        case S_IFLNK:
+                st.fs_filetype = WASI_FILETYPE_SYMBOLIC_LINK;
+                break;
+        case S_IFCHR:
+                st.fs_filetype = WASI_FILETYPE_CHARACTER_DEVICE;
+                break;
+        case S_IFBLK:
+                st.fs_filetype = WASI_FILETYPE_BLOCK_DEVICE;
+                break;
+        default:
+                st.fs_filetype = WASI_FILETYPE_UNKNOWN;
+                break;
+        }
+        /* TODO fs_flags */
+        /* TODO fs_rights_base */
+        /* TODO fs_rights_inheriting */
+        void *p;
+        ret = memory_getptr(ctx, 0, stat_addr, 0, sizeof(st), &p);
+        if (ret != 0) {
+                goto fail;
+        }
+        memcpy(p, &st, sizeof(st));
+        ret = 0;
+fail:
+        results[0].u.i32 = wasi_convert_errno(ret);
         return 0;
 }
 
@@ -174,7 +252,177 @@ wasi_fd_seek(struct exec_context *ctx, struct host_instance *hi,
              const struct functype *ft, const struct val *params,
              struct val *results)
 {
+        struct wasi_instance *wasi = (void *)hi;
+        uint32_t wasifd = params[0].u.i32;
+        xlog_trace("%s called for fd %" PRIu32, __func__, wasifd);
+        int64_t offset = params[1].u.i64;
+        uint32_t whence = params[2].u.i32;
+        uint32_t retp = params[3].u.i32;
+        int hostfd;
+        int ret;
+        ret = wasi_fdlookup(wasi, wasifd, &hostfd);
+        if (ret != 0) {
+                goto fail;
+        }
+        int hostwhence;
+        switch (whence) {
+        case 0:
+                hostwhence = SEEK_SET;
+                break;
+        case 1:
+                hostwhence = SEEK_CUR;
+                break;
+        case 2:
+                hostwhence = SEEK_END;
+                break;
+        default:
+                ret = EINVAL;
+                goto fail;
+        }
+        off_t ret1 = lseek(hostfd, offset, hostwhence);
+        if (ret1 == -1) {
+                ret = errno;
+                goto fail;
+        }
+        uint64_t result = ret1;
+        void *p;
+        ret = memory_getptr(ctx, 0, retp, 0, sizeof(result), &p);
+        if (ret != 0) {
+                goto fail;
+        }
+        memcpy(p, &result, sizeof(result));
+        ret = 0;
+fail:
+        results[0].u.i32 = wasi_convert_errno(ret);
+        return 0;
+}
+
+static int
+wasi_clock_time_get(struct exec_context *ctx, struct host_instance *hi,
+                    const struct functype *ft, const struct val *params,
+                    struct val *results)
+{
         xlog_trace("%s called", __func__);
+        uint32_t clockid = params[0].u.i32;
+#if 0 /* REVISIT what to do with the precision? */
+        uint64_t precision = params[1].u.i64;
+#endif
+        uint32_t retp = params[2].u.i32;
+        clockid_t hostclockid;
+        int ret;
+        switch (clockid) {
+        case 0:
+                hostclockid = CLOCK_REALTIME;
+                break;
+        case 1:
+                hostclockid = CLOCK_MONOTONIC;
+                break;
+        case 2:
+                /* REVISIT what does this really mean for wasm? */
+                hostclockid = CLOCK_PROCESS_CPUTIME_ID;
+                break;
+        case 3:
+                /* REVISIT what does this really mean for wasm? */
+                hostclockid = CLOCK_THREAD_CPUTIME_ID;
+                break;
+        default:
+                ret = EINVAL;
+                goto fail;
+        }
+        struct timespec ts;
+        ret = clock_gettime(hostclockid, &ts);
+        if (ret == -1) {
+                ret = errno;
+                goto fail;
+        }
+        uint64_t result = (uint64_t)ts.tv_sec * 1000000000 + ts.tv_nsec;
+        void *p;
+        ret = memory_getptr(ctx, 0, retp, 0, sizeof(result), &p);
+        if (ret != 0) {
+                goto fail;
+        }
+        memcpy(p, &result, sizeof(result));
+        ret = 0;
+fail:
+        results[0].u.i32 = wasi_convert_errno(ret);
+        return 0;
+}
+
+static int
+wasi_args_sizes_get(struct exec_context *ctx, struct host_instance *hi,
+                    const struct functype *ft, const struct val *params,
+                    struct val *results)
+{
+        struct wasi_instance *wasi = (void *)hi;
+        uint32_t argcp = params[0].u.i32;
+        uint32_t argv_buf_sizep = params[1].u.i32;
+        int argc = wasi->argc;
+        char *const *argv = wasi->argv;
+        xlog_trace("%s called argc=%u", __func__, argc);
+        int ret;
+        void *p;
+        ret = memory_getptr(ctx, 0, argcp, 0, sizeof(argc), &p);
+        if (ret != 0) {
+                goto fail;
+        }
+        memcpy(p, &argc, sizeof(argc));
+        int i;
+        uint32_t argv_buf_size = 0;
+        for (i = 0; i < argc; i++) {
+                argv_buf_size = strlen(argv[i]) + 1;
+        }
+        ret = memory_getptr(ctx, 0, argv_buf_sizep, 0, sizeof(argv_buf_size),
+                            &p);
+        if (ret != 0) {
+                goto fail;
+        }
+        memcpy(p, &argv_buf_size, sizeof(argv_buf_size));
+fail:
+        results[0].u.i32 = wasi_convert_errno(ret);
+        return 0;
+}
+
+static int
+wasi_args_get(struct exec_context *ctx, struct host_instance *hi,
+              const struct functype *ft, const struct val *params,
+              struct val *results)
+{
+        xlog_trace("%s called", __func__);
+        struct wasi_instance *wasi = (void *)hi;
+        uint32_t argvp = params[0].u.i32;
+        uint32_t argv_buf = params[1].u.i32;
+        int argc = wasi->argc;
+        char *const *argv = wasi->argv;
+        xlog_trace("%s called argc=%u", __func__, argc);
+        int ret;
+        int i;
+        uint32_t *wasm_argv = malloc(argc * sizeof(*wasm_argv));
+        if (wasm_argv == NULL) {
+                ret = ENOMEM;
+                goto fail;
+        }
+        uint32_t wasmp = argv_buf;
+        for (i = 0; i < argc; i++) {
+                wasm_argv[i] = wasmp;
+                wasmp += strlen(argv[i]) + 1;
+        }
+        void *p;
+        for (i = 0; i < argc; i++) {
+                size_t sz = strlen(argv[i]) + 1;
+                ret = memory_getptr(ctx, 0, wasm_argv[i], 0, sz, &p);
+                if (ret != 0) {
+                        goto fail;
+                }
+                memcpy(p, argv[i], sz);
+        }
+        ret = memory_getptr(ctx, 0, argvp, 0, argc * sizeof(*wasm_argv), &p);
+        if (ret != 0) {
+                goto fail;
+        }
+        memcpy(p, wasm_argv, argc * sizeof(*wasm_argv));
+fail:
+        free(wasm_argv);
+        results[0].u.i32 = wasi_convert_errno(ret);
         return 0;
 }
 
@@ -189,6 +437,9 @@ const struct host_func wasi_funcs[] = {
         WASI_HOST_FUNC(fd_write, "(iiii)i"),
         WASI_HOST_FUNC(fd_fdstat_get, "(ii)i"),
         WASI_HOST_FUNC(fd_seek, "(iIii)i"),
+        WASI_HOST_FUNC(clock_time_get, "(iIi)i"),
+        WASI_HOST_FUNC(args_sizes_get, "(ii)i"),
+        WASI_HOST_FUNC(args_get, "(ii)i"),
         /* TODO implement the rest of the api */
 };
 
@@ -220,6 +471,13 @@ wasi_instance_create(struct wasi_instance **instp)
         }
         *instp = inst;
         return 0;
+}
+
+void
+wasi_instance_set_args(struct wasi_instance *inst, int argc, char *const *argv)
+{
+        inst->argc = argc;
+        inst->argv = argv;
 }
 
 void

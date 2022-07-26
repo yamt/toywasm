@@ -79,7 +79,7 @@ const struct option longopts[] = {
 };
 
 int
-main(int argc, char *argv[])
+main(int argc, char *const *argv)
 {
         struct repl_state *state = g_repl_state;
         int ret;
@@ -140,6 +140,10 @@ main(int argc, char *argv[])
         }
         if (argc == 0) {
                 exit(0);
+        }
+        ret = repl_set_wasi_args(state, argc, argv);
+        if (ret != 0 && ret != EPROTO) {
+                goto fail;
         }
         const char *filename = argv[0];
         ret = repl_load(state, filename);
