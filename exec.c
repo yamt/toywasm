@@ -57,8 +57,8 @@ trap_with_id(struct exec_context *ctx, enum trapid id, const char *fmt, ...)
 }
 
 int
-memory_getptr(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
-              uint32_t offset, uint32_t size, void **pp)
+memory_getptr2(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
+               uint32_t offset, uint32_t size, void **pp, bool *movedp)
 {
         struct instance *inst = ctx->instance;
         struct meminst *meminst = VEC_ELEM(inst->mems, memidx);
@@ -97,12 +97,22 @@ do_trap:
                 xlog_trace("extend memory %" PRIu32 " from %" PRIu32
                            " to %" PRIu32,
                            memidx, meminst->allocated, need);
+                if (movedp != NULL) {
+                        *movedp = true;
+                }
                 memset(meminst->data + meminst->allocated, 0,
                        need - meminst->allocated);
                 meminst->allocated = need;
         }
         *pp = meminst->data + ea;
         return 0;
+}
+
+int
+memory_getptr(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
+              uint32_t offset, uint32_t size, void **pp)
+{
+        return memory_getptr2(ctx, memidx, ptr, offset, size, pp, NULL);
 }
 
 void

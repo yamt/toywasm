@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <limits.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -151,6 +152,7 @@ wasi_fd_write(struct exec_context *ctx, struct host_instance *hi,
                 ret = ENOMEM;
                 goto fail;
         }
+retry:
         ret = memory_getptr(ctx, 0, iov_addr, 0,
                             iov_count * sizeof(struct wasi_iov), &p);
         if (ret != 0) {
@@ -160,12 +162,17 @@ wasi_fd_write(struct exec_context *ctx, struct host_instance *hi,
         uint32_t i;
         for (i = 0; i < iov_count; i++) {
                 struct wasi_iov iov;
+                bool moved = false;
                 memcpy(&iov, &iov_in_module[i], sizeof(iov));
                 xlog_trace("iov [%" PRIu32 "] base %" PRIx32 " len %" PRIu32,
                            i, iov.iov_base, iov.iov_len);
-                ret = memory_getptr(ctx, 0, iov.iov_base, 0, iov.iov_len, &p);
+                ret = memory_getptr2(ctx, 0, iov.iov_base, 0, iov.iov_len, &p,
+                                     &moved);
                 if (ret != 0) {
                         goto fail;
+                }
+                if (moved) {
+                        goto retry;
                 }
                 hostiov[i].iov_base = p;
                 hostiov[i].iov_len = iov.iov_len;
@@ -221,6 +228,7 @@ wasi_fd_read(struct exec_context *ctx, struct host_instance *hi,
                 ret = ENOMEM;
                 goto fail;
         }
+retry:
         ret = memory_getptr(ctx, 0, iov_addr, 0,
                             iov_count * sizeof(struct wasi_iov), &p);
         if (ret != 0) {
@@ -230,12 +238,17 @@ wasi_fd_read(struct exec_context *ctx, struct host_instance *hi,
         uint32_t i;
         for (i = 0; i < iov_count; i++) {
                 struct wasi_iov iov;
+                bool moved = false;
                 memcpy(&iov, &iov_in_module[i], sizeof(iov));
                 xlog_trace("iov [%" PRIu32 "] base %" PRIx32 " len %" PRIu32,
                            i, iov.iov_base, iov.iov_len);
-                ret = memory_getptr(ctx, 0, iov.iov_base, 0, iov.iov_len, &p);
+                ret = memory_getptr2(ctx, 0, iov.iov_base, 0, iov.iov_len, &p,
+                                     &moved);
                 if (ret != 0) {
                         goto fail;
+                }
+                if (moved) {
+                        goto retry;
                 }
                 hostiov[i].iov_base = p;
                 hostiov[i].iov_len = iov.iov_len;
