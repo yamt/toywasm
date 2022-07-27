@@ -63,6 +63,7 @@ enum trapid {
         TRAP_CALL_INDIRECT_NULL_FUNCREF,
         TRAP_CALL_INDIRECT_FUNCTYPE_MISMATCH,
         TRAP_INVALID_CONVERSION_TO_INTEGER,
+        TRAP_VOLUNTARY_EXIT,
 };
 
 struct validation_context {
@@ -103,6 +104,7 @@ struct exec_context {
         bool trapped; /* used with a combination with EFAULT */
         enum trapid trapid;
         char *trapmsg;
+        uint32_t exit_code; /* wasi */
 
         enum exec_event event;
         union {

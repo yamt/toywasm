@@ -95,9 +95,10 @@ wasi_proc_exit(struct exec_context *ctx, struct host_instance *hi,
                struct val *results)
 {
         xlog_trace("%s called", __func__);
-        /* TODO implement */
-        results[0].u.i32 = 0;
-        return 0;
+        uint32_t code = params[0].u.i32;
+        ctx->exit_code = code;
+        return trap_with_id(ctx, TRAP_VOLUNTARY_EXIT,
+                            "proc_exit with %" PRIu32, code);
 }
 
 static int
