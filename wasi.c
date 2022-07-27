@@ -449,7 +449,7 @@ wasi_args_sizes_get(struct exec_context *ctx, struct host_instance *hi,
         int i;
         uint32_t argv_buf_size = 0;
         for (i = 0; i < argc; i++) {
-                argv_buf_size = strlen(argv[i]) + 1;
+                argv_buf_size += strlen(argv[i]) + 1;
         }
         ret = memory_getptr(ctx, 0, argv_buf_sizep, 0, sizeof(argv_buf_size),
                             &p);
