@@ -424,28 +424,31 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
 }
 
 int
-exec_next_insn(const uint8_t **pp, struct exec_context *ctx)
+exec_next_insn(const uint8_t *p, struct exec_context *ctx)
 {
-        assert(pp == &ctx->p);
+#if !(defined(USE_SEPARATE_EXECUTE) && defined(USE_TAILCALL))
+        assert(ctx->p == p);
+#endif
         assert(ctx->event == EXEC_EVENT_NONE);
         assert(ctx->frames.lsize > 0);
 #if defined(ENABLE_TRACING)
-        uint32_t pc = ptr2pc(ctx->instance->module, ctx->p);
+        uint32_t pc = ptr2pc(ctx->instance->module, p);
 #endif
-        uint32_t op = *ctx->p++;
+        uint32_t op = *p++;
         const struct instruction_desc *desc = &instructions[op];
         if (desc->next_table != NULL) {
-                op = *ctx->p++;
+                op = *p++;
                 desc = &desc->next_table[op];
         }
         xlog_trace("exec %06" PRIx32 ": %s", pc, desc->name);
         assert(desc->process != NULL);
 #if defined(USE_SEPARATE_EXECUTE)
-        __musttail return desc->execute(&ctx->p, ctx);
+        __musttail return desc->execute(p, ctx);
 #else
         struct context common_ctx;
         memset(&common_ctx, 0, sizeof(common_ctx));
         common_ctx.exec = ctx;
+        ctx->p = p;
         return desc->process(&ctx->p, NULL, &common_ctx);
 #endif
 }
@@ -469,7 +472,7 @@ exec_expr(const struct expr *expr, uint32_t nlocals,
         }
         ctx->p = expr->start;
         while (true) {
-                ret = exec_next_insn(&ctx->p, ctx);
+                ret = exec_next_insn(ctx->p, ctx);
                 if (ret != 0) {
                         if (ctx->trapped) {
                                 xlog_trace("got a trap");

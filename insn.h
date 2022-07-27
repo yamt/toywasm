@@ -8,7 +8,7 @@ struct instruction_desc {
         int (*process)(const uint8_t **pp, const uint8_t *ep,
                        struct context *ctx);
 #if defined(USE_SEPARATE_EXECUTE)
-        int (*execute)(const uint8_t **pp, struct exec_context *ctx);
+        int (*execute)(const uint8_t *p, struct exec_context *ctx);
 #endif
         const struct instruction_desc *next_table;
         unsigned int next_table_size;

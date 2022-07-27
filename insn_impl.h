@@ -9,18 +9,18 @@ INSN_IMPL(unreachable)
         return 0;
 }
 
-INSN_IMPL(nop) { return 0; }
+INSN_IMPL(nop) { INSN_SUCCESS; }
 
 INSN_IMPL(block)
 {
-        const uint8_t *p = *pp;
         int ret;
         struct resulttype *rt_parameter = NULL;
         struct resulttype *rt_result = NULL;
 
+        LOAD_CTX;
         READ_LEB_S33(blocktype);
         if (EXECUTING) {
-                push_label(ECTX);
+                push_label(ORIG_P, ECTX);
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
                 struct module *m = vctx->module;
@@ -33,7 +33,7 @@ INSN_IMPL(block)
                 if (ret != 0) {
                         goto fail;
                 }
-                uint32_t pc = ptr2pc(m, (*pp) - 1);
+                uint32_t pc = ptr2pc(m, ORIG_P - 1);
                 ret = push_ctrlframe(pc, FRAME_OP_BLOCK, 0, rt_parameter,
                                      rt_result, vctx);
                 if (ret != 0) {
@@ -42,9 +42,8 @@ INSN_IMPL(block)
                 rt_parameter = NULL;
                 rt_result = NULL;
         }
-
-        *pp = p;
-        return 0;
+        SAVE_CTX;
+        INSN_SUCCESS_RETURN;
 fail:
         resulttype_free(rt_parameter);
         resulttype_free(rt_result);
@@ -53,14 +52,14 @@ fail:
 
 INSN_IMPL(loop)
 {
-        const uint8_t *p = *pp;
         struct resulttype *rt_parameter = NULL;
         struct resulttype *rt_result = NULL;
         int ret;
 
+        LOAD_CTX;
         READ_LEB_S33(blocktype);
         if (EXECUTING) {
-                push_label(ECTX);
+                push_label(ORIG_P, ECTX);
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
                 struct module *m = vctx->module;
@@ -73,7 +72,7 @@ INSN_IMPL(loop)
                 if (ret != 0) {
                         goto fail;
                 }
-                uint32_t pc = ptr2pc(m, (*pp) - 1);
+                uint32_t pc = ptr2pc(m, ORIG_P - 1);
                 ret = push_ctrlframe(pc, FRAME_OP_LOOP, 0, rt_parameter,
                                      rt_result, vctx);
                 if (ret != 0) {
@@ -82,9 +81,8 @@ INSN_IMPL(loop)
                 rt_parameter = NULL;
                 rt_result = NULL;
         }
-
-        *pp = p;
-        return 0;
+        SAVE_CTX;
+        INSN_SUCCESS_RETURN;
 fail:
         resulttype_free(rt_parameter);
         resulttype_free(rt_result);
@@ -93,16 +91,16 @@ fail:
 
 INSN_IMPL(if)
 {
-        const uint8_t *p = *pp;
         struct resulttype *rt_parameter = NULL;
         struct resulttype *rt_result = NULL;
         int ret;
 
+        LOAD_CTX;
         READ_LEB_S33(blocktype);
         POP_VAL(TYPE_i32, c);
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
-                push_label(ectx);
+                push_label(ORIG_P, ECTX);
                 if (val_c.u.i32 == 0) {
                         ectx->event_u.branch.index = 0;
                         ectx->event_u.branch.goto_else = true;
@@ -120,7 +118,7 @@ INSN_IMPL(if)
                 if (ret != 0) {
                         goto fail;
                 }
-                uint32_t pc = ptr2pc(m, (*pp) - 1);
+                uint32_t pc = ptr2pc(m, ORIG_P - 1);
                 ret = push_ctrlframe(pc, FRAME_OP_IF, 0, rt_parameter,
                                      rt_result, vctx);
                 if (ret != 0) {
@@ -129,9 +127,8 @@ INSN_IMPL(if)
                 rt_parameter = NULL;
                 rt_result = NULL;
         }
-
-        *pp = p;
-        return 0;
+        SAVE_CTX;
+        INSN_SUCCESS_RETURN;
 fail:
         resulttype_free(rt_parameter);
         resulttype_free(rt_result);
@@ -151,7 +148,8 @@ INSN_IMPL(else)
                 struct ctrlframe cframe;
                 int ret;
 
-                uint32_t pc = ptr2pc(vctx->module, *pp);
+                LOAD_CTX;
+                uint32_t pc = ptr2pc(vctx->module, p);
                 ret = pop_ctrlframe(pc, true, &cframe, vctx);
                 if (ret != 0) {
                         return ret;
@@ -166,7 +164,7 @@ INSN_IMPL(else)
                         return ret;
                 }
         }
-        return 0;
+        INSN_SUCCESS_RETURN;
 }
 
 INSN_IMPL(end)
@@ -175,17 +173,21 @@ INSN_IMPL(end)
                 struct exec_context *ectx = ECTX;
                 assert(ectx->frames.lsize > 0);
                 struct funcframe *frame = &VEC_LASTELEM(ectx->frames);
+                xlog_trace("end: nlabels %" PRIu32 " labelidx %" PRIu32,
+                           ectx->labels.lsize, frame->labelidx);
                 if (ectx->labels.lsize > frame->labelidx) {
                         VEC_POP_DROP(ectx->labels);
                 } else {
                         frame_exit(ectx);
+                        RELOAD_CTX;
                 }
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
                 struct ctrlframe cframe;
                 int ret;
 
-                uint32_t pc = ptr2pc(vctx->module, *pp);
+                LOAD_CTX;
+                uint32_t pc = ptr2pc(vctx->module, p);
                 ret = pop_ctrlframe(pc, false, &cframe, vctx);
                 if (ret != 0) {
                         return ret;
@@ -196,14 +198,14 @@ INSN_IMPL(end)
                         return ret;
                 }
         }
-        return 0;
+        INSN_SUCCESS_RETURN;
 }
 
 INSN_IMPL(br)
 {
-        const uint8_t *p = *pp;
         int ret;
 
+        LOAD_CTX;
         READ_LEB_U32(labelidx);
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
@@ -223,17 +225,17 @@ INSN_IMPL(br)
                 }
                 mark_unreachable(vctx);
         }
-        *pp = p;
-        return 0;
+        SAVE_CTX;
+        INSN_SUCCESS_RETURN;
 fail:
         return ret;
 }
 
 INSN_IMPL(br_if)
 {
-        const uint8_t *p = *pp;
         int ret;
 
+        LOAD_CTX;
         READ_LEB_U32(labelidx);
         POP_VAL(TYPE_i32, l);
         if (EXECUTING) {
@@ -259,23 +261,21 @@ INSN_IMPL(br_if)
                         goto fail;
                 }
         }
-        *pp = p;
-        return 0;
+        SAVE_CTX;
+        INSN_SUCCESS_RETURN;
 fail:
         return ret;
 }
 
 INSN_IMPL(br_table)
 {
-        const uint8_t *p = *pp;
         uint32_t *table = NULL;
         uint32_t vec_count = 0;
         int ret;
 
+        LOAD_CTX;
         ret = read_vec_u32(&p, ep, &vec_count, &table);
-        if (ret != 0) {
-                goto fail;
-        }
+        CHECK_RET(ret);
         READ_LEB_U32(defaultidx);
         POP_VAL(TYPE_i32, l);
         if (EXECUTING) {
@@ -323,9 +323,9 @@ INSN_IMPL(br_table)
                 }
                 mark_unreachable(vctx);
         }
-        *pp = p;
         free(table);
-        return 0;
+        SAVE_CTX;
+        INSN_SUCCESS_RETURN;
 fail:
         free(table);
         return ret;
@@ -351,7 +351,7 @@ INSN_IMPL(return )
                 }
                 mark_unreachable(vctx);
         }
-        return 0;
+        INSN_SUCCESS_RETURN;
 fail:
         return ret;
 }
@@ -359,9 +359,9 @@ fail:
 INSN_IMPL(call)
 {
         struct module *m;
-        const uint8_t *p = *pp;
         int ret;
 
+        LOAD_CTX;
         READ_LEB_U32(funcidx);
         m = MODULE;
         CHECK(funcidx < m->nimportedfuncs + m->nfuncs);
@@ -382,8 +382,8 @@ INSN_IMPL(call)
                         goto fail;
                 }
         }
-        *pp = p;
-        return 0;
+        SAVE_CTX;
+        INSN_SUCCESS_RETURN;
 fail:
         return ret;
 }
@@ -391,9 +391,9 @@ fail:
 INSN_IMPL(call_indirect)
 {
         struct module *m = MODULE;
-        const uint8_t *p = *pp;
         int ret;
 
+        LOAD_CTX;
         READ_LEB_U32(typeidx);
         READ_LEB_U32(tableidx);
         CHECK(tableidx < m->nimportedtables + m->ntables);
@@ -454,8 +454,8 @@ INSN_IMPL(call_indirect)
                         goto fail;
                 }
         }
-        *pp = p;
-        return 0;
+        SAVE_CTX;
+        INSN_SUCCESS_RETURN;
 fail:
         return ret;
 }
@@ -487,9 +487,9 @@ fail:
 
 INSN_IMPL(local_get)
 {
-        const uint8_t *p = *pp;
         int ret;
 
+        LOAD_CTX;
         READ_LEB_U32(localidx);
         struct val val_c;
         if (EXECUTING) {
@@ -502,7 +502,7 @@ INSN_IMPL(local_get)
                 CHECK(localidx < VCTX->nlocals);
         }
         PUSH_VAL(VCTX->locals[localidx], c);
-        *pp = p;
+        SAVE_CTX;
         INSN_SUCCESS;
 fail:
         return ret;
@@ -510,9 +510,9 @@ fail:
 
 INSN_IMPL(local_set)
 {
-        const uint8_t *p = *pp;
         int ret;
 
+        LOAD_CTX;
         READ_LEB_U32(localidx);
         if (VALIDATING) {
                 CHECK(localidx < VCTX->nlocals);
@@ -525,7 +525,7 @@ INSN_IMPL(local_set)
                 assert(localidx < ectx->locals.lsize - frame->localidx);
                 VEC_ELEM(ectx->locals, frame->localidx + localidx) = val_a;
         }
-        *pp = p;
+        SAVE_CTX;
         INSN_SUCCESS;
 fail:
         return ret;
@@ -533,9 +533,9 @@ fail:
 
 INSN_IMPL(local_tee)
 {
-        const uint8_t *p = *pp;
         int ret;
 
+        LOAD_CTX;
         READ_LEB_U32(localidx);
         if (VALIDATING) {
                 CHECK(localidx < VCTX->nlocals);
@@ -549,7 +549,7 @@ INSN_IMPL(local_tee)
                 VEC_ELEM(ectx->locals, frame->localidx + localidx) = val_a;
         }
         PUSH_VAL(VCTX->locals[localidx], a);
-        *pp = p;
+        SAVE_CTX;
         INSN_SUCCESS;
 fail:
         return ret;
@@ -558,9 +558,9 @@ fail:
 INSN_IMPL(global_get)
 {
         struct module *m = MODULE;
-        const uint8_t *p = *pp;
         int ret;
 
+        LOAD_CTX;
         READ_LEB_U32(globalidx);
         CHECK(globalidx < m->nimportedglobals + m->nglobals);
         struct val val_c;
@@ -578,7 +578,7 @@ INSN_IMPL(global_get)
                 }
         }
         PUSH_VAL(module_globaltype(m, globalidx)->t, c);
-        *pp = p;
+        SAVE_CTX;
         INSN_SUCCESS;
 fail:
         return ret;
@@ -587,16 +587,16 @@ fail:
 INSN_IMPL(global_set)
 {
         struct module *m = MODULE;
-        const uint8_t *p = *pp;
         int ret;
 
+        LOAD_CTX;
         READ_LEB_U32(globalidx);
         CHECK(globalidx < m->nimportedglobals + m->nglobals);
         POP_VAL(m->globals[globalidx].type.t, a);
         if (EXECUTING) {
                 VEC_ELEM(ECTX->instance->globals, globalidx)->val = val_a;
         }
-        *pp = p;
+        SAVE_CTX;
         INSN_SUCCESS;
 fail:
         return ret;
@@ -614,17 +614,12 @@ STOREOP(i64_store32, 32, 64, )
 
 INSN_IMPL(memory_size)
 {
-        const uint8_t *p = *pp;
         uint8_t zero;
         int ret;
+        LOAD_CTX;
         ret = read_u8(&p, ep, &zero);
-        if (ret != 0) {
-                goto fail;
-        }
-        if (zero != 0) {
-                ret = ENOTSUP;
-                goto fail;
-        }
+        CHECK_RET(ret);
+        CHECK(zero == 0);
         uint32_t memidx = 0;
         struct module *m = MODULE;
         CHECK(memidx < m->nimportedmems + m->nmems);
@@ -636,7 +631,7 @@ INSN_IMPL(memory_size)
                 val_sz.u.i32 = minst->size_in_pages;
         }
         PUSH_VAL(TYPE_i32, sz);
-        *pp = p;
+        SAVE_CTX;
         INSN_SUCCESS;
 fail:
         return ret;
@@ -644,17 +639,12 @@ fail:
 
 INSN_IMPL(memory_grow)
 {
-        const uint8_t *p = *pp;
         uint8_t zero;
         int ret;
+        LOAD_CTX;
         ret = read_u8(&p, ep, &zero);
-        if (ret != 0) {
-                goto fail;
-        }
-        if (zero != 0) {
-                ret = ENOTSUP;
-                goto fail;
-        }
+        CHECK_RET(ret);
+        CHECK(zero == 0);
         uint32_t memidx = 0;
         struct module *m = MODULE;
         CHECK(memidx < m->nimportedmems + m->nmems);
@@ -664,7 +654,7 @@ INSN_IMPL(memory_grow)
                 val_error.u.i32 = memory_grow(ECTX, memidx, val_n.u.i32);
         }
         PUSH_VAL(TYPE_i32, error);
-        *pp = p;
+        SAVE_CTX;
         INSN_SUCCESS;
 fail:
         return ret;

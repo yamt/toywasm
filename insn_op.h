@@ -116,9 +116,9 @@ fail:                                                                         \
         INSN_IMPL(NAME)                                                       \
         {                                                                     \
                 struct module *m = MODULE;                                    \
-                const uint8_t *p = *pp;                                       \
                 struct memarg memarg;                                         \
                 int ret;                                                      \
+                LOAD_CTX;                                                     \
                 ret = read_memarg(&p, ep, &memarg);                           \
                 CHECK_RET(ret);                                               \
                 uint32_t memidx = 0;                                          \
@@ -137,7 +137,7 @@ fail:                                                                         \
                         val_c.u.i##STACK = CAST le##MEM##_decode(datap);      \
                 }                                                             \
                 PUSH_VAL(TYPE_##I_OR_F##STACK, c);                            \
-                *pp = p;                                                      \
+                SAVE_CTX;                                                     \
                 INSN_SUCCESS;                                                 \
 fail:                                                                         \
                 return ret;                                                   \
@@ -149,9 +149,9 @@ fail:                                                                         \
         INSN_IMPL(NAME)                                                       \
         {                                                                     \
                 struct module *m = MODULE;                                    \
-                const uint8_t *p = *pp;                                       \
                 struct memarg memarg;                                         \
                 int ret;                                                      \
+                LOAD_CTX;                                                     \
                 ret = read_memarg(&p, ep, &memarg);                           \
                 CHECK_RET(ret);                                               \
                 uint32_t memidx = 0;                                          \
@@ -169,7 +169,7 @@ fail:                                                                         \
                         }                                                     \
                         le##MEM##_encode(p, CAST val_v.u.i##STACK);           \
                 }                                                             \
-                *pp = p;                                                      \
+                SAVE_CTX;                                                     \
                 INSN_SUCCESS;                                                 \
 fail:                                                                         \
                 return ret;                                                   \
@@ -209,15 +209,15 @@ fail:                                                                         \
 #define CONSTOP(NAME, BITS, WTYPE)                                            \
         INSN_IMPL(NAME)                                                       \
         {                                                                     \
-                const uint8_t *p = *pp;                                       \
                 int ret;                                                      \
+                LOAD_CTX;                                                     \
                 READ_LEB_I##BITS(v);                                          \
                 struct val val_c;                                             \
                 if (EXECUTING) {                                              \
                         val_c.u.i##BITS = v;                                  \
                 }                                                             \
                 PUSH_VAL(TYPE_##WTYPE, c);                                    \
-                *pp = p;                                                      \
+                SAVE_CTX;                                                     \
                 INSN_SUCCESS;                                                 \
 fail:                                                                         \
                 return ret;                                                   \
@@ -226,9 +226,9 @@ fail:                                                                         \
 #define CONSTOP_F(NAME, BITS, WTYPE)                                          \
         INSN_IMPL(NAME)                                                       \
         {                                                                     \
-                const uint8_t *p = *pp;                                       \
                 uint##BITS##_t v;                                             \
                 int ret;                                                      \
+                LOAD_CTX;                                                     \
                 ret = read_u##BITS(&p, ep, &v);                               \
                 CHECK_RET(ret);                                               \
                 struct val val_c;                                             \
@@ -236,7 +236,7 @@ fail:                                                                         \
                         val_c.u.i##BITS = v;                                  \
                 }                                                             \
                 PUSH_VAL(TYPE_##WTYPE, c);                                    \
-                *pp = p;                                                      \
+                SAVE_CTX;                                                     \
                 INSN_SUCCESS;                                                 \
 fail:                                                                         \
                 return ret;                                                   \

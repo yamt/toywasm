@@ -42,10 +42,9 @@ pop_val(struct val *val, struct exec_context *ctx)
 }
 
 static void
-push_label(struct exec_context *ctx)
+push_label(const uint8_t *p, struct exec_context *ctx)
 {
-        const uint8_t *p = ctx->p - 1;
-        uint32_t pc = ptr2pc(ctx->instance->module, p);
+        uint32_t pc = ptr2pc(ctx->instance->module, p - 1);
         struct label *l = VEC_PUSH(ctx->labels);
         l->pc = pc;
         l->height = ctx->stack.lsize;
@@ -299,7 +298,12 @@ fail:
 #define INSN_IMPL(NAME)                                                       \
         int process_##NAME(const uint8_t **pp, const uint8_t *ep,             \
                            struct context *ctx)
+#define LOAD_CTX const uint8_t *p = *pp
+#define SAVE_CTX *pp = p
+#define RELOAD_CTX
+#define ORIG_P (*pp)
 #define INSN_SUCCESS return 0
+#define INSN_SUCCESS_RETURN INSN_SUCCESS
 
 #include "insn_impl.h"
 
@@ -308,7 +312,12 @@ fail:
 #undef ECTX
 #undef VCTX
 #undef INSN_IMPL
+#undef LOAD_CTX
+#undef SAVE_CTX
+#undef RELOAD_CTX
+#undef ORIG_P
 #undef INSN_SUCCESS
+#undef INSN_SUCCESS_RETURN
 
 #if defined(USE_SEPARATE_EXECUTE)
 #define EXECUTING true
@@ -316,12 +325,19 @@ fail:
 #define ECTX ctx
 #define VCTX ((struct validation_context *)NULL)
 #define INSN_IMPL(NAME)                                                       \
-        int execute_##NAME(const uint8_t **pp, struct exec_context *ctx)
+        int execute_##NAME(const uint8_t *p, struct exec_context *ctx)
+#define LOAD_CTX const uint8_t *p0 __attribute__((__unused__)) = p
+#define SAVE_CTX
+#define RELOAD_CTX p = ctx->p
+#define ORIG_P p0
 #if defined(USE_TAILCALL)
-#define INSN_SUCCESS __musttail return exec_next_insn(pp, ctx)
+#define INSN_SUCCESS __musttail return exec_next_insn(p, ctx)
 #else
-#define INSN_SUCCESS return 0
+#define INSN_SUCCESS INSN_SUCCESS_RETURN
 #endif
+#define INSN_SUCCESS_RETURN                                                   \
+        ctx->p = p;                                                           \
+        return 0
 #define ep NULL
 
 #include "insn_impl.h"
@@ -331,7 +347,12 @@ fail:
 #undef ECTX
 #undef VCTX
 #undef INSN_IMPL
+#undef LOAD_CTX
+#undef SAVE_CTX
+#undef RELOAD_CTX
+#undef ORIG_P
 #undef INSN_SUCCESS
+#undef INSN_SUCCESS_RETURN
 #undef ep
 
 #define INSTRUCTION(b, n, f, FLAGS)                                           \
