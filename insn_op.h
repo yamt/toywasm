@@ -161,13 +161,13 @@ fail:                                                                         \
                 POP_VAL(TYPE_##I_OR_F##STACK, v);                             \
                 POP_VAL(TYPE_i32, i);                                         \
                 if (EXECUTING) {                                              \
-                        void *p;                                              \
+                        void *datap;                                          \
                         ret = memory_getptr(ECTX, memidx, val_i.u.i32,        \
-                                            memarg.offset, MEM / 8, &p);      \
+                                            memarg.offset, MEM / 8, &datap);  \
                         if (ret != 0) {                                       \
                                 goto fail;                                    \
                         }                                                     \
-                        le##MEM##_encode(p, CAST val_v.u.i##STACK);           \
+                        le##MEM##_encode(datap, CAST val_v.u.i##STACK);       \
                 }                                                             \
                 SAVE_CTX;                                                     \
                 INSN_SUCCESS;                                                 \
