@@ -1,4 +1,5 @@
 #define _POSIX_C_SOURCE 199309 /* clock_gettime */
+#define _DARWIN_C_SOURCE       /* arc4random_buf */
 
 #include <sys/stat.h>
 #include <sys/uio.h>
@@ -180,6 +181,76 @@ wasi_fd_write(struct exec_context *ctx, struct host_instance *hi,
         }
         uint32_t r = n;
         xlog_trace("nwritten %" PRIu32, r);
+        ret = memory_getptr(ctx, 0, retp, 0, sizeof(r), &p);
+        if (ret != 0) {
+                goto fail;
+        }
+        memcpy(p, &r, sizeof(r));
+        ret = 0;
+fail:
+        results[0].u.i32 = wasi_convert_errno(ret);
+        free(hostiov);
+        return 0;
+}
+
+static int
+wasi_fd_read(struct exec_context *ctx, struct host_instance *hi,
+             const struct functype *ft, const struct val *params,
+             struct val *results)
+{
+        struct wasi_instance *wasi = (void *)hi;
+        uint32_t wasifd = params[0].u.i32;
+        xlog_trace("%s called for fd %" PRIu32, __func__, wasifd);
+        uint32_t iov_addr = params[1].u.i32;
+        uint32_t iov_count = params[2].u.i32;
+        uint32_t retp = params[3].u.i32;
+        struct iovec *hostiov = NULL;
+        void *p;
+        int ret;
+        int hostfd;
+        if (iov_count > INT_MAX) {
+                ret = EOVERFLOW;
+                goto fail;
+        }
+        ret = wasi_fdlookup(wasi, wasifd, &hostfd);
+        if (ret != 0) {
+                goto fail;
+        }
+        hostiov = calloc(iov_count, sizeof(*hostiov));
+        if (hostiov == NULL) {
+                ret = ENOMEM;
+                goto fail;
+        }
+        ret = memory_getptr(ctx, 0, iov_addr, 0,
+                            iov_count * sizeof(struct wasi_iov), &p);
+        if (ret != 0) {
+                goto fail;
+        }
+        const struct wasi_iov *iov_in_module = p;
+        uint32_t i;
+        for (i = 0; i < iov_count; i++) {
+                struct wasi_iov iov;
+                memcpy(&iov, &iov_in_module[i], sizeof(iov));
+                xlog_trace("iov [%" PRIu32 "] base %" PRIx32 " len %" PRIu32,
+                           i, iov.iov_base, iov.iov_len);
+                ret = memory_getptr(ctx, 0, iov.iov_base, 0, iov.iov_len, &p);
+                if (ret != 0) {
+                        goto fail;
+                }
+                hostiov[i].iov_base = p;
+                hostiov[i].iov_len = iov.iov_len;
+        }
+        ssize_t n = readv(hostfd, hostiov, iov_count);
+        if (n == -1) {
+                ret = errno;
+                goto fail;
+        }
+        if (n > UINT32_MAX) {
+                ret = EOVERFLOW;
+                goto fail;
+        }
+        uint32_t r = n;
+        xlog_trace("nread %" PRIu32, r);
         ret = memory_getptr(ctx, 0, retp, 0, sizeof(r), &p);
         if (ret != 0) {
                 goto fail;
@@ -390,7 +461,7 @@ wasi_args_get(struct exec_context *ctx, struct host_instance *hi,
         char *const *argv = wasi->argv;
         xlog_trace("%s called argc=%u", __func__, argc);
         int ret;
-        int i;
+        uint32_t i;
         uint32_t *wasm_argv = malloc(argc * sizeof(*wasm_argv));
         if (wasm_argv == NULL) {
                 ret = ENOMEM;
@@ -399,6 +470,7 @@ wasi_args_get(struct exec_context *ctx, struct host_instance *hi,
         uint32_t wasmp = argv_buf;
         for (i = 0; i < argc; i++) {
                 wasm_argv[i] = wasmp;
+                xlog_trace("wasm_argv[%" PRIu32 "] %" PRIx32, i, wasmp);
                 wasmp += strlen(argv[i]) + 1;
         }
         void *p;
@@ -421,6 +493,64 @@ fail:
         return 0;
 }
 
+static int
+wasi_environ_sizes_get(struct exec_context *ctx, struct host_instance *hi,
+                       const struct functype *ft, const struct val *params,
+                       struct val *results)
+{
+        xlog_trace("%s called", __func__);
+        uint32_t environ_count_p = params[0].u.i32;
+        uint32_t environ_buf_size_p = params[1].u.i32;
+        uint32_t zero = 0; /* REVISIT */
+        int ret;
+        void *p;
+        ret = memory_getptr(ctx, 0, environ_count_p, 0, sizeof(zero), &p);
+        if (ret != 0) {
+                goto fail;
+        }
+        memcpy(p, &zero, sizeof(zero));
+        ret = memory_getptr(ctx, 0, environ_buf_size_p, 0, sizeof(zero), &p);
+        if (ret != 0) {
+                goto fail;
+        }
+        memcpy(p, &zero, sizeof(zero));
+fail:
+        results[0].u.i32 = wasi_convert_errno(ret);
+        return 0;
+}
+
+static int
+wasi_environ_get(struct exec_context *ctx, struct host_instance *hi,
+                 const struct functype *ft, const struct val *params,
+                 struct val *results)
+{
+        xlog_trace("%s called", __func__);
+        /* REVISIT */
+        results[0].u.i32 = wasi_convert_errno(0);
+        return 0;
+}
+
+static int
+wasi_random_get(struct exec_context *ctx, struct host_instance *hi,
+                const struct functype *ft, const struct val *params,
+                struct val *results)
+{
+        xlog_trace("%s called", __func__);
+        uint32_t buf = params[0].u.i32;
+        uint32_t buflen = params[1].u.i32;
+        int ret;
+        void *p;
+        ret = memory_getptr(ctx, 0, buf, 0, buflen, &p);
+        if (ret != 0) {
+                goto fail;
+        }
+        arc4random_buf(p, buflen);
+        ret = 0;
+fail:
+        results[0].u.i32 = wasi_convert_errno(ret);
+        return 0;
+}
+
 #define WASI_HOST_FUNC(NAME, TYPE)                                            \
         {                                                                     \
                 .name = #NAME, .type = TYPE, .func = wasi_##NAME,             \
@@ -430,11 +560,15 @@ const struct host_func wasi_funcs[] = {
         WASI_HOST_FUNC(proc_exit, "(i)"),
         WASI_HOST_FUNC(fd_close, "(i)i"),
         WASI_HOST_FUNC(fd_write, "(iiii)i"),
+        WASI_HOST_FUNC(fd_read, "(iiii)i"),
         WASI_HOST_FUNC(fd_fdstat_get, "(ii)i"),
         WASI_HOST_FUNC(fd_seek, "(iIii)i"),
         WASI_HOST_FUNC(clock_time_get, "(iIi)i"),
         WASI_HOST_FUNC(args_sizes_get, "(ii)i"),
         WASI_HOST_FUNC(args_get, "(ii)i"),
+        WASI_HOST_FUNC(environ_sizes_get, "(ii)i"),
+        WASI_HOST_FUNC(environ_get, "(ii)i"),
+        WASI_HOST_FUNC(random_get, "(ii)i"),
         /* TODO implement the rest of the api */
 };
 
