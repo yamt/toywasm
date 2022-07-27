@@ -579,6 +579,9 @@ memory_init(struct exec_context *ctx, uint32_t dataidx, uint32_t dest,
         assert(dataidx < m->ndatas);
         const struct data *d = &m->datas[dataidx];
         uint32_t memidx = d->memory;
+        xlog_trace("memory init: at %04" PRIx32 " %08" PRIx32 " - %08" PRIx32
+                   ", size %" PRIu32,
+                   memidx, dest, dest + n, n);
         int ret;
         if (src + n > d->init_size) {
                 ret = trap(ctx, "memory.init out of band source");
@@ -630,6 +633,8 @@ memory_grow(struct exec_context *ctx, uint32_t memidx, uint32_t sz)
         if (new_size > WASM_MAX_PAGES || new_size > lim->max) {
                 return (uint32_t)-1; /* fail */
         }
+        xlog_trace("memory grow %" PRIu32 " -> %" PRIu32, mi->size_in_pages,
+                   (uint32_t)new_size);
         mi->size_in_pages = new_size;
         return orig_size; /* success */
 }
