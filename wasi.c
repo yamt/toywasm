@@ -1,6 +1,7 @@
 #define _POSIX_C_SOURCE 199309 /* clock_gettime */
 #define _DARWIN_C_SOURCE       /* arc4random_buf */
 
+#include <sys/random.h> /* getrandom */
 #include <sys/stat.h>
 #include <sys/uio.h>
 
@@ -559,8 +560,27 @@ wasi_random_get(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
+#if defined(__GLIBC__)
+        /*
+         * glibc doesn't have arc4random
+         * https://sourceware.org/bugzilla/show_bug.cgi?id=4417
+         */
+        while (buflen > 0) {
+                ssize_t ssz = getrandom(p, buflen, 0);
+                if (ssz == -1) {
+                        ret = errno;
+                        if (ret == EINTR) {
+                                continue;
+                        }
+                        break;
+                }
+                p += ssz;
+                buflen -= ssz;
+        }
+#else
         arc4random_buf(p, buflen);
         ret = 0;
+#endif
 fail:
         results[0].u.i32 = wasi_convert_errno(ret);
         return 0;
