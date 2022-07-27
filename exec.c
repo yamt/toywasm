@@ -74,9 +74,9 @@ memory_getptr(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
                 goto do_trap;
         }
         uint32_t need = ea + size;
-        xlog_trace("memory access: at %04" PRIx32 " %08" PRIx32
+        xlog_trace("memory access: at %04" PRIx32 " %08" PRIx32 " + %08" PRIx32
                    ", size %" PRIu32 ", meminst size %" PRIu32,
-                   memidx, ptr, size, meminst->size_in_pages);
+                   memidx, ptr, offset, size, meminst->size_in_pages);
         uint32_t need_in_pages =
                 ((uint64_t)need + WASM_PAGE_SIZE - 1) / WASM_PAGE_SIZE;
         if (need_in_pages > meminst->size_in_pages) {
