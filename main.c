@@ -94,7 +94,7 @@ main(int argc, char *const *argv)
                         g_repl_use_jump_table = false;
                         break;
                 case opt_invoke:
-                        ret = repl_invoke(state, optarg);
+                        ret = repl_invoke(state, optarg, true);
                         if (ret != 0) {
                                 goto fail;
                         }
@@ -151,7 +151,7 @@ main(int argc, char *const *argv)
                 xlog_error("load failed");
                 goto fail;
         }
-        ret = repl_invoke(state, "_start");
+        ret = repl_invoke(state, "_start", false);
         if (ret != 0) {
                 xlog_error("invoke failed with %d", ret);
                 goto fail;

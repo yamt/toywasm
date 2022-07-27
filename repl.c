@@ -336,7 +336,7 @@ arg_conv(enum valtype type, const char *s, struct val *result)
 }
 
 int
-print_result(const struct resulttype *rt, const struct val *vals)
+repl_print_result(const struct resulttype *rt, const struct val *vals)
 {
         const char *sep = "";
         uint32_t i;
@@ -450,7 +450,7 @@ unescape(char *p)
  * "cmd" is like "add 1 2"
  */
 int
-repl_invoke(struct repl_state *state, const char *cmd)
+repl_invoke(struct repl_state *state, const char *cmd, bool print_result)
 {
         char *cmd1 = strdup(cmd);
         if (cmd1 == NULL) {
@@ -533,10 +533,12 @@ repl_invoke(struct repl_state *state, const char *cmd)
                 xlog_printf("instance_execute_func failed\n");
                 goto fail;
         }
-        ret = print_result(rtype, result);
-        if (ret != 0) {
-                xlog_printf("print_result failed\n");
-                goto fail;
+        if (print_result) {
+                ret = repl_print_result(rtype, result);
+                if (ret != 0) {
+                        xlog_printf("print_result failed\n");
+                        goto fail;
+                }
         }
         ret = 0;
 fail:
@@ -581,7 +583,7 @@ repl(void)
                                 goto fail;
                         }
                 } else if (!strcmp(cmd, ":invoke") && opt != NULL) {
-                        ret = repl_invoke(state, opt);
+                        ret = repl_invoke(state, opt, true);
                         if (ret != 0) {
                                 goto fail;
                         }
