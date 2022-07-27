@@ -620,6 +620,13 @@ wasi_instance_set_args(struct wasi_instance *inst, int argc, char *const *argv)
 {
         inst->argc = argc;
         inst->argv = argv;
+#if defined(ENABLE_TRACING)
+        xlog_trace("%s argc = %u", __func__, argc);
+        int i;
+        for (i = 0; i < argc; i++) {
+                xlog_trace("%s arg[%u] = \"%s\"", __func__, i, argv[i]);
+        }
+#endif
 }
 
 void
