@@ -14,6 +14,7 @@
 #include <unistd.h>
 
 #include "context.h"
+#include "endian.h"
 #include "host_instance.h"
 #include "type.h"
 #include "util.h"
@@ -444,7 +445,7 @@ wasi_args_sizes_get(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        memcpy(p, &argc, sizeof(argc));
+        le32_encode(p, argc);
         int i;
         uint32_t argv_buf_size = 0;
         for (i = 0; i < argc; i++) {
@@ -455,7 +456,7 @@ wasi_args_sizes_get(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        memcpy(p, &argv_buf_size, sizeof(argv_buf_size));
+        le32_encode(p, argv_buf_size);
 fail:
         results[0].u.i32 = wasi_convert_errno(ret);
         return 0;
@@ -482,7 +483,7 @@ wasi_args_get(struct exec_context *ctx, struct host_instance *hi,
         }
         uint32_t wasmp = argv_buf;
         for (i = 0; i < argc; i++) {
-                wasm_argv[i] = wasmp;
+                le32_encode(&wasm_argv[i], wasmp);
                 xlog_trace("wasm_argv[%" PRIu32 "] %" PRIx32, i, wasmp);
                 wasmp += strlen(argv[i]) + 1;
         }
