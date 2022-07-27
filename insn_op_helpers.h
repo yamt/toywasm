@@ -75,6 +75,15 @@
 /*
  * Note: we need separate min/max values for float and integer here
  * because of rounding errors.
+ *
+ * For example,
+ * - -0x800001p+8 is the largest f32 value which is smaller than INT32_MIN.
+ * - 0x800000p+8 is the smallest f32 value which is larger than INT32_MAX.
+ *
+ * Note: INT32_MIN can be represented exactly by f32. On the other hand,
+ * INT32_MAX can't:
+ *    -0x800000p+8 == INT32_MIN == 0x80000000
+ *    0x7fffffp+8 < INT32_MAX == 0x7fffffff < 0x800000p+8
  */
 #define TRUNC_S_32_32(R, A)                                                   \
         TRUNC(R, -0x800001p+8, 0x800000p+8, INT32_MIN, INT32_MAX, truncf, A)
