@@ -30,7 +30,7 @@ vtrap(struct exec_context *ctx, enum trapid id, const char *fmt, va_list ap)
         if (ret < 0) {
                 xlog_error("failed to format trap message with %d", errno);
         }
-        xlog_error("TRAP: %s", ctx->trapmsg);
+        xlog_trace("TRAP: %s", ctx->trapmsg);
         return EFAULT;
 }
 
