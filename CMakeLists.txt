@@ -125,6 +125,12 @@ add_test(NAME toywasm-cli-wasm3-spec-test
 )
 set_tests_properties(toywasm-cli-wasm3-spec-test PROPERTIES ENVIRONMENT "${TEST_ENV}")
 
+add_test(NAME toywasm-cli-wasm3-spec-test-no-jump-table
+	COMMAND ./run-wasm3-spec-test.sh --exec "${CMAKE_BINARY_DIR}/toywasm --no-jump-table --load ${CMAKE_BINARY_DIR}/spectest.wasm --register spectest --repl --repl-prompt wasm3"
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+set_tests_properties(toywasm-cli-wasm3-spec-test-no-jump-table PROPERTIES ENVIRONMENT "${TEST_ENV}")
+
 # sample wasm files
 
 if(BUILD_TESTING)
