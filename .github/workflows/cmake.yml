@@ -11,6 +11,7 @@ jobs:
     env:
       CC: ${{matrix.compiler}}
     strategy:
+      fail-fast: false
       matrix:
         compiler: [clang, gcc]
         BUILD_TYPE: [Release, Debug]
