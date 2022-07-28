@@ -272,6 +272,13 @@ INSN_IMPL(br_table)
         uint32_t *table = NULL;
         uint32_t vec_count = 0;
         int ret;
+#if defined(__GNUC__) && !defined(__clang__)
+        /*
+         * GCC w/o optimization produces a "maybe-uninitialized"
+         * false-positive here.
+         */
+        ret = 0;
+#endif
 
         LOAD_CTX;
         if (EXECUTING) {
