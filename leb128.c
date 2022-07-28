@@ -39,34 +39,38 @@ read_leb(const uint8_t **pp, const uint8_t *ep, unsigned int bits,
                         return ret;
                 }
                 uint8_t v = u8 & 0x7f;
-                if (shift >= bits) {
-                        if (error_check && v != (is_minus ? 0x7f : 0)) {
-                                return E2BIG;
-                        }
-                } else {
-                        if (is_signed) {
-                                is_minus = v & 0x40;
-                        }
-                        unsigned int bits_left;
-                        if (error_check && (bits_left = bits - shift) < 7) {
+                if (error_check) {
+                        if (shift >= bits) {
+                                if (v != (is_minus ? 0x7f : 0)) {
+                                        return E2BIG;
+                                }
+                        } else {
                                 if (is_signed) {
-                                        uint8_t mask = ((unsigned int)-1)
-                                                       << (bits_left - 1);
-                                        if (is_minus) {
-                                                if ((((~v) & 0x7f) & mask) !=
-                                                    0) {
-                                                        return E2BIG;
+                                        is_minus = v & 0x40;
+                                }
+                                unsigned int bits_left;
+                                if ((bits_left = bits - shift) < 7) {
+                                        if (is_signed) {
+                                                uint8_t mask =
+                                                        ((unsigned int)-1)
+                                                        << (bits_left - 1);
+                                                if (is_minus) {
+                                                        if ((((~v) & 0x7f) &
+                                                             mask) != 0) {
+                                                                return E2BIG;
+                                                        }
+                                                } else {
+                                                        if ((v & mask) != 0) {
+                                                                return E2BIG;
+                                                        }
                                                 }
                                         } else {
+                                                uint8_t mask =
+                                                        ((unsigned int)-1)
+                                                        << bits_left;
                                                 if ((v & mask) != 0) {
                                                         return E2BIG;
                                                 }
-                                        }
-                                } else {
-                                        uint8_t mask = ((unsigned int)-1)
-                                                       << bits_left;
-                                        if ((v & mask) != 0) {
-                                                return E2BIG;
                                         }
                                 }
                         }
@@ -77,7 +81,9 @@ read_leb(const uint8_t **pp, const uint8_t *ep, unsigned int bits,
                         break;
                 }
         }
-
+        if (!error_check && is_signed) {
+                is_minus = u8 & 0x40;
+        }
         if (is_minus) {
                 if (shift < 64) {
                         result |= (~UINT64_C(0)) << shift;
