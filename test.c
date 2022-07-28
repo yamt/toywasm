@@ -19,6 +19,13 @@
         assert_ptr_equal(p, ep);                                              \
         assert_int_equal(type, expected_value)
 
+#define TEST_NOCHECK(type, encoded_bytes, expected_value)                     \
+        p = encoded_bytes;                                                    \
+        ep = p + sizeof(encoded_bytes);                                       \
+        type = read_leb_##type##_nocheck(&p);                                 \
+        assert_ptr_equal(p, ep);                                              \
+        assert_int_equal(type, expected_value)
+
 #define TEST_E2BIG(type, encoded_bytes)                                       \
         p = op = encoded_bytes;                                               \
         ep = p + sizeof(encoded_bytes);                                       \
@@ -63,6 +70,7 @@ test_leb128(void **state)
         };
 
         TEST_OK(u32, u_624485, 624485);
+        TEST_NOCHECK(u32, u_624485, 624485);
         TEST_OK(s32, u_624485, 624485);
         TEST_OK(u64, u_624485, 624485);
         TEST_OK(s64, u_624485, 624485);
@@ -85,6 +93,7 @@ test_leb128(void **state)
         };
 
         TEST_OK(u32, s_minus123456, 0x1e1dc0);
+        TEST_NOCHECK(u32, s_minus123456, 0x1e1dc0);
         TEST_OK(s32, s_minus123456, -123456);
         TEST_OK(u64, s_minus123456, 0x1e1dc0);
         TEST_OK(s64, s_minus123456, -123456);
@@ -117,16 +126,19 @@ test_leb128(void **state)
         };
 
         TEST_OK(u32, u_0xffffffff, 0xffffffff);
+        TEST_NOCHECK(u32, u_0xffffffff, 0xffffffff);
         TEST_E2BIG(s32, u_0xffffffff);
         TEST_OK(u64, u_0xffffffff, 0xffffffff);
         TEST_OK(s64, u_0xffffffff, 0xffffffff);
 
         TEST_OK(u32, u_0x7fffffff, 0x7fffffff);
+        TEST_NOCHECK(u32, u_0x7fffffff, 0x7fffffff);
         TEST_OK(s32, u_0x7fffffff, 0x7fffffff);
         TEST_OK(u64, u_0x7fffffff, 0x7fffffff);
         TEST_OK(s64, u_0x7fffffff, 0x7fffffff);
 
         TEST_OK(u32, u_0x80000000, 0x80000000);
+        TEST_NOCHECK(u32, u_0x80000000, 0x80000000);
         TEST_E2BIG(s32, u_0x80000000);
         TEST_OK(u64, u_0x80000000, 0x80000000);
         TEST_OK(s64, u_0x80000000, 0x80000000);
@@ -137,6 +149,7 @@ test_leb128(void **state)
         TEST_OK(s64, u_0x100000000, 0x100000000);
 
         TEST_OK(u32, s_minus1, 0x7f);
+        TEST_NOCHECK(u32, s_minus1, 0x7f);
         TEST_OK(s32, s_minus1, -1);
         TEST_OK(u64, s_minus1, 0x7f);
         TEST_OK(s64, s_minus1, -1);
@@ -177,6 +190,7 @@ test_leb128(void **state)
         };
 
         TEST_OK(i32, i_2155905152_s, 2155905152);
+        TEST_NOCHECK(i32, i_2155905152_s, 2155905152);
         TEST_E2BIG(u32, i_2155905152_s);
         TEST_OK(s32, i_2155905152_s, (int32_t)2155905152);
 
@@ -199,6 +213,7 @@ test_leb128(void **state)
         };
 
         TEST_OK(i32, u_5_redundant, 5);
+        TEST_NOCHECK(i32, u_5_redundant, 5);
         TEST_OK(u32, u_5_redundant, 5);
         TEST_OK(s32, u_5_redundant, 5);
 
@@ -228,6 +243,7 @@ test_leb128(void **state)
                 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x7f,
         };
         TEST_OK(i64, s64_min, INT64_MIN);
+        TEST_NOCHECK(i64, s64_min, INT64_MIN);
 }
 
 void
