@@ -446,7 +446,7 @@ exec_next_insn(const uint8_t *p, struct val *stack, struct exec_context *ctx)
 #endif
         uint32_t op = *p++;
         const struct instruction_desc *desc = &instructions[op];
-        if (desc->next_table != NULL) {
+        if (__predict_false(desc->next_table != NULL)) {
                 op = *p++;
                 desc = &desc->next_table[op];
         }
