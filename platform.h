@@ -4,6 +4,7 @@
 #define __musttail
 #endif
 
+#if !defined(__predict_true)
 #if defined(__GNUC__)
 #define __predict_true(x) __builtin_expect(x, 1)
 #define __predict_false(x) __builtin_expect(x, 0)
@@ -11,3 +12,4 @@
 #define __predict_true(x) (x)
 #define __predict_false(x) (!(x))
 #endif
+#endif /* !defined(__predict_true) */
