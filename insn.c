@@ -372,7 +372,7 @@ exec_next_insn_fc(const uint8_t *p, struct val *stack,
                   struct exec_context *ctx)
 {
 #if !(defined(USE_SEPARATE_EXECUTE) && defined(USE_TAILCALL))
-        assert(ctx->p == p);
+        assert(ctx->p + 1 == p);
 #endif
         assert(ctx->event == EXEC_EVENT_NONE);
         assert(ctx->frames.lsize > 0);
