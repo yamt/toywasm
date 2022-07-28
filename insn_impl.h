@@ -274,21 +274,33 @@ INSN_IMPL(br_table)
         int ret;
 
         LOAD_CTX;
+        if (EXECUTING) {
+                struct exec_context *ectx = ECTX;
+                vec_count = read_leb_u32_nocheck(&p);
+                POP_VAL(TYPE_i32, l);
+                /*
+                 * Note: as we will jump anyway, we don't bother to
+                 * update the instruction pointer (p) precisely here.
+                 */
+                uint32_t l = val_l.u.i32;
+                if (l >= vec_count) {
+                        l = vec_count;
+                }
+                uint32_t idx;
+                do {
+                        idx = read_leb_u32_nocheck(&p);
+                } while (l-- > 0);
+                ectx->event_u.branch.index = idx;
+                ectx->event_u.branch.goto_else = false;
+                ectx->event = EXEC_EVENT_BRANCH;
+                SAVE_CTX;
+                INSN_SUCCESS_RETURN;
+        }
         ret = read_vec_u32(&p, ep, &vec_count, &table);
         CHECK_RET(ret);
         READ_LEB_U32(defaultidx);
         POP_VAL(TYPE_i32, l);
-        if (EXECUTING) {
-                struct exec_context *ectx = ECTX;
-                uint32_t l = val_l.u.i32;
-                if (l < vec_count) {
-                        ectx->event_u.branch.index = table[l];
-                } else {
-                        ectx->event_u.branch.index = defaultidx;
-                }
-                ectx->event_u.branch.goto_else = false;
-                ectx->event = EXEC_EVENT_BRANCH;
-        } else if (VALIDATING) {
+        if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
                 const struct resulttype *rt_default;
                 ret = target_label_types(vctx, defaultidx, &rt_default);
