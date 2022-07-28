@@ -434,7 +434,7 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
 }
 
 int
-exec_next_insn(const uint8_t *p, struct exec_context *ctx)
+exec_next_insn(const uint8_t *p, struct val *stack, struct exec_context *ctx)
 {
 #if !(defined(USE_SEPARATE_EXECUTE) && defined(USE_TAILCALL))
         assert(ctx->p == p);
@@ -453,7 +453,7 @@ exec_next_insn(const uint8_t *p, struct exec_context *ctx)
         xlog_trace("exec %06" PRIx32 ": %s", pc, desc->name);
         assert(desc->process != NULL);
 #if defined(USE_SEPARATE_EXECUTE)
-        __musttail return desc->execute(p, ctx);
+        __musttail return desc->execute(p, stack, ctx);
 #else
         struct context common_ctx;
         memset(&common_ctx, 0, sizeof(common_ctx));
@@ -482,7 +482,8 @@ exec_expr(const struct expr *expr, uint32_t nlocals,
         }
         ctx->p = expr->start;
         while (true) {
-                ret = exec_next_insn(ctx->p, ctx);
+                struct val *stack = &VEC_NEXTELEM(ctx->stack);
+                ret = exec_next_insn(ctx->p, stack, ctx);
                 if (ret != 0) {
                         if (ctx->trapped) {
                                 xlog_trace("got a trap");

@@ -5,6 +5,7 @@
 struct expr;
 struct context;
 struct resulttype;
+struct val;
 enum valtype;
 
 int exec_expr(const struct expr *expr, uint32_t nlocals,
@@ -21,4 +22,5 @@ uint32_t memory_grow(struct exec_context *ctx, uint32_t memidx,
                      uint32_t newsize);
 
 bool skip_expr(const uint8_t **p, bool goto_else);
-int exec_next_insn(const uint8_t *p, struct exec_context *ctx);
+int exec_next_insn(const uint8_t *p, struct val *stack,
+                   struct exec_context *ctx);

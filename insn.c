@@ -42,12 +42,12 @@ pop_val(struct val *val, struct exec_context *ctx)
 }
 
 static void
-push_label(const uint8_t *p, struct exec_context *ctx)
+push_label(const uint8_t *p, struct val *stack, struct exec_context *ctx)
 {
         uint32_t pc = ptr2pc(ctx->instance->module, p - 1);
         struct label *l = VEC_PUSH(ctx->labels);
         l->pc = pc;
-        l->height = ctx->stack.lsize;
+        l->height = stack - ctx->stack.p;
 }
 
 static float
@@ -304,6 +304,7 @@ fail:
 #define ORIG_P (*pp)
 #define INSN_SUCCESS return 0
 #define INSN_SUCCESS_RETURN INSN_SUCCESS
+#define STACK &VEC_NEXTELEM(ECTX->stack)
 
 #include "insn_impl.h"
 
@@ -318,6 +319,7 @@ fail:
 #undef ORIG_P
 #undef INSN_SUCCESS
 #undef INSN_SUCCESS_RETURN
+#undef STACK
 
 #if defined(USE_SEPARATE_EXECUTE)
 #define EXECUTING true
@@ -325,20 +327,25 @@ fail:
 #define ECTX ctx
 #define VCTX ((struct validation_context *)NULL)
 #define INSN_IMPL(NAME)                                                       \
-        int execute_##NAME(const uint8_t *p, struct exec_context *ctx)
+        int execute_##NAME(const uint8_t *p, struct val *stack,               \
+                           struct exec_context *ctx)
 #define LOAD_CTX const uint8_t *p0 __attribute__((__unused__)) = p
 #define SAVE_CTX
 #define RELOAD_CTX p = ctx->p
 #define ORIG_P p0
 #if defined(USE_TAILCALL)
-#define INSN_SUCCESS __musttail return exec_next_insn(p, ctx)
+#define INSN_SUCCESS __musttail return exec_next_insn(p, stack, ctx)
 #else
 #define INSN_SUCCESS INSN_SUCCESS_RETURN
 #endif
 #define INSN_SUCCESS_RETURN                                                   \
+        ctx->stack.lsize = stack - ctx->stack.p;                              \
         ctx->p = p;                                                           \
         return 0
 #define ep NULL
+#define STACK stack
+#define push_val(v, ctx) *(stack++) = *v
+#define pop_val(v, ctx) *v = *(--stack)
 
 #include "insn_impl.h"
 
@@ -354,6 +361,7 @@ fail:
 #undef INSN_SUCCESS
 #undef INSN_SUCCESS_RETURN
 #undef ep
+#undef STACK
 
 #define INSTRUCTION(b, n, f, FLAGS)                                           \
         [b] = {                                                               \

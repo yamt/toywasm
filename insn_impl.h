@@ -20,7 +20,7 @@ INSN_IMPL(block)
         LOAD_CTX;
         READ_LEB_S33(blocktype);
         if (EXECUTING) {
-                push_label(ORIG_P, ECTX);
+                push_label(ORIG_P, STACK, ECTX);
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
                 struct module *m = vctx->module;
@@ -59,7 +59,7 @@ INSN_IMPL(loop)
         LOAD_CTX;
         READ_LEB_S33(blocktype);
         if (EXECUTING) {
-                push_label(ORIG_P, ECTX);
+                push_label(ORIG_P, STACK, ECTX);
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
                 struct module *m = vctx->module;
@@ -100,7 +100,7 @@ INSN_IMPL(if)
         POP_VAL(TYPE_i32, c);
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
-                push_label(ORIG_P, ECTX);
+                push_label(ORIG_P, STACK, ECTX);
                 if (val_c.u.i32 == 0) {
                         ectx->event_u.branch.index = 0;
                         ectx->event_u.branch.goto_else = true;
