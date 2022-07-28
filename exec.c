@@ -446,15 +446,16 @@ exec_next_insn(const uint8_t *p, struct val *stack, struct exec_context *ctx)
 #endif
         uint32_t op = *p++;
         const struct instruction_desc *desc = &instructions[op];
+#if defined(USE_SEPARATE_EXECUTE)
+        xlog_trace("exec %06" PRIx32 ": %s", pc, desc->name);
+        __musttail return desc->execute(p, stack, ctx);
+#else
         if (__predict_false(desc->next_table != NULL)) {
                 op = *p++;
                 desc = &desc->next_table[op];
         }
         xlog_trace("exec %06" PRIx32 ": %s", pc, desc->name);
         assert(desc->process != NULL);
-#if defined(USE_SEPARATE_EXECUTE)
-        __musttail return desc->execute(p, stack, ctx);
-#else
         struct context common_ctx;
         memset(&common_ctx, 0, sizeof(common_ctx));
         common_ctx.exec = ctx;

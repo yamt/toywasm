@@ -362,6 +362,28 @@ fail:
 #undef INSN_SUCCESS_RETURN
 #undef ep
 #undef STACK
+#endif /* defined(USE_SEPARATE_EXECUTE) */
+
+#if defined(USE_SEPARATE_EXECUTE)
+const static struct instruction_desc instructions_fc[];
+
+static int
+exec_next_insn_fc(const uint8_t *p, struct val *stack,
+                  struct exec_context *ctx)
+{
+#if !(defined(USE_SEPARATE_EXECUTE) && defined(USE_TAILCALL))
+        assert(ctx->p == p);
+#endif
+        assert(ctx->event == EXEC_EVENT_NONE);
+        assert(ctx->frames.lsize > 0);
+#if defined(ENABLE_TRACING)
+        uint32_t pc = ptr2pc(ctx->instance->module, p);
+#endif
+        uint32_t op = *p++;
+        const struct instruction_desc *desc = &instructions_fc[op];
+        xlog_trace("exec %06" PRIx32 ": (2nd byte) %s", pc, desc->name);
+        __musttail return desc->execute(p, stack, ctx);
+}
 
 #define INSTRUCTION(b, n, f, FLAGS)                                           \
         [b] = {                                                               \
@@ -370,6 +392,14 @@ fail:
                 .execute = execute_##f,                                       \
                 .flags = FLAGS,                                               \
                 .next_table = NULL,                                           \
+        }
+
+#define INSTRUCTION_INDIRECT(b, n, t)                                         \
+        [b] = {                                                               \
+                .name = n,                                                    \
+                .next_table = t,                                              \
+                .next_table_size = ARRAYCOUNT(t),                             \
+                .execute = exec_next_insn_fc,                                 \
         }
 
 #else /* defined(USE_SEPARATE_EXECUTE) */
@@ -382,8 +412,6 @@ fail:
                 .next_table = NULL,                                           \
         }
 
-#endif /* defined(USE_SEPARATE_EXECUTE) */
-
 #define INSTRUCTION_INDIRECT(b, n, t)                                         \
         [b] = {                                                               \
                 .name = n,                                                    \
@@ -391,7 +419,9 @@ fail:
                 .next_table_size = ARRAYCOUNT(t),                             \
         }
 
-const struct instruction_desc instructions_fc[] = {
+#endif /* defined(USE_SEPARATE_EXECUTE) */
+
+const static struct instruction_desc instructions_fc[] = {
         INSTRUCTION(0x00, "i32.trunc_sat_f32_s", i32_trunc_sat_f32_s, 0),
         INSTRUCTION(0x01, "i32.trunc_sat_f32_u", i32_trunc_sat_f32_u, 0),
         INSTRUCTION(0x02, "i32.trunc_sat_f64_s", i32_trunc_sat_f64_s, 0),
