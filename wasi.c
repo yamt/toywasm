@@ -61,6 +61,63 @@ struct wasi_fdstat {
 _Static_assert(sizeof(struct wasi_fdstat) == 24, "wasi_fdstat");
 
 static int
+wasi_copyout(struct exec_context *ctx, const void *hostaddr, uint32_t wasmaddr,
+             size_t len)
+{
+        void *p;
+        int ret;
+
+        ret = memory_getptr(ctx, 0, wasmaddr, 0, len, &p);
+        if (ret != 0) {
+                return ret;
+        }
+        memcpy(p, hostaddr, len);
+        return 0;
+}
+
+static int
+wasi_copyin_iovec(struct exec_context *ctx, uint32_t iov_uaddr,
+                  uint32_t iov_count, struct iovec **resultp)
+{
+        struct iovec *hostiov = calloc(iov_count, sizeof(*hostiov));
+        void *p;
+        int ret;
+        if (hostiov == NULL) {
+                ret = ENOMEM;
+                goto fail;
+        }
+retry:
+        ret = memory_getptr(ctx, 0, iov_uaddr, 0,
+                            iov_count * sizeof(struct wasi_iov), &p);
+        if (ret != 0) {
+                goto fail;
+        }
+        const struct wasi_iov *iov_in_module = p;
+        uint32_t i;
+        for (i = 0; i < iov_count; i++) {
+                bool moved = false;
+                uint32_t iov_base = le32_decode(&iov_in_module[i].iov_base);
+                uint32_t iov_len = le32_decode(&iov_in_module[i].iov_len);
+                xlog_trace("iov [%" PRIu32 "] base %" PRIx32 " len %" PRIu32,
+                           i, iov_base, iov_len);
+                ret = memory_getptr2(ctx, 0, iov_base, 0, iov_len, &p, &moved);
+                if (ret != 0) {
+                        goto fail;
+                }
+                if (moved) {
+                        goto retry;
+                }
+                hostiov[i].iov_base = p;
+                hostiov[i].iov_len = iov_len;
+        }
+        *resultp = hostiov;
+        return 0;
+fail:
+        free(hostiov);
+        return ret;
+}
+
+static int
 wasi_fdlookup(struct wasi_instance *wasi, uint32_t wasifd, int *hostfdp)
 {
         if (wasifd >= wasi->nfds) {
@@ -139,7 +196,6 @@ wasi_fd_write(struct exec_context *ctx, struct host_instance *hi,
         uint32_t iov_count = params[2].u.i32;
         uint32_t retp = params[3].u.i32;
         struct iovec *hostiov = NULL;
-        void *p;
         int ret;
         int hostfd;
         if (iov_count > INT_MAX) {
@@ -150,35 +206,9 @@ wasi_fd_write(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        hostiov = calloc(iov_count, sizeof(*hostiov));
-        if (hostiov == NULL) {
-                ret = ENOMEM;
-                goto fail;
-        }
-retry:
-        ret = memory_getptr(ctx, 0, iov_addr, 0,
-                            iov_count * sizeof(struct wasi_iov), &p);
+        ret = wasi_copyin_iovec(ctx, iov_addr, iov_count, &hostiov);
         if (ret != 0) {
                 goto fail;
-        }
-        const struct wasi_iov *iov_in_module = p;
-        uint32_t i;
-        for (i = 0; i < iov_count; i++) {
-                struct wasi_iov iov;
-                bool moved = false;
-                memcpy(&iov, &iov_in_module[i], sizeof(iov));
-                xlog_trace("iov [%" PRIu32 "] base %" PRIx32 " len %" PRIu32,
-                           i, iov.iov_base, iov.iov_len);
-                ret = memory_getptr2(ctx, 0, iov.iov_base, 0, iov.iov_len, &p,
-                                     &moved);
-                if (ret != 0) {
-                        goto fail;
-                }
-                if (moved) {
-                        goto retry;
-                }
-                hostiov[i].iov_base = p;
-                hostiov[i].iov_len = iov.iov_len;
         }
         ssize_t n = writev(hostfd, hostiov, iov_count);
         if (n == -1) {
@@ -189,14 +219,8 @@ retry:
                 ret = EOVERFLOW;
                 goto fail;
         }
-        uint32_t r = n;
-        xlog_trace("nwritten %" PRIu32, r);
-        ret = memory_getptr(ctx, 0, retp, 0, sizeof(r), &p);
-        if (ret != 0) {
-                goto fail;
-        }
-        memcpy(p, &r, sizeof(r));
-        ret = 0;
+        uint32_t r = host_to_le32(n);
+        ret = wasi_copyout(ctx, &r, retp, sizeof(r));
 fail:
         results[0].u.i32 = wasi_convert_errno(ret);
         free(hostiov);
@@ -215,7 +239,6 @@ wasi_fd_read(struct exec_context *ctx, struct host_instance *hi,
         uint32_t iov_count = params[2].u.i32;
         uint32_t retp = params[3].u.i32;
         struct iovec *hostiov = NULL;
-        void *p;
         int ret;
         int hostfd;
         if (iov_count > INT_MAX) {
@@ -226,35 +249,9 @@ wasi_fd_read(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        hostiov = calloc(iov_count, sizeof(*hostiov));
-        if (hostiov == NULL) {
-                ret = ENOMEM;
-                goto fail;
-        }
-retry:
-        ret = memory_getptr(ctx, 0, iov_addr, 0,
-                            iov_count * sizeof(struct wasi_iov), &p);
+        ret = wasi_copyin_iovec(ctx, iov_addr, iov_count, &hostiov);
         if (ret != 0) {
                 goto fail;
-        }
-        const struct wasi_iov *iov_in_module = p;
-        uint32_t i;
-        for (i = 0; i < iov_count; i++) {
-                struct wasi_iov iov;
-                bool moved = false;
-                memcpy(&iov, &iov_in_module[i], sizeof(iov));
-                xlog_trace("iov [%" PRIu32 "] base %" PRIx32 " len %" PRIu32,
-                           i, iov.iov_base, iov.iov_len);
-                ret = memory_getptr2(ctx, 0, iov.iov_base, 0, iov.iov_len, &p,
-                                     &moved);
-                if (ret != 0) {
-                        goto fail;
-                }
-                if (moved) {
-                        goto retry;
-                }
-                hostiov[i].iov_base = p;
-                hostiov[i].iov_len = iov.iov_len;
         }
         ssize_t n = readv(hostfd, hostiov, iov_count);
         if (n == -1) {
@@ -265,14 +262,8 @@ retry:
                 ret = EOVERFLOW;
                 goto fail;
         }
-        uint32_t r = n;
-        xlog_trace("nread %" PRIu32, r);
-        ret = memory_getptr(ctx, 0, retp, 0, sizeof(r), &p);
-        if (ret != 0) {
-                goto fail;
-        }
-        memcpy(p, &r, sizeof(r));
-        ret = 0;
+        uint32_t r = host_to_le32(n);
+        ret = wasi_copyout(ctx, &r, retp, sizeof(r));
 fail:
         results[0].u.i32 = wasi_convert_errno(ret);
         free(hostiov);
@@ -317,13 +308,7 @@ wasi_fd_fdstat_get(struct exec_context *ctx, struct host_instance *hi,
         /* TODO fs_flags */
         /* TODO fs_rights_base */
         /* TODO fs_rights_inheriting */
-        void *p;
-        ret = memory_getptr(ctx, 0, stat_addr, 0, sizeof(st), &p);
-        if (ret != 0) {
-                goto fail;
-        }
-        memcpy(p, &st, sizeof(st));
-        ret = 0;
+        ret = wasi_copyout(ctx, &st, stat_addr, sizeof(st));
 fail:
         results[0].u.i32 = wasi_convert_errno(ret);
         return 0;
@@ -366,14 +351,8 @@ wasi_fd_seek(struct exec_context *ctx, struct host_instance *hi,
                 ret = errno;
                 goto fail;
         }
-        uint64_t result = ret1;
-        void *p;
-        ret = memory_getptr(ctx, 0, retp, 0, sizeof(result), &p);
-        if (ret != 0) {
-                goto fail;
-        }
-        memcpy(p, &result, sizeof(result));
-        ret = 0;
+        uint64_t result = host_to_le64(ret1);
+        ret = wasi_copyout(ctx, &result, retp, sizeof(result));
 fail:
         results[0].u.i32 = wasi_convert_errno(ret);
         return 0;
@@ -417,14 +396,9 @@ wasi_clock_time_get(struct exec_context *ctx, struct host_instance *hi,
                 ret = errno;
                 goto fail;
         }
-        uint64_t result = (uint64_t)ts.tv_sec * 1000000000 + ts.tv_nsec;
-        void *p;
-        ret = memory_getptr(ctx, 0, retp, 0, sizeof(result), &p);
-        if (ret != 0) {
-                goto fail;
-        }
-        memcpy(p, &result, sizeof(result));
-        ret = 0;
+        uint64_t result =
+                host_to_le64((uint64_t)ts.tv_sec * 1000000000 + ts.tv_nsec);
+        ret = wasi_copyout(ctx, &result, retp, sizeof(result));
 fail:
         results[0].u.i32 = wasi_convert_errno(ret);
         return 0;
@@ -442,23 +416,19 @@ wasi_args_sizes_get(struct exec_context *ctx, struct host_instance *hi,
         char *const *argv = wasi->argv;
         xlog_trace("%s called argc=%u", __func__, argc);
         int ret;
-        void *p;
-        ret = memory_getptr(ctx, 0, argcp, 0, sizeof(argc), &p);
+        uint32_t argc_le32 = host_to_le32(argc);
+        ret = wasi_copyout(ctx, &argc_le32, argcp, sizeof(argc_le32));
         if (ret != 0) {
                 goto fail;
         }
-        le32_encode(p, argc);
         int i;
         uint32_t argv_buf_size = 0;
         for (i = 0; i < argc; i++) {
                 argv_buf_size += strlen(argv[i]) + 1;
         }
-        ret = memory_getptr(ctx, 0, argv_buf_sizep, 0, sizeof(argv_buf_size),
-                            &p);
-        if (ret != 0) {
-                goto fail;
-        }
-        le32_encode(p, argv_buf_size);
+        argv_buf_size = host_to_le32(argv_buf_size);
+        ret = wasi_copyout(ctx, &argv_buf_size, argv_buf_sizep,
+                           sizeof(argv_buf_size));
 fail:
         results[0].u.i32 = wasi_convert_errno(ret);
         return 0;
@@ -489,20 +459,15 @@ wasi_args_get(struct exec_context *ctx, struct host_instance *hi,
                 xlog_trace("wasm_argv[%" PRIu32 "] %" PRIx32, i, wasmp);
                 wasmp += strlen(argv[i]) + 1;
         }
-        void *p;
         for (i = 0; i < argc; i++) {
                 size_t sz = strlen(argv[i]) + 1;
-                ret = memory_getptr(ctx, 0, wasm_argv[i], 0, sz, &p);
+                ret = wasi_copyout(ctx, argv[i], le32_to_host(wasm_argv[i]),
+                                   sz);
                 if (ret != 0) {
                         goto fail;
                 }
-                memcpy(p, argv[i], sz);
         }
-        ret = memory_getptr(ctx, 0, argvp, 0, argc * sizeof(*wasm_argv), &p);
-        if (ret != 0) {
-                goto fail;
-        }
-        memcpy(p, wasm_argv, argc * sizeof(*wasm_argv));
+        ret = wasi_copyout(ctx, wasm_argv, argvp, argc * sizeof(*wasm_argv));
 fail:
         free(wasm_argv);
         results[0].u.i32 = wasi_convert_errno(ret);
@@ -519,17 +484,11 @@ wasi_environ_sizes_get(struct exec_context *ctx, struct host_instance *hi,
         uint32_t environ_buf_size_p = params[1].u.i32;
         uint32_t zero = 0; /* REVISIT */
         int ret;
-        void *p;
-        ret = memory_getptr(ctx, 0, environ_count_p, 0, sizeof(zero), &p);
+        ret = wasi_copyout(ctx, &zero, environ_count_p, sizeof(zero));
         if (ret != 0) {
                 goto fail;
         }
-        memcpy(p, &zero, sizeof(zero));
-        ret = memory_getptr(ctx, 0, environ_buf_size_p, 0, sizeof(zero), &p);
-        if (ret != 0) {
-                goto fail;
-        }
-        memcpy(p, &zero, sizeof(zero));
+        ret = wasi_copyout(ctx, &zero, environ_buf_size_p, sizeof(zero));
 fail:
         results[0].u.i32 = wasi_convert_errno(ret);
         return 0;
