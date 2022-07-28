@@ -587,7 +587,11 @@ repl(void)
                         if (ret != 0) {
                                 goto fail;
                         }
-
+                } else if (!strcmp(cmd, ":register") && opt != NULL) {
+                        ret = repl_register(state, opt);
+                        if (ret != 0) {
+                                goto fail;
+                        }
                 } else {
                         xlog_printf("Error: unknown command %s\n", cmd);
                 }
