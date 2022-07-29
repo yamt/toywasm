@@ -5,7 +5,7 @@
 #include "util.h"
 #include "vec.h"
 
-VEC(_vec, void *);
+VEC(_vec, void);
 
 int
 _vec_resize(void *vec, size_t elem_size, uint32_t new_elem_count)
