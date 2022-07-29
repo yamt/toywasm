@@ -910,7 +910,6 @@ const struct host_func wasi_funcs[] = {
         WASI_HOST_FUNC(environ_sizes_get, "(ii)i"),
         WASI_HOST_FUNC(environ_get, "(ii)i"),
         WASI_HOST_FUNC(random_get, "(ii)i"),
-        WASI_HOST_FUNC(path_open, "(iiiiIIii)i"),
         WASI_HOST_FUNC(path_open, "(iiiiiIIii)i"),
         /* TODO implement the rest of the api */
 };
