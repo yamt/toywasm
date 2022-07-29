@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -11,6 +12,8 @@ _vec_resize(void *vec, size_t elem_size, uint32_t new_elem_count)
 {
         struct _vec *v = vec;
         int ret;
+        assert(v->lsize <= v->psize);
+        assert((v->psize == 0) == (v->p == NULL));
         if (new_elem_count > v->psize) {
                 ret = resize_array((void **)&v->p, elem_size, new_elem_count);
                 if (ret != 0) {
