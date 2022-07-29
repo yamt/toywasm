@@ -1,5 +1,6 @@
 #define _POSIX_C_SOURCE 199309 /* clock_gettime */
 #define _DARWIN_C_SOURCE       /* arc4random_buf */
+#define _GNU_SOURCE            /* asprintf, realpath, O_DIRECTORY */
 
 #include <sys/random.h> /* getrandom */
 #include <sys/stat.h>
