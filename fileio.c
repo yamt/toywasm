@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stddef.h>
@@ -5,6 +6,7 @@
 #include <unistd.h>
 
 #include "fileio.h"
+#include "xlog.h"
 
 #if defined(__wasi__)
 
@@ -20,14 +22,21 @@ map_file(const char *path, void **pp, size_t *sizep)
         int fd;
         int ret;
 
+        xlog_trace("opening %s", path);
         fd = open(path, O_RDONLY);
         if (fd == -1) {
-                return errno;
+                ret = errno;
+                assert(ret != 0);
+                xlog_trace("failed to open %s (error %d)", path, ret);
+                return ret;
         }
         ret = fstat(fd, &st);
         if (ret == -1) {
+                ret = errno;
+                assert(ret != 0);
+                xlog_trace("failed to fstat %s (error %d)", path, ret);
                 close(fd);
-                return errno;
+                return ret;
         }
         size = st.st_size;
         p = malloc(size);
@@ -37,9 +46,13 @@ map_file(const char *path, void **pp, size_t *sizep)
         }
         ssz = read(fd, p, size);
         if (ssz != size) {
+                ret = errno;
+                assert(ret != 0);
+                xlog_trace("failed to read %s (error %d)", path, ret);
                 close(fd);
-                return EIO;
+                return ret;
         }
+        close(fd);
         *pp = p;
         *sizep = size;
         return 0;
@@ -62,6 +75,7 @@ map_file(const char *filename, void **pp, size_t *szp)
         int ret;
         int fd;
 
+        xlog_trace("mapping %s", filename);
         fd = open(filename, O_RDONLY);
         if (fd == -1) {
                 return errno;
