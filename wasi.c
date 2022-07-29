@@ -278,6 +278,8 @@ wasi_convert_errno(int host_errno)
         default:
                 wasmerrno = 29; /* EIO */
         }
+        xlog_trace("error converted from %u to %" PRIu32, host_errno,
+                   wasmerrno);
         return wasmerrno;
 }
 
@@ -418,20 +420,25 @@ wasi_fd_fdstat_get(struct exec_context *ctx, struct host_instance *hi,
         uint32_t wasifd = params[0].u.i32;
         xlog_trace("%s called for fd %" PRIu32, __func__, wasifd);
         uint32_t stat_addr = params[1].u.i32;
-        int hostfd;
+        struct wasi_fdinfo *fdinfo;
         int ret;
-        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd);
-        if (ret != 0) {
-                goto fail;
-        }
-        struct stat stat;
-        ret = fstat(hostfd, &stat);
+        ret = wasi_fd_lookup(wasi, wasifd, &fdinfo);
         if (ret != 0) {
                 goto fail;
         }
         struct wasi_fdstat st;
         memset(&st, 0, sizeof(st));
-        st.fs_filetype = wasi_convert_filetype(stat.st_mode);
+        if (fdinfo->prestat_path != NULL) {
+                st.fs_filetype = WASI_FILETYPE_DIRECTORY;
+        } else {
+                struct stat stat;
+                int hostfd = fdinfo->hostfd;
+                ret = fstat(hostfd, &stat);
+                if (ret != 0) {
+                        goto fail;
+                }
+                st.fs_filetype = wasi_convert_filetype(stat.st_mode);
+        }
         /* TODO fs_flags */
         /* TODO fs_rights_base */
         /* TODO fs_rights_inheriting */
@@ -861,13 +868,12 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
                 assert(ret != 0);
                 goto fail;
         }
-        ret = open(hostpath, oflags);
-        if (ret != 0) {
+        hostfd = open(hostpath, oflags);
+        if (hostfd == -1) {
                 ret = errno;
                 assert(ret != 0);
                 goto fail;
         }
-        hostfd = ret;
         uint32_t wasifd;
         ret = wasi_fd_add(wasi, hostfd, &wasifd);
         if (ret != 0) {
@@ -974,11 +980,7 @@ wasi_instance_prestat_add(struct wasi_instance *wasi, const char *path)
                 return ret;
         }
         struct wasi_fdinfo *fdinfo = &VEC_ELEM(wasi->fdtable, wasifd);
-#if defined(__wasi__)
         fdinfo->prestat_path = strdup(path);
-#else
-        fdinfo->prestat_path = realpath(path, NULL);
-#endif
         if (fdinfo->prestat_path == NULL) {
                 ret = errno;
                 assert(ret != 0);
