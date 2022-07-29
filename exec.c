@@ -1,5 +1,3 @@
-#define _GNU_SOURCE /* vasprintf */
-
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
