@@ -566,7 +566,7 @@ wasi_fd_prestat_dir_name(struct exec_context *ctx, struct host_instance *hi,
         struct wasi_instance *wasi = (void *)hi;
         uint32_t wasifd = params[0].u.i32;
         uint32_t path = params[1].u.i32;
-        uint32_t pathlen = params[1].u.i32;
+        uint32_t pathlen = params[2].u.i32;
         xlog_trace("%s called for fd %" PRIu32, __func__, wasifd);
         int ret;
         struct wasi_fdinfo *fdinfo;
