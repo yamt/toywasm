@@ -963,6 +963,7 @@ wasi_instance_prestat_add(struct wasi_instance *wasi, const char *path)
 {
         uint32_t wasifd;
         int ret;
+        xlog_trace("prestat adding %s", path);
         ret = wasi_fd_alloc(wasi, &wasifd);
         if (ret != 0) {
                 return ret;
@@ -976,8 +977,10 @@ wasi_instance_prestat_add(struct wasi_instance *wasi, const char *path)
         if (fdinfo->prestat_path == NULL) {
                 ret = errno;
                 assert(ret != 0);
+                xlog_trace("realpath failed with %d", ret);
                 return ret;
         }
+        xlog_trace("prestat added %s (%s)", path, fdinfo->prestat_path);
         return 0;
 }
 
