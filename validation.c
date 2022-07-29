@@ -239,11 +239,7 @@ validation_failure(struct validation_context *ctx, const char *fmt, ...)
 {
         va_list ap;
         va_start(ap, fmt);
-        flockfile(stderr);
-        fprintf(stderr, "validation_failure ");
-        vfprintf(stderr, fmt, ap);
-        fprintf(stderr, "\n");
-        funlockfile(stderr);
+        vreport(ctx->report, fmt, ap);
         va_end(ap);
         return EINVAL;
 }

@@ -17,6 +17,7 @@
 #include "leb128.h"
 #include "load_context.h"
 #include "module.h"
+#include "report.h"
 #include "type.h"
 #include "util.h"
 #include "xlog.h"
@@ -1372,9 +1373,11 @@ void
 load_context_init(struct load_context *ctx)
 {
         memset(ctx, 0, sizeof(*ctx));
+        report_init(&ctx->report);
 }
 
 void
 load_context_clear(struct load_context *ctx)
 {
+        report_clear(&ctx->report);
 }

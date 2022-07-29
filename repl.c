@@ -24,6 +24,7 @@
 #include "load_context.h"
 #include "module.h"
 #include "repl.h"
+#include "report.h"
 #include "type.h"
 #include "wasi.h"
 #include "xlog.h"
@@ -215,12 +216,22 @@ repl_load_from_buf(struct repl_state *state, struct repl_module_state *mod)
         ctx.generate_jump_table = g_repl_use_jump_table;
         ret = module_load(mod->module, mod->buf, mod->buf + mod->bufsize,
                           &ctx);
+        if (ctx.report.msg != NULL) {
+                xlog_error("load/validation error: %s", ctx.report.msg);
+        }
         load_context_clear(&ctx);
         if (ret != 0) {
                 xlog_printf("module_load failed\n");
                 goto fail;
         }
-        ret = instance_create(mod->module, &mod->inst, state->imports);
+        struct report report;
+        report_init(&report);
+        ret = instance_create(mod->module, &mod->inst, state->imports,
+                              &report);
+        if (report.msg != NULL) {
+                xlog_error("instance_create: %s", report.msg);
+        }
+        report_clear(&report);
         if (ret != 0) {
                 xlog_printf("instance_create failed\n");
                 goto fail;
@@ -380,6 +391,7 @@ print_trap(const struct exec_context *ctx)
         /* the messages here are aimed to match assert_trap in wast */
         enum trapid id = ctx->trapid;
         const char *msg = "unknown";
+        const char *trapmsg = ctx->report->msg;
         switch (id) {
         case TRAP_DIV_BY_ZERO:
                 msg = "integer divide by zero";
@@ -407,12 +419,12 @@ print_trap(const struct exec_context *ctx)
                 msg = "invalid conversion to integer";
                 break;
         default:
-                if (ctx->trapmsg != NULL) {
-                        msg = ctx->trapmsg;
-                }
                 break;
         }
-        printf("Error: [trap] %s (%u)\n", msg, id);
+        if (trapmsg == NULL) {
+                trapmsg = "no message";
+        }
+        printf("Error: [trap] %s (%u): %s\n", msg, id, trapmsg);
 }
 
 int

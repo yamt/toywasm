@@ -46,6 +46,7 @@ SRCS += import_object.c
 SRCS += host_instance.c
 SRCS += insn.c
 SRCS += instance.c
+SRCS += report.c
 SRCS += repl.c
 SRCS += module.c
 SRCS += leb128.c

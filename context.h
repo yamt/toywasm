@@ -1,10 +1,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "report.h"
 #include "vec.h"
 
 enum valtype;
-
 struct val;
 
 enum ctrlframe_op {
@@ -84,6 +84,8 @@ struct validation_context {
 
         bool const_expr;
         bool generate_jump_table;
+
+        struct report *report;
 };
 
 enum exec_event {
@@ -103,8 +105,9 @@ struct exec_context {
 
         bool trapped; /* used with a combination with EFAULT */
         enum trapid trapid;
-        char *trapmsg;
         uint32_t exit_code; /* wasi */
+        struct report *report;
+        struct report report0;
 
         enum exec_event event;
         union {

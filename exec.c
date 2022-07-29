@@ -21,16 +21,10 @@
 int
 vtrap(struct exec_context *ctx, enum trapid id, const char *fmt, va_list ap)
 {
-        int ret;
         ctx->trapped = true;
         ctx->trapid = id;
-        free(ctx->trapmsg);
-        ctx->trapmsg = NULL;
-        ret = vasprintf(&ctx->trapmsg, fmt, ap);
-        if (ret < 0) {
-                xlog_error("failed to format trap message with %d", errno);
-        }
-        xlog_trace("TRAP: %s", ctx->trapmsg);
+        vreport(ctx->report, fmt, ap);
+        xlog_trace("TRAP: %s", ctx->report->msg);
         return EFAULT;
 }
 
@@ -619,6 +613,8 @@ exec_context_init(struct exec_context *ctx, struct instance *inst)
 {
         memset(ctx, 0, sizeof(*ctx));
         ctx->instance = inst;
+        report_init(&ctx->report0);
+        ctx->report = &ctx->report0;
 }
 
 void
@@ -632,7 +628,8 @@ exec_context_clear(struct exec_context *ctx)
         VEC_FREE(ctx->stack);
         VEC_FREE(ctx->labels);
         VEC_FREE(ctx->locals);
-        free(ctx->trapmsg);
+        report_clear(&ctx->report0);
+        ctx->report = NULL;
 }
 
 uint32_t

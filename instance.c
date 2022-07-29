@@ -43,7 +43,8 @@ int
 find_entry_for_import(
         const struct import_object *imports, const struct import *im,
         int (*check)(const struct import_object_entry *e, const void *arg),
-        const void *checkarg, const struct import_object_entry **resultp)
+        const void *checkarg, const struct import_object_entry **resultp,
+        struct report *report)
 {
         const struct import_object *impobj = imports;
         bool mismatch = false;
@@ -55,7 +56,8 @@ find_entry_for_import(
                         if (!strcmp(e->module_name, im->module_name) &&
                             !strcmp(e->name, im->name)) {
                                 if (e->type != im->desc.type) {
-                                        xlog_trace(
+                                        report_error(
+                                                report,
                                                 "Type mismatch for import "
                                                 "%s:%s (%u != %u)",
                                                 im->module_name, im->name,
@@ -77,11 +79,11 @@ find_entry_for_import(
                 impobj = impobj->next;
         }
         if (mismatch) {
-                xlog_trace("No matching entry for import %s:%s",
-                           im->module_name, im->name);
+                report_error(report, "No matching entry for import %s:%s",
+                             im->module_name, im->name);
         } else {
-                xlog_trace("No entry for import %s:%s", im->module_name,
-                           im->name);
+                report_error(report, "No entry for import %s:%s",
+                             im->module_name, im->name);
         }
         return ENOENT;
 }
@@ -92,11 +94,13 @@ find_import_entry(const struct module *m, enum importtype type, uint32_t idx,
                   int (*check)(const struct import_object_entry *e,
                                const void *arg),
                   const void *checkarg,
-                  const struct import_object_entry **resultp)
+                  const struct import_object_entry **resultp,
+                  struct report *report)
 {
         const struct import *im = module_find_import(m, type, idx);
         assert(im != NULL);
-        return find_entry_for_import(imports, im, check, checkarg, resultp);
+        return find_entry_for_import(imports, im, check, checkarg, resultp,
+                                     report);
 }
 
 /*
@@ -177,7 +181,7 @@ check_globaltype(const struct import_object_entry *e, const void *vp)
 
 int
 instance_create(struct module *m, struct instance **instp,
-                const struct import_object *imports)
+                const struct import_object *imports, struct report *report)
 {
         struct exec_context ctx0;
         struct exec_context *ctx = NULL;
@@ -201,9 +205,9 @@ instance_create(struct module *m, struct instance **instp,
                 struct funcinst *fp;
                 if (i < m->nimportedfuncs) {
                         const struct import_object_entry *e;
-                        ret = find_import_entry(m, IMPORT_FUNC, i, imports,
-                                                check_functype,
-                                                module_functype(m, i), &e);
+                        ret = find_import_entry(
+                                m, IMPORT_FUNC, i, imports, check_functype,
+                                module_functype(m, i), &e, report);
                         if (ret != 0) {
                                 goto fail;
                         }
@@ -232,9 +236,9 @@ instance_create(struct module *m, struct instance **instp,
                 struct meminst *mp;
                 if (i < m->nimportedmems) {
                         const struct import_object_entry *e;
-                        ret = find_import_entry(m, IMPORT_MEMORY, i, imports,
-                                                check_memtype,
-                                                module_memtype(m, i), &e);
+                        ret = find_import_entry(
+                                m, IMPORT_MEMORY, i, imports, check_memtype,
+                                module_memtype(m, i), &e, report);
                         if (ret != 0) {
                                 goto fail;
                         }
@@ -262,9 +266,9 @@ instance_create(struct module *m, struct instance **instp,
                 struct globalinst *ginst;
                 if (i < m->nimportedglobals) {
                         const struct import_object_entry *e;
-                        ret = find_import_entry(m, IMPORT_GLOBAL, i, imports,
-                                                check_globaltype,
-                                                module_globaltype(m, i), &e);
+                        ret = find_import_entry(
+                                m, IMPORT_GLOBAL, i, imports, check_globaltype,
+                                module_globaltype(m, i), &e, report);
                         if (ret != 0) {
                                 goto fail;
                         }
@@ -292,9 +296,9 @@ instance_create(struct module *m, struct instance **instp,
                 struct tableinst *tinst;
                 if (i < m->nimportedtables) {
                         const struct import_object_entry *e;
-                        ret = find_import_entry(m, IMPORT_TABLE, i, imports,
-                                                check_tabletype,
-                                                module_tabletype(m, i), &e);
+                        ret = find_import_entry(
+                                m, IMPORT_TABLE, i, imports, check_tabletype,
+                                module_tabletype(m, i), &e, report);
                         if (ret != 0) {
                                 goto fail;
                         }
@@ -321,6 +325,7 @@ instance_create(struct module *m, struct instance **instp,
         }
         ctx = &ctx0;
         exec_context_init(ctx, inst);
+        ctx->report = report;
         for (i = 0; i < m->nglobals; i++) {
                 struct globalinst *ginst = VEC_ELEM(inst->globals, i);
                 ret = exec_const_expr(&m->globals[i].init, ginst->type->t,

@@ -6,9 +6,11 @@ struct exec_context;
 struct resulttype;
 struct val;
 struct import_object;
+struct report;
 
 int instance_create(struct module *m, struct instance **instp,
-                    const struct import_object *imports);
+                    const struct import_object *imports,
+                    struct report *report);
 void instance_destroy(struct instance *inst);
 
 int instance_execute_func(struct exec_context *ctx, const char *name,

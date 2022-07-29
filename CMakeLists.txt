@@ -84,6 +84,7 @@ set(lib_sources
 	"instance.c"
 	"leb128.c"
 	"module.c"
+	"report.c"
 	"repl.c"
 	"type.c"
 	"util.c"
