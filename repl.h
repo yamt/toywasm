@@ -12,3 +12,4 @@ int repl_invoke(struct repl_state *state, const char *cmd, bool print_result);
 
 int repl_load_wasi(struct repl_state *state);
 int repl_set_wasi_args(struct repl_state *state, int argc, char *const *argv);
+int repl_set_wasi_prestat(struct repl_state *state, const char *path);

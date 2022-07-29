@@ -203,6 +203,15 @@ repl_set_wasi_args(struct repl_state *state, int argc, char *const *argv)
 }
 
 int
+repl_set_wasi_prestat(struct repl_state *state, const char *path)
+{
+        if (state->wasi == NULL) {
+                return EPROTO;
+        }
+        return wasi_instance_prestat_add(state->wasi, path);
+}
+
+int
 repl_load_from_buf(struct repl_state *state, struct repl_module_state *mod)
 {
         int ret;

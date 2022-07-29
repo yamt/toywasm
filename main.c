@@ -19,6 +19,7 @@ enum longopt {
         opt_repl_prompt,
         opt_trace,
         opt_wasi,
+        opt_wasi_dir,
 };
 
 const struct option longopts[] = {
@@ -69,6 +70,12 @@ const struct option longopts[] = {
                 no_argument,
                 NULL,
                 opt_wasi,
+        },
+        {
+                "wasi-dir",
+                no_argument,
+                NULL,
+                opt_wasi_dir,
         },
         {
                 NULL,
@@ -122,6 +129,12 @@ main(int argc, char *const *argv)
                         break;
                 case opt_wasi:
                         ret = repl_load_wasi(state);
+                        if (ret != 0) {
+                                goto fail;
+                        }
+                        break;
+                case opt_wasi_dir:
+                        ret = repl_set_wasi_prestat(state, optarg);
                         if (ret != 0) {
                                 goto fail;
                         }
