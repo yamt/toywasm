@@ -551,7 +551,7 @@ wasi_fd_prestat_get(struct exec_context *ctx, struct host_instance *hi,
         struct wasi_fd_prestat st;
         memset(&st, 0, sizeof(st));
         st.type = WASI_PREOPEN_TYPE_DIR;
-        st.dir_name_len = strlen(fdinfo->prestat_path);
+        st.dir_name_len = host_to_le32(strlen(fdinfo->prestat_path));
         ret = wasi_copyout(ctx, &st, retp, sizeof(st));
 fail:
         results[0].u.i32 = wasi_convert_errno(ret);
