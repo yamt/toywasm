@@ -543,7 +543,8 @@ repl_invoke(struct repl_state *state, const char *cmd, bool print_result)
                                     result);
         if (ret == EFAULT && ctx->trapped) {
                 if (ctx->trapid == TRAP_VOLUNTARY_EXIT) {
-                        xlog_trace("voluntary exit (%" PRIu32, ctx->exit_code);
+                        xlog_trace("voluntary exit (%" PRIu32 ")",
+                                   ctx->exit_code);
                         ret = ctx->exit_code;
                         goto fail;
                 }
