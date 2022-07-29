@@ -259,6 +259,7 @@ repl_load(struct repl_state *state, const char *filename)
         int ret;
         ret = map_file(filename, (void **)&mod->buf, &mod->bufsize);
         if (ret != 0) {
+                xlog_error("failed to map %s", filename);
                 goto fail;
         }
         mod->buf_mapped = true;
