@@ -86,6 +86,19 @@ _Static_assert(sizeof(struct wasi_fd_prestat) == 8, "wasi_fd_prestat");
 
 #define WASI_PREOPEN_TYPE_DIR 0
 
+struct wasi_filestat {
+        uint64_t dev;
+        uint64_t ino;
+        uint8_t type;
+        uint8_t pad[7];
+        uint64_t linkcount;
+        uint64_t size;
+        uint64_t atim;
+        uint64_t mtim;
+        uint64_t ctim;
+};
+_Static_assert(sizeof(struct wasi_filestat) == 64, "wasi_filestat");
+
 static int
 wasi_copyin(struct exec_context *ctx, void *hostaddr, uint32_t wasmaddr,
             size_t len)
@@ -219,6 +232,32 @@ wasi_fd_add(struct wasi_instance *wasi, int hostfd, uint32_t *wasifdp)
         fdinfo->hostfd = hostfd;
         *wasifdp = wasifd;
         return 0;
+}
+
+static uint64_t
+timespec_to_ns(const struct timespec *ts)
+{
+        return (uint64_t)ts->tv_sec * 1000000000 + ts->tv_nsec;
+}
+
+static uint8_t
+wasi_convert_filetype(mode_t mode)
+{
+        uint8_t type;
+        if (S_ISREG(mode)) {
+                type = WASI_FILETYPE_REGULAR_FILE;
+        } else if (S_ISDIR(mode)) {
+                type = WASI_FILETYPE_DIRECTORY;
+        } else if (S_ISCHR(mode)) {
+                type = WASI_FILETYPE_CHARACTER_DEVICE;
+        } else if (S_ISBLK(mode)) {
+                type = WASI_FILETYPE_BLOCK_DEVICE;
+        } else if (S_ISLNK(mode)) {
+                type = WASI_FILETYPE_SYMBOLIC_LINK;
+        } else {
+                type = WASI_FILETYPE_UNKNOWN;
+        }
+        return type;
 }
 
 static uint32_t
@@ -392,19 +431,7 @@ wasi_fd_fdstat_get(struct exec_context *ctx, struct host_instance *hi,
         }
         struct wasi_fdstat st;
         memset(&st, 0, sizeof(st));
-        if (S_ISREG(stat.st_mode)) {
-                st.fs_filetype = WASI_FILETYPE_REGULAR_FILE;
-        } else if (S_ISDIR(stat.st_mode)) {
-                st.fs_filetype = WASI_FILETYPE_DIRECTORY;
-        } else if (S_ISCHR(stat.st_mode)) {
-                st.fs_filetype = WASI_FILETYPE_CHARACTER_DEVICE;
-        } else if (S_ISBLK(stat.st_mode)) {
-                st.fs_filetype = WASI_FILETYPE_BLOCK_DEVICE;
-        } else if (S_ISLNK(stat.st_mode)) {
-                st.fs_filetype = WASI_FILETYPE_SYMBOLIC_LINK;
-        } else {
-                st.fs_filetype = WASI_FILETYPE_UNKNOWN;
-        }
+        st.fs_filetype = wasi_convert_filetype(stat.st_mode);
         /* TODO fs_flags */
         /* TODO fs_rights_base */
         /* TODO fs_rights_inheriting */
@@ -453,6 +480,50 @@ wasi_fd_seek(struct exec_context *ctx, struct host_instance *hi,
         }
         uint64_t result = host_to_le64(ret1);
         ret = wasi_copyout(ctx, &result, retp, sizeof(result));
+fail:
+        results[0].u.i32 = wasi_convert_errno(ret);
+        return 0;
+}
+
+static int
+wasi_fd_filestat_get(struct exec_context *ctx, struct host_instance *hi,
+                     const struct functype *ft, const struct val *params,
+                     struct val *results)
+{
+        struct wasi_instance *wasi = (void *)hi;
+        uint32_t wasifd = params[0].u.i32;
+        xlog_trace("%s called for fd %" PRIu32, __func__, wasifd);
+        uint32_t retp = params[1].u.i32;
+        int hostfd;
+        int ret;
+        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd);
+        if (ret != 0) {
+                goto fail;
+        }
+        struct stat hst;
+        ret = fstat(hostfd, &hst);
+        if (ret == -1) {
+                ret = errno;
+                assert(ret != 0);
+                goto fail;
+        }
+        struct wasi_filestat wst;
+        memset(&wst, 0, sizeof(wst));
+        wst.dev = host_to_le64(hst.st_dev);
+        wst.ino = host_to_le64(hst.st_ino);
+        wst.type = wasi_convert_filetype(hst.st_mode);
+        wst.linkcount = host_to_le64(hst.st_nlink);
+        wst.size = host_to_le64(hst.st_size);
+#if defined(__APPLE__)
+        wst.atim = host_to_le64(timespec_to_ns(&hst.st_atimespec));
+        wst.mtim = host_to_le64(timespec_to_ns(&hst.st_mtimespec));
+        wst.ctim = host_to_le64(timespec_to_ns(&hst.st_ctimespec));
+#else
+        wst.atim = host_to_le64(timespec_to_ns(&hst.st_atim));
+        wst.mtim = host_to_le64(timespec_to_ns(&hst.st_mtim));
+        wst.ctim = host_to_le64(timespec_to_ns(&hst.st_ctim));
+#endif
+        ret = wasi_copyout(ctx, &wst, retp, sizeof(wst));
 fail:
         results[0].u.i32 = wasi_convert_errno(ret);
         return 0;
@@ -555,8 +626,7 @@ wasi_clock_time_get(struct exec_context *ctx, struct host_instance *hi,
                 ret = errno;
                 goto fail;
         }
-        uint64_t result =
-                host_to_le64((uint64_t)ts.tv_sec * 1000000000 + ts.tv_nsec);
+        uint64_t result = host_to_le64(timespec_to_ns(&ts));
         ret = wasi_copyout(ctx, &result, retp, sizeof(result));
 fail:
         results[0].u.i32 = wasi_convert_errno(ret);
@@ -825,6 +895,7 @@ const struct host_func wasi_funcs[] = {
         WASI_HOST_FUNC(fd_read, "(iiii)i"),
         WASI_HOST_FUNC(fd_fdstat_get, "(ii)i"),
         WASI_HOST_FUNC(fd_seek, "(iIii)i"),
+        WASI_HOST_FUNC(fd_filestat_get, "(ii)i"),
         WASI_HOST_FUNC(fd_prestat_get, "(ii)i"),
         WASI_HOST_FUNC(fd_prestat_dir_name, "(iii)i"),
         WASI_HOST_FUNC(clock_time_get, "(iIi)i"),
