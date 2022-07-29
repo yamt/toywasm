@@ -13,6 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-latest, macos-latest]
         compiler: [clang, gcc]
         BUILD_TYPE: [Release, Debug]
         TOYWASM_USE_SEPARATE_EXECUTE: [ON, OFF]
@@ -21,15 +22,24 @@ jobs:
         exclude:
           - TOYWASM_USE_SEPARATE_EXECUTE: OFF
             TOYWASM_USE_TAILCALL: ON
+          - os: macos-latest
+            compiler: gcc
 
     # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
     # You can convert this to a matrix build if you need cross-platform coverage.
     # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
-    runs-on: ubuntu-latest
+    runs-on: ${{matrix.os}}
 
     steps:
-    - name: Install dependencies
+    - name: Install dependencies (ubuntu)
+      if: matrix.os == 'ubuntu-latest'
       run: sudo apt-get update && sudo apt-get install -y wabt libcmocka-dev clang lld llvm-dev
+
+    - name: Install dependencies (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        brew install wabt
+        brew install cmocka
 
     - uses: actions/checkout@v3
 
