@@ -857,7 +857,12 @@ wasi_instance_create(struct wasi_instance **instp)
         uint32_t i;
         for (i = 0; i < nfds; i++) {
                 int hostfd;
-                VEC_ELEM(inst->fdtable, i).hostfd = hostfd = dup(i);
+#if defined(__wasi__)
+                hostfd = i;
+#else
+                hostfd = dup(i);
+#endif
+                VEC_ELEM(inst->fdtable, i).hostfd = hostfd;
                 if (hostfd == -1) {
                         xlog_trace("failed to dup: wasm fd %" PRIu32
                                    " host fd %u with errno %d",
@@ -892,7 +897,11 @@ wasi_instance_prestat_add(struct wasi_instance *wasi, const char *path)
                 return ret;
         }
         struct wasi_fdinfo *fdinfo = &VEC_ELEM(wasi->fdtable, wasifd);
+#if defined(__wasi__)
+        fdinfo->prestat_path = strdup(path);
+#else
         fdinfo->prestat_path = realpath(path, NULL);
+#endif
         if (fdinfo->prestat_path == NULL) {
                 ret = errno;
                 assert(ret != 0);
@@ -909,7 +918,11 @@ wasi_instance_destroy(struct wasi_instance *inst)
         VEC_FOREACH_IDX(i, it, inst->fdtable)
         {
                 int hostfd = it->hostfd;
+#if defined(__wasi__)
+                if (hostfd != -1 && hostfd >= 3) {
+#else
                 if (hostfd != -1) {
+#endif
                         int ret = close(hostfd);
                         if (ret != 0) {
                                 xlog_trace("failed to close: wasm fd %" PRIu32

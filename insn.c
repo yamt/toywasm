@@ -382,7 +382,10 @@ exec_next_insn_fc(const uint8_t *p, struct val *stack,
         uint32_t op = *p++;
         const struct instruction_desc *desc = &instructions_fc[op];
         xlog_trace("exec %06" PRIx32 ": (2nd byte) %s", pc, desc->name);
-        __musttail return desc->execute(p, stack, ctx);
+#if defined(USE_TAILCALL)
+        __musttail
+#endif
+                return desc->execute(p, stack, ctx);
 }
 
 #define INSTRUCTION(b, n, f, FLAGS)                                           \

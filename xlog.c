@@ -9,6 +9,11 @@
 
 int xlog_tracing = 0;
 
+#if defined(__wasi__)
+#define flockfile(f)
+#define funlockfile(f)
+#endif
+
 void
 xlog_vprintf(const char *fmt, va_list ap)
 {

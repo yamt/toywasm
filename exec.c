@@ -440,7 +440,10 @@ exec_next_insn(const uint8_t *p, struct val *stack, struct exec_context *ctx)
         const struct instruction_desc *desc = &instructions[op];
 #if defined(USE_SEPARATE_EXECUTE)
         xlog_trace("exec %06" PRIx32 ": %s", pc, desc->name);
-        __musttail return desc->execute(p, stack, ctx);
+#if defined(USE_TAILCALL)
+        __musttail
+#endif
+                return desc->execute(p, stack, ctx);
 #else
         if (__predict_false(desc->next_table != NULL)) {
                 op = *p++;
