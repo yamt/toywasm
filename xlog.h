@@ -17,7 +17,7 @@ extern int xlog_tracing;
                 if (xlog_tracing) {                                           \
                         xlog__trace(__VA_ARGS__);                             \
                 }                                                             \
-        } while (false)
+        } while (0)
 #else
 #define xlog_trace(...)
 #endif
