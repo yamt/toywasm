@@ -575,14 +575,20 @@ wasi_fd_prestat_dir_name(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         if (fdinfo->prestat_path == NULL) {
+                xlog_trace("wasm fd %" PRIu32 " is not prestat", wasifd);
                 ret = EBADF;
                 goto fail;
         }
-        if (strlen(fdinfo->prestat_path) != pathlen) {
+        xlog_trace("wasm fd %" PRIu32 " is prestat %s", wasifd,
+                   fdinfo->prestat_path);
+
+        size_t len = strlen(fdinfo->prestat_path);
+        if (len != pathlen) {
+                xlog_trace("pathlen mismatch %zu != %" PRIu32, len, pathlen);
                 ret = EINVAL;
                 goto fail;
         }
-        ret = wasi_copyout(ctx, fdinfo->prestat_path, path, pathlen);
+        ret = wasi_copyout(ctx, fdinfo->prestat_path, path, len);
 fail:
         results[0].u.i32 = wasi_convert_errno(ret);
         return 0;
