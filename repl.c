@@ -581,7 +581,20 @@ repl(void)
                 }
                 char *opt = strtok(NULL, "\n");
                 if (!strcmp(cmd, ":version")) {
-                        printf("toy-wasm-interp unknown version\n");
+                        printf("toywasm wasm interpreter\n");
+#if defined(__clang_version__)
+                        printf("__clang_version__ = %s\n", __clang_version__);
+#endif
+#if defined(__wasi__)
+                        printf("__wasi__ defined\n");
+#else
+                        printf("__wasi__ not defined\n");
+#endif
+#if defined(__x86_64__)
+                        printf("__x86_64__ defined\n");
+#else
+                        printf("__x86_64__ not defined\n");
+#endif
                 } else if (!strcmp(cmd, ":init")) {
                         repl_rollback(state, &cp);
                 } else if (!strcmp(cmd, ":load") && opt != NULL) {
