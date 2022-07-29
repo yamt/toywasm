@@ -73,7 +73,7 @@ const struct option longopts[] = {
         },
         {
                 "wasi-dir",
-                no_argument,
+                required_argument,
                 NULL,
                 opt_wasi_dir,
         },
