@@ -1305,6 +1305,13 @@ module_load(struct module *m, const uint8_t *p, const uint8_t *ep,
          * https://webassembly.github.io/spec/core/valid/modules.html
          */
 
+        /*
+         * Note: This validation is a bit special because the number of
+         * data segments is not known when we validate instructions.
+         *
+         * See the note in:
+         * https://webassembly.github.io/spec/core/binary/modules.html#data-count-section
+         */
         if (ctx->expected_ndatas > m->ndatas) {
                 report_error(&ctx->report, "dataidx validation error");
                 ret = EINVAL;
