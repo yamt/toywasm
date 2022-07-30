@@ -582,6 +582,12 @@ repl_print_version(void)
 #if defined(__x86_64__)
         printf("__x86_64__ defined\n");
 #endif
+#if defined(__APPLE__)
+        printf("__APPLE__ defined\n");
+#endif
+#if defined(__linux__)
+        printf("__linux__ defined\n");
+#endif
 #if defined(USE_SEPARATE_EXECUTE)
         printf("USE_SEPARATE_EXECUTE defined\n");
 #endif
