@@ -136,7 +136,7 @@ main(int argc, char *const *argv)
                         break;
                 case opt_version:
                         repl_print_version();
-                        exit(0);
+                        break;
                 case opt_wasi:
                         ret = repl_load_wasi(state);
                         if (ret != 0) {
