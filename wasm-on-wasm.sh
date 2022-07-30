@@ -22,7 +22,7 @@ fetch_wasi_sdk()
         exit 1
         ;;
     esac
-    MAJOR=14
+    MAJOR=16
     MINOR=0
     TAR=wasi-sdk-${MAJOR}.${MINOR}-${PLATFORM}.tar.gz
     if [ ! -f ${DIST_DIR}/${TAR} ]; then
