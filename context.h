@@ -64,6 +64,7 @@ enum trapid {
         TRAP_CALL_INDIRECT_FUNCTYPE_MISMATCH,
         TRAP_INVALID_CONVERSION_TO_INTEGER,
         TRAP_VOLUNTARY_EXIT,
+        TRAP_OUT_OF_BOUNDS_DATA_ACCESS,
 };
 
 struct validation_context {
@@ -84,6 +85,8 @@ struct validation_context {
 
         bool const_expr;
         bool generate_jump_table;
+
+        uint32_t expected_ndatas; /* max dataidx seen + 1 */
 
         struct report *report;
 };

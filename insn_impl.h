@@ -865,6 +865,54 @@ CVTOP(i64_trunc_sat_f32_u, f32, i64, TRUNC_SAT_U_32_64)
 CVTOP(i64_trunc_sat_f64_s, f64, i64, TRUNC_SAT_S_64_64)
 CVTOP(i64_trunc_sat_f64_u, f64, i64, TRUNC_SAT_U_64_64)
 
+INSN_IMPL(memory_init)
+{
+        int ret;
+        LOAD_CTX;
+        uint32_t memidx = 0;
+        READ_LEB_U32(dataidx);
+        uint8_t zero;
+        ret = read_u8(&p, ep, &zero);
+        CHECK_RET(ret);
+        CHECK(zero == 0);
+        struct module *m = MODULE;
+        CHECK(memidx < m->nimportedmems + m->nmems);
+        POP_VAL(TYPE_i32, n);
+        POP_VAL(TYPE_i32, s);
+        POP_VAL(TYPE_i32, d);
+        if (EXECUTING) {
+                struct exec_context *ectx = ECTX;
+                const struct data *data = &m->datas[dataidx];
+                uint32_t d = val_d.u.i32;
+                uint32_t s = val_s.u.i32;
+                uint32_t n = val_n.u.i32;
+                if (s >= data->init_size || n > data->init_size - s) {
+                        ret = trap_with_id(
+                                ectx, TRAP_OUT_OF_BOUNDS_DATA_ACCESS,
+                                "out of bounds data access: dataidx %" PRIu32
+                                ", init_size %" PRIu32 ", s %" PRIu32
+                                ", n %" PRIu32,
+                                dataidx, data->init_size, s, n);
+                        goto fail;
+                }
+                void *p;
+                ret = memory_getptr(ectx, memidx, d, 0, n, &p);
+                if (ret != 0) {
+                        goto fail;
+                }
+                memcpy(p, &data->init[s], n);
+        } else if (VALIDATING) {
+                struct validation_context *vctx = VCTX;
+                if (vctx->expected_ndatas <= dataidx) {
+                        vctx->expected_ndatas = dataidx + 1;
+                }
+        }
+        SAVE_CTX;
+        INSN_SUCCESS;
+fail:
+        return ret;
+}
+
 INSN_IMPL(memory_copy)
 {
         int ret;

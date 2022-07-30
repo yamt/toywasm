@@ -410,6 +410,7 @@ print_trap(const struct exec_context *ctx)
                 msg = "integer overflow";
                 break;
         case TRAP_OUT_OF_BOUNDS_MEMORY_ACCESS:
+        case TRAP_OUT_OF_BOUNDS_DATA_ACCESS:
                 msg = "out of bounds memory access";
                 break;
         case TRAP_TOO_MANY_FRAMES:

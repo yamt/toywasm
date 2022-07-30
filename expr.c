@@ -152,6 +152,9 @@ read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
                    ", vals %" PRIu32,
                    expr->end - expr->start, ei->njumps * sizeof(*ei->jumps),
                    ei->maxlabels, ei->maxvals);
+        if (lctx->expected_ndatas < vctx->expected_ndatas) {
+                lctx->expected_ndatas = vctx->expected_ndatas;
+        }
         validation_context_clear(vctx);
         return 0;
 fail:

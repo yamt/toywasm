@@ -1305,6 +1305,11 @@ module_load(struct module *m, const uint8_t *p, const uint8_t *ep,
          * https://webassembly.github.io/spec/core/valid/modules.html
          */
 
+        if (ctx->expected_ndatas > m->ndatas) {
+                report_error(&ctx->report, "dataidx validation error");
+                ret = EINVAL;
+                goto fail;
+        }
         ret = 0;
 fail:
         return ret;
