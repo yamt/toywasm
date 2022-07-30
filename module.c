@@ -1096,10 +1096,19 @@ read_data(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
         if (ret != 0) {
                 goto fail;
         }
+        data->memory = 0;
         switch (u32) {
+        case 1:
+                data->mode = DATA_MODE_PASSIVE;
+                break;
+        case 2:
+                ret = read_leb_u32(&p, ep, &data->memory);
+                if (ret != 0) {
+                        goto fail;
+                }
+                /* fallthrough */
         case 0:
                 data->mode = DATA_MODE_ACTIVE;
-                data->memory = 0;
                 if (data->memory >= ctx->module->nmems) {
                         ret = EINVAL;
                         goto fail;
@@ -1110,7 +1119,7 @@ read_data(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
                 }
                 break;
         default:
-                xlog_trace("unimplemented data %" PRIu32, u32);
+                xlog_error("unimplemented data %" PRIu32, u32);
                 goto fail;
         }
 
