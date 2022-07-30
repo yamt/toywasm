@@ -864,3 +864,78 @@ CVTOP(i64_trunc_sat_f32_s, f32, i64, TRUNC_SAT_S_32_64)
 CVTOP(i64_trunc_sat_f32_u, f32, i64, TRUNC_SAT_U_32_64)
 CVTOP(i64_trunc_sat_f64_s, f64, i64, TRUNC_SAT_S_64_64)
 CVTOP(i64_trunc_sat_f64_u, f64, i64, TRUNC_SAT_U_64_64)
+
+INSN_IMPL(memory_copy)
+{
+        int ret;
+        LOAD_CTX;
+        uint32_t memidx = 0;
+        uint8_t zero;
+        ret = read_u8(&p, ep, &zero);
+        CHECK_RET(ret);
+        CHECK(zero == 0);
+        ret = read_u8(&p, ep, &zero);
+        CHECK_RET(ret);
+        CHECK(zero == 0);
+        struct module *m = MODULE;
+        CHECK(memidx < m->nimportedmems + m->nmems);
+        POP_VAL(TYPE_i32, n);
+        POP_VAL(TYPE_i32, s);
+        POP_VAL(TYPE_i32, d);
+        if (EXECUTING) {
+                struct exec_context *ectx = ECTX;
+                uint32_t n = val_n.u.i32;
+                void *src_p;
+                void *dst_p;
+                bool moved;
+retry:
+                ret = memory_getptr(ectx, memidx, val_s.u.i32, 0, n, &src_p);
+                if (ret != 0) {
+                        goto fail;
+                }
+                moved = false;
+                ret = memory_getptr2(ectx, memidx, val_d.u.i32, 0, n, &dst_p,
+                                     &moved);
+                if (ret != 0) {
+                        goto fail;
+                }
+                if (moved) {
+                        goto retry;
+                }
+                memmove(dst_p, src_p, n);
+        }
+        SAVE_CTX;
+        INSN_SUCCESS;
+fail:
+        return ret;
+}
+
+INSN_IMPL(memory_fill)
+{
+        int ret;
+        LOAD_CTX;
+        uint32_t memidx = 0;
+        uint8_t zero;
+        ret = read_u8(&p, ep, &zero);
+        CHECK_RET(ret);
+        CHECK(zero == 0);
+        struct module *m = MODULE;
+        CHECK(memidx < m->nimportedmems + m->nmems);
+        POP_VAL(TYPE_i32, n);
+        POP_VAL(TYPE_i32, val);
+        POP_VAL(TYPE_i32, d);
+        if (EXECUTING) {
+                struct exec_context *ectx = ECTX;
+                void *p;
+                uint32_t n = val_n.u.i32;
+                ret = memory_getptr(ectx, memidx, val_d.u.i32, 0, n, &p);
+                if (ret != 0) {
+                        goto fail;
+                }
+                memset(p, (uint8_t)val_val.u.i32, n);
+        }
+        SAVE_CTX;
+        INSN_SUCCESS;
+fail:
+        return ret;
+}
