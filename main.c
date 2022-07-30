@@ -18,6 +18,7 @@ enum longopt {
         opt_repl,
         opt_repl_prompt,
         opt_trace,
+        opt_version,
         opt_wasi,
         opt_wasi_dir,
 };
@@ -64,6 +65,12 @@ const struct option longopts[] = {
                 no_argument,
                 NULL,
                 opt_trace,
+        },
+        {
+                "version",
+                no_argument,
+                NULL,
+                opt_version,
         },
         {
                 "wasi",
@@ -127,6 +134,9 @@ main(int argc, char *const *argv)
                 case opt_trace:
                         xlog_tracing = 1;
                         break;
+                case opt_version:
+                        repl_print_version();
+                        exit(0);
                 case opt_wasi:
                         ret = repl_load_wasi(state);
                         if (ret != 0) {

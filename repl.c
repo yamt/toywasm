@@ -569,6 +569,30 @@ fail:
         return ret;
 }
 
+void
+repl_print_version(void)
+{
+        printf("toywasm wasm interpreter\n");
+#if defined(__clang_version__)
+        printf("__clang_version__ = %s\n", __clang_version__);
+#endif
+#if defined(__wasi__)
+        printf("__wasi__ defined\n");
+#endif
+#if defined(__x86_64__)
+        printf("__x86_64__ defined\n");
+#endif
+#if defined(USE_SEPARATE_EXECUTE)
+        printf("USE_SEPARATE_EXECUTE defined\n");
+#endif
+#if defined(USE_TAILCALL)
+        printf("USE_TAILCALL defined\n");
+#endif
+#if defined(ENABLE_TRACING)
+        printf("ENABLE_TRACING defined\n");
+#endif
+}
+
 int
 repl(void)
 {
@@ -592,20 +616,7 @@ repl(void)
                 }
                 char *opt = strtok(NULL, "\n");
                 if (!strcmp(cmd, ":version")) {
-                        printf("toywasm wasm interpreter\n");
-#if defined(__clang_version__)
-                        printf("__clang_version__ = %s\n", __clang_version__);
-#endif
-#if defined(__wasi__)
-                        printf("__wasi__ defined\n");
-#else
-                        printf("__wasi__ not defined\n");
-#endif
-#if defined(__x86_64__)
-                        printf("__x86_64__ defined\n");
-#else
-                        printf("__x86_64__ not defined\n");
-#endif
+                        repl_print_version();
                 } else if (!strcmp(cmd, ":init")) {
                         repl_rollback(state, &cp);
                 } else if (!strcmp(cmd, ":load") && opt != NULL) {
