@@ -275,6 +275,11 @@ wasi_convert_errno(int host_errno)
         case EINVAL:
                 wasmerrno = 28;
                 break;
+#if defined(ENOTCAPABLE)
+        case ENOTCAPABLE:
+                wasmerrno = 76;
+                break;
+#endif
         default:
                 wasmerrno = 29; /* EIO */
         }
