@@ -40,12 +40,14 @@ struct repl_module_state {
         struct instance *inst;
 };
 
-#define MAX_MODULES 10
+#define MAX_MODULES 120
 
 struct repl_state {
         struct repl_module_state modules[MAX_MODULES];
         unsigned int nmodules;
         struct import_object *imports;
+        unsigned int nregister;
+        char *registered_names[MAX_MODULES];
         struct val *param;
         struct val *result;
         struct wasi_instance *wasi;
@@ -53,6 +55,7 @@ struct repl_state {
 
 struct repl_state_checkpoint {
         unsigned int nmodules;
+        unsigned int nregister;
         struct import_object *imports;
 };
 
@@ -134,6 +137,7 @@ void
 repl_checkpoint(struct repl_state *state, struct repl_state_checkpoint *cp)
 {
         cp->nmodules = state->nmodules;
+        cp->nregister = state->nregister;
         cp->imports = state->imports;
 }
 
@@ -144,6 +148,9 @@ repl_rollback(struct repl_state *state, const struct repl_state_checkpoint *cp)
                 struct import_object *im = state->imports;
                 state->imports = im->next;
                 import_object_destroy(im);
+        }
+        while (state->nregister > cp->nregister) {
+                free(state->registered_names[--state->nregister]);
         }
         while (state->nmodules > cp->nmodules) {
                 repl_unload(&state->modules[--state->nmodules]);
@@ -312,18 +319,27 @@ repl_register(struct repl_state *state, const char *module_name)
         if (state->nmodules == 0) {
                 return EPROTO;
         }
+        if (state->nregister == MAX_MODULES) {
+                return EOVERFLOW;
+        }
+        char *module_name1 = strdup(module_name);
+        if (module_name1 == NULL) {
+                return ENOMEM;
+        }
         struct repl_module_state *mod = &state->modules[state->nmodules - 1];
         struct instance *inst = mod->inst;
         assert(inst != NULL);
         struct import_object *im;
         int ret;
 
-        ret = import_object_create_for_exports(inst, module_name, &im);
+        ret = import_object_create_for_exports(inst, module_name1, &im);
         if (ret != 0) {
+                free(module_name1);
                 return ret;
         }
         im->next = state->imports;
         state->imports = im;
+        state->registered_names[state->nregister++] = module_name1;
         return 0;
 }
 
