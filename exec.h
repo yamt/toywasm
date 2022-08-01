@@ -22,6 +22,8 @@ uint32_t memory_grow(struct exec_context *ctx, uint32_t memidx,
                      uint32_t newsize);
 int table_init(struct exec_context *ctx, uint32_t tableidx, uint32_t elemidx,
                uint32_t d, uint32_t s, uint32_t n);
+int table_access(struct exec_context *ectx, uint32_t tableidx, uint32_t offset,
+                 uint32_t n);
 
 bool skip_expr(const uint8_t **p, bool goto_else);
 int exec_next_insn(const uint8_t *p, struct val *stack,

@@ -614,6 +614,23 @@ fail:
 }
 
 int
+table_access(struct exec_context *ectx, uint32_t tableidx, uint32_t offset,
+             uint32_t n)
+{
+        assert(tableidx < m->nimportedtables + m->ntables);
+        struct instance *inst = ectx->instance;
+        struct tableinst *t = VEC_ELEM(inst->tables, tableidx);
+        if (offset > t->size || n > t->size - offset) {
+                return trap_with_id(
+                        ectx, TRAP_OUT_OF_BOUNDS_TABLE_ACCESS,
+                        "out of bounds table access: table %" PRIu32
+                        ", size %" PRIu32 ", offset %" PRIu32 ", n %" PRIu32,
+                        tableidx, t->size, offset, n);
+        }
+        return 0;
+}
+
+int
 table_init(struct exec_context *ectx, uint32_t tableidx, uint32_t elemidx,
            uint32_t d, uint32_t s, uint32_t n)
 {
@@ -621,7 +638,6 @@ table_init(struct exec_context *ectx, uint32_t tableidx, uint32_t elemidx,
         assert(elemidx < m->nelems);
         struct instance *inst = ectx->instance;
         struct module *m = inst->module;
-        struct tableinst *t = VEC_ELEM(inst->tables, tableidx);
         int ret;
         bool dropped =
                 inst->elem_dropped[elemidx / 32] & (1U << (elemidx % 32));
@@ -636,14 +652,11 @@ table_init(struct exec_context *ectx, uint32_t tableidx, uint32_t elemidx,
                         elemidx, dropped, elem->init_size, s, n);
                 goto fail;
         }
-        if (d >= t->size || n > t->size - d) {
-                ret = trap_with_id(ectx, TRAP_OUT_OF_BOUNDS_TABLE_ACCESS,
-                                   "out of bounds table access: table %" PRIu32
-                                   ", size %" PRIu32 ", d %" PRIu32
-                                   ", n %" PRIu32,
-                                   tableidx, t->size, d, n);
+        ret = table_access(ectx, tableidx, d, n);
+        if (ret != 0) {
                 goto fail;
         }
+        struct tableinst *t = VEC_ELEM(inst->tables, tableidx);
         uint32_t i;
         for (i = 0; i < n; i++) {
                 if (elem->funcs != NULL) {
