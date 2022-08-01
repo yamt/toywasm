@@ -354,12 +354,12 @@ instance_create(struct module *m, struct instance **instp,
                 }
                 uint32_t offset = val.u.i32;
                 struct tableinst *t = VEC_ELEM(inst->tables, tableidx);
-                if (offset + elem->nfuncs > t->size) {
+                if (offset + elem->init_size > t->size) {
                         ret = EOVERFLOW;
                         goto fail;
                 }
                 uint32_t j;
-                for (j = 0; j < elem->nfuncs; j++) {
+                for (j = 0; j < elem->init_size; j++) {
                         struct funcref *ref = &t->vals[offset + j].u.funcref;
                         ref->func = VEC_ELEM(inst->funcs, elem->funcs[j]);
                         xlog_trace("table %" PRIu32 " offset %" PRIu32

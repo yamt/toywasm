@@ -100,9 +100,9 @@ enum element_mode {
 
 struct element {
         enum valtype type;
-        // struct expr init;
+        uint32_t init_size; /* entries in init_exprs or funcs */
+        struct expr *init_exprs;
         uint32_t *funcs;
-        uint32_t nfuncs;
         enum element_mode mode;
 
         /* only for active */

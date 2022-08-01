@@ -940,6 +940,20 @@ fail:
         return ret;
 }
 
+struct read_element_init_expr_context {
+        struct load_context *lctx;
+        struct element *elem;
+};
+
+int
+read_element_init_expr(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
+                       struct expr *e, void *vctx)
+{
+        struct read_element_init_expr_context *ctx = vctx;
+        struct element *elem = ctx->elem;
+        return read_const_expr(pp, ep, e, elem->type, ctx->lctx);
+}
+
 /*
  * https://webassembly.github.io/spec/core/binary/modules.html#element-section
  * https://webassembly.github.io/spec/core/valid/modules.html#element-segments
@@ -949,67 +963,170 @@ read_element(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
              struct element *elem, void *vctx)
 {
         struct load_context *ctx = vctx;
-        struct module *module;
+        struct module *module = ctx->module;
         const uint8_t *p = *pp;
         uint32_t u32;
-        uint32_t nfuncs = 0;
-        uint32_t *funcs = NULL;
+        uint32_t tableidx;
+        enum valtype et;
+        uint8_t u8;
+        struct read_element_init_expr_context init_expr_ctx = {
+                .lctx = ctx,
+                .elem = elem,
+        };
         uint32_t i;
         int ret;
 
+        elem->init_size = 0;
+        elem->init_exprs = NULL;
+        elem->funcs = NULL;
         ret = read_leb_u32(&p, ep, &u32);
         if (ret != 0) {
                 goto fail;
         }
+        if (u32 > 7) {
+                report_error(&ctx->report, "unimplemented element %" PRIu32,
+                             u32);
+                ret = EINVAL;
+                goto fail;
+        }
+        switch (u32) {
+        case 2:
+        case 6:
+                /* tableidx */
+                ret = read_leb_u32(&p, ep, &tableidx);
+                if (ret != 0) {
+                        goto fail;
+                }
+                elem->table = tableidx;
+                break;
+        default:
+                /*
+                 * 0, 4 -> tableidx 0 is implicit
+                 *
+                 * others -> non-active, no tableidx here
+                 */
+                elem->table = 0;
+                break;
+        }
         switch (u32) {
         case 0:
-                elem->type = TYPE_FUNCREF;
+        case 2:
+        case 4:
+        case 6:
                 elem->mode = ELEM_MODE_ACTIVE;
-                elem->table = 0;
-                module = ctx->module;
-                if (elem->table >= module->nimportedtables + module->ntables) {
-                        ret = EINVAL;
-                        goto fail;
-                }
-                if (module_tabletype(module, elem->table)->et != elem->type) {
-                        ret = EINVAL;
-                        goto fail;
-                }
+                /* offset */
                 ret = read_const_expr(&p, ep, &elem->offset, TYPE_i32, ctx);
                 if (ret != 0) {
                         goto fail;
                 }
-                ret = read_vec_u32(&p, ep, &nfuncs, &funcs);
+                break;
+        case 1:
+        case 5:
+                elem->mode = ELEM_MODE_PASSIVE;
+                break;
+        default:
+                elem->mode = ELEM_MODE_DECLARATIVE;
+                break;
+        }
+        switch (u32) {
+        case 1:
+        case 2:
+        case 3:
+                /* elemkind */
+                ret = read_u8(&p, ep, &u8);
                 if (ret != 0) {
                         goto fail;
                 }
-                for (i = 0; i < nfuncs; i++) {
-                        if (funcs[i] >= ctx->module->nimportedfuncs +
-                                                ctx->module->nfuncs) {
+                if (u8 != 0) {
+                        report_error(&ctx->report, "unexpected elemkind %u",
+                                     u8);
+                        ret = EINVAL;
+                        goto fail;
+                }
+                /* fallthrough */
+        default: /* 0, 4 */
+                elem->type = TYPE_FUNCREF;
+                break;
+        case 5:
+        case 6:
+        case 7:
+                /* reftype */
+                ret = read_u8(&p, ep, &u8);
+                if (ret != 0) {
+                        goto fail;
+                }
+                et = u8;
+                if (!is_reftype(et)) {
+                        report_error(&ctx->report, "unexpected reftype %u",
+                                     u8);
+                        ret = EINVAL;
+                        goto fail;
+                }
+                elem->type = et;
+                break;
+        }
+        switch (u32) {
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+                ret = read_vec_u32(&p, ep, &elem->init_size, &elem->funcs);
+                if (ret != 0) {
+                        goto fail;
+                }
+                for (i = 0; i < elem->init_size; i++) {
+                        if (elem->funcs[i] >= ctx->module->nimportedfuncs +
+                                                      ctx->module->nfuncs) {
                                 ret = EINVAL;
                                 goto fail;
                         }
                 }
                 break;
-        default:
-                xlog_trace("unimplemented element %" PRIu32, u32);
+        case 4:
+        case 5:
+        case 6:
+        case 7:
+                /*
+                 * vec(expr)
+                 */
+                ret = read_vec_with_ctx2(&p, ep, sizeof(*elem->init_exprs),
+                                         read_element_init_expr, clear_expr,
+                                         &init_expr_ctx, &elem->init_size,
+                                         &elem->init_exprs);
+                if (ret != 0) {
+                        goto fail;
+                }
+        }
+        if (elem->mode == ELEM_MODE_ACTIVE &&
+            elem->table >= module->nimportedtables + module->ntables) {
+                report_error(&ctx->report, "element tableidx out of range");
                 ret = EINVAL;
                 goto fail;
         }
-
-        elem->funcs = funcs;
-        elem->nfuncs = nfuncs;
+        enum valtype table_type = module_tabletype(module, elem->table)->et;
+        if (table_type != elem->type) {
+                report_error(&ctx->report, "element type mismatch %u != %u",
+                             table_type, elem->type);
+                ret = EINVAL;
+                goto fail;
+        }
         ret = 0;
         *pp = p;
         return 0;
 fail:
-        free(funcs);
         return ret;
 }
 
 void
 clear_element(struct element *elem)
 {
+        if (elem->init_exprs != NULL) {
+                uint32_t i;
+                for (i = 0; i < elem->init_size; i++) {
+                        clear_expr(&elem->init_exprs[i]);
+                }
+                free(elem->init_exprs);
+        }
         free(elem->funcs);
         clear_expr(&elem->offset);
 }
