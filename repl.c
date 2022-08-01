@@ -413,6 +413,13 @@ print_trap(const struct exec_context *ctx)
         case TRAP_OUT_OF_BOUNDS_DATA_ACCESS:
                 msg = "out of bounds memory access";
                 break;
+        case TRAP_OUT_OF_BOUNDS_TABLE_ACCESS:
+        case TRAP_OUT_OF_BOUNDS_ELEMENT_ACCESS:
+                msg = "out of bounds table access";
+                break;
+        case TRAP_CALL_INDIRECT_NULL_FUNCREF:
+                msg = "uninitialized element";
+                break;
         case TRAP_TOO_MANY_FRAMES:
         case TRAP_TOO_MANY_STACKVALS:
                 msg = "stack overflow";
