@@ -882,25 +882,34 @@ INSN_IMPL(memory_init)
         POP_VAL(TYPE_i32, d);
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
-                const struct data *data = &m->datas[dataidx];
                 uint32_t d = val_d.u.i32;
                 uint32_t s = val_s.u.i32;
                 uint32_t n = val_n.u.i32;
-                if (s >= data->init_size || n > data->init_size - s) {
-                        ret = trap_with_id(
-                                ectx, TRAP_OUT_OF_BOUNDS_DATA_ACCESS,
-                                "out of bounds data access: dataidx %" PRIu32
-                                ", init_size %" PRIu32 ", s %" PRIu32
-                                ", n %" PRIu32,
-                                dataidx, data->init_size, s, n);
-                        goto fail;
-                }
-                void *p;
-                ret = memory_getptr(ectx, memidx, d, 0, n, &p);
+                ret = memory_init(ectx, memidx, dataidx, d, s, n);
                 if (ret != 0) {
                         goto fail;
                 }
-                memcpy(p, &data->init[s], n);
+        } else if (VALIDATING) {
+                struct validation_context *vctx = VCTX;
+                if (vctx->expected_ndatas <= dataidx) {
+                        vctx->expected_ndatas = dataidx + 1;
+                }
+        }
+        SAVE_CTX;
+        INSN_SUCCESS;
+fail:
+        return ret;
+}
+
+INSN_IMPL(data_drop)
+{
+        int ret;
+        LOAD_CTX;
+        READ_LEB_U32(dataidx);
+        if (EXECUTING) {
+                struct exec_context *ectx = ECTX;
+                struct instance *inst = ectx->instance;
+                inst->data_dropped[dataidx / 32] |= 1U << (dataidx % 32);
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
                 if (vctx->expected_ndatas <= dataidx) {

@@ -10,3 +10,5 @@ void *zalloc(size_t sz);
 #define ARRAY_FOREACH(p, a, sz) for (p = a; p < a + sz; p++)
 
 #define ZERO(p) memset(p, 0, sizeof(*p))
+
+#define HOWMANY(a, b) ((a + (b - 1)) / b)

@@ -436,6 +436,7 @@ const static struct instruction_desc instructions_fc[] = {
         INSTRUCTION(0x07, "i64.trunc_sat_f64_u", i64_trunc_sat_f64_u, 0),
 
         INSTRUCTION(0x08, "memory.init", memory_init, 0),
+        INSTRUCTION(0x09, "data.drop", data_drop, 0),
         INSTRUCTION(0x0a, "memory.copy", memory_copy, 0),
         INSTRUCTION(0x0b, "memory.fill", memory_fill, 0),
 };

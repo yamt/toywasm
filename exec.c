@@ -581,29 +581,33 @@ exec_const_expr(const struct expr *expr, enum valtype type, struct val *result,
 }
 
 int
-memory_init(struct exec_context *ctx, uint32_t dataidx, uint32_t dest,
-            uint32_t src, uint32_t n)
+memory_init(struct exec_context *ectx, uint32_t memidx, uint32_t dataidx,
+            uint32_t d, uint32_t s, uint32_t n)
 {
-        struct instance *inst = ctx->instance;
+        struct instance *inst = ectx->instance;
         const struct module *m = inst->module;
+        assert(memidx < m->nimportedmems + m->nmems);
         assert(dataidx < m->ndatas);
-        const struct data *d = &m->datas[dataidx];
-        uint32_t memidx = d->memory;
-        xlog_trace("memory init: at %04" PRIx32 " %08" PRIx32 " - %08" PRIx32
-                   ", size %" PRIu32,
-                   memidx, dest, dest + n, n);
         int ret;
-        if (src + n > d->init_size) {
-                ret = trap(ctx, "memory.init out of band source");
+        bool dropped =
+                inst->data_dropped[dataidx / 32] & (1U << (dataidx % 32));
+        const struct data *data = &m->datas[dataidx];
+        if ((dropped && !(s == 0 && n == 0)) || s > data->init_size ||
+            n > data->init_size - s) {
+                ret = trap_with_id(
+                        ectx, TRAP_OUT_OF_BOUNDS_DATA_ACCESS,
+                        "out of bounds data access: dataidx %" PRIu32
+                        ", dropped %u, init_size %" PRIu32 ", s %" PRIu32
+                        ", n %" PRIu32,
+                        dataidx, dropped, data->init_size, s, n);
                 goto fail;
         }
         void *p;
-        ret = memory_getptr(ctx, memidx, dest, 0, n, &p);
+        ret = memory_getptr(ectx, memidx, d, 0, n, &p);
         if (ret != 0) {
-                ret = trap(ctx, "memory.init out of band dest");
                 goto fail;
         }
-        memcpy(p, d->init + src, n);
+        memcpy(p, &data->init[s], n);
         ret = 0;
 fail:
         return ret;

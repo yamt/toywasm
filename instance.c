@@ -323,6 +323,11 @@ instance_create(struct module *m, struct instance **instp,
                 }
                 VEC_ELEM(inst->tables, i) = tinst;
         }
+        inst->data_dropped = calloc(HOWMANY(m->ndatas, 32), sizeof(uint32_t));
+        if (inst->data_dropped == NULL) {
+                ret = ENOMEM;
+                goto fail;
+        }
         ctx = &ctx0;
         exec_context_init(ctx, inst);
         ctx->report = report;
@@ -377,7 +382,7 @@ instance_create(struct module *m, struct instance **instp,
                         goto fail;
                 }
                 uint32_t offset = val.u.i32;
-                ret = memory_init(ctx, i, offset, 0, d->init_size);
+                ret = memory_init(ctx, d->memory, i, offset, 0, d->init_size);
                 if (ret != 0) {
                         goto fail;
                 }
@@ -443,6 +448,7 @@ instance_destroy(struct instance *inst)
                 free(*tp);
         }
         VEC_FREE(inst->tables);
+        free(inst->data_dropped);
         free(inst);
 }
 

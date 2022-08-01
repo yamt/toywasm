@@ -288,6 +288,8 @@ struct instance {
         VEC(, struct meminst *) mems;
         VEC(, struct tableinst *) tables;
         VEC(, struct globalinst *) globals;
+
+        uint32_t *data_dropped;
 };
 
 struct import_object_entry {
