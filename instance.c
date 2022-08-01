@@ -114,8 +114,8 @@ bool
 match_limits(const struct limits *a, const struct limits *b)
 {
         if (a->min >= b->min && (b->max == UINT32_MAX ||
-                                 (a->max == UINT32_MAX &&
-                                  b->max == UINT32_MAX && a->max <= b->max))) {
+                                 (a->max != UINT32_MAX &&
+                                  b->max != UINT32_MAX && a->max <= b->max))) {
                 return true;
         }
         return false;
