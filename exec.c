@@ -675,7 +675,7 @@ table_init(struct exec_context *ectx, uint32_t tableidx, uint32_t elemidx,
                            " initialized to %016" PRIx64
 
                            ,
-                           tableidx, offset + j, t->vals[offset + j].u.i64);
+                           tableidx, d + i, t->vals[d + i].u.i64);
         }
         ret = 0;
 fail:
