@@ -1240,7 +1240,8 @@ read_data(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
                 }
                 break;
         default:
-                xlog_error("unimplemented data %" PRIu32, u32);
+                report_error(&ctx->report, "unknown data %" PRIu32, u32);
+                ret = EINVAL;
                 goto fail;
         }
 
