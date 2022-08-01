@@ -439,6 +439,9 @@ const static struct instruction_desc instructions_fc[] = {
         INSTRUCTION(0x09, "data.drop", data_drop, 0),
         INSTRUCTION(0x0a, "memory.copy", memory_copy, 0),
         INSTRUCTION(0x0b, "memory.fill", memory_fill, 0),
+
+        INSTRUCTION(0x0c, "table.init", table_init, 0),
+        INSTRUCTION(0x0d, "elem.drop", elem_drop, 0),
 };
 
 const struct instruction_desc instructions[] = {
