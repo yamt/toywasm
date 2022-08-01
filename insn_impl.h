@@ -1042,3 +1042,40 @@ INSN_IMPL(elem_drop)
 fail:
         return ret;
 }
+
+INSN_IMPL(table_copy)
+{
+        int ret;
+        LOAD_CTX;
+        READ_LEB_U32(tableidx_dst);
+        READ_LEB_U32(tableidx_src);
+        struct module *m = MODULE;
+        CHECK(tableidx_dst < m->nimportedtables + m->ntables);
+        CHECK(tableidx_src < m->nimportedtables + m->ntables);
+        CHECK(m->tables[tableidx_dst].et == m->tables[tableidx_src].et);
+        POP_VAL(TYPE_i32, n);
+        POP_VAL(TYPE_i32, s);
+        POP_VAL(TYPE_i32, d);
+        if (EXECUTING) {
+                struct exec_context *ectx = ECTX;
+                struct instance *inst = ectx->instance;
+                uint32_t d = val_d.u.i32;
+                uint32_t s = val_s.u.i32;
+                uint32_t n = val_n.u.i32;
+                ret = table_access(ectx, tableidx_dst, d, n);
+                if (ret != 0) {
+                        goto fail;
+                }
+                ret = table_access(ectx, tableidx_src, s, n);
+                if (ret != 0) {
+                        goto fail;
+                }
+                memmove(&VEC_ELEM(inst->tables, tableidx_dst)->vals[d],
+                        &VEC_ELEM(inst->tables, tableidx_src)->vals[s],
+                        n * sizeof(struct val));
+        }
+        SAVE_CTX;
+        INSN_SUCCESS;
+fail:
+        return ret;
+}
