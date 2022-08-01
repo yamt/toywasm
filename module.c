@@ -951,6 +951,10 @@ read_element_init_expr(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
 {
         struct read_element_init_expr_context *ctx = vctx;
         struct element *elem = ctx->elem;
+        /*
+         * TODO this should be more restrictive than other const expr
+         * https://github.com/WebAssembly/spec/blob/main/proposals/bulk-memory-operations/Overview.md#element-segments
+         */
         return read_const_expr(pp, ep, e, elem->type, ctx->lctx);
 }
 
