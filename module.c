@@ -1218,6 +1218,7 @@ read_data(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
                 goto fail;
         }
         data->memory = 0;
+        struct module *m = ctx->module;
         switch (u32) {
         case 1:
                 data->mode = DATA_MODE_PASSIVE;
@@ -1230,7 +1231,7 @@ read_data(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
                 /* fallthrough */
         case 0:
                 data->mode = DATA_MODE_ACTIVE;
-                if (data->memory >= ctx->module->nmems) {
+                if (data->memory >= m->nimportedmems + m->nmems) {
                         ret = EINVAL;
                         goto fail;
                 }
