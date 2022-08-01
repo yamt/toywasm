@@ -617,8 +617,9 @@ int
 table_access(struct exec_context *ectx, uint32_t tableidx, uint32_t offset,
              uint32_t n)
 {
-        assert(tableidx < m->nimportedtables + m->ntables);
         struct instance *inst = ectx->instance;
+		struct module *m = inst->module;
+        assert(tableidx < m->nimportedtables + m->ntables);
         struct tableinst *t = VEC_ELEM(inst->tables, tableidx);
         if (offset > t->size || n > t->size - offset) {
                 return trap_with_id(
@@ -634,10 +635,10 @@ int
 table_init(struct exec_context *ectx, uint32_t tableidx, uint32_t elemidx,
            uint32_t d, uint32_t s, uint32_t n)
 {
-        assert(tableidx < m->nimportedtables + m->ntables);
-        assert(elemidx < m->nelems);
         struct instance *inst = ectx->instance;
         struct module *m = inst->module;
+        assert(tableidx < m->nimportedtables + m->ntables);
+        assert(elemidx < m->nelems);
         int ret;
         bool dropped =
                 inst->elem_dropped[elemidx / 32] & (1U << (elemidx % 32));
