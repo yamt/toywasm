@@ -290,6 +290,7 @@ struct instance {
         VEC(, struct globalinst *) globals;
 
         uint32_t *data_dropped;
+        uint32_t *elem_dropped;
 };
 
 struct import_object_entry {

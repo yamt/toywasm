@@ -561,7 +561,7 @@ int
 exec_const_expr(const struct expr *expr, enum valtype type, struct val *result,
                 struct exec_context *ctx)
 {
-        assert(ctx->frames.lsize == 0);
+        uint32_t saved_height = ctx->frames.lsize;
         static struct resulttype empty = {
                 .ntypes = 0,
                 .is_static = true,
@@ -576,7 +576,7 @@ exec_const_expr(const struct expr *expr, enum valtype type, struct val *result,
         if (ret != 0) {
                 return ret;
         }
-        assert(ctx->frames.lsize == 0);
+        assert(ctx->frames.lsize == saved_height);
         return 0;
 }
 
@@ -608,6 +608,62 @@ memory_init(struct exec_context *ectx, uint32_t memidx, uint32_t dataidx,
                 goto fail;
         }
         memcpy(p, &data->init[s], n);
+        ret = 0;
+fail:
+        return ret;
+}
+
+int
+table_init(struct exec_context *ectx, uint32_t tableidx, uint32_t elemidx,
+           uint32_t d, uint32_t s, uint32_t n)
+{
+        assert(tableidx < m->nimportedtables + m->ntables);
+        assert(elemidx < m->nelems);
+        struct instance *inst = ectx->instance;
+        struct module *m = inst->module;
+        struct tableinst *t = VEC_ELEM(inst->tables, tableidx);
+        int ret;
+        bool dropped =
+                inst->elem_dropped[elemidx / 32] & (1U << (elemidx % 32));
+        struct element *elem = &m->elems[elemidx];
+        if ((dropped && !(s == 0 && n == 0)) || s > elem->init_size ||
+            n > elem->init_size - s) {
+                ret = trap_with_id(
+                        ectx, TRAP_OUT_OF_BOUNDS_ELEMENT_ACCESS,
+                        "out of bounds element access: dataidx %" PRIu32
+                        ", dropped %u, init_size %" PRIu32 ", s %" PRIu32
+                        ", n %" PRIu32,
+                        elemidx, dropped, elem->init_size, s, n);
+                goto fail;
+        }
+        if (d >= t->size || n > t->size - d) {
+                ret = trap_with_id(ectx, TRAP_OUT_OF_BOUNDS_TABLE_ACCESS,
+                                   "out of bounds table access: table %" PRIu32
+                                   ", size %" PRIu32 ", d %" PRIu32
+                                   ", n %" PRIu32,
+                                   tableidx, t->size, d, n);
+                goto fail;
+        }
+        uint32_t i;
+        for (i = 0; i < n; i++) {
+                if (elem->funcs != NULL) {
+                        struct funcref *ref = &t->vals[d + i].u.funcref;
+                        ref->func = VEC_ELEM(inst->funcs, elem->funcs[s + i]);
+                } else {
+                        struct val val;
+                        ret = exec_const_expr(&elem->init_exprs[s + i],
+                                              elem->type, &val, ectx);
+                        if (ret != 0) {
+                                goto fail;
+                        }
+                        t->vals[d + i] = val;
+                }
+                xlog_trace("table %" PRIu32 " offset %" PRIu32
+                           " initialized to %016" PRIx64
+
+                           ,
+                           tableidx, offset + j, t->vals[offset + j].u.i64);
+        }
         ret = 0;
 fail:
         return ret;

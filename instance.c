@@ -328,6 +328,11 @@ instance_create(struct module *m, struct instance **instp,
                 ret = ENOMEM;
                 goto fail;
         }
+        inst->elem_dropped = calloc(HOWMANY(m->nelems, 32), sizeof(uint32_t));
+        if (inst->elem_dropped == NULL) {
+                ret = ENOMEM;
+                goto fail;
+        }
         ctx = &ctx0;
         exec_context_init(ctx, inst);
         ctx->report = report;
@@ -346,28 +351,16 @@ instance_create(struct module *m, struct instance **instp,
                 if (elem->mode != ELEM_MODE_ACTIVE) {
                         continue;
                 }
-                uint32_t tableidx = elem->table;
                 struct val val;
                 ret = exec_const_expr(&elem->offset, TYPE_i32, &val, ctx);
                 if (ret != 0) {
                         goto fail;
                 }
                 uint32_t offset = val.u.i32;
-                struct tableinst *t = VEC_ELEM(inst->tables, tableidx);
-                if (offset + elem->init_size > t->size) {
-                        ret = EOVERFLOW;
+                ret = table_init(ctx, elem->table, i, offset, 0,
+                                 elem->init_size);
+                if (ret != 0) {
                         goto fail;
-                }
-                uint32_t j;
-                for (j = 0; j < elem->init_size; j++) {
-                        struct funcref *ref = &t->vals[offset + j].u.funcref;
-                        ref->func = VEC_ELEM(inst->funcs, elem->funcs[j]);
-                        xlog_trace("table %" PRIu32 " offset %" PRIu32
-                                   " initialized to %016" PRIx64
-
-                                   ,
-                                   tableidx, offset + j,
-                                   t->vals[offset + j].u.i64);
                 }
         }
         for (i = 0; i < m->ndatas; i++) {
@@ -449,6 +442,7 @@ instance_destroy(struct instance *inst)
         }
         VEC_FREE(inst->tables);
         free(inst->data_dropped);
+        free(inst->elem_dropped);
         free(inst);
 }
 

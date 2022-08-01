@@ -65,6 +65,8 @@ enum trapid {
         TRAP_INVALID_CONVERSION_TO_INTEGER,
         TRAP_VOLUNTARY_EXIT,
         TRAP_OUT_OF_BOUNDS_DATA_ACCESS,
+        TRAP_OUT_OF_BOUNDS_TABLE_ACCESS,
+        TRAP_OUT_OF_BOUNDS_ELEMENT_ACCESS,
 };
 
 struct validation_context {
