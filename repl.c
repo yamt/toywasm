@@ -146,13 +146,16 @@ repl_checkpoint(struct repl_state *state, struct repl_state_checkpoint *cp)
 void
 repl_rollback(struct repl_state *state, const struct repl_state_checkpoint *cp)
 {
+        uint32_t n = 0;
         while (state->imports != cp->imports) {
                 struct import_object *im = state->imports;
                 state->imports = im->next;
                 import_object_destroy(im);
+                n++;
         }
         while (state->nregister > cp->nregister) {
                 free(state->registered_names[--state->nregister]);
+                n--;
         }
         while (state->nmodules > cp->nmodules) {
                 repl_unload(&state->modules[--state->nmodules]);
@@ -165,7 +168,9 @@ repl_rollback(struct repl_state *state, const struct repl_state_checkpoint *cp)
         if (state->wasi != NULL && cp->wasi == NULL) {
                 wasi_instance_destroy(state->wasi);
                 state->wasi = NULL;
+                n--;
         }
+        assert(n == 0);
 }
 
 void
