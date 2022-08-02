@@ -947,7 +947,7 @@ INSN_IMPL(ref_is_null)
         POP_VAL(TYPE_ANYREF, n);
         struct val val_result;
         if (EXECUTING) {
-                val_result.u.i32 = (int)(val_result.u.funcref.func == NULL);
+                val_result.u.i32 = (int)(val_n.u.funcref.func == NULL);
         }
         PUSH_VAL(TYPE_i32, result);
         SAVE_CTX;
