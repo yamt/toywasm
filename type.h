@@ -52,6 +52,7 @@ enum valtype {
         TYPE_EXTERNREF = 0x6f,
 
         /* a pseudo type for validation logic */
+        TYPE_ANYREF = 0xfe, /* any reftype */
         TYPE_UNKNOWN = 0xff,
 };
 

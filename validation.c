@@ -19,6 +19,7 @@ push_valtype(enum valtype type, struct validation_context *ctx)
         uint32_t nsize = ctx->nvaltypes + 1;
         int ret;
 
+        assert(type != TYPE_ANYREF);
         if (nsize == 0) {
                 return EOVERFLOW;
         }
@@ -54,8 +55,10 @@ pop_valtype(enum valtype expected_type, enum valtype *typep,
         }
         ctx->nvaltypes--;
         enum valtype t = ctx->valtypes[ctx->nvaltypes];
+        assert(t != TYPE_ANYREF);
         if (expected_type != TYPE_UNKNOWN && t != TYPE_UNKNOWN &&
-            t != expected_type) {
+            t != expected_type &&
+            !(expected_type == TYPE_ANYREF && is_reftype(t))) {
                 return validation_failure(ctx, "expected %x actual %x",
                                           expected_type, t);
         }
