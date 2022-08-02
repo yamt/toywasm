@@ -611,7 +611,7 @@ INSN_IMPL(global_set)
         LOAD_CTX;
         READ_LEB_U32(globalidx);
         CHECK(globalidx < m->nimportedglobals + m->nglobals);
-        POP_VAL(m->globals[globalidx].type.t, a);
+        POP_VAL(module_globaltype(m, globalidx)->t, a);
         if (EXECUTING) {
                 VEC_ELEM(ECTX->instance->globals, globalidx)->val = val_a;
         }
