@@ -234,11 +234,11 @@ instance_create(struct module *m, struct instance **instp,
         }
         for (i = 0; i < nmems; i++) {
                 struct meminst *mp;
+                const struct limits *mt = module_memtype(m, i);
                 if (i < m->nimportedmems) {
                         const struct import_object_entry *e;
-                        ret = find_import_entry(
-                                m, IMPORT_MEMORY, i, imports, check_memtype,
-                                module_memtype(m, i), &e, report);
+                        ret = find_import_entry(m, IMPORT_MEMORY, i, imports,
+                                                check_memtype, mt, &e, report);
                         if (ret != 0) {
                                 goto fail;
                         }
@@ -251,8 +251,8 @@ instance_create(struct module *m, struct instance **instp,
                                 ret = ENOMEM;
                                 goto fail;
                         }
-                        mp->size_in_pages = m->mems[i].min;
-                        mp->type = &m->mems[i];
+                        mp->type = mt;
+                        mp->size_in_pages = mt->min;
                 }
                 VEC_ELEM(inst->mems, i) = mp;
         }
@@ -264,11 +264,12 @@ instance_create(struct module *m, struct instance **instp,
         }
         for (i = 0; i < nglobals; i++) {
                 struct globalinst *ginst;
+                const struct globaltype *gt = module_globaltype(m, i);
                 if (i < m->nimportedglobals) {
                         const struct import_object_entry *e;
-                        ret = find_import_entry(
-                                m, IMPORT_GLOBAL, i, imports, check_globaltype,
-                                module_globaltype(m, i), &e, report);
+                        ret = find_import_entry(m, IMPORT_GLOBAL, i, imports,
+                                                check_globaltype, gt, &e,
+                                                report);
                         if (ret != 0) {
                                 goto fail;
                         }
@@ -281,7 +282,7 @@ instance_create(struct module *m, struct instance **instp,
                                 ret = ENOMEM;
                                 goto fail;
                         }
-                        ginst->type = &m->globals[i].type;
+                        ginst->type = gt;
                         memset(&ginst->val, 0, sizeof(ginst->val));
                 }
                 VEC_ELEM(inst->globals, i) = ginst;
@@ -294,11 +295,12 @@ instance_create(struct module *m, struct instance **instp,
         }
         for (i = 0; i < ntables; i++) {
                 struct tableinst *tinst;
+                const struct tabletype *tt = module_tabletype(m, i);
                 if (i < m->nimportedtables) {
                         const struct import_object_entry *e;
-                        ret = find_import_entry(
-                                m, IMPORT_TABLE, i, imports, check_tabletype,
-                                module_tabletype(m, i), &e, report);
+                        ret = find_import_entry(m, IMPORT_TABLE, i, imports,
+                                                check_tabletype, tt, &e,
+                                                report);
                         if (ret != 0) {
                                 goto fail;
                         }
@@ -311,7 +313,7 @@ instance_create(struct module *m, struct instance **instp,
                                 ret = ENOMEM;
                                 goto fail;
                         }
-                        tinst->type = &m->tables[i];
+                        tinst->type = tt;
                         tinst->size = tinst->type->lim.min;
                         ret = ARRAY_RESIZE(tinst->vals, tinst->size);
                         if (ret != 0) {
