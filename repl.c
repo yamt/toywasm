@@ -40,7 +40,8 @@ struct repl_module_state {
         struct instance *inst;
 };
 
-#define MAX_MODULES 120
+/* eg. const.wast has 366 modules */
+#define MAX_MODULES 500
 
 struct repl_state {
         struct repl_module_state modules[MAX_MODULES];
