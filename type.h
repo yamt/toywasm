@@ -84,6 +84,7 @@ struct val {
                 float f32;
                 double f64;
                 struct funcref funcref;
+                void *externref;
         } u;
 };
 

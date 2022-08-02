@@ -84,6 +84,16 @@ str_to_uint(const char *s, int base, uintmax_t *resultp)
         return 0;
 }
 
+int
+str_to_ptr(const char *s, int base, uintmax_t *resultp)
+{
+        if (!strcmp(s, "null")) {
+                *resultp = 0;
+                return 0;
+        }
+        return str_to_uint(s, base, resultp);
+}
+
 /* read something like: "aabbcc\n" */
 int
 read_hex_from_stdin(uint8_t *p, size_t left)
@@ -372,6 +382,18 @@ arg_conv(enum valtype type, const char *s, struct val *result)
                         result->u.i64 = u;
                 }
                 break;
+        case TYPE_FUNCREF:
+                ret = str_to_ptr(s, 0, &u);
+                if (ret == 0) {
+                        result->u.funcref.func = (void *)u;
+                }
+                break;
+        case TYPE_EXTERNREF:
+                ret = str_to_ptr(s, 0, &u);
+                if (ret == 0) {
+                        result->u.externref = (void *)u;
+                }
+                break;
         default:
                 xlog_printf("arg_conv: unimplementd type %02x\n", type);
                 ret = ENOTSUP;
@@ -406,6 +428,22 @@ repl_print_result(const struct resulttype *rt, const struct val *vals)
                         break;
                 case TYPE_f64:
                         printf("%s%" PRIu64 ":f64", sep, val->u.i64);
+                        break;
+                case TYPE_FUNCREF:
+                        if (val->u.funcref.func == NULL) {
+                                printf("%snull:funcref", sep);
+                        } else {
+                                printf("%s%" PRIuPTR ":funcref", sep,
+                                       (uintptr_t)val->u.funcref.func);
+                        }
+                        break;
+                case TYPE_EXTERNREF:
+                        if (val->u.externref == NULL) {
+                                printf("%snull:externref", sep);
+                        } else {
+                                printf("%s%" PRIuPTR ":externref", sep,
+                                       (uintptr_t)val->u.externref);
+                        }
                         break;
                 default:
                         xlog_printf("print_result: unimplementd type %02x\n",
