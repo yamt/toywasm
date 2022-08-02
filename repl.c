@@ -57,6 +57,7 @@ struct repl_state_checkpoint {
         unsigned int nmodules;
         unsigned int nregister;
         struct import_object *imports;
+        struct wasi_instance *wasi;
 };
 
 struct repl_state g_repl_state0;
@@ -139,6 +140,7 @@ repl_checkpoint(struct repl_state *state, struct repl_state_checkpoint *cp)
         cp->nmodules = state->nmodules;
         cp->nregister = state->nregister;
         cp->imports = state->imports;
+        cp->wasi = state->wasi;
 }
 
 void
@@ -159,6 +161,11 @@ repl_rollback(struct repl_state *state, const struct repl_state_checkpoint *cp)
         state->param = NULL;
         free(state->result);
         state->result = NULL;
+
+        if (state->wasi != NULL && cp->wasi == NULL) {
+                wasi_instance_destroy(state->wasi);
+                state->wasi = NULL;
+        }
 }
 
 void
@@ -167,11 +174,6 @@ repl_reset(struct repl_state *state)
         struct repl_state_checkpoint cp;
         memset(&cp, 0, sizeof(cp));
         repl_rollback(state, &cp);
-
-        if (state->wasi != NULL) {
-                wasi_instance_destroy(state->wasi);
-                state->wasi = NULL;
-        }
 }
 
 int
