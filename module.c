@@ -980,9 +980,7 @@ read_element(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
         uint32_t i;
         int ret;
 
-        elem->init_size = 0;
-        elem->init_exprs = NULL;
-        elem->funcs = NULL;
+        memset(elem, 0, sizeof(*elem));
         ret = read_leb_u32(&p, ep, &u32);
         if (ret != 0) {
                 goto fail;
@@ -1101,18 +1099,22 @@ read_element(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
                         goto fail;
                 }
         }
-        if (elem->mode == ELEM_MODE_ACTIVE &&
-            elem->table >= module->nimportedtables + module->ntables) {
-                report_error(&ctx->report, "element tableidx out of range");
-                ret = EINVAL;
-                goto fail;
-        }
-        enum valtype table_type = module_tabletype(module, elem->table)->et;
-        if (table_type != elem->type) {
-                report_error(&ctx->report, "element type mismatch %u != %u",
-                             table_type, elem->type);
-                ret = EINVAL;
-                goto fail;
+        if (elem->mode == ELEM_MODE_ACTIVE) {
+                if (elem->table >= module->nimportedtables + module->ntables) {
+                        report_error(&ctx->report,
+                                     "element tableidx out of range");
+                        ret = EINVAL;
+                        goto fail;
+                }
+                enum valtype table_type =
+                        module_tabletype(module, elem->table)->et;
+                if (table_type != elem->type) {
+                        report_error(&ctx->report,
+                                     "element type mismatch %u != %u",
+                                     table_type, elem->type);
+                        ret = EINVAL;
+                        goto fail;
+                }
         }
         ret = 0;
         *pp = p;
@@ -1213,6 +1215,7 @@ read_data(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
         uint32_t u32;
         int ret;
 
+        memset(data, 0, sizeof(*data));
         ret = read_leb_u32(&p, ep, &u32);
         if (ret != 0) {
                 goto fail;
