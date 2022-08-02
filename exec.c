@@ -618,7 +618,7 @@ table_access(struct exec_context *ectx, uint32_t tableidx, uint32_t offset,
              uint32_t n)
 {
         struct instance *inst = ectx->instance;
-		struct module *m = inst->module;
+        struct module *m = inst->module;
         assert(tableidx < m->nimportedtables + m->ntables);
         struct tableinst *t = VEC_ELEM(inst->tables, tableidx);
         if (offset > t->size || n > t->size - offset) {
