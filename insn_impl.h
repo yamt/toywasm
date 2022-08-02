@@ -621,6 +621,61 @@ fail:
         return ret;
 }
 
+INSN_IMPL(table_get)
+{
+        struct module *m = MODULE;
+        int ret;
+
+        LOAD_CTX;
+        READ_LEB_U32(tableidx);
+        CHECK(tableidx < m->nimportedtables + m->ntables);
+        POP_VAL(TYPE_i32, offset);
+        struct val val_c;
+        if (EXECUTING) {
+                struct exec_context *ectx = ECTX;
+                uint32_t offset = val_offset.u.i32;
+                ret = table_access(ectx, tableidx, offset, 1);
+                if (ret != 0) {
+                        goto fail;
+                }
+                struct instance *inst = ectx->instance;
+                struct tableinst *t = VEC_ELEM(inst->tables, tableidx);
+                val_c = t->vals[offset];
+        }
+        PUSH_VAL(module_tabletype(m, tableidx)->et, c);
+        SAVE_CTX;
+        INSN_SUCCESS;
+fail:
+        return ret;
+}
+
+INSN_IMPL(table_set)
+{
+        struct module *m = MODULE;
+        int ret;
+
+        LOAD_CTX;
+        READ_LEB_U32(tableidx);
+        CHECK(tableidx < m->nimportedtables + m->ntables);
+        POP_VAL(module_tabletype(m, tableidx)->et, a);
+        POP_VAL(TYPE_i32, offset);
+        if (EXECUTING) {
+                struct exec_context *ectx = ECTX;
+                uint32_t offset = val_offset.u.i32;
+                ret = table_access(ectx, tableidx, offset, 1);
+                if (ret != 0) {
+                        goto fail;
+                }
+                struct instance *inst = ectx->instance;
+                struct tableinst *t = VEC_ELEM(inst->tables, tableidx);
+                t->vals[offset] = val_a;
+        }
+        SAVE_CTX;
+        INSN_SUCCESS;
+fail:
+        return ret;
+}
+
 STOREOP(i32_store, 32, 32, )
 STOREOP(i64_store, 64, 64, )
 STOREOP_F(f32_store, 32, 32, )
@@ -864,6 +919,62 @@ CVTOP(i64_trunc_sat_f32_s, f32, i64, TRUNC_SAT_S_32_64)
 CVTOP(i64_trunc_sat_f32_u, f32, i64, TRUNC_SAT_U_32_64)
 CVTOP(i64_trunc_sat_f64_s, f64, i64, TRUNC_SAT_S_64_64)
 CVTOP(i64_trunc_sat_f64_u, f64, i64, TRUNC_SAT_U_64_64)
+
+INSN_IMPL(ref_null)
+{
+        int ret;
+        LOAD_CTX;
+        uint8_t u8;
+        ret = read_u8(&p, ep, &u8);
+        CHECK_RET(ret);
+        enum valtype type = u8;
+        CHECK(is_reftype(type));
+        struct val val_null;
+        if (EXECUTING) {
+                memset(&val_null, 0, sizeof(val_null));
+        }
+        PUSH_VAL(type, null);
+        SAVE_CTX;
+        INSN_SUCCESS;
+fail:
+        return ret;
+}
+
+INSN_IMPL(ref_is_null)
+{
+        int ret;
+        LOAD_CTX;
+        POP_VAL(TYPE_ANYREF, n);
+        struct val val_result;
+        if (EXECUTING) {
+                val_result.u.i32 = (int)(val_result.u.funcref.func == NULL);
+        }
+        PUSH_VAL(TYPE_i32, result);
+        SAVE_CTX;
+        INSN_SUCCESS;
+fail:
+        return ret;
+}
+
+INSN_IMPL(ref_func)
+{
+        int ret;
+        LOAD_CTX;
+        READ_LEB_U32(funcidx);
+        struct module *m = MODULE;
+        CHECK(funcidx < m->nimportedfuncs + m->nfuncs);
+        struct val val_result;
+        if (EXECUTING) {
+                struct exec_context *ectx = ECTX;
+                val_result.u.funcref.func =
+                        VEC_ELEM(ectx->instance->funcs, funcidx);
+        }
+        PUSH_VAL(TYPE_FUNCREF, result);
+        SAVE_CTX;
+        INSN_SUCCESS;
+fail:
+        return ret;
+}
 
 INSN_IMPL(memory_init)
 {

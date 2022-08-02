@@ -466,6 +466,8 @@ const struct instruction_desc instructions[] = {
         INSTRUCTION(0x22, "local.tee", local_tee, 0),
         INSTRUCTION(0x23, "global.get", global_get, INSN_FLAG_CONST),
         INSTRUCTION(0x24, "global.set", global_set, 0),
+        INSTRUCTION(0x25, "table_get", table_get, 0),
+        INSTRUCTION(0x26, "table_set", table_set, 0),
 
         INSTRUCTION(0x28, "i32.load", i32_load, 0),
         INSTRUCTION(0x29, "i64.load", i64_load, 0),
@@ -647,6 +649,10 @@ const struct instruction_desc instructions[] = {
         INSTRUCTION(0xc2, "i64.extend8_s", i64_extend8_s, 0),
         INSTRUCTION(0xc3, "i64.extend16_s", i64_extend16_s, 0),
         INSTRUCTION(0xc4, "i64.extend32_s", i64_extend32_s, 0),
+
+        INSTRUCTION(0xd0, "ref.null", ref_null, 0),
+        INSTRUCTION(0xd1, "ref.is_null", ref_is_null, 0),
+        INSTRUCTION(0xd2, "ref.func", ref_func, 0),
 
         INSTRUCTION_INDIRECT(0xfc, "fc", instructions_fc),
 };
