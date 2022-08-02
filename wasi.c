@@ -200,8 +200,7 @@ wasi_fd_alloc(struct wasi_instance *wasi, uint32_t *wasifdp)
 {
         struct wasi_fdinfo *fdinfo;
         uint32_t wasifd;
-        VEC_FOREACH_IDX(wasifd, fdinfo, wasi->fdtable)
-        {
+        VEC_FOREACH_IDX(wasifd, fdinfo, wasi->fdtable) {
                 if (fdinfo->hostfd == -1 && fdinfo->prestat_path == NULL) {
                         *wasifdp = wasifd;
                         return 0;
@@ -1001,8 +1000,7 @@ wasi_instance_destroy(struct wasi_instance *inst)
 {
         struct wasi_fdinfo *it;
         uint32_t i;
-        VEC_FOREACH_IDX(i, it, inst->fdtable)
-        {
+        VEC_FOREACH_IDX(i, it, inst->fdtable) {
                 int hostfd = it->hostfd;
 #if defined(__wasi__)
                 if (hostfd != -1 && hostfd >= 3) {

@@ -407,8 +407,7 @@ instance_destroy(struct instance *inst)
         struct module *m = inst->module;
         uint32_t i;
         struct funcinst **fp;
-        VEC_FOREACH_IDX(i, fp, inst->funcs)
-        {
+        VEC_FOREACH_IDX(i, fp, inst->funcs) {
                 if (i < m->nimportedfuncs) {
                         continue;
                 }
@@ -416,8 +415,7 @@ instance_destroy(struct instance *inst)
         }
         VEC_FREE(inst->funcs);
         struct meminst **mp;
-        VEC_FOREACH_IDX(i, mp, inst->mems)
-        {
+        VEC_FOREACH_IDX(i, mp, inst->mems) {
                 if (i < m->nimportedmems) {
                         continue;
                 }
@@ -426,8 +424,7 @@ instance_destroy(struct instance *inst)
         }
         VEC_FREE(inst->mems);
         struct globalinst **gp;
-        VEC_FOREACH_IDX(i, gp, inst->globals)
-        {
+        VEC_FOREACH_IDX(i, gp, inst->globals) {
                 if (i < m->nimportedglobals) {
                         continue;
                 }
