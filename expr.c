@@ -120,8 +120,10 @@ read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
                 uint32_t orig_n = vctx->nvaltypes;
 #endif
                 if (const_expr && (desc->flags & INSN_FLAG_CONST) == 0) {
-                        xlog_trace("instruction not allowed in a const expr");
-                        ret = EINVAL;
+                        ret = validation_failure(vctx,
+                                                 "instruction \"%s\" not "
+                                                 "allowed in a const expr",
+                                                 desc->name);
                         goto fail;
                 }
                 if (desc->process != NULL) {
