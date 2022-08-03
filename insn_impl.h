@@ -494,7 +494,8 @@ INSN_IMPL(select)
         if (EXECUTING) {
                 val_c = val_cond.u.i32 != 0 ? val_v1 : val_v2;
         } else if (VALIDATING) {
-                CHECK(is_numtype(type_v2) || is_vectype(type_v2));
+                CHECK(is_numtype(type_v2) || is_vectype(type_v2) ||
+                      type_v2 == TYPE_UNKNOWN);
         }
         PUSH_VAL(type_v2, c);
         INSN_SUCCESS;
