@@ -13,33 +13,6 @@
 #include "xlog.h"
 
 int
-invoke(uint32_t funcidx, const struct resulttype *paramtype,
-       const struct resulttype *resulttype, const struct val *params,
-       struct val *results, struct exec_context *ctx)
-{
-        struct instance *inst = ctx->instance;
-        struct funcinst *finst = VEC_ELEM(inst->funcs, funcidx);
-        const struct functype *ft = funcinst_functype(finst);
-        assert((paramtype == NULL) == (resulttype == NULL));
-        if (paramtype != NULL) {
-                if (compare_resulttype(paramtype, &ft->parameter) != 0 ||
-                    compare_resulttype(resulttype, &ft->result) != 0) {
-                        return EINVAL;
-                }
-        }
-        xlog_trace("func %u %u %u", funcidx, ft->parameter.ntypes,
-                   ft->result.ntypes);
-        if (finst->is_host) {
-                return finst->u.host.func(ctx, finst->u.host.instance, ft,
-                                          params, results);
-        }
-        struct module *m = inst->module;
-        struct func *func = &m->funcs[funcidx - m->nimportedfuncs];
-        return exec_expr(&func->e, func->nlocals, func->locals, &ft->parameter,
-                         &ft->result, params, results, ctx);
-}
-
-int
 find_entry_for_import(
         const struct import_object *imports, const struct import *im,
         int (*check)(const struct import_object_entry *e, const void *arg),

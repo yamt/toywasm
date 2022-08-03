@@ -255,17 +255,31 @@ jump_lookup(const struct expr_exec_info *ei, uint32_t blockpc)
         assert(false);
 }
 
+static const struct func *
+funcinst_func(const struct funcinst *fi)
+{
+        assert(!fi->is_host);
+        struct instance *inst = fi->u.wasm.instance;
+        uint32_t funcidx = fi->u.wasm.funcidx;
+        /*
+         * Note: We do never create multiple funcinst for a func.
+         * When re-exporting a function, we share the funcinst
+         * from the original instance directly.
+         */
+        assert(VEC_ELEM(inst->funcs, funcidx) == fi);
+        struct module *m = inst->module;
+        assert(funcidx >= m->nimportedfuncs);
+        assert(funcidx < m->nimportedfuncs + m->nfuncs);
+        return &m->funcs[funcidx - m->nimportedfuncs];
+}
+
 static int
 do_wasm_call(struct exec_context *ctx, const struct funcinst *finst)
 {
         int ret;
         const struct functype *type = funcinst_functype(finst);
         struct instance *callee_inst = finst->u.wasm.instance;
-        const struct module *callee = callee_inst->module;
-        uint32_t funcidx = finst->u.wasm.funcidx;
-        assert(funcidx < callee->nimportedfuncs + callee->nfuncs);
-        const struct func *func =
-                &callee->funcs[funcidx - callee->nimportedfuncs];
+        const struct func *func = funcinst_func(finst);
         uint32_t nparams = type->parameter.ntypes;
         uint32_t nresults = type->result.ntypes;
         assert(ctx->stack.lsize >= nparams);
@@ -724,4 +738,31 @@ memory_grow(struct exec_context *ctx, uint32_t memidx, uint32_t sz)
                    (uint32_t)new_size);
         mi->size_in_pages = new_size;
         return orig_size; /* success */
+}
+
+int
+invoke(uint32_t funcidx, const struct resulttype *paramtype,
+       const struct resulttype *resulttype, const struct val *params,
+       struct val *results, struct exec_context *ctx)
+{
+        struct instance *inst = ctx->instance;
+        struct funcinst *finst = VEC_ELEM(inst->funcs, funcidx);
+        const struct functype *ft = funcinst_functype(finst);
+        assert((paramtype == NULL) == (resulttype == NULL));
+        if (paramtype != NULL) {
+                if (compare_resulttype(paramtype, &ft->parameter) != 0 ||
+                    compare_resulttype(resulttype, &ft->result) != 0) {
+                        return EINVAL;
+                }
+        }
+        xlog_trace("func %u %u %u", funcidx, ft->parameter.ntypes,
+                   ft->result.ntypes);
+        if (finst->is_host) {
+                return finst->u.host.func(ctx, finst->u.host.instance, ft,
+                                          params, results);
+        }
+        const struct func *func = funcinst_func(finst);
+        ctx->instance = finst->u.wasm.instance;
+        return exec_expr(&func->e, func->nlocals, func->locals, &ft->parameter,
+                         &ft->result, params, results, ctx);
 }
