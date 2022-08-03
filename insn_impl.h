@@ -327,11 +327,7 @@ INSN_IMPL(br_table)
                                 ret = EINVAL;
                                 goto fail;
                         }
-                        ret = pop_valtypes(rt, vctx);
-                        if (ret != 0) {
-                                goto fail;
-                        }
-                        ret = push_valtypes(rt, vctx);
+                        ret = peek_valtypes(rt, vctx);
                         if (ret != 0) {
                                 goto fail;
                         }

@@ -171,6 +171,8 @@ int push_valtypes(const struct resulttype *types,
                   struct validation_context *ctx);
 int pop_valtypes(const struct resulttype *types,
                  struct validation_context *ctx);
+int peek_valtypes(const struct resulttype *types,
+                  struct validation_context *ctx);
 
 int push_ctrlframe(uint32_t pc, enum ctrlframe_op op, uint32_t jumpslot,
                    struct resulttype *start_types,

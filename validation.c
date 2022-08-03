@@ -108,6 +108,15 @@ pop_valtypes(const struct resulttype *types, struct validation_context *ctx)
 }
 
 int
+peek_valtypes(const struct resulttype *types, struct validation_context *ctx)
+{
+        uint32_t saved_height = ctx->nvaltypes;
+        int ret = pop_valtypes(types, ctx);
+        ctx->nvaltypes = saved_height;
+        return ret;
+}
+
+int
 push_ctrlframe(uint32_t pc, enum ctrlframe_op op, uint32_t jumpslot,
                struct resulttype *start_types, struct resulttype *end_types,
                struct validation_context *ctx)
