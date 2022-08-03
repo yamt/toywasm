@@ -11,6 +11,15 @@ struct report;
 int instance_create(struct module *m, struct instance **instp,
                     const struct import_object *imports,
                     struct report *report);
+/*
+ * Note: If you have multiple instances linked together
+ * with import/export, usually the only safe way to destroy those
+ * instances is to destroy them together at once. Note that import/export
+ * is not necessarily a one-way dependency. Because funcref values,
+ * which are implemented as bare host pointers in this engine, can be
+ * freely passed among instances, linked instances can have references
+ * each other.
+ */
 void instance_destroy(struct instance *inst);
 
 int instance_execute_func(struct exec_context *ctx, const char *name,
