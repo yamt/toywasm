@@ -493,8 +493,35 @@ INSN_IMPL(select)
         struct val val_c;
         if (EXECUTING) {
                 val_c = val_cond.u.i32 != 0 ? val_v1 : val_v2;
+        } else if (VALIDATING) {
+                CHECK(is_numtype(type_v2) || is_vectype(type_v2));
         }
         PUSH_VAL(type_v2, c);
+        INSN_SUCCESS;
+fail:
+        return ret;
+}
+
+INSN_IMPL(select_t)
+{
+        int ret;
+        LOAD_CTX;
+        READ_LEB_U32(vec_count);
+        CHECK(vec_count == 1);
+        uint8_t u8;
+        ret = read_u8(&p, ep, &u8);
+        CHECK_RET(ret);
+        enum valtype t = u8;
+        CHECK(is_valtype(t));
+        POP_VAL(TYPE_i32, cond);
+        POP_VAL(t, v2);
+        POP_VAL(t, v1);
+        struct val val_c;
+        if (EXECUTING) {
+                val_c = val_cond.u.i32 != 0 ? val_v1 : val_v2;
+        }
+        PUSH_VAL(t, c);
+        SAVE_CTX;
         INSN_SUCCESS;
 fail:
         return ret;

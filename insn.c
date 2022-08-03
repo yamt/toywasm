@@ -463,6 +463,7 @@ const struct instruction_desc instructions[] = {
         INSTRUCTION(0x11, "call_indirect", call_indirect, 0),
         INSTRUCTION(0x1a, "drop", drop, 0),
         INSTRUCTION(0x1b, "select", select, 0),
+        INSTRUCTION(0x1c, "select_t", select_t, 0),
         INSTRUCTION(0x20, "local.get", local_get, 0),
         INSTRUCTION(0x21, "local.set", local_set, 0),
         INSTRUCTION(0x22, "local.tee", local_tee, 0),
