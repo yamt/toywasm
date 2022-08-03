@@ -312,14 +312,15 @@ instance_create(struct module *m, struct instance **instp,
         exec_context_init(ctx, inst);
         ctx->report = report;
         for (i = 0; i < m->nglobals; i++) {
-                struct globalinst *ginst = VEC_ELEM(inst->globals, i);
+                struct globalinst *ginst =
+                        VEC_ELEM(inst->globals, m->nimportedglobals + i);
                 ret = exec_const_expr(&m->globals[i].init, ginst->type->t,
                                       &ginst->val, ctx);
                 if (ret != 0) {
                         goto fail;
                 }
                 xlog_trace("global [%" PRIu32 "] initialized to %016" PRIx64,
-                           i, ginst->val.u.i64);
+                           m->nimportedglobals + i, ginst->val.u.i64);
         }
         for (i = 0; i < m->nelems; i++) {
                 const struct element *elem = &m->elems[i];
