@@ -1186,3 +1186,64 @@ INSN_IMPL(table_copy)
 fail:
         return ret;
 }
+
+INSN_IMPL(table_grow)
+{
+        int ret;
+        LOAD_CTX;
+        READ_LEB_U32(tableidx);
+        struct module *m = MODULE;
+        CHECK(tableidx < m->nimportedtables + m->ntables);
+        POP_VAL(TYPE_i32, n);
+        POP_VAL(module_tabletype(m, tableidx)->et, val);
+        struct val val_result;
+        if (EXECUTING) {
+                struct exec_context *ectx = ECTX;
+                struct instance *inst = ectx->instance;
+                struct tableinst *t = VEC_ELEM(inst->tables, tableidx);
+                uint32_t n = val_n.u.i32;
+                if (UINT32_MAX - t->size < n ||
+                    t->size + n > t->type->lim.max) {
+                        val_result.u.i32 = (uint32_t)-1;
+                } else {
+                        uint32_t newsize = t->size + n;
+                        ret = ARRAY_RESIZE(t->vals, newsize);
+                        if (ret != 0) {
+                                val_result.u.i32 = (uint32_t)-1;
+                        } else {
+                                uint32_t i;
+                                for (i = t->size; i < newsize; i++) {
+                                        t->vals[i] = val_val;
+                                }
+                                val_result.u.i32 = t->size;
+                                t->size = newsize;
+                        }
+                }
+        }
+        PUSH_VAL(TYPE_i32, result);
+        SAVE_CTX;
+        INSN_SUCCESS;
+fail:
+        return ret;
+}
+
+INSN_IMPL(table_size)
+{
+        int ret;
+        LOAD_CTX;
+        READ_LEB_U32(tableidx);
+        struct module *m = MODULE;
+        CHECK(tableidx < m->nimportedtables + m->ntables);
+        struct val val_n;
+        if (EXECUTING) {
+                struct exec_context *ectx = ECTX;
+                struct instance *inst = ectx->instance;
+                struct tableinst *t = VEC_ELEM(inst->tables, tableidx);
+                val_n.u.i32 = t->size;
+        }
+        PUSH_VAL(TYPE_i32, n);
+        SAVE_CTX;
+        INSN_SUCCESS;
+fail:
+        return ret;
+}

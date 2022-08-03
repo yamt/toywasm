@@ -443,6 +443,8 @@ const static struct instruction_desc instructions_fc[] = {
         INSTRUCTION(0x0c, "table.init", table_init, 0),
         INSTRUCTION(0x0d, "elem.drop", elem_drop, 0),
         INSTRUCTION(0x0e, "table.copy", table_copy, 0),
+        INSTRUCTION(0x0f, "table.grew", table_grow, 0),
+        INSTRUCTION(0x10, "table.size", table_size, 0),
 };
 
 const struct instruction_desc instructions[] = {
