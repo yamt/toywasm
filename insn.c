@@ -652,9 +652,9 @@ const struct instruction_desc instructions[] = {
         INSTRUCTION(0xc3, "i64.extend16_s", i64_extend16_s, 0),
         INSTRUCTION(0xc4, "i64.extend32_s", i64_extend32_s, 0),
 
-        INSTRUCTION(0xd0, "ref.null", ref_null, 0),
+        INSTRUCTION(0xd0, "ref.null", ref_null, INSN_FLAG_CONST),
         INSTRUCTION(0xd1, "ref.is_null", ref_is_null, 0),
-        INSTRUCTION(0xd2, "ref.func", ref_func, 0),
+        INSTRUCTION(0xd2, "ref.func", ref_func, INSN_FLAG_CONST),
 
         INSTRUCTION_INDIRECT(0xfc, "fc", instructions_fc),
 };
