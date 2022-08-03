@@ -572,7 +572,7 @@ repl_invoke(struct repl_state *state, const char *cmd, bool print_result)
         uint32_t funcidx;
         ret = module_find_export_func(module, funcname, &funcidx);
         if (ret != 0) {
-                xlog_printf("module_find_export_func failed\n");
+                xlog_error("module_find_export_func failed for %s", funcname);
                 goto fail;
         }
         const struct functype *ft = module_functype(module, funcidx);
