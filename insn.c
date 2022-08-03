@@ -445,6 +445,7 @@ const static struct instruction_desc instructions_fc[] = {
         INSTRUCTION(0x0e, "table.copy", table_copy, 0),
         INSTRUCTION(0x0f, "table.grew", table_grow, 0),
         INSTRUCTION(0x10, "table.size", table_size, 0),
+        INSTRUCTION(0x11, "table.fill", table_fill, 0),
 };
 
 const struct instruction_desc instructions[] = {

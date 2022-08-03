@@ -1273,3 +1273,35 @@ INSN_IMPL(table_size)
 fail:
         return ret;
 }
+
+INSN_IMPL(table_fill)
+{
+        int ret;
+        LOAD_CTX;
+        READ_LEB_U32(tableidx);
+        struct module *m = MODULE;
+        CHECK(tableidx < m->nimportedtables + m->ntables);
+        POP_VAL(TYPE_i32, n);
+        POP_VAL(module_tabletype(m, tableidx)->et, val);
+        POP_VAL(TYPE_i32, i);
+        if (EXECUTING) {
+                struct exec_context *ectx = ECTX;
+                uint32_t start = val_i.u.i32;
+                uint32_t n = val_n.u.i32;
+                ret = table_access(ectx, tableidx, start, n);
+                if (ret != 0) {
+                        goto fail;
+                }
+                struct instance *inst = ectx->instance;
+                struct tableinst *t = VEC_ELEM(inst->tables, tableidx);
+                uint32_t end = start + n;
+                uint32_t i;
+                for (i = start; i < end; i++) {
+                        t->vals[i] = val_val;
+                }
+        }
+        SAVE_CTX;
+        INSN_SUCCESS;
+fail:
+        return ret;
+}
