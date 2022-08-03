@@ -29,6 +29,23 @@
 #include "wasi.h"
 #include "xlog.h"
 
+/*
+ * Note: ref_is_null.wast distinguishes "ref.extern 0" and "ref.null extern"
+ * while this implementation uses 0/NULL to represent "ref.null extern".
+ *
+ * wast                our representation
+ * -----------------   -------------------
+ * "ref.extern 0"      EXTERNREF_0
+ * "ref.null extern"   NULL
+ *
+ * cf.
+ * https://webassembly.github.io/spec/core/syntax/types.html#reference-types
+ * > The type externref denotes the infinite union of all references to
+ * > objects owned by the embedder and that can be passed into WebAssembly
+ * > under this type.
+ */
+#define EXTERNREF_0 ((uintptr_t)-1)
+
 const char *g_repl_prompt = "toywasm";
 bool g_repl_use_jump_table = true;
 
@@ -91,7 +108,15 @@ str_to_ptr(const char *s, int base, uintmax_t *resultp)
                 *resultp = 0;
                 return 0;
         }
-        return str_to_uint(s, base, resultp);
+        int ret;
+        ret = str_to_uint(s, base, resultp);
+        if (ret != 0) {
+                return ret;
+        }
+        if (*resultp == 0) {
+                *resultp = EXTERNREF_0;
+        }
+        return 0;
 }
 
 /* read something like: "aabbcc\n" */
@@ -438,7 +463,9 @@ repl_print_result(const struct resulttype *rt, const struct val *vals)
                         }
                         break;
                 case TYPE_EXTERNREF:
-                        if (val->u.externref == NULL) {
+                        if ((uintptr_t)val->u.externref == EXTERNREF_0) {
+                                printf("%s0:externref", sep);
+                        } else if (val->u.externref == NULL) {
                                 printf("%snull:externref", sep);
                         } else {
                                 printf("%s%" PRIuPTR ":externref", sep,
