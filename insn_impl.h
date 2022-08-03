@@ -1015,8 +1015,7 @@ INSN_IMPL(data_drop)
         READ_LEB_U32(dataidx);
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
-                struct instance *inst = ectx->instance;
-                inst->data_dropped[dataidx / 32] |= 1U << (dataidx % 32);
+                data_drop(ectx, dataidx);
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
                 if (vctx->expected_ndatas <= dataidx) {
@@ -1141,8 +1140,7 @@ INSN_IMPL(elem_drop)
         CHECK(elemidx < m->nelems);
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
-                struct instance *inst = ectx->instance;
-                inst->elem_dropped[elemidx / 32] |= 1U << (elemidx % 32);
+                elem_drop(ectx, elemidx);
         }
         SAVE_CTX;
         INSN_SUCCESS;

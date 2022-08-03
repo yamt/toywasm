@@ -323,19 +323,22 @@ instance_create(struct module *m, struct instance **instp,
         }
         for (i = 0; i < m->nelems; i++) {
                 const struct element *elem = &m->elems[i];
-                if (elem->mode != ELEM_MODE_ACTIVE) {
-                        continue;
+                if (elem->mode == ELEM_MODE_ACTIVE) {
+                        struct val val;
+                        ret = exec_const_expr(&elem->offset, TYPE_i32, &val,
+                                              ctx);
+                        if (ret != 0) {
+                                goto fail;
+                        }
+                        uint32_t offset = val.u.i32;
+                        ret = table_init(ctx, elem->table, i, offset, 0,
+                                         elem->init_size);
+                        if (ret != 0) {
+                                goto fail;
+                        }
                 }
-                struct val val;
-                ret = exec_const_expr(&elem->offset, TYPE_i32, &val, ctx);
-                if (ret != 0) {
-                        goto fail;
-                }
-                uint32_t offset = val.u.i32;
-                ret = table_init(ctx, elem->table, i, offset, 0,
-                                 elem->init_size);
-                if (ret != 0) {
-                        goto fail;
+                if (elem->mode != ELEM_MODE_PASSIVE) {
+                        elem_drop(ctx, i);
                 }
         }
         for (i = 0; i < m->ndatas; i++) {
@@ -354,6 +357,7 @@ instance_create(struct module *m, struct instance **instp,
                 if (ret != 0) {
                         goto fail;
                 }
+                data_drop(ctx, i);
         }
         if (m->has_start) {
                 ret = invoke(m->start, NULL, NULL, NULL, NULL, ctx);

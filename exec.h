@@ -24,6 +24,8 @@ int table_init(struct exec_context *ctx, uint32_t tableidx, uint32_t elemidx,
                uint32_t d, uint32_t s, uint32_t n);
 int table_access(struct exec_context *ectx, uint32_t tableidx, uint32_t offset,
                  uint32_t n);
+void data_drop(struct exec_context *ectx, uint32_t dataidx);
+void elem_drop(struct exec_context *ectx, uint32_t elemidx);
 
 bool skip_expr(const uint8_t **p, bool goto_else);
 int exec_next_insn(const uint8_t *p, struct val *stack,

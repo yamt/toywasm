@@ -766,3 +766,21 @@ invoke(uint32_t funcidx, const struct resulttype *paramtype,
         return exec_expr(&func->e, func->nlocals, func->locals, &ft->parameter,
                          &ft->result, params, results, ctx);
 }
+
+void
+data_drop(struct exec_context *ectx, uint32_t dataidx)
+{
+        struct instance *inst = ectx->instance;
+        struct module *m = inst->module;
+        assert(dataidx < m->ndatas);
+        inst->data_dropped[dataidx / 32] |= 1U << (dataidx % 32);
+}
+
+void
+elem_drop(struct exec_context *ectx, uint32_t elemidx)
+{
+        struct instance *inst = ectx->instance;
+        struct module *m = inst->module;
+        assert(elemidx < m->nelems);
+        inst->elem_dropped[elemidx / 32] |= 1U << (elemidx % 32);
+}
