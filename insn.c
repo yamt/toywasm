@@ -379,7 +379,7 @@ fail:
 #endif /* defined(USE_SEPARATE_EXECUTE) */
 
 #if defined(USE_SEPARATE_EXECUTE)
-const static struct instruction_desc instructions_fc[];
+const static struct exec_instruction_desc exec_instructions_fc[];
 
 static int
 exec_next_insn_fc(const uint8_t *p, struct val *stack,
@@ -394,7 +394,7 @@ exec_next_insn_fc(const uint8_t *p, struct val *stack,
         uint32_t pc = ptr2pc(ctx->instance->module, p);
 #endif
         uint32_t op = *p++;
-        const struct instruction_desc *desc = &instructions_fc[op];
+        const struct exec_instruction_desc *desc = &exec_instructions_fc[op];
         xlog_trace("exec %06" PRIx32 ": (2nd byte) %s", pc, desc->name);
 #if defined(USE_TAILCALL)
         __musttail
@@ -404,22 +404,26 @@ exec_next_insn_fc(const uint8_t *p, struct val *stack,
 
 #define INSTRUCTION(b, n, f, FLAGS)                                           \
         [b] = {                                                               \
-                .name = n,                                                    \
-                .process = process_##f,                                       \
                 .execute = execute_##f,                                       \
-                .flags = FLAGS,                                               \
-                .next_table = NULL,                                           \
         }
 
 #define INSTRUCTION_INDIRECT(b, n, t)                                         \
         [b] = {                                                               \
-                .name = n,                                                    \
-                .next_table = t,                                              \
-                .next_table_size = ARRAYCOUNT(t),                             \
                 .execute = exec_next_insn_fc,                                 \
         }
 
-#else /* defined(USE_SEPARATE_EXECUTE) */
+const static struct exec_instruction_desc exec_instructions_fc[] = {
+#include "insn_list_fc.h"
+};
+
+const struct exec_instruction_desc exec_instructions[] = {
+#include "insn_list_base.h"
+};
+
+#undef INSTRUCTION
+#undef INSTRUCTION_INDIRECT
+
+#endif /* defined(USE_SEPARATE_EXECUTE) */
 
 #define INSTRUCTION(b, n, f, FLAGS)                                           \
         [b] = {                                                               \
@@ -435,8 +439,6 @@ exec_next_insn_fc(const uint8_t *p, struct val *stack,
                 .next_table = t,                                              \
                 .next_table_size = ARRAYCOUNT(t),                             \
         }
-
-#endif /* defined(USE_SEPARATE_EXECUTE) */
 
 const static struct instruction_desc instructions_fc[] = {
 #include "insn_list_fc.h"

@@ -501,14 +501,15 @@ exec_next_insn(const uint8_t *p, struct val *stack, struct exec_context *ctx)
         uint32_t pc = ptr2pc(ctx->instance->module, p);
 #endif
         uint32_t op = *p++;
-        const struct instruction_desc *desc = &instructions[op];
 #if defined(USE_SEPARATE_EXECUTE)
-        xlog_trace("exec %06" PRIx32 ": %s", pc, desc->name);
+        xlog_trace("exec %06" PRIx32 ": %02" PRIx32, pc, op);
+        const struct exec_instruction_desc *desc = &exec_instructions[op];
 #if defined(USE_TAILCALL)
         __musttail
 #endif
                 return desc->execute(p, stack, ctx);
 #else
+        const struct instruction_desc *desc = &instructions[op];
         if (__predict_false(desc->next_table != NULL)) {
                 op = *p++;
                 desc = &desc->next_table[op];
