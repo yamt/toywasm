@@ -10,6 +10,7 @@
 #include <stddef.h>
 
 #include "leb128.h"
+#include "platform.h"
 
 static int
 read_u8(const uint8_t **pp, const uint8_t *ep, uint8_t *resultp)
@@ -28,16 +29,27 @@ read_leb(const uint8_t **pp, const uint8_t *ep, unsigned int bits,
         const uint8_t *p = *pp;
         uint8_t u8;
         int ret;
+
+        /*
+         * A fast path for small values.
+         * While it might look silly, it's used very frequently
+         * for localidx etc.
+         */
+        ret = read_u8(&p, ep, &u8);
+        if (ret != 0) {
+                return ret;
+        }
+        if (__predict_true((u8 & (0x80 | 0x40)) == 0)) {
+                *pp = p;
+                *resultp = u8;
+                return 0;
+        }
+
         unsigned int shift = 0;
         uint64_t result = 0;
         bool is_minus = false;
         const bool error_check = ep != NULL;
-
         while (true) {
-                ret = read_u8(&p, ep, &u8);
-                if (ret != 0) {
-                        return ret;
-                }
                 uint8_t v = u8 & 0x7f;
                 if (error_check) {
                         if (shift >= bits) {
@@ -79,6 +91,10 @@ read_leb(const uint8_t **pp, const uint8_t *ep, unsigned int bits,
                 shift += 7;
                 if ((u8 & 0x80) == 0) {
                         break;
+                }
+                ret = read_u8(&p, ep, &u8);
+                if (ret != 0) {
+                        return ret;
                 }
         }
         if (!error_check && is_signed) {
