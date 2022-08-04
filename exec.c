@@ -379,6 +379,30 @@ do_call(struct exec_context *ctx, const struct funcinst *finst)
         }
 }
 
+/* a bit shrinked version of get_functype_for_blocktype */
+static void
+get_arity_for_blocktype(struct module *m, int64_t blocktype,
+                        uint32_t *parameter, uint32_t *result)
+{
+        if (blocktype < 0) {
+                uint8_t u8 = (uint8_t)(blocktype & 0x7f);
+                if (u8 == 0x40) {
+                        *parameter = 0;
+                        *result = 0;
+                        return;
+                }
+                assert(is_valtype(u8));
+                *parameter = 0;
+                *result = 1;
+                return;
+        }
+        assert(blocktype <= UINT32_MAX);
+        assert(blocktype < m->ntypes);
+        const struct functype *ft = &m->types[blocktype];
+        *parameter = ft->parameter.ntypes;
+        *result = ft->result.ntypes;
+}
+
 static void
 do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
 {
@@ -441,7 +465,6 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
                        op == FRAME_OP_BLOCK);
                 int64_t blocktype = read_leb_s33_nocheck(&p);
                 uint32_t param_arity;
-                int ret;
                 /*
                  * do a jump. (w/o jump table)
                  */
@@ -465,9 +488,7 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
                                 }
                         }
                 }
-                ret = get_arity_for_blocktype(m, blocktype, &param_arity,
-                                              &arity);
-                assert(ret == 0);
+                get_arity_for_blocktype(m, blocktype, &param_arity, &arity);
                 if (op == FRAME_OP_LOOP) {
                         arity = param_arity;
                 }
@@ -487,6 +508,7 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
          */
         assert(height <= ctx->stack.lsize);
         assert(arity <= ctx->stack.lsize);
+        assert(height + arity <= ctx->stack.lsize);
         memmove(&VEC_ELEM(ctx->stack, height),
                 &VEC_ELEM(ctx->stack, ctx->stack.lsize - arity),
                 arity * sizeof(*ctx->stack.p));

@@ -240,42 +240,6 @@ get_functype_for_blocktype(struct module *m, int64_t blocktype,
         return 0;
 }
 
-/* a bit shrinked version of get_functype_for_blocktype */
-int
-get_arity_for_blocktype(struct module *m, int64_t blocktype,
-                        uint32_t *parameter, uint32_t *result)
-{
-        int ret;
-
-        if (blocktype < 0) {
-                uint8_t u8 = (uint8_t)(blocktype & 0x7f);
-
-                if (BYTE_AS_S33(u8) != blocktype) {
-                        return EINVAL;
-                }
-                if (u8 == 0x40) {
-                        *parameter = 0;
-                        *result = 0;
-                        return 0;
-                }
-                if (is_valtype(u8)) {
-                        *parameter = 0;
-                        *result = 1;
-                        return 0;
-                }
-                return EINVAL;
-        }
-        assert(blocktype <= UINT32_MAX);
-        struct functype *ft;
-        ret = get_functype(m, (uint32_t)blocktype, &ft);
-        if (ret != 0) {
-                return ret;
-        }
-        *parameter = ft->parameter.ntypes;
-        *result = ft->result.ntypes;
-        return 0;
-}
-
 struct memarg {
         uint32_t offset;
         uint32_t align;
