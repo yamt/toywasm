@@ -15,9 +15,10 @@ fetch_spec()
     git -C "${SPEC_DIR}" checkout FETCH_HEAD
 }
 
+wast2json --version
 test -d "${SPEC_DIR}" || fetch_spec
 (cd ${SPEC_DIR} && find test -name "*.wast") | while read WAST; do
 	D=${TEST_DIR}/$(dirname ${WAST})
     mkdir -p ${D}
-    wast2json -o ${TEST_DIR}/${WAST%%.wast}.json ${SPEC_DIR}/${WAST}
+    wast2json --enable-all -o ${TEST_DIR}/${WAST%%.wast}.json ${SPEC_DIR}/${WAST}
 done
