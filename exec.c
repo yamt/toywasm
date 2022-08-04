@@ -439,8 +439,7 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
                 int64_t blocktype;
                 int ret;
                 p++;
-                ret = read_leb_s(&p, NULL, 33, &blocktype);
-                assert(ret == 0);
+                blocktype = read_leb_s33_nocheck(&p);
                 /*
                  * do a jump. (w/o jump table)
                  */
