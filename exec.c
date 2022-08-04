@@ -242,17 +242,56 @@ frame_exit(struct exec_context *ctx)
 }
 
 static const struct jump *
-jump_lookup(const struct expr_exec_info *ei, uint32_t blockpc)
+jump_table_lookup(const struct expr_exec_info *ei, uint32_t blockpc)
 {
-        /* TODO binary search */
+        uint32_t left = 0;
+        uint32_t right = ei->njumps;
+#if defined(USE_JUMP_BINARY_SEARCH)
+        /*
+         * REVISIT: is it worth to switch to linear search for
+         * small tables/range?
+         */
+        while (true) {
+                assert(left < right);
+                uint32_t mid = (left + right) / 2;
+                const struct jump *jump = &ei->jumps[mid];
+                if (jump->pc == blockpc) {
+                        return jump;
+                }
+                if (jump->pc < blockpc) {
+                        left = mid + 1;
+                } else {
+                        right = mid;
+                }
+        }
+#else /* defined(USE_JUMP_BINARY_SEARCH) */
         uint32_t i;
-        for (i = 0; i < ei->njumps; i++) {
+        for (i = left; i < right; i++) {
                 const struct jump *jump = &ei->jumps[i];
                 if (jump->pc == blockpc) {
                         return jump;
                 }
         }
+#endif /* defined(USE_JUMP_BINARY_SEARCH) */
         assert(false);
+}
+
+static const struct jump *
+jump_lookup(struct exec_context *ctx, const struct expr_exec_info *ei,
+            uint32_t blockpc)
+{
+        const struct jump *jump;
+#if defined(USE_JUMP_CACHE)
+        jump = ctx->jump_cache;
+        if (jump != NULL && jump->pc == blockpc) {
+                return jump;
+        }
+#endif
+		jump = jump_table_lookup(ei, blockpc);
+#if defined(USE_JUMP_CACHE)
+        ctx->jump_cache = jump;
+#endif
+        return jump;
 }
 
 static const struct func *
@@ -357,10 +396,10 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
                         xlog_trace("jump w/ table");
                         bool stay_in_block = false;
                         const struct jump *jump;
-                        jump = jump_lookup(ei, blockpc + goto_else);
+                        jump = jump_lookup(ctx, ei, blockpc + goto_else);
                         if (jump->targetpc == 0) {
                                 assert(goto_else);
-                                jump = jump_lookup(ei, blockpc);
+                                jump = jump_lookup(ctx, ei, blockpc);
                         } else if (goto_else) {
                                 stay_in_block = true;
                         }
