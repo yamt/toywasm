@@ -164,13 +164,13 @@ add_test(NAME toywasm-cli-simple-module COMMAND
 set_tests_properties(toywasm-cli-simple-module PROPERTIES ENVIRONMENT "${TEST_ENV}")
 
 add_test(NAME toywasm-cli-wasm3-spec-test
-	COMMAND ./run-wasm3-spec-test.sh --exec "${CMAKE_BINARY_DIR}/toywasm --load ${CMAKE_BINARY_DIR}/spectest.wasm --register spectest --repl --repl-prompt wasm3"
+	COMMAND ./run-wasm3-spec-test.sh --exec "${CMAKE_BINARY_DIR}/toywasm --repl --repl-prompt wasm3" --spectest ${CMAKE_BINARY_DIR}/spectest.wasm
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 set_tests_properties(toywasm-cli-wasm3-spec-test PROPERTIES ENVIRONMENT "${TEST_ENV}")
 
 add_test(NAME toywasm-cli-wasm3-spec-test-disable-jump-table
-	COMMAND ./run-wasm3-spec-test.sh --exec "${CMAKE_BINARY_DIR}/toywasm --disable-jump-table --load ${CMAKE_BINARY_DIR}/spectest.wasm --register spectest --repl --repl-prompt wasm3"
+	COMMAND ./run-wasm3-spec-test.sh --exec "${CMAKE_BINARY_DIR}/toywasm --repl --repl-prompt wasm3" --spectest ${CMAKE_BINARY_DIR}/spectest.wasm
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 set_tests_properties(toywasm-cli-wasm3-spec-test-disable-jump-table PROPERTIES ENVIRONMENT "${TEST_ENV}")
