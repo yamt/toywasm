@@ -102,6 +102,9 @@ enum exec_event {
 struct exec_context {
         struct instance *instance; /* REVISIT: redundant */
         const uint8_t *p;
+#if defined(USE_LOCALS_CACHE)
+        struct val *current_locals;
+#endif
 #if defined(USE_JUMP_CACHE)
         const struct jump *jump_cache;
 #endif

@@ -216,6 +216,9 @@ frame_enter(struct exec_context *ctx, struct instance *inst,
         assert(ctx->locals.lsize + nlocals <= ctx->locals.psize);
         ctx->locals.lsize += nlocals;
         ctx->instance = inst;
+#if defined(USE_LOCALS_CACHE)
+        ctx->current_locals = &VEC_ELEM(ctx->locals, frame->localidx);
+#endif
         return 0;
 }
 
@@ -230,9 +233,17 @@ frame_exit(struct exec_context *ctx)
         assert(ctx->frames.lsize > 0);
         frame = VEC_POP(ctx->frames);
         assert(ctx->instance == frame->instance);
+#if defined(USE_LOCALS_CACHE)
+        assert(ctx->current_locals == &VEC_ELEM(ctx->locals, frame->localidx));
+#endif
         if (ctx->frames.lsize > 0) {
                 ctx->instance = VEC_LASTELEM(ctx->frames).instance;
                 ctx->p = pc2ptr(ctx->instance->module, frame->callerpc);
+
+#if defined(USE_LOCALS_CACHE)
+                struct funcframe *pframe = &VEC_LASTELEM(ctx->frames);
+                ctx->current_locals = &VEC_ELEM(ctx->locals, pframe->localidx);
+#endif
         }
         assert(frame->labelidx <= ctx->labels.lsize);
         assert(frame->localidx <= ctx->locals.lsize);

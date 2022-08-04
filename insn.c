@@ -51,6 +51,19 @@ push_label(const uint8_t *p, struct val *stack, struct exec_context *ctx)
         l->height = stack - ctx->stack.p;
 }
 
+static struct val *
+local_getptr(struct exec_context *ectx, uint32_t localidx)
+{
+#if defined(USE_LOCALS_CACHE)
+        return &ectx->current_locals[localidx];
+#else
+        const struct funcframe *frame = &VEC_LASTELEM(ectx->frames);
+        assert(ectx->locals.lsize >= frame->localidx);
+        assert(localidx < ectx->locals.lsize - frame->localidx);
+        return &VEC_ELEM(ectx->locals, frame->localidx + localidx);
+#endif
+}
+
 static float
 wasm_fminf(float a, float b)
 {

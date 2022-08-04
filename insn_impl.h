@@ -537,10 +537,7 @@ INSN_IMPL(local_get)
         struct val val_c;
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
-                const struct funcframe *frame = &VEC_LASTELEM(ectx->frames);
-                assert(ectx->locals.lsize >= frame->localidx);
-                assert(localidx < ectx->locals.lsize - frame->localidx);
-                val_c = VEC_ELEM(ectx->locals, frame->localidx + localidx);
+                val_c = *local_getptr(ectx, localidx);
         } else if (VALIDATING) {
                 CHECK(localidx < VCTX->nlocals);
         }
@@ -563,10 +560,7 @@ INSN_IMPL(local_set)
         POP_VAL(VCTX->locals[localidx], a);
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
-                const struct funcframe *frame = &VEC_LASTELEM(ectx->frames);
-                assert(ectx->locals.lsize >= frame->localidx);
-                assert(localidx < ectx->locals.lsize - frame->localidx);
-                VEC_ELEM(ectx->locals, frame->localidx + localidx) = val_a;
+                *local_getptr(ectx, localidx) = val_a;
         }
         SAVE_CTX;
         INSN_SUCCESS;
