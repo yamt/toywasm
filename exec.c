@@ -264,7 +264,7 @@ jump_table_lookup(const struct expr_exec_info *ei, uint32_t blockpc)
                         right = mid;
                 }
         }
-#else /* defined(USE_JUMP_BINARY_SEARCH) */
+#else  /* defined(USE_JUMP_BINARY_SEARCH) */
         uint32_t i;
         for (i = left; i < right; i++) {
                 const struct jump *jump = &ei->jumps[i];
@@ -287,7 +287,7 @@ jump_lookup(struct exec_context *ctx, const struct expr_exec_info *ei,
                 return jump;
         }
 #endif
-		jump = jump_table_lookup(ei, blockpc);
+        jump = jump_table_lookup(ei, blockpc);
 #if defined(USE_JUMP_CACHE)
         ctx->jump_cache = jump;
 #endif
