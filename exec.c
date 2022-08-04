@@ -410,6 +410,10 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
                         jump = jump_lookup(ctx, ei, blockpc + goto_else);
                         if (jump->targetpc == 0) {
                                 assert(goto_else);
+                                /*
+                                 * this "if" block has no "else" clause.
+                                 * jump to "end".
+                                 */
                                 jump = jump_lookup(ctx, ei, blockpc);
                         } else if (goto_else) {
                                 stay_in_block = true;
@@ -425,21 +429,19 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
                 /*
                  * exit from the block.
                  *
-                 * parse the block op to see
+                 * parse the block op to check
                  * - if it's a "loop"
-                 * - otherwise, blocktype
+                 * - blocktype
                  */
                 struct module *m = ctx->instance->module;
                 const uint8_t *blockp = pc2ptr(m, blockpc);
                 const uint8_t *p = blockp;
-                uint8_t op = *p;
+                uint8_t op = *p++;
                 assert(op == FRAME_OP_LOOP || op == FRAME_OP_IF ||
                        op == FRAME_OP_BLOCK);
+                int64_t blocktype = read_leb_s33_nocheck(&p);
                 uint32_t param_arity;
-                int64_t blocktype;
                 int ret;
-                p++;
-                blocktype = read_leb_s33_nocheck(&p);
                 /*
                  * do a jump. (w/o jump table)
                  */
@@ -452,6 +454,9 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
                                  * The only way to find out the jump target
                                  * is to parse every instructions.
                                  * This is expensive.
+                                 *
+                                 * REVISIT: skipping LEBs can be optimized
+                                 * better than the current code.
                                  */
                                 bool stay_in_block = skip_expr(&p, goto_else);
                                 ctx->p = p;
@@ -462,10 +467,10 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
                 }
                 ret = get_arity_for_blocktype(m, blocktype, &param_arity,
                                               &arity);
+                assert(ret == 0);
                 if (op == FRAME_OP_LOOP) {
                         arity = param_arity;
                 }
-                assert(ret == 0);
                 ctx->labels.lsize -= labelidx + 1;
                 /*
                  * Note: The spec says to pop the values before
