@@ -431,16 +431,14 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
                         xlog_trace("jump w/ table");
                         bool stay_in_block = false;
                         const struct jump *jump;
-                        jump = jump_lookup(ctx, ei, blockpc + goto_else);
-                        if (jump->targetpc == 0) {
-                                assert(goto_else);
-                                /*
-                                 * this "if" block has no "else" clause.
-                                 * jump to "end".
-                                 */
-                                jump = jump_lookup(ctx, ei, blockpc);
-                        } else if (goto_else) {
-                                stay_in_block = true;
+                        jump = jump_lookup(ctx, ei, blockpc);
+                        if (goto_else) {
+                                const struct jump *jump_to_else = jump + 1;
+                                assert(jump_to_else->pc == blockpc + 1);
+                                if (jump_to_else->targetpc != 0) {
+                                        stay_in_block = true;
+                                        jump = jump_to_else;
+                                }
                         }
                         assert(jump->targetpc != 0);
                         ctx->p = pc2ptr(ctx->instance->module, jump->targetpc);
