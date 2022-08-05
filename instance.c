@@ -397,7 +397,9 @@ instance_destroy(struct instance *inst)
                 if (i < m->nimportedmems) {
                         continue;
                 }
-                free((*mp)->data);
+                if (*mp != NULL) {
+                        free((*mp)->data);
+                }
                 free(*mp);
         }
         VEC_FREE(inst->mems);
@@ -414,7 +416,9 @@ instance_destroy(struct instance *inst)
                 if (i < m->nimportedtables) {
                         continue;
                 }
-                free((*tp)->vals);
+                if (*tp != NULL) {
+                        free((*tp)->vals);
+                }
                 free(*tp);
         }
         VEC_FREE(inst->tables);
