@@ -71,13 +71,6 @@ struct repl_state {
         struct wasi_instance *wasi;
 };
 
-struct repl_state_checkpoint {
-        unsigned int nmodules;
-        unsigned int nregister;
-        struct import_object *imports;
-        struct wasi_instance *wasi;
-};
-
 struct repl_state g_repl_state0;
 struct repl_state *g_repl_state = &g_repl_state0;
 
@@ -171,29 +164,20 @@ repl_unload(struct repl_module_state *mod)
 }
 
 void
-repl_checkpoint(struct repl_state *state, struct repl_state_checkpoint *cp)
-{
-        cp->nmodules = state->nmodules;
-        cp->nregister = state->nregister;
-        cp->imports = state->imports;
-        cp->wasi = state->wasi;
-}
-
-void
-repl_rollback(struct repl_state *state, const struct repl_state_checkpoint *cp)
+repl_reset(struct repl_state *state)
 {
         uint32_t n = 0;
-        while (state->imports != cp->imports) {
+        while (state->imports != NULL) {
                 struct import_object *im = state->imports;
                 state->imports = im->next;
                 import_object_destroy(im);
                 n++;
         }
-        while (state->nregister > cp->nregister) {
+        while (state->nregister > 0) {
                 free(state->registered_names[--state->nregister]);
                 n--;
         }
-        while (state->nmodules > cp->nmodules) {
+        while (state->nmodules > 0) {
                 repl_unload(&state->modules[--state->nmodules]);
         }
         free(state->param);
@@ -201,20 +185,12 @@ repl_rollback(struct repl_state *state, const struct repl_state_checkpoint *cp)
         free(state->result);
         state->result = NULL;
 
-        if (state->wasi != NULL && cp->wasi == NULL) {
+        if (state->wasi != NULL) {
                 wasi_instance_destroy(state->wasi);
                 state->wasi = NULL;
                 n--;
         }
         assert(n == 0);
-}
-
-void
-repl_reset(struct repl_state *state)
-{
-        struct repl_state_checkpoint cp;
-        memset(&cp, 0, sizeof(cp));
-        repl_rollback(state, &cp);
 }
 
 int
@@ -703,11 +679,9 @@ int
 repl(void)
 {
         struct repl_state *state = g_repl_state;
-        struct repl_state_checkpoint cp;
         char *line = NULL;
         size_t linecap = 0;
         int ret;
-        repl_checkpoint(state, &cp);
         while (true) {
                 printf("%s> ", g_repl_prompt);
                 fflush(stdout);
@@ -724,7 +698,7 @@ repl(void)
                 if (!strcmp(cmd, ":version")) {
                         repl_print_version();
                 } else if (!strcmp(cmd, ":init")) {
-                        repl_rollback(state, &cp);
+                        repl_reset(state);
                 } else if (!strcmp(cmd, ":load") && opt != NULL) {
                         ret = repl_load(state, opt);
                         if (ret != 0) {
