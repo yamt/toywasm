@@ -292,7 +292,7 @@ int
 target_label_types(struct validation_context *ctx, uint32_t labelidx,
                    const struct resulttype **rtp)
 {
-        if (labelidx > ctx->ncframes) {
+        if (labelidx >= ctx->ncframes) {
                 return EINVAL;
         }
         struct ctrlframe *cframe = &ctx->cframes[ctx->ncframes - labelidx - 1];
