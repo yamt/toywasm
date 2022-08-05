@@ -1341,7 +1341,7 @@ const struct section_type section_types[] = {
 const struct section_type *
 get_section_type(uint8_t id)
 {
-        if (id > ARRAYCOUNT(section_types)) {
+        if (id >= ARRAYCOUNT(section_types)) {
                 return NULL;
         }
         return &section_types[id];
