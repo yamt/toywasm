@@ -254,7 +254,7 @@ repl_load_from_buf(struct repl_state *state, struct repl_module_state *mod)
         if (ctx.report.msg != NULL) {
                 xlog_error("load/validation error: %s", ctx.report.msg);
                 printf("load/validation error: %s\n", ctx.report.msg);
-        } else {
+        } else if (ret != 0) {
                 printf("load/validation error: unknown\n");
         }
         load_context_clear(&ctx);
