@@ -550,7 +550,7 @@ exec_next_insn(const uint8_t *p, struct val *stack, struct exec_context *ctx)
 
 int
 exec_expr(const struct expr *expr, uint32_t nlocals,
-          const enum valtype *locals, const struct resulttype *parametertype,
+          const struct resulttype *parametertype,
           const struct resulttype *resulttype, const struct val *params,
           struct val *results, struct exec_context *ctx)
 {
@@ -661,7 +661,7 @@ exec_const_expr(const struct expr *expr, enum valtype type, struct val *result,
                 .is_static = true,
         };
         int ret;
-        ret = exec_expr(expr, 0, NULL, &empty, &resulttype, NULL, result, ctx);
+        ret = exec_expr(expr, 0, &empty, &resulttype, NULL, result, ctx);
         if (ret != 0) {
                 return ret;
         }
@@ -838,8 +838,8 @@ invoke(uint32_t funcidx, const struct resulttype *paramtype,
         }
         const struct func *func = funcinst_func(finst);
         ctx->instance = finst->u.wasm.instance;
-        return exec_expr(&func->e, func->nlocals, func->locals, &ft->parameter,
-                         &ft->result, params, results, ctx);
+        return exec_expr(&func->e, func->nlocals, &ft->parameter, &ft->result,
+                         params, results, ctx);
 }
 
 void

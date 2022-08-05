@@ -604,19 +604,20 @@ fail:
 }
 
 int
-read_locals(const uint8_t **pp, const uint8_t *ep, uint32_t *nlocalsp,
-            enum valtype **localsp)
+read_locals(const uint8_t **pp, const uint8_t *ep, struct func *func)
 {
         const uint8_t *p = *pp;
         uint32_t vec_count;
         int ret;
-        enum valtype *locals = NULL;
+        struct localchunk *chunks = NULL;
         uint32_t nlocals = 0;
 
         ret = read_vec_count(&p, ep, &vec_count);
         if (ret != 0) {
                 goto fail;
         }
+        func->nlocalchunks = vec_count;
+        chunks = calloc(vec_count, sizeof(*chunks));
 
         uint32_t i;
         for (i = 0; i < vec_count; i++) {
@@ -634,11 +635,6 @@ read_locals(const uint8_t **pp, const uint8_t *ep, uint32_t *nlocalsp,
                         ret = E2BIG;
                         goto fail;
                 }
-                ret = resize_array((void **)&locals, sizeof(*locals), nlocals);
-                if (ret != 0) {
-                        ret = ENOMEM;
-                        goto fail;
-                }
                 ret = read_u8(&p, ep, &u8);
                 if (ret != 0) {
                         goto fail;
@@ -647,26 +643,15 @@ read_locals(const uint8_t **pp, const uint8_t *ep, uint32_t *nlocalsp,
                         ret = EINVAL;
                         goto fail;
                 }
-                uint32_t j;
-                for (j = 0; j < count; j++) {
-                        locals[old_nlocals + j] = u8;
-                }
+                chunks[i].n = count;
+                chunks[i].type = u8;
         }
-
-#if 0
-        xlog_printf("local");
-        for (i = 0; i < nlocals; i++) {
-                xlog_printf_raw(" %s", valtype_str(locals[i]));
-        }
-        xlog_printf_raw("\n");
-#endif
-
-        *localsp = locals;
-        *nlocalsp = nlocals;
+        func->localchunks = chunks;
+        func->nlocals = nlocals;
         *pp = p;
         return 0;
 fail:
-        free(locals);
+        free(chunks);
         return ret;
 }
 
@@ -677,11 +662,10 @@ read_func(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
         struct load_context *ctx = vp;
         struct module *m = ctx->module;
         const uint8_t *p = *pp;
-        enum valtype *locals = NULL;
         uint32_t size;
-        uint32_t nlocals;
         int ret;
 
+        func->localchunks = NULL;
         uint32_t funcidx = m->nimportedfuncs + idx;
         if (funcidx >= m->nimportedfuncs + m->nfuncs) {
                 xlog_trace("read_func: funcidx out of range");
@@ -702,12 +686,12 @@ read_func(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
         }
 
         const uint8_t *cep = p + size;
-        ret = read_locals(&p, cep, &nlocals, &locals);
+        ret = read_locals(&p, cep, func);
         if (ret != 0) {
                 goto fail;
         }
-        ret = read_expr(&p, cep, &func->e, nlocals, locals, &ft->parameter,
-                        &ft->result, ctx);
+        ret = read_expr(&p, cep, &func->e, func->nlocals, func->localchunks,
+                        &ft->parameter, &ft->result, ctx);
         if (ret != 0) {
                 goto fail;
         }
@@ -716,13 +700,10 @@ read_func(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
                 ret = EINVAL;
                 goto fail;
         }
-
-        func->locals = locals;
-        func->nlocals = nlocals;
         *pp = p;
         return 0;
 fail:
-        free(locals);
+        free(func->localchunks);
         return ret;
 }
 
@@ -741,7 +722,7 @@ clear_expr(struct expr *expr)
 void
 clear_func(struct func *func)
 {
-        free(func->locals);
+        free(func->localchunks);
         clear_expr(&func->e);
 }
 

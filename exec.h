@@ -9,9 +9,9 @@ struct val;
 enum valtype;
 
 int exec_expr(const struct expr *expr, uint32_t nlocals,
-              const enum valtype *locals, const struct resulttype *,
-              const struct resulttype *resulttype, const struct val *params,
-              struct val *results, struct exec_context *ctx);
+              const struct resulttype *, const struct resulttype *resulttype,
+              const struct val *params, struct val *results,
+              struct exec_context *ctx);
 
 int exec_const_expr(const struct expr *expr, enum valtype type,
                     struct val *result, struct exec_context *ctx);

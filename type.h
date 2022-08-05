@@ -88,9 +88,15 @@ struct val {
         } u;
 };
 
+struct localchunk {
+        enum valtype type;
+        uint32_t n;
+};
+
 struct func {
         uint32_t nlocals;
-        enum valtype *locals;
+        uint32_t nlocalchunks;
+        struct localchunk *localchunks;
         struct expr e;
 };
 

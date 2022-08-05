@@ -58,9 +58,9 @@ fail:
         return ret;
 }
 
-int
+static int
 read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
-                 uint32_t nlocals, const enum valtype *locals,
+                 uint32_t nlocals, const struct localchunk *locals,
                  struct resulttype *parameter_types,
                  struct resulttype *result_types, bool const_expr,
                  struct load_context *lctx)
@@ -94,8 +94,13 @@ read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
         for (i = 0; i < parameter_types->ntypes; i++) {
                 vctx->locals[i] = parameter_types->types[i];
         }
-        for (i = 0; i < nlocals; i++) {
-                vctx->locals[parameter_types->ntypes + i] = locals[i];
+        const struct localchunk *ch = locals;
+        for (i = 0; i < nlocals; i += ch->n, ch++) {
+                uint32_t j;
+                for (j = 0; j < ch->n; j++) {
+                        vctx->locals[parameter_types->ntypes + i + j] =
+                                ch->type;
+                }
         }
 
         expr->start = p;
@@ -167,11 +172,11 @@ fail:
 
 int
 read_expr(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
-          uint32_t nlocals, const enum valtype *locals,
+          uint32_t nlocals, const struct localchunk *chunks,
           struct resulttype *parameter_types, struct resulttype *result_types,
           struct load_context *lctx)
 {
-        return read_expr_common(pp, ep, expr, nlocals, locals, parameter_types,
+        return read_expr_common(pp, ep, expr, nlocals, chunks, parameter_types,
                                 result_types, false, lctx);
 }
 
