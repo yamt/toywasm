@@ -366,7 +366,7 @@ read_importdesc(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
                 if (ret != 0) {
                         goto fail;
                 }
-                if (desc->u.typeidx > ctx->module->ntypes) {
+                if (desc->u.typeidx >= ctx->module->ntypes) {
                         ret = EINVAL;
                         goto fail;
                 }
