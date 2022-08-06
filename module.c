@@ -1412,6 +1412,12 @@ module_load(struct module *m, const uint8_t *p, const uint8_t *ep,
          * https://webassembly.github.io/spec/core/valid/modules.html
          */
 
+        if ((m->funcs == NULL) != (m->nfuncs == 0)) {
+                /* maybe there was no code section */
+                ret = EINVAL;
+                goto fail;
+        }
+
         /*
          * Note: This validation is a bit special because the number of
          * data segments is not known when we validate instructions.
