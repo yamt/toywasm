@@ -49,6 +49,23 @@ read_leb(const uint8_t **pp, const uint8_t *ep, unsigned int bits,
         uint64_t result = 0;
         bool is_minus = false;
         const bool error_check = ep != NULL;
+        if (error_check) {
+                /*
+                 * https://webassembly.github.io/spec/core/binary/values.html#integers
+                 *
+                 * > the total number of bytes encoding a value of type uN
+                 * > must not exceed ceil(N/7) bytes.
+                 *
+                 * > the total number of bytes encoding a value of type sN
+                 * > must not exceed ceil(N/7) bytes.
+                 *
+                 * Note: we have already consumed 1 byte, thus p - 1.
+                 */
+                const uint8_t *nep = p - 1 + (bits + 7 - 1) / 7;
+                if (ep > nep) {
+                        ep = nep;
+                }
+        }
         while (true) {
                 uint8_t v = u8 & 0x7f;
                 if (error_check) {
