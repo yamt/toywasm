@@ -1384,6 +1384,8 @@ module_load(struct module *m, const uint8_t *p, const uint8_t *ep,
                         if (max_seen_section_id >= t->order) {
                                 xlog_trace("unexpected section %u (%s)", s.id,
                                            name);
+                                ret = EINVAL;
+                                goto fail;
                         }
                         max_seen_section_id = t->order;
                 }
