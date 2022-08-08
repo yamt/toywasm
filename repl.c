@@ -268,6 +268,9 @@ repl_load_from_buf(struct repl_state *state, struct repl_module_state *mod)
                               &report);
         if (report.msg != NULL) {
                 xlog_error("instance_create: %s", report.msg);
+                printf("instantiation error: %s\n", report.msg);
+        } else if (ret != 0) {
+                printf("instantiation error: unknown\n");
         }
         report_clear(&report);
         if (ret != 0) {
