@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -1297,6 +1298,34 @@ fail:
         return ret;
 }
 
+int
+read_custom_section(const uint8_t **pp, const uint8_t *ep,
+                    struct load_context *ctx)
+{
+        const uint8_t *p = *pp;
+        uint32_t name_len;
+        int ret;
+        ret = read_leb_u32(&p, ep, &name_len);
+        if (ret != 0) {
+                goto fail;
+        }
+        if (ep - p < name_len) {
+                ret = EINVAL;
+                goto fail;
+        }
+        if (name_len < INT_MAX) {
+                xlog_trace("custom section name %.*s", (int)name_len, p);
+        }
+        p += name_len;
+        /*
+         * unspecified bytes follow. just skip them.
+         */
+        ret = 0;
+        *pp = ep;
+fail:
+        return ret;
+}
+
 struct section_type {
         const char *name;
         int (*read)(const uint8_t **pp, const uint8_t *ep,
@@ -1313,7 +1342,7 @@ struct section_type {
 #define SECTION_NOOP(id, n, o) [id] = {.name = #n, .read = NULL, .order = o}
 
 const struct section_type section_types[] = {
-        SECTION_NOOP(0, custom, 0),
+        SECTION(0, custom, 0),
         SECTION(1, type, 1),
         SECTION(2, import, 2),
         SECTION(3, function, 3),
