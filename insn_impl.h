@@ -192,6 +192,25 @@ INSN_IMPL(end)
                 if (ret != 0) {
                         return ret;
                 }
+                if (cframe.op == FRAME_OP_IF) {
+                        /* no "else" is same as an empty "else" */
+                        xlog_trace("emulating an empty else");
+                        ret = push_ctrlframe(pc, FRAME_OP_EMPTY_ELSE, 0,
+                                             cframe.start_types,
+                                             cframe.end_types, vctx);
+                        if (ret == 0) {
+                                cframe.start_types = NULL;
+                                cframe.end_types = NULL;
+                        }
+                        ctrlframe_clear(&cframe);
+                        if (ret != 0) {
+                                return ret;
+                        }
+                        ret = pop_ctrlframe(pc, false, &cframe, vctx);
+                        if (ret != 0) {
+                                return ret;
+                        }
+                }
                 ret = push_valtypes(cframe.end_types, vctx);
                 ctrlframe_clear(&cframe);
                 if (ret != 0) {

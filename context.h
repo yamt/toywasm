@@ -16,6 +16,7 @@ enum ctrlframe_op {
         FRAME_OP_END = 0x0b,
 
         /* pseudo op */
+        FRAME_OP_EMPTY_ELSE = 0xfe,
         FRAME_OP_INVOKE = 0xff,
 };
 

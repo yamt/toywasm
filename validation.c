@@ -135,7 +135,7 @@ push_ctrlframe(uint32_t pc, enum ctrlframe_op op, uint32_t jumpslot,
          */
         assert(op == FRAME_OP_ELSE || jumpslot == 0);
         if (!ctx->generate_jump_table || op == FRAME_OP_INVOKE ||
-            op == FRAME_OP_ELSE) {
+            op == FRAME_OP_ELSE || op == FRAME_OP_EMPTY_ELSE) {
                 nslots = 0;
         } else if (op == FRAME_OP_IF) {
                 /*
@@ -200,9 +200,10 @@ pop_ctrlframe(uint32_t pc, bool is_else, struct ctrlframe *cframep,
         }
         cframe = &ctx->cframes[ctx->ncframes - 1];
         if (is_else && cframe->op != FRAME_OP_IF) {
-                return EINVAL;
+                return validation_failure(ctx, "if-else mismatch");
         }
-        if (cframe->op != FRAME_OP_INVOKE && ctx->ei->jumps != NULL) {
+        if (cframe->op != FRAME_OP_INVOKE &&
+            cframe->op != FRAME_OP_EMPTY_ELSE && ctx->ei->jumps != NULL) {
                 struct jump *jump =
                         &ctx->ei->jumps[cframe->jumpslot + is_else];
                 assert(jump->pc != 0);
