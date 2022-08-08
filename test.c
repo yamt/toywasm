@@ -168,8 +168,10 @@ test_leb128(void **state)
                 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x02,
         };
 
+#if 0
         TEST_E2BIG(u32, u_0x10000000000000000);
         TEST_E2BIG(s32, u_0x10000000000000000);
+#endif
         TEST_E2BIG(u64, u_0x10000000000000000);
         TEST_E2BIG(s64, u_0x10000000000000000);
 
@@ -177,8 +179,10 @@ test_leb128(void **state)
                 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01,
         };
 
+#if 0
         TEST_E2BIG(u32, u_0xffffffffffffffff);
         TEST_E2BIG(s32, u_0xffffffffffffffff);
+#endif
         TEST_OK(u64, u_0xffffffffffffffff, 0xffffffffffffffff);
         TEST_E2BIG(s64, u_0xffffffffffffffff);
 
@@ -205,11 +209,19 @@ test_leb128(void **state)
         /*
          * Redundant representations are quite common in
          * actual wasm files.
+         * (But it's restricted to ceil(N/7) bytes.
          */
 
         const uint8_t u_5_redundant[] = {
-                0x85, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
-                0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x00,
+                0x85,
+                0x80,
+                0x80,
+                0x80,
+#if 0
+                0x80, 0x80, 0x80, 0x80,
+                0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
+#endif
+                0x00,
         };
 
         TEST_OK(i32, u_5_redundant, 5);
@@ -218,7 +230,14 @@ test_leb128(void **state)
         TEST_OK(s32, u_5_redundant, 5);
 
         const uint8_t s_minus5_redundant[] = {
-                0xfb, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f,
+                0xfb,
+                0xff,
+                0xff,
+                0xff,
+#if 0
+                0xff, 0xff, 0xff, 0xff,
+#endif
+                0x7f,
         };
 
         TEST_OK(i32, s_minus5_redundant, (uint32_t)-5);
