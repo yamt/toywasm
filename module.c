@@ -222,8 +222,17 @@ read_limits(const uint8_t **pp, const uint8_t *ep, struct limits *lim)
                 if (ret != 0) {
                         goto fail;
                 }
+                /* implementation limit */
+                if (lim->max == UINT32_MAX) {
+                        ret = ENOTSUP;
+                        goto fail;
+                }
         } else {
                 lim->max = UINT32_MAX;
+        }
+        if (lim->min > lim->max) {
+                ret = EINVAL;
+                goto fail;
         }
 
         *pp = p;
