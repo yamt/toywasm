@@ -1452,6 +1452,11 @@ module_load(struct module *m, const uint8_t *p, const uint8_t *ep,
          * https://webassembly.github.io/spec/core/valid/modules.html
          */
 
+        if (m->nimportedmems + m->nmems > 1) {
+                ret = EINVAL;
+                goto fail;
+        }
+
         if ((m->funcs == NULL) != (m->nfuncs == 0)) {
                 /* maybe there was no code section */
                 ret = EINVAL;
