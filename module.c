@@ -1464,6 +1464,21 @@ module_load(struct module *m, const uint8_t *p, const uint8_t *ep,
         }
 
         /*
+         * export names should be unique.
+         * TODO use something which is not O(n^2)
+         */
+        uint32_t i;
+        for (i = 0; i < m->nexports; i++) {
+                uint32_t j;
+                for (j = i + 1; j < m->nexports; j++) {
+                        if (!strcmp(m->exports[i].name, m->exports[j].name)) {
+                                ret = EINVAL;
+                                goto fail;
+                        }
+                }
+        }
+
+        /*
          * Note: This validation is a bit special because the number of
          * data segments is not known when we validate instructions.
          *
