@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "bitmap.h"
 #include "context.h"
 #include "exec.h"
 #include "instance.h"
@@ -298,14 +299,12 @@ instance_create(struct module *m, struct instance **instp,
                 }
                 VEC_ELEM(inst->tables, i) = tinst;
         }
-        inst->data_dropped = calloc(HOWMANY(m->ndatas, 32), sizeof(uint32_t));
-        if (inst->data_dropped == NULL) {
-                ret = ENOMEM;
+        ret = bitmap_alloc(&inst->data_dropped, m->ndatas);
+        if (ret != 0) {
                 goto fail;
         }
-        inst->elem_dropped = calloc(HOWMANY(m->nelems, 32), sizeof(uint32_t));
-        if (inst->elem_dropped == NULL) {
-                ret = ENOMEM;
+        ret = bitmap_alloc(&inst->elem_dropped, m->nelems);
+        if (ret != 0) {
                 goto fail;
         }
         ctx = &ctx0;
@@ -422,8 +421,8 @@ instance_destroy(struct instance *inst)
                 free(*tp);
         }
         VEC_FREE(inst->tables);
-        free(inst->data_dropped);
-        free(inst->elem_dropped);
+        bitmap_free(&inst->data_dropped);
+        bitmap_free(&inst->elem_dropped);
         free(inst);
 }
 

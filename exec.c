@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "bitmap.h"
 #include "context.h"
 #include "exec.h"
 #include "expr.h"
@@ -678,8 +679,7 @@ memory_init(struct exec_context *ectx, uint32_t memidx, uint32_t dataidx,
         assert(memidx < m->nimportedmems + m->nmems);
         assert(dataidx < m->ndatas);
         int ret;
-        bool dropped =
-                inst->data_dropped[dataidx / 32] & (1U << (dataidx % 32));
+        bool dropped = bitmap_test(&inst->data_dropped, dataidx);
         const struct data *data = &m->datas[dataidx];
         if ((dropped && !(s == 0 && n == 0)) || s > data->init_size ||
             n > data->init_size - s) {
@@ -729,8 +729,7 @@ table_init(struct exec_context *ectx, uint32_t tableidx, uint32_t elemidx,
         assert(tableidx < m->nimportedtables + m->ntables);
         assert(elemidx < m->nelems);
         int ret;
-        bool dropped =
-                inst->elem_dropped[elemidx / 32] & (1U << (elemidx % 32));
+        bool dropped = bitmap_test(&inst->elem_dropped, elemidx);
         struct element *elem = &m->elems[elemidx];
         if ((dropped && !(s == 0 && n == 0)) || s > elem->init_size ||
             n > elem->init_size - s) {
@@ -849,7 +848,7 @@ data_drop(struct exec_context *ectx, uint32_t dataidx)
         struct instance *inst = ectx->instance;
         struct module *m = inst->module;
         assert(dataidx < m->ndatas);
-        inst->data_dropped[dataidx / 32] |= 1U << (dataidx % 32);
+        bitmap_set(&inst->data_dropped, dataidx);
 }
 
 void
@@ -858,5 +857,5 @@ elem_drop(struct exec_context *ectx, uint32_t elemidx)
         struct instance *inst = ectx->instance;
         struct module *m = inst->module;
         assert(elemidx < m->nelems);
-        inst->elem_dropped[elemidx / 32] |= 1U << (elemidx % 32);
+        bitmap_set(&inst->elem_dropped, elemidx);
 }

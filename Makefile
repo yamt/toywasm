@@ -36,6 +36,7 @@ TESTSRCS += test.c
 
 TEST_WASM=./test.wasm
 
+SRCS += bitmap.c
 SRCS += context.c
 SRCS += decode.c
 SRCS += endian.c

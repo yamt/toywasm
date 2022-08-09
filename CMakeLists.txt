@@ -116,6 +116,7 @@ message(STATUS "TOYWASM_USE_LOCALS_CACHE: ${TOYWASM_USE_LOCALS_CACHE}")
 # lib
 
 set(lib_sources
+	"bitmap.c"
 	"context.c"
 	"decode.c"
 	"endian.c"

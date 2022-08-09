@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "bitmap.h"
 #include "vec.h"
 
 #define WASM_PAGE_SIZE 65536
@@ -297,8 +298,8 @@ struct instance {
         VEC(, struct tableinst *) tables;
         VEC(, struct globalinst *) globals;
 
-        uint32_t *data_dropped;
-        uint32_t *elem_dropped;
+        struct bitmap data_dropped;
+        struct bitmap elem_dropped;
 };
 
 struct import_object_entry {
