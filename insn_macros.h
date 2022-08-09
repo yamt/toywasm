@@ -56,6 +56,17 @@
                 }                                                             \
         } while (false)
 
+#define READ_MEMARG(arg)                                                      \
+        do {                                                                  \
+                if (VALIDATING) {                                             \
+                        ret = read_memarg(&p, ep, arg);                       \
+                        CHECK_RET(ret);                                       \
+                } else {                                                      \
+                        (arg)->align = read_leb_u32_nocheck(&p);              \
+                        (arg)->offset = read_leb_u32_nocheck(&p);             \
+                }                                                             \
+        } while (false)
+
 #define READ_IMM(TYPE, VAR, READ, READ_NOCHECK)                               \
         TYPE VAR;                                                             \
         do {                                                                  \

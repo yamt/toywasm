@@ -119,8 +119,7 @@ fail:                                                                         \
                 struct memarg memarg;                                         \
                 int ret;                                                      \
                 LOAD_CTX;                                                     \
-                ret = read_memarg(&p, ep, &memarg);                           \
-                CHECK_RET(ret);                                               \
+                READ_MEMARG(&memarg);                                         \
                 uint32_t memidx = 0;                                          \
                 CHECK(memidx < m->nimportedmems + m->nmems);                  \
                 CHECK(1 <= (MEM / 8) >>                                       \
@@ -152,8 +151,7 @@ fail:                                                                         \
                 struct memarg memarg;                                         \
                 int ret;                                                      \
                 LOAD_CTX;                                                     \
-                ret = read_memarg(&p, ep, &memarg);                           \
-                CHECK_RET(ret);                                               \
+                READ_MEMARG(&memarg);                                         \
                 uint32_t memidx = 0;                                          \
                 CHECK(memidx < m->nimportedmems + m->nmems);                  \
                 CHECK(1 <= (MEM / 8) >>                                       \
