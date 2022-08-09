@@ -747,6 +747,7 @@ table_init(struct exec_context *ectx, uint32_t tableidx, uint32_t elemidx,
                 goto fail;
         }
         struct tableinst *t = VEC_ELEM(inst->tables, tableidx);
+        assert(t->type->et == elem->type);
         uint32_t i;
         for (i = 0; i < n; i++) {
                 if (elem->funcs != NULL) {
