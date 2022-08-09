@@ -1153,6 +1153,7 @@ INSN_IMPL(table_init)
         struct module *m = MODULE;
         CHECK(elemidx < m->nelems);
         CHECK(tableidx < m->nimportedtables + m->ntables);
+        CHECK(m->tables[tableidx].et == m->elems[elemidx].type);
         POP_VAL(TYPE_i32, n);
         POP_VAL(TYPE_i32, s);
         POP_VAL(TYPE_i32, d);
