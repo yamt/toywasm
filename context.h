@@ -92,6 +92,7 @@ struct validation_context {
         uint32_t expected_ndatas; /* max dataidx seen + 1 */
 
         struct report *report;
+        struct bitmap *refs; /* C.refs */
 };
 
 enum exec_event {

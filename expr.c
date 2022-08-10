@@ -78,6 +78,7 @@ read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
         assert(lctx->module != NULL);
         validation_context_init(vctx);
         vctx->report = &lctx->report;
+        vctx->refs = &lctx->refs;
         vctx->const_expr = const_expr;
         vctx->generate_jump_table = lctx->generate_jump_table;
         vctx->module = lctx->module;

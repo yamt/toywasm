@@ -1007,6 +1007,22 @@ INSN_IMPL(ref_func)
                 struct exec_context *ectx = ECTX;
                 val_result.u.funcref.func =
                         VEC_ELEM(ectx->instance->funcs, funcidx);
+        } else if (VALIDATING) {
+                struct validation_context *vctx = VCTX;
+                /*
+                 * REVISIT: a bit abuse of const_expr.
+                 * what we want to check here is if it's in the code
+                 * section or not.
+                 */
+                if (vctx->const_expr) {
+                        bitmap_set(vctx->refs, funcidx);
+                } else {
+                        if (!bitmap_test(vctx->refs, funcidx)) {
+                                ret = validation_failure(
+                                        vctx, "funcref %" PRIu32, funcidx);
+                                goto fail;
+                        }
+                }
         }
         PUSH_VAL(TYPE_FUNCREF, result);
         SAVE_CTX;

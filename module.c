@@ -758,6 +758,12 @@ read_function_section(const uint8_t **pp, const uint8_t *ep,
                 xlog_trace("func [%" PRIu32 "] typeidx %" PRIu32, i,
                            m->functypeidxes[i]);
         }
+        if (m->nimportedfuncs + m->nfuncs > 0) {
+                ret = bitmap_alloc(&ctx->refs, m->nimportedfuncs + m->nfuncs);
+                if (ret != 0) {
+                        goto fail;
+                }
+        }
 
         ret = 0;
         *pp = p;
@@ -1073,6 +1079,7 @@ read_element(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
                                 ret = EINVAL;
                                 goto fail;
                         }
+                        bitmap_set(&ctx->refs, elem->funcs[i]);
                 }
                 break;
         case 4:
@@ -1574,4 +1581,5 @@ void
 load_context_clear(struct load_context *ctx)
 {
         report_clear(&ctx->report);
+        bitmap_free(&ctx->refs);
 }

@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "bitmap.h"
 #include "context.h"
 #include "decode.h"
 #include "endian.h"
