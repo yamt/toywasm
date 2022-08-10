@@ -82,6 +82,8 @@ read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
         vctx->const_expr = const_expr;
         vctx->generate_jump_table = lctx->generate_jump_table;
         vctx->module = lctx->module;
+        vctx->has_datacount = lctx->has_datacount;
+        vctx->ndatas_in_datacount = lctx->ndatas_in_datacount;
         struct expr_exec_info *ei;
         vctx->ei = ei = &expr->ei;
         memset(ei, 0, sizeof(*ei));
@@ -160,9 +162,6 @@ read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
                    ", vals %" PRIu32,
                    expr->end - expr->start, ei->njumps * sizeof(*ei->jumps),
                    ei->maxlabels, ei->maxvals);
-        if (lctx->expected_ndatas < vctx->expected_ndatas) {
-                lctx->expected_ndatas = vctx->expected_ndatas;
-        }
         validation_context_clear(vctx);
         return 0;
 fail:

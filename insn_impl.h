@@ -1057,9 +1057,8 @@ INSN_IMPL(memory_init)
                 }
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
-                if (vctx->expected_ndatas <= dataidx) {
-                        vctx->expected_ndatas = dataidx + 1;
-                }
+                CHECK(vctx->has_datacount);
+                CHECK(dataidx < vctx->ndatas_in_datacount);
         }
         SAVE_CTX;
         INSN_SUCCESS;
@@ -1077,9 +1076,8 @@ INSN_IMPL(data_drop)
                 data_drop(ectx, dataidx);
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
-                if (vctx->expected_ndatas <= dataidx) {
-                        vctx->expected_ndatas = dataidx + 1;
-                }
+                CHECK(vctx->has_datacount);
+                CHECK(dataidx < vctx->ndatas_in_datacount);
         }
         SAVE_CTX;
         INSN_SUCCESS;

@@ -89,7 +89,8 @@ struct validation_context {
         bool const_expr;
         bool generate_jump_table;
 
-        uint32_t expected_ndatas; /* max dataidx seen + 1 */
+        bool has_datacount;
+        uint32_t ndatas_in_datacount;
 
         struct report *report;
         struct bitmap *refs; /* C.refs */
