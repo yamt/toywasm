@@ -27,7 +27,7 @@ import_object_alloc(uint32_t nentries, struct import_object **resultp)
 
 int
 import_object_create_for_exports(struct instance *inst,
-                                 const char *module_name,
+                                 const struct name *module_name,
                                  struct import_object **resultp)
 {
         struct module *m = inst->module;
@@ -64,7 +64,7 @@ import_object_create_for_exports(struct instance *inst,
                         assert(false);
                 }
                 e->module_name = module_name;
-                e->name = ex->name;
+                e->name = &ex->name;
                 xlog_trace("created an entry for %s:%s", e->module_name,
                            e->name);
         }

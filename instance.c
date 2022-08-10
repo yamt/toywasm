@@ -27,8 +27,8 @@ find_entry_for_import(
                 for (j = 0; j < impobj->nentries; j++) {
                         const struct import_object_entry *e =
                                 &impobj->entries[j];
-                        if (!strcmp(e->module_name, im->module_name) &&
-                            !strcmp(e->name, im->name)) {
+                        if (!compare_name(e->module_name, &im->module_name) &&
+                            !compare_name(e->name, &im->name)) {
                                 if (e->type != im->desc.type) {
                                         report_error(
                                                 report,
@@ -427,7 +427,7 @@ instance_destroy(struct instance *inst)
 }
 
 int
-instance_execute_func(struct exec_context *ctx, const char *name,
+instance_execute_func(struct exec_context *ctx, const struct name *name,
                       const struct resulttype *paramtype,
                       const struct resulttype *resulttype,
                       const struct val *params, struct val *results)

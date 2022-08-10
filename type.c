@@ -53,12 +53,13 @@ is_valtype(enum valtype vt)
 }
 
 int
-module_find_export_func(struct module *m, const char *name, uint32_t *funcidxp)
+module_find_export_func(struct module *m, const struct name *name,
+                        uint32_t *funcidxp)
 {
         uint32_t i;
         for (i = 0; i < m->nexports; i++) {
                 const struct export *ex = &m->exports[i];
-                if (!strcmp(ex->name, name)) {
+                if (!compare_name(&ex->name, name)) {
                         const struct exportdesc *exd = &ex->desc;
                         if (exd->type == EXPORT_FUNC) {
                                 *funcidxp = exd->idx;
@@ -176,6 +177,15 @@ compare_functype(const struct functype *a, const struct functype *b)
                 return 1;
         }
         return compare_resulttype(&a->result, &b->result);
+}
+
+int
+compare_name(const struct name *a, const struct name *b)
+{
+        if (a->nbytes != b->nbytes) {
+                return 1;
+        }
+        return memcmp(a->data, b->data, a->nbytes);
 }
 
 static int

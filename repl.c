@@ -65,7 +65,7 @@ struct repl_state {
         unsigned int nmodules;
         struct import_object *imports;
         unsigned int nregister;
-        char *registered_names[MAX_MODULES];
+        struct name registered_names[MAX_MODULES];
         struct val *param;
         struct val *result;
         struct wasi_instance *wasi;
@@ -174,7 +174,7 @@ repl_reset(struct repl_state *state)
                 n++;
         }
         while (state->nregister > 0) {
-                free(state->registered_names[--state->nregister]);
+                clear_name(&state->registered_names[--state->nregister]);
                 n--;
         }
         while (state->nmodules > 0) {
@@ -357,14 +357,16 @@ repl_register(struct repl_state *state, const char *module_name)
         struct import_object *im;
         int ret;
 
-        ret = import_object_create_for_exports(inst, module_name1, &im);
+        struct name *name = &state->registered_names[state->nregister];
+        set_name_cstr(name, module_name1);
+        ret = import_object_create_for_exports(inst, name, &im);
         if (ret != 0) {
                 free(module_name1);
                 return ret;
         }
         im->next = state->imports;
         state->imports = im;
-        state->registered_names[state->nregister++] = module_name1;
+        state->nregister++;
         return 0;
 }
 
@@ -579,8 +581,11 @@ repl_invoke(struct repl_state *state, const char *cmd, bool print_result)
         assert(inst != NULL);
         assert(module != NULL);
         uint32_t funcidx;
-        ret = module_find_export_func(module, funcname, &funcidx);
+        struct name funcname_name;
+        set_name_cstr(&funcname_name, funcname);
+        ret = module_find_export_func(module, &funcname_name, &funcidx);
         if (ret != 0) {
+                /* TODO should print the name w/o unescape */
                 xlog_error("module_find_export_func failed for %s", funcname);
                 goto fail;
         }
@@ -619,7 +624,7 @@ repl_invoke(struct repl_state *state, const char *cmd, bool print_result)
         struct exec_context ctx0;
         struct exec_context *ctx = &ctx0;
         exec_context_init(ctx, inst);
-        ret = instance_execute_func(ctx, funcname, ptype, rtype, param,
+        ret = instance_execute_func(ctx, &funcname_name, ptype, rtype, param,
                                     result);
         if (ret == EFAULT && ctx->trapped) {
                 if (ctx->trapid == TRAP_VOLUNTARY_EXIT) {

@@ -292,7 +292,7 @@ fail:
 }
 
 int
-read_name(const uint8_t **pp, const uint8_t *ep, char **namep)
+read_name(const uint8_t **pp, const uint8_t *ep, struct name *namep)
 {
         const uint8_t *p = *pp;
         char *name = NULL;
@@ -325,12 +325,26 @@ read_name(const uint8_t **pp, const uint8_t *ep, char **namep)
         name[vec_count] = 0;
         p += vec_count;
 
+        namep->nbytes = vec_count;
+        namep->data = name;
         *pp = p;
-        *namep = name;
         return 0;
 fail:
         free(name);
         return ret;
+}
+
+void
+set_name_cstr(struct name *name, char *cstr)
+{
+        name->nbytes = strlen(cstr);
+        name->data = cstr;
+}
+
+void
+clear_name(struct name *name)
+{
+        free(name->data);
 }
 
 int
@@ -484,15 +498,14 @@ read_import(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
             struct import *im, void *ctx)
 {
         const uint8_t *p = *pp;
-        char *module_name = NULL;
-        char *name = NULL;
         int ret;
 
-        ret = read_name(&p, ep, &module_name);
+        memset(im, 0, sizeof(*im));
+        ret = read_name(&p, ep, &im->module_name);
         if (ret != 0) {
                 goto fail;
         }
-        ret = read_name(&p, ep, &name);
+        ret = read_name(&p, ep, &im->name);
         if (ret != 0) {
                 goto fail;
         }
@@ -502,20 +515,16 @@ read_import(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
         }
 
         *pp = p;
-        im->module_name = module_name;
-        im->name = name;
         return 0;
 fail:
-        free(module_name);
-        free(name);
         return ret;
 }
 
 void
 clear_import(struct import *im)
 {
-        free(im->module_name);
-        free(im->name);
+        clear_name(&im->module_name);
+        clear_name(&im->name);
 }
 
 int
@@ -527,7 +536,8 @@ read_export(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
         char *name = NULL;
         int ret;
 
-        ret = read_name(&p, ep, &name);
+        memset(ex, 0, sizeof(*ex));
+        ret = read_name(&p, ep, &ex->name);
         if (ret != 0) {
                 goto fail;
         }
@@ -537,17 +547,15 @@ read_export(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
         }
 
         *pp = p;
-        ex->name = name;
         return 0;
 fail:
-        free(name);
         return ret;
 }
 
 void
 clear_export(struct export *ex)
 {
-        free(ex->name);
+        clear_name(&ex->name);
 }
 
 void
@@ -1496,7 +1504,8 @@ module_load(struct module *m, const uint8_t *p, const uint8_t *ep,
         for (i = 0; i < m->nexports; i++) {
                 uint32_t j;
                 for (j = i + 1; j < m->nexports; j++) {
-                        if (!strcmp(m->exports[i].name, m->exports[j].name)) {
+                        if (!compare_name(&m->exports[i].name,
+                                          &m->exports[j].name)) {
                                 ret = EINVAL;
                                 goto fail;
                         }

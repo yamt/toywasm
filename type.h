@@ -176,15 +176,21 @@ struct exportdesc {
         uint32_t idx;
 };
 
+/* Note: wasm name strings are not 0-terminated */
+struct name {
+        uint32_t nbytes;
+        char *data; /* utf-8 */
+};
+
 struct import {
-        char *module_name;
-        char *name;
+        struct name module_name;
+        struct name name;
         struct importdesc desc;
 };
 
 struct export
 {
-        char *name;
+        struct name name;
         struct exportdesc desc;
 };
 
@@ -303,8 +309,8 @@ struct instance {
 };
 
 struct import_object_entry {
-        const char *module_name;
-        const char *name;
+        const struct name *module_name;
+        const struct name *name;
         enum importtype type;
         union {
                 struct funcinst *func;
@@ -328,6 +334,7 @@ bool is_reftype(enum valtype vt);
 bool is_valtype(enum valtype vt);
 int compare_resulttype(const struct resulttype *a, const struct resulttype *b);
 int compare_functype(const struct functype *a, const struct functype *b);
+int compare_name(const struct name *a, const struct name *b);
 
 const struct import *module_find_import(const struct module *m,
                                         enum importtype type, uint32_t idx);
@@ -344,5 +351,8 @@ void functype_free(struct functype *ft);
 
 void clear_functype(struct functype *ft);
 void clear_resulttype(struct resulttype *ft);
+
+void set_name_cstr(struct name *name, char *cstr);
+void clear_name(struct name *name);
 
 #endif /* defined(_TYPE_H) */

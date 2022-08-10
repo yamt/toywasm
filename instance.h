@@ -7,6 +7,7 @@ struct resulttype;
 struct val;
 struct import_object;
 struct report;
+struct name;
 
 int instance_create(struct module *m, struct instance **instp,
                     const struct import_object *imports,
@@ -22,13 +23,13 @@ int instance_create(struct module *m, struct instance **instp,
  */
 void instance_destroy(struct instance *inst);
 
-int instance_execute_func(struct exec_context *ctx, const char *name,
+int instance_execute_func(struct exec_context *ctx, const struct name *name,
                           const struct resulttype *paramtype,
                           const struct resulttype *resulttype,
                           const struct val *params, struct val *results);
 
 int import_object_create_for_exports(struct instance *inst,
-                                     const char *module_name,
+                                     const struct name *module_name,
                                      struct import_object **resultp);
 void import_object_destroy(struct import_object *export);
 int import_object_alloc(uint32_t nentries, struct import_object **resultp);

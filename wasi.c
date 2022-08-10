@@ -899,9 +899,15 @@ fail:
         return 0;
 }
 
+#define NAME_FROM_CLITERAL(C)                                                 \
+        {                                                                     \
+                .nbytes = sizeof(C) - 1, .data = C,                           \
+        }
+
 #define WASI_HOST_FUNC(NAME, TYPE)                                            \
         {                                                                     \
-                .name = #NAME, .type = TYPE, .func = wasi_##NAME,             \
+                .name = NAME_FROM_CLITERAL(#NAME), .type = TYPE,              \
+                .func = wasi_##NAME,                                          \
         }
 
 const struct host_func wasi_funcs[] = {
@@ -1020,11 +1026,14 @@ wasi_instance_destroy(struct wasi_instance *inst)
         free(inst);
 }
 
+struct name wasi_snapshot_preview1 =
+        NAME_FROM_CLITERAL("wasi_snapshot_preview1");
+
 int
 import_object_create_for_wasi(struct wasi_instance *wasi,
                               struct import_object **impp)
 {
         return import_object_create_for_host_funcs(
-                "wasi_snapshot_preview1", wasi_funcs, ARRAYCOUNT(wasi_funcs),
+                &wasi_snapshot_preview1, wasi_funcs, ARRAYCOUNT(wasi_funcs),
                 &wasi->hi, impp);
 }
