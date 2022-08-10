@@ -10,6 +10,8 @@ struct load_context {
         struct report report;
         uint32_t expected_ndatas;
         struct bitmap refs; /* C.refs */
+        bool has_datacount;
+        uint32_t ndatas_in_datacount;
 };
 
 void load_context_init(struct load_context *ctx);

@@ -1306,6 +1306,25 @@ fail:
 }
 
 int
+read_datacount_section(const uint8_t **pp, const uint8_t *ep,
+                       struct load_context *ctx)
+{
+        const uint8_t *p = *pp;
+        uint32_t count;
+        int ret;
+        ret = read_leb_u32(&p, ep, &count);
+        if (ret != 0) {
+                goto fail;
+        }
+        ctx->has_datacount = true;
+        ctx->ndatas_in_datacount = count;
+        ret = 0;
+        *pp = ep;
+fail:
+        return ret;
+}
+
+int
 read_custom_section(const uint8_t **pp, const uint8_t *ep,
                     struct load_context *ctx)
 {
@@ -1349,19 +1368,13 @@ struct section_type {
 #define SECTION_NOOP(id, n, o) [id] = {.name = #n, .read = NULL, .order = o}
 
 const struct section_type section_types[] = {
-        SECTION(0, custom, 0),
-        SECTION(1, type, 1),
-        SECTION(2, import, 2),
-        SECTION(3, function, 3),
-        SECTION(4, table, 4),
-        SECTION(5, memory, 5),
-        SECTION(6, global, 6),
-        SECTION(7, export, 7),
-        SECTION(8, start, 8),
-        SECTION(9, element, 9),
-        SECTION(10, code, 11),
-        SECTION(11, data, 12),
-        SECTION_NOOP(12, datacount, 10),
+        SECTION(0, custom, 0),      SECTION(1, type, 1),
+        SECTION(2, import, 2),      SECTION(3, function, 3),
+        SECTION(4, table, 4),       SECTION(5, memory, 5),
+        SECTION(6, global, 6),      SECTION(7, export, 7),
+        SECTION(8, start, 8),       SECTION(9, element, 9),
+        SECTION(10, code, 11),      SECTION(11, data, 12),
+        SECTION(12, datacount, 10),
 };
 
 const struct section_type *
@@ -1466,6 +1479,11 @@ module_load(struct module *m, const uint8_t *p, const uint8_t *ep,
 
         if ((m->funcs == NULL) != (m->nfuncs == 0)) {
                 /* maybe there was no code section */
+                ret = EINVAL;
+                goto fail;
+        }
+
+        if (ctx->has_datacount && ctx->ndatas_in_datacount != m->ndatas) {
                 ret = EINVAL;
                 goto fail;
         }
