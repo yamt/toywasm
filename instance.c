@@ -30,20 +30,28 @@ find_entry_for_import(
                         if (!compare_name(e->module_name, &im->module_name) &&
                             !compare_name(e->name, &im->name)) {
                                 if (e->type != im->desc.type) {
+                                        /* TODO escape names */
                                         report_error(
                                                 report,
                                                 "Type mismatch for import "
-                                                "%s:%s (%u != %u)",
-                                                im->module_name, im->name,
+                                                "%.*s:%.*s (%u != %u)",
+                                                (int)im->module_name.nbytes,
+                                                im->module_name.data,
+                                                (int)im->name.nbytes,
+                                                im->name.data,
                                                 (unsigned int)e->type,
                                                 (unsigned int)im->desc.type);
                                         return EINVAL;
                                 }
                                 int ret = check(e, checkarg);
                                 if (ret == 0) {
+                                        /* TODO escape names */
                                         xlog_trace("Found an entry for import "
-                                                   "%s:%s",
-                                                   im->module_name, im->name);
+                                                   "%.*s:%.*s",
+                                                   (int)im->module_name.nbytes,
+                                                   im->module_name.data,
+                                                   (int)im->name.nbytes,
+                                                   im->name.data);
                                         *resultp = e;
                                         return 0;
                                 }
@@ -53,11 +61,15 @@ find_entry_for_import(
                 impobj = impobj->next;
         }
         if (mismatch) {
-                report_error(report, "No matching entry for import %s:%s",
-                             im->module_name, im->name);
+                /* TODO escape names */
+                report_error(report, "No matching entry for import %.*s:%.*s",
+                             (int)im->module_name.nbytes, im->module_name.data,
+                             (int)im->name.nbytes, im->name.data);
         } else {
-                report_error(report, "No entry for import %s:%s",
-                             im->module_name, im->name);
+                /* TODO escape names */
+                report_error(report, "No entry for import %.*s:%.*s",
+                             (int)im->module_name.nbytes, im->module_name.data,
+                             (int)im->name.nbytes, im->name.data);
         }
         return ENOENT;
 }
