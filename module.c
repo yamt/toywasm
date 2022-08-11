@@ -292,6 +292,75 @@ fail:
 }
 
 int
+check_utf8(const uint8_t *p, const uint8_t *ep)
+{
+        int ret;
+        while (p < ep) {
+                uint32_t c;
+                uint32_t min;
+                uint32_t max;
+                uint8_t b;
+                unsigned int n;
+                ret = read_u8(&p, ep, &b);
+                if (ret != 0) {
+                        goto fail;
+                }
+                if (b < 0x80) {
+                        n = 1;
+                        min = 0;
+                        max = 0x7f;
+                        c = b;
+                } else if (b < 0xc0) {
+                        ret = EINVAL;
+                        goto fail;
+                } else if (b < 0xe0) {
+                        n = 2;
+                        min = 0x80;
+                        max = 0x7ff;
+                        c = b - 0xc0;
+                } else if (b < 0xf0) {
+                        n = 3;
+                        min = 0x800;
+                        max = 0xffff;
+                        c = b - 0xe0;
+                } else if (b < 0xf8) {
+                        n = 4;
+                        min = 0x10000;
+                        max = 0x10ffff;
+                        c = b - 0xf0;
+                } else {
+                        ret = EINVAL;
+                        goto fail;
+                }
+                unsigned int i;
+                for (i = 1; i < n; i++) {
+                        ret = read_u8(&p, ep, &b);
+                        if (ret != 0) {
+                                goto fail;
+                        }
+                        if (b < 0x80 || b >= 0xc0) {
+                                ret = EINVAL;
+                                goto fail;
+                        }
+                        c <<= 6;
+                        c += b - 0x80;
+                }
+                if (c < min || max < c) {
+                        ret = EINVAL;
+                        goto fail;
+                }
+                /* reject surrogate halves */
+                if (0xd800 <= c && c < 0xe000) {
+                        ret = EINVAL;
+                        goto fail;
+                }
+        }
+        return 0;
+fail:
+        return ret;
+}
+
+int
 read_name(const uint8_t **pp, const uint8_t *ep, struct name *namep)
 {
         const uint8_t *p = *pp;
@@ -314,7 +383,10 @@ read_name(const uint8_t **pp, const uint8_t *ep, struct name *namep)
                 goto fail;
         }
 
-        /* TODO: utf-8 validation */
+        ret = check_utf8(p, p + vec_count);
+        if (ret != 0) {
+                goto fail;
+        }
 
         name = malloc(vec_count + 1);
         if (name == NULL) {
