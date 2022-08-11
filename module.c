@@ -1337,20 +1337,16 @@ read_custom_section(const uint8_t **pp, const uint8_t *ep,
                     struct load_context *ctx)
 {
         const uint8_t *p = *pp;
-        uint32_t name_len;
         int ret;
-        ret = read_leb_u32(&p, ep, &name_len);
+        /*
+         * read the name just for validation.
+         */
+        struct name name;
+        ret = read_name(&p, ep, &name);
         if (ret != 0) {
                 goto fail;
         }
-        if (ep - p < name_len) {
-                ret = EINVAL;
-                goto fail;
-        }
-        if (name_len < INT_MAX) {
-                xlog_trace("custom section name %.*s", (int)name_len, p);
-        }
-        p += name_len;
+        clear_name(&name);
         /*
          * unspecified bytes follow. just skip them.
          */
