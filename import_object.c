@@ -65,8 +65,8 @@ import_object_create_for_exports(struct instance *inst,
                 }
                 e->module_name = module_name;
                 e->name = &ex->name;
-                xlog_trace("created an entry for %s:%s", e->module_name,
-                           e->name);
+                xlog_trace("created an entry for %.*s:%.*s",
+                           CSTR(e->module_name), CSTR(e->name));
         }
         im->next = NULL;
         *resultp = im;

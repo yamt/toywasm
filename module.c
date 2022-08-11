@@ -561,14 +561,14 @@ clear_export(struct export *ex)
 void
 print_import(const struct import *im)
 {
-        xlog_trace("import module %s name %s type %u", im->module_name,
-                   im->name, im->desc.type);
+        xlog_trace("import module %.*s name %.*s type %u",
+                   CSTR(&im->module_name), CSTR(&im->name), im->desc.type);
 }
 
 void
 print_export(const struct export *ex)
 {
-        xlog_trace("export name %s type %u idx %" PRIu32, ex->name,
+        xlog_trace("export name %.*s type %u idx %" PRIu32, CSTR(&ex->name),
                    ex->desc.type, ex->desc.idx);
 }
 

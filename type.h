@@ -182,6 +182,10 @@ struct name {
         char *data; /* utf-8 */
 };
 
+/* usage: printf("%.*s", CSTR(name)); */
+/* TODO escape unprintable names */
+#define CSTR(n) (int)(n)->nbytes, (n)->data
+
 struct import {
         struct name module_name;
         struct name name;
