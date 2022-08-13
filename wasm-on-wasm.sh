@@ -2,8 +2,8 @@
 
 set -e
 
-MAJOR=16
-MINOR=0
+MAJOR=${WASI_SDK_MAJOR:-16}
+MINOR=${WASI_SDK_MINOR:-0}
 WASI_SDK_DIR=.wasi-sdk-${MAJOR}.${MINOR}
 DIST_DIR=.dist
 
