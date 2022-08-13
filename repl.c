@@ -519,32 +519,55 @@ print_trap(const struct exec_context *ctx)
 }
 
 int
-unescape(char *p)
+unescape(char *p0, size_t *lenp)
 {
         /* unescape string like "\xe1\xba\x9b" in-place */
 
+        bool in_quote = false;
+        char *p = p0;
         char *wp = p;
         while (*p != 0) {
-                if (p[0] == '\\' && p[1] == 'x') {
-                        p += 2;
-                        char buf[3];
-                        if ((buf[0] = *p++) == 0) {
+                if (in_quote) {
+                        if (p[0] == '"') {
+                                in_quote = false;
+                                p++;
+                                continue;
+                        }
+                } else {
+                        if (p[0] == '"') {
+                                in_quote = true;
+                                p++;
+                                continue;
+                        }
+                }
+                if (p[0] == '\\') {
+                        if (p[1] == 'x') {
+                                p += 2;
+                                char buf[3];
+                                if ((buf[0] = *p++) == 0) {
+                                        return EINVAL;
+                                }
+                                if ((buf[1] = *p++) == 0) {
+                                        return EINVAL;
+                                }
+                                buf[2] = 0;
+                                uintmax_t v;
+                                int ret = str_to_uint(buf, 16, &v);
+                                if (ret != 0) {
+                                        return ret;
+                                }
+                                *wp++ = (char)v;
+                        } else {
                                 return EINVAL;
                         }
-                        if ((buf[1] = *p++) == 0) {
-                                return EINVAL;
-                        }
-                        buf[2] = 0;
-                        uintmax_t v;
-                        int ret = str_to_uint(buf, 16, &v);
-                        if (ret != 0) {
-                                return ret;
-                        }
-                        *wp++ = (char)v;
                 } else {
                         *wp++ = *p++;
                 }
         }
+        if (in_quote) {
+                return EINVAL;
+        }
+        *lenp = wp - p0;
         *wp++ = 0;
         return 0;
 }
@@ -560,16 +583,23 @@ repl_invoke(struct repl_state *state, const char *cmd, bool print_result)
                 return ENOMEM;
         }
         int ret;
+        /* TODO handle quote */
         char *funcname = strtok(cmd1, " ");
         if (funcname == NULL) {
                 xlog_printf("no func name\n");
                 ret = EPROTO;
                 goto fail;
         }
-        ret = unescape(funcname);
+        xlog_trace("repl: invoke func %s", funcname);
+        size_t len;
+        ret = unescape(funcname, &len);
         if (ret != 0) {
+                xlog_error("failed to unescape funcname");
                 goto fail;
         }
+        struct name funcname_name;
+        funcname_name.data = funcname;
+        funcname_name.nbytes = len;
         if (state->nmodules == 0) {
                 xlog_printf("no module loaded\n");
                 ret = EPROTO;
@@ -581,8 +611,6 @@ repl_invoke(struct repl_state *state, const char *cmd, bool print_result)
         assert(inst != NULL);
         assert(module != NULL);
         uint32_t funcidx;
-        struct name funcname_name;
-        set_name_cstr(&funcname_name, funcname);
         ret = module_find_export_func(module, &funcname_name, &funcidx);
         if (ret != 0) {
                 /* TODO should print the name w/o unescape */
