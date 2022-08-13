@@ -429,21 +429,10 @@ instance_destroy(struct instance *inst)
 }
 
 int
-instance_execute_func(struct exec_context *ctx, const struct name *name,
+instance_execute_func(struct exec_context *ctx, uint32_t funcidx,
                       const struct resulttype *paramtype,
                       const struct resulttype *resulttype,
                       const struct val *params, struct val *results)
 {
-        struct module *m = ctx->instance->module;
-        uint32_t idx;
-        int ret;
-        ret = module_find_export_func(m, name, &idx);
-        if (ret != 0) {
-                return ret;
-        }
-        ret = invoke(idx, paramtype, resulttype, params, results, ctx);
-        if (ret != 0) {
-                return ret;
-        }
-        return 0;
+        return invoke(funcidx, paramtype, resulttype, params, results, ctx);
 }

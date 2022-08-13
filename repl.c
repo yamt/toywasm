@@ -652,8 +652,7 @@ repl_invoke(struct repl_state *state, const char *cmd, bool print_result)
         struct exec_context ctx0;
         struct exec_context *ctx = &ctx0;
         exec_context_init(ctx, inst);
-        ret = instance_execute_func(ctx, &funcname_name, ptype, rtype, param,
-                                    result);
+        ret = instance_execute_func(ctx, funcidx, ptype, rtype, param, result);
         if (ret == EFAULT && ctx->trapped) {
                 if (ctx->trapid == TRAP_VOLUNTARY_EXIT) {
                         xlog_trace("voluntary exit (%" PRIu32 ")",

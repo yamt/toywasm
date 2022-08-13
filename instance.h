@@ -23,7 +23,7 @@ int instance_create(struct module *m, struct instance **instp,
  */
 void instance_destroy(struct instance *inst);
 
-int instance_execute_func(struct exec_context *ctx, const struct name *name,
+int instance_execute_func(struct exec_context *ctx, uint32_t funcidx,
                           const struct resulttype *paramtype,
                           const struct resulttype *resulttype,
                           const struct val *params, struct val *results);
