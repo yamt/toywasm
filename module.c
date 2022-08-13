@@ -373,11 +373,6 @@ read_name(const uint8_t **pp, const uint8_t *ep, struct name *namep)
                 goto fail;
         }
 
-        /*
-         * "name" is not NUL terminated.
-         * NUL terminate for our convenience.
-         */
-
         if (vec_count > ep - p) {
                 ret = E2BIG;
                 goto fail;
@@ -388,17 +383,9 @@ read_name(const uint8_t **pp, const uint8_t *ep, struct name *namep)
                 goto fail;
         }
 
-        name = malloc(vec_count + 1);
-        if (name == NULL) {
-                ret = ENOMEM;
-                goto fail;
-        }
-        memcpy(name, p, vec_count);
-        name[vec_count] = 0;
-        p += vec_count;
-
         namep->nbytes = vec_count;
-        namep->data = name;
+        namep->data = (const char *)p;
+        p += vec_count;
         *pp = p;
         return 0;
 fail:
@@ -416,7 +403,6 @@ set_name_cstr(struct name *name, char *cstr)
 void
 clear_name(struct name *name)
 {
-        free(name->data);
 }
 
 int
@@ -605,7 +591,6 @@ read_export(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
 {
         struct load_context *ctx = vctx;
         const uint8_t *p = *pp;
-        char *name = NULL;
         int ret;
 
         memset(ex, 0, sizeof(*ex));

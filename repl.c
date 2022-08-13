@@ -174,7 +174,7 @@ repl_reset(struct repl_state *state)
                 n++;
         }
         while (state->nregister > 0) {
-                clear_name(&state->registered_names[--state->nregister]);
+                free((void *)state->registered_names[--state->nregister].data);
                 n--;
         }
         while (state->nmodules > 0) {

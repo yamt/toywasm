@@ -179,7 +179,7 @@ struct exportdesc {
 /* Note: wasm name strings are not 0-terminated */
 struct name {
         uint32_t nbytes;
-        char *data; /* utf-8 */
+        const char *data; /* utf-8 */
 };
 
 /* usage: printf("%.*s", CSTR(name)); */
