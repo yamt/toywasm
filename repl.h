@@ -3,6 +3,7 @@
 extern const char *g_repl_prompt;
 extern struct repl_state *g_repl_state;
 extern bool g_repl_use_jump_table;
+extern bool g_repl_print_stats;
 
 int repl(void);
 void repl_reset(struct repl_state *state);

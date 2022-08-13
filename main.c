@@ -17,6 +17,7 @@ enum longopt {
         opt_register,
         opt_repl,
         opt_repl_prompt,
+        opt_print_stats,
         opt_trace,
         opt_version,
         opt_wasi,
@@ -59,6 +60,12 @@ const struct option longopts[] = {
                 required_argument,
                 NULL,
                 opt_repl_prompt,
+        },
+        {
+                "print-stats",
+                no_argument,
+                NULL,
+                opt_print_stats,
         },
         {
                 "trace",
@@ -130,6 +137,9 @@ main(int argc, char *const *argv)
                         break;
                 case opt_repl_prompt:
                         g_repl_prompt = optarg;
+                        break;
+                case opt_print_stats:
+                        g_repl_print_stats = true;
                         break;
                 case opt_trace:
                         xlog_tracing = 1;

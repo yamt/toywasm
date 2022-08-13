@@ -48,6 +48,7 @@
 
 const char *g_repl_prompt = "toywasm";
 bool g_repl_use_jump_table = true;
+bool g_repl_print_stats = false;
 
 struct repl_module_state {
         uint8_t *buf;
@@ -653,6 +654,9 @@ repl_invoke(struct repl_state *state, const char *cmd, bool print_result)
         struct exec_context *ctx = &ctx0;
         exec_context_init(ctx, inst);
         ret = instance_execute_func(ctx, funcidx, ptype, rtype, param, result);
+        if (g_repl_print_stats) {
+                exec_context_print_stats(ctx);
+        }
         if (ret == EFAULT && ctx->trapped) {
                 if (ctx->trapid == TRAP_VOLUNTARY_EXIT) {
                         xlog_trace("voluntary exit (%" PRIu32 ")",

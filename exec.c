@@ -796,6 +796,20 @@ exec_context_clear(struct exec_context *ctx)
         ctx->report = NULL;
 }
 
+#define VEC_PRINT_USAGE(name, vec)                                            \
+        printf("%s %" PRIu32 " (%zu bytes)\n", (name), (vec)->psize,          \
+               (vec)->psize * sizeof(*(vec)->p));
+
+void
+exec_context_print_stats(struct exec_context *ctx)
+{
+        printf("=== execution statistics ===\n");
+        VEC_PRINT_USAGE("operand stack", &ctx->stack);
+        VEC_PRINT_USAGE("locals", &ctx->locals);
+        VEC_PRINT_USAGE("labels", &ctx->labels);
+        VEC_PRINT_USAGE("frames", &ctx->frames);
+}
+
 uint32_t
 memory_grow(struct exec_context *ctx, uint32_t memidx, uint32_t sz)
 {

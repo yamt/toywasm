@@ -169,6 +169,7 @@ void frame_clear(struct funcframe *frame);
 void frame_exit(struct exec_context *ctx);
 void exec_context_init(struct exec_context *ctx, struct instance *inst);
 void exec_context_clear(struct exec_context *ctx);
+void exec_context_print_stats(struct exec_context *ctx);
 
 /* validation */
 
