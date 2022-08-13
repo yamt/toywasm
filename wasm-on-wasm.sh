@@ -52,24 +52,26 @@ cmake \
 .
 cmake --build build.native
 
+EXTRA_OPTIONS=--print-stats
+
 echo "=== native ==="
 time \
 ./build.native/toywasm --version
 
 echo "=== wasm ==="
 time \
-./build.native/toywasm --wasi --wasi-dir . -- \
+./build.native/toywasm ${EXTRA_OPTIONS} --wasi --wasi-dir . -- \
 ./build.wasm/toywasm --version
 
 echo "=== wasm on wasm ==="
 time \
-./build.native/toywasm --wasi --wasi-dir . -- \
-./build.wasm/toywasm --wasi --wasi-dir . -- \
+./build.native/toywasm ${EXTRA_OPTIONS} --wasi --wasi-dir . -- \
+./build.wasm/toywasm ${EXTRA_OPTIONS} --wasi --wasi-dir . -- \
 ./build.wasm/toywasm --version
 
 echo "=== wasm on wasm on wasm ==="
 time \
-./build.native/toywasm --wasi --wasi-dir . -- \
-./build.wasm/toywasm --wasi --wasi-dir . -- \
-./build.wasm/toywasm --wasi --wasi-dir . -- \
+./build.native/toywasm ${EXTRA_OPTIONS} --wasi --wasi-dir . -- \
+./build.wasm/toywasm ${EXTRA_OPTIONS} --wasi --wasi-dir . -- \
+./build.wasm/toywasm ${EXTRA_OPTIONS} --wasi --wasi-dir . -- \
 ./build.wasm/toywasm --version
