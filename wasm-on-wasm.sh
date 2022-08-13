@@ -2,7 +2,9 @@
 
 set -e
 
-WASI_SDK_DIR=.wasi-sdk
+MAJOR=16
+MINOR=0
+WASI_SDK_DIR=.wasi-sdk-${MAJOR}.${MINOR}
 DIST_DIR=.dist
 
 mkdir -p ${DIST_DIR}
@@ -22,8 +24,6 @@ fetch_wasi_sdk()
         exit 1
         ;;
     esac
-    MAJOR=16
-    MINOR=0
     TAR=wasi-sdk-${MAJOR}.${MINOR}-${PLATFORM}.tar.gz
     if [ ! -f ${DIST_DIR}/${TAR} ]; then
         URL=https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${MAJOR}/${TAR}
