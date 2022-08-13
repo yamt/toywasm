@@ -648,8 +648,11 @@ INSN_IMPL(global_set)
         LOAD_CTX;
         READ_LEB_U32(globalidx);
         CHECK(globalidx < m->nimportedglobals + m->nglobals);
-        const struct globaltype *gt = module_globaltype(m, globalidx);
-        CHECK(gt->mut != GLOBAL_CONST);
+        const struct globaltype *gt;
+        if (EXECUTING || VALIDATING) {
+                gt = module_globaltype(m, globalidx);
+                CHECK(gt->mut != GLOBAL_CONST);
+        }
         POP_VAL(gt->t, a);
         if (EXECUTING) {
                 VEC_ELEM(ECTX->instance->globals, globalidx)->val = val_a;
