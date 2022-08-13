@@ -186,6 +186,11 @@ struct name {
 /* TODO escape unprintable names */
 #define CSTR(n) (int)(n)->nbytes, (n)->data
 
+#define NAME_FROM_CSTR_LITERAL(C)                                             \
+        {                                                                     \
+                .nbytes = sizeof(C) - 1, .data = C,                           \
+        }
+
 struct import {
         struct name module_name;
         struct name name;

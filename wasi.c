@@ -899,14 +899,9 @@ fail:
         return 0;
 }
 
-#define NAME_FROM_CLITERAL(C)                                                 \
-        {                                                                     \
-                .nbytes = sizeof(C) - 1, .data = C,                           \
-        }
-
 #define WASI_HOST_FUNC(NAME, TYPE)                                            \
         {                                                                     \
-                .name = NAME_FROM_CLITERAL(#NAME), .type = TYPE,              \
+                .name = NAME_FROM_CSTR_LITERAL(#NAME), .type = TYPE,          \
                 .func = wasi_##NAME,                                          \
         }
 
@@ -1027,7 +1022,7 @@ wasi_instance_destroy(struct wasi_instance *inst)
 }
 
 struct name wasi_snapshot_preview1 =
-        NAME_FROM_CLITERAL("wasi_snapshot_preview1");
+        NAME_FROM_CSTR_LITERAL("wasi_snapshot_preview1");
 
 int
 import_object_create_for_wasi(struct wasi_instance *wasi,
