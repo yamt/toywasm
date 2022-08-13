@@ -39,9 +39,13 @@ read_leb(const uint8_t **pp, const uint8_t *ep, unsigned int bits,
         if (ret != 0) {
                 return ret;
         }
-        if (__predict_true((u8 & (0x80 | 0x40)) == 0)) {
+        if (__predict_true((u8 & 0x80) == 0)) {
+                uint64_t result = u8;
+                if (is_signed && (u8 & 0x40) != 0) {
+                        result |= (uint64_t)(int64_t)(int8_t)0xc0;
+                }
                 *pp = p;
-                *resultp = u8;
+                *resultp = result;
                 return 0;
         }
 
