@@ -362,7 +362,9 @@ instance_create(struct module *m, struct instance **instp,
                 data_drop(ctx, i);
         }
         if (m->has_start) {
-                ret = invoke(m->start, NULL, NULL, NULL, NULL, ctx);
+                assert(m->start < m->nimportedfuncs + m->nfuncs);
+                struct funcinst *finst = VEC_ELEM(inst->funcs, m->start);
+                ret = invoke(finst, NULL, NULL, NULL, NULL, ctx);
                 if (ret != 0) {
                         goto fail;
                 }
@@ -434,5 +436,6 @@ instance_execute_func(struct exec_context *ctx, uint32_t funcidx,
                       const struct resulttype *resulttype,
                       const struct val *params, struct val *results)
 {
-        return invoke(funcidx, paramtype, resulttype, params, results, ctx);
+        struct funcinst *finst = VEC_ELEM(ctx->instance->funcs, funcidx);
+        return invoke(finst, paramtype, resulttype, params, results, ctx);
 }

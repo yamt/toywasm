@@ -3,7 +3,8 @@
 #include <stdint.h>
 
 struct expr;
-struct context;
+struct exec_context;
+struct funcinst;
 struct resulttype;
 struct val;
 enum valtype;
@@ -31,6 +32,6 @@ bool skip_expr(const uint8_t **p, bool goto_else);
 int exec_next_insn(const uint8_t *p, struct val *stack,
                    struct exec_context *ctx);
 
-int invoke(uint32_t funcidx, const struct resulttype *paramtype,
+int invoke(struct funcinst *finst, const struct resulttype *paramtype,
            const struct resulttype *resulttype, const struct val *params,
            struct val *results, struct exec_context *ctx);

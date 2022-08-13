@@ -816,12 +816,10 @@ memory_grow(struct exec_context *ctx, uint32_t memidx, uint32_t sz)
 }
 
 int
-invoke(uint32_t funcidx, const struct resulttype *paramtype,
+invoke(struct funcinst *finst, const struct resulttype *paramtype,
        const struct resulttype *resulttype, const struct val *params,
        struct val *results, struct exec_context *ctx)
 {
-        struct instance *inst = ctx->instance;
-        struct funcinst *finst = VEC_ELEM(inst->funcs, funcidx);
         const struct functype *ft = funcinst_functype(finst);
         assert((paramtype == NULL) == (resulttype == NULL));
         if (paramtype != NULL) {
@@ -830,8 +828,6 @@ invoke(uint32_t funcidx, const struct resulttype *paramtype,
                         return EINVAL;
                 }
         }
-        xlog_trace("func %u %u %u", funcidx, ft->parameter.ntypes,
-                   ft->result.ntypes);
         if (finst->is_host) {
                 return finst->u.host.func(ctx, finst->u.host.instance, ft,
                                           params, results);
