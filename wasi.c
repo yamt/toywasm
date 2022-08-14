@@ -201,6 +201,53 @@ wasi_convert_filetype(mode_t mode)
 }
 
 static int
+wasi_copyin_and_convert_path(struct exec_context *ctx,
+                             struct wasi_instance *wasi, uint32_t dirwasifd,
+                             uint32_t path, uint32_t pathlen, char **wasmpathp,
+                             char **hostpathp)
+{
+        char *hostpath = NULL;
+        char *wasmpath = NULL;
+        int ret;
+        wasmpath = malloc(pathlen + 1);
+        if (wasmpath == NULL) {
+                ret = ENOMEM;
+                goto fail;
+        }
+        ret = wasi_copyin(ctx, wasmpath, path, pathlen);
+        if (ret != 0) {
+                goto fail;
+        }
+        wasmpath[pathlen] = 0;
+        if (wasmpath[0] == '/') {
+                ret = EPERM;
+                goto fail;
+        }
+        struct wasi_fdinfo *dirfdinfo;
+        ret = wasi_fd_lookup(wasi, dirwasifd, &dirfdinfo);
+        if (ret != 0) {
+                goto fail;
+        }
+        if (dirfdinfo->prestat_path == NULL) {
+                ret = EBADF;
+                goto fail;
+        }
+        ret = asprintf(&hostpath, "%s/%s", dirfdinfo->prestat_path, wasmpath);
+        if (ret < 0) {
+                ret = errno;
+                assert(ret != 0);
+                goto fail;
+        }
+        *hostpathp = hostpath;
+        *wasmpathp = wasmpath;
+        return 0;
+fail:
+        free(hostpath);
+        free(wasmpath);
+        return ret;
+}
+
+static int
 wasi_convert_clockid(uint32_t clockid, clockid_t *hostidp)
 {
         clockid_t hostclockid;
@@ -826,33 +873,9 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
                 oflags |= O_RDWR;
                 break;
         }
-        wasmpath = malloc(pathlen + 1);
-        if (wasmpath == NULL) {
-                ret = ENOMEM;
-                goto fail;
-        }
-        ret = wasi_copyin(ctx, wasmpath, path, pathlen);
+        ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd, path, pathlen,
+                                           &wasmpath, &hostpath);
         if (ret != 0) {
-                goto fail;
-        }
-        wasmpath[pathlen] = 0;
-        if (wasmpath[0] == '/') {
-                ret = EPERM;
-                goto fail;
-        }
-        struct wasi_fdinfo *dirfdinfo;
-        ret = wasi_fd_lookup(wasi, dirwasifd, &dirfdinfo);
-        if (ret != 0) {
-                goto fail;
-        }
-        if (dirfdinfo->prestat_path == NULL) {
-                ret = EBADF;
-                goto fail;
-        }
-        ret = asprintf(&hostpath, "%s/%s", dirfdinfo->prestat_path, wasmpath);
-        if (ret < 0) {
-                ret = errno;
-                assert(ret != 0);
                 goto fail;
         }
         hostfd = open(hostpath, oflags);
@@ -876,6 +899,35 @@ fail:
         if (hostfd != -1) {
                 close(hostfd);
         }
+        free(hostpath);
+        free(wasmpath);
+        results[0].u.i32 = wasi_convert_errno(ret);
+        return 0;
+}
+
+static int
+wasi_path_unlink_file(struct exec_context *ctx, struct host_instance *hi,
+                      const struct functype *ft, const struct val *params,
+                      struct val *results)
+{
+        struct wasi_instance *wasi = (void *)hi;
+        uint32_t dirwasifd = params[0].u.i32;
+        xlog_trace("%s called", __func__);
+        uint32_t path = params[1].u.i32;
+        uint32_t pathlen = params[2].u.i32;
+        char *hostpath = NULL;
+        char *wasmpath = NULL;
+        int ret;
+        ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd, path, pathlen,
+                                           &wasmpath, &hostpath);
+        if (ret != 0) {
+                goto fail;
+        }
+        ret = unlink(hostpath);
+        if (ret != 0) {
+                goto fail;
+        }
+fail:
         free(hostpath);
         free(wasmpath);
         results[0].u.i32 = wasi_convert_errno(ret);
@@ -906,6 +958,7 @@ const struct host_func wasi_funcs[] = {
         WASI_HOST_FUNC(environ_get, "(ii)i"),
         WASI_HOST_FUNC(random_get, "(ii)i"),
         WASI_HOST_FUNC(path_open, "(iiiiiIIii)i"),
+        WASI_HOST_FUNC(path_unlink_file, "(iii)i"),
         /* TODO implement the rest of the api */
 };
 
