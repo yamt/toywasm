@@ -471,6 +471,29 @@ fail:
 }
 
 static int
+wasi_fd_fdstat_set_flags(struct exec_context *ctx, struct host_instance *hi,
+                         const struct functype *ft, const struct val *params,
+                         struct val *results)
+{
+        struct wasi_instance *wasi = (void *)hi;
+        uint32_t wasifd = params[0].u.i32;
+        xlog_trace("%s called for fd %" PRIu32, __func__, wasifd);
+#if 0
+        uint32_t fdflags = params[1].u.i32;
+#endif
+        struct wasi_fdinfo *fdinfo;
+        int ret;
+        ret = wasi_fd_lookup(wasi, wasifd, &fdinfo);
+        if (ret != 0) {
+                goto fail;
+        }
+        /* TODO implement */
+fail:
+        results[0].u.i32 = wasi_convert_errno(ret);
+        return 0;
+}
+
+static int
 wasi_fd_seek(struct exec_context *ctx, struct host_instance *hi,
              const struct functype *ft, const struct val *params,
              struct val *results)
@@ -975,6 +998,7 @@ const struct host_func wasi_funcs[] = {
         WASI_HOST_FUNC(fd_write, "(iiii)i"),
         WASI_HOST_FUNC(fd_read, "(iiii)i"),
         WASI_HOST_FUNC(fd_fdstat_get, "(ii)i"),
+        WASI_HOST_FUNC(fd_fdstat_set_flags, "(ii)i"),
         WASI_HOST_FUNC(fd_seek, "(iIii)i"),
         WASI_HOST_FUNC(fd_filestat_get, "(ii)i"),
         WASI_HOST_FUNC(fd_prestat_get, "(ii)i"),
