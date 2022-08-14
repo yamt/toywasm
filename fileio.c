@@ -39,6 +39,7 @@ map_file(const char *path, void **pp, size_t *sizep)
                 return ret;
         }
         size = st.st_size;
+        xlog_trace("file size %zu", size);
         p = malloc(size);
         if (p == NULL) {
                 close(fd);
