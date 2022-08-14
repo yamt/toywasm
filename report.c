@@ -11,8 +11,10 @@
 void
 vreport(struct report *r, const char *fmt, va_list ap)
 {
+        if (r->msg != NULL) {
+                return;
+        }
         int ret;
-        free(r->msg);
         r->msg = NULL;
         ret = vasprintf(&r->msg, fmt, ap);
         if (ret < 0) {
