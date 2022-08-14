@@ -934,6 +934,35 @@ fail:
         return 0;
 }
 
+static int
+wasi_path_remove_directory(struct exec_context *ctx, struct host_instance *hi,
+                           const struct functype *ft, const struct val *params,
+                           struct val *results)
+{
+        struct wasi_instance *wasi = (void *)hi;
+        uint32_t dirwasifd = params[0].u.i32;
+        xlog_trace("%s called", __func__);
+        uint32_t path = params[1].u.i32;
+        uint32_t pathlen = params[2].u.i32;
+        char *hostpath = NULL;
+        char *wasmpath = NULL;
+        int ret;
+        ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd, path, pathlen,
+                                           &wasmpath, &hostpath);
+        if (ret != 0) {
+                goto fail;
+        }
+        ret = rmdir(hostpath);
+        if (ret != 0) {
+                goto fail;
+        }
+fail:
+        free(hostpath);
+        free(wasmpath);
+        results[0].u.i32 = wasi_convert_errno(ret);
+        return 0;
+}
+
 #define WASI_HOST_FUNC(NAME, TYPE)                                            \
         {                                                                     \
                 .name = NAME_FROM_CSTR_LITERAL(#NAME), .type = TYPE,          \
@@ -959,6 +988,7 @@ const struct host_func wasi_funcs[] = {
         WASI_HOST_FUNC(random_get, "(ii)i"),
         WASI_HOST_FUNC(path_open, "(iiiiiIIii)i"),
         WASI_HOST_FUNC(path_unlink_file, "(iii)i"),
+        WASI_HOST_FUNC(path_remove_directory, "(iii)i"),
         /* TODO implement the rest of the api */
 };
 
