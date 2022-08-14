@@ -493,7 +493,11 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
         assert(labelidx <= ctx->labels.lsize - frame->labelidx);
         uint32_t height;
         uint32_t arity; /* arity of the label */
-        STAT_INC(ctx->stats.branch);
+        if (goto_else) {
+                STAT_INC(ctx->stats.branch_goto_else);
+        } else {
+                STAT_INC(ctx->stats.branch);
+        }
         if (ctx->labels.lsize - labelidx == frame->labelidx) {
                 /* exit the function */
                 xlog_trace("do_branch: exititng function");
@@ -889,6 +893,7 @@ exec_context_print_stats(struct exec_context *ctx)
 
         STAT_PRINT(call);
         STAT_PRINT(branch);
+        STAT_PRINT(branch_goto_else);
         STAT_PRINT(jump_cache_hit);
         STAT_PRINT(jump_table_search);
 }

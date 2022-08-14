@@ -107,6 +107,7 @@ enum exec_event {
 struct exec_stat {
         uint64_t call;
         uint64_t branch;
+        uint64_t branch_goto_else;
         uint64_t jump_cache_hit;
         uint64_t jump_table_search;
 };
