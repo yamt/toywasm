@@ -340,9 +340,11 @@ jump_lookup(struct exec_context *ctx, const struct expr_exec_info *ei,
 #if defined(USE_JUMP_CACHE)
         jump = ctx->jump_cache;
         if (jump != NULL && jump->pc == blockpc) {
+                STAT_INC(ctx->stats.jump_cache_hit);
                 return jump;
         }
 #endif
+        STAT_INC(ctx->stats.jump_table_search);
         jump = jump_table_lookup(ei, blockpc);
 #if defined(USE_JUMP_CACHE)
         ctx->jump_cache = jump;
@@ -417,6 +419,7 @@ do_host_call(struct exec_context *ctx, const struct funcinst *finst)
 static int
 do_call(struct exec_context *ctx, const struct funcinst *finst)
 {
+        STAT_INC(ctx->stats.call);
         if (finst->is_host) {
                 return do_host_call(ctx, finst);
         } else {
@@ -490,6 +493,7 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
         assert(labelidx <= ctx->labels.lsize - frame->labelidx);
         uint32_t height;
         uint32_t arity; /* arity of the label */
+        STAT_INC(ctx->stats.branch);
         if (ctx->labels.lsize - labelidx == frame->labelidx) {
                 /* exit the function */
                 xlog_trace("do_branch: exititng function");
@@ -870,6 +874,8 @@ exec_context_clear(struct exec_context *ctx)
         printf("%s %" PRIu32 " (%zu bytes)\n", (name), (vec)->psize,          \
                (vec)->psize * sizeof(*(vec)->p));
 
+#define STAT_PRINT(name) printf("%s %" PRIu64 "\n", #name, ctx->stats.name);
+
 void
 exec_context_print_stats(struct exec_context *ctx)
 {
@@ -880,6 +886,11 @@ exec_context_print_stats(struct exec_context *ctx)
 #endif
         VEC_PRINT_USAGE("labels", &ctx->labels);
         VEC_PRINT_USAGE("frames", &ctx->frames);
+
+        STAT_PRINT(call);
+        STAT_PRINT(branch);
+        STAT_PRINT(jump_cache_hit);
+        STAT_PRINT(jump_table_search);
 }
 
 uint32_t

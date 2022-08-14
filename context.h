@@ -104,6 +104,15 @@ enum exec_event {
         EXEC_EVENT_BRANCH,
 };
 
+struct exec_stat {
+        uint64_t call;
+        uint64_t branch;
+        uint64_t jump_cache_hit;
+        uint64_t jump_table_search;
+};
+
+#define STAT_INC(s) (s)++
+
 struct exec_context {
         struct instance *instance; /* REVISIT: redundant */
         const uint8_t *p;
@@ -137,6 +146,7 @@ struct exec_context {
                         uint32_t index;
                 } branch;
         } event_u;
+        struct exec_stat stats;
 };
 
 struct context {
