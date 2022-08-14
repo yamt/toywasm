@@ -15,7 +15,6 @@
 int
 map_file(const char *path, void **pp, size_t *sizep)
 {
-        struct stat st;
         void *p;
         size_t size;
         ssize_t ssz;
@@ -30,6 +29,8 @@ map_file(const char *path, void **pp, size_t *sizep)
                 xlog_trace("failed to open %s (error %d)", path, ret);
                 return ret;
         }
+#if 1
+        struct stat st;
         ret = fstat(fd, &st);
         if (ret == -1) {
                 ret = errno;
@@ -39,6 +40,26 @@ map_file(const char *path, void **pp, size_t *sizep)
                 return ret;
         }
         size = st.st_size;
+#else
+        off_t off;
+        off = lseek(fd, 0, SEEK_END);
+        if (off == -1) {
+                ret = errno;
+                assert(ret != 0);
+                xlog_trace("failed to lseek %s (error %d)", path, ret);
+                close(fd);
+                return ret;
+        }
+        size = off;
+        off = lseek(fd, 0, SEEK_SET);
+        if (off == -1) {
+                ret = errno;
+                assert(ret != 0);
+                xlog_trace("failed to lseek %s (error %d)", path, ret);
+                close(fd);
+                return ret;
+        }
+#endif
         xlog_trace("file size %zu", size);
         p = malloc(size);
         if (p == NULL) {
