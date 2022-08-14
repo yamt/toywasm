@@ -509,72 +509,93 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
                         ctx->labels, ctx->labels.lsize - labelidx - 1);
                 uint32_t blockpc = l->pc;
 
-                /*
-                 * do a jump. (w/ jump table)
-                 */
-                const struct expr_exec_info *ei = frame->ei;
-                if (ei->jumps != NULL) {
-                        xlog_trace("jump w/ table");
-                        bool stay_in_block = false;
-                        const struct jump *jump;
-                        jump = jump_lookup(ctx, ei, blockpc);
-                        if (goto_else) {
-                                const struct jump *jump_to_else = jump + 1;
-                                assert(jump_to_else->pc == blockpc + 1);
-                                if (jump_to_else->targetpc != 0) {
-                                        stay_in_block = true;
-                                        jump = jump_to_else;
-                                }
-                        }
-                        assert(jump->targetpc != 0);
-                        ctx->p = pc2ptr(ctx->instance->module, jump->targetpc);
-                        if (stay_in_block) {
-                                xlog_trace("jump inside a block");
-                                return;
-                        }
-                }
-
-                /*
-                 * exit from the block.
-                 *
-                 * parse the block op to check
-                 * - if it's a "loop"
-                 * - blocktype
-                 */
-                struct module *m = ctx->instance->module;
-                const uint8_t *blockp = pc2ptr(m, blockpc);
-                const uint8_t *p = blockp;
-                uint8_t op = *p++;
-                assert(op == FRAME_OP_LOOP || op == FRAME_OP_IF ||
-                       op == FRAME_OP_BLOCK);
-                int64_t blocktype = read_leb_s33_nocheck(&p);
+                struct jump_cache *cache = &ctx->cache[0];
                 uint32_t param_arity;
-                /*
-                 * do a jump. (w/o jump table)
-                 */
-                if (ei->jumps == NULL) {
-                        xlog_trace("jump w/o table");
-                        if (op == FRAME_OP_LOOP) {
-                                ctx->p = blockp;
-                        } else {
-                                /*
-                                 * The only way to find out the jump target
-                                 * is to parse every instructions.
-                                 * This is expensive.
-                                 *
-                                 * REVISIT: skipping LEBs can be optimized
-                                 * better than the current code.
-                                 */
-                                bool stay_in_block = skip_expr(&p, goto_else);
-                                ctx->p = p;
+                if (cache->blockpc == blockpc &&
+                    cache->goto_else == goto_else) {
+                        param_arity = cache->param_arity;
+                        arity = cache->arity;
+                        ctx->p = cache->target;
+                } else {
+
+                        /*
+                         * do a jump. (w/ jump table)
+                         */
+                        const struct expr_exec_info *ei = frame->ei;
+                        if (ei->jumps != NULL) {
+                                xlog_trace("jump w/ table");
+                                bool stay_in_block = false;
+                                const struct jump *jump;
+                                jump = jump_lookup(ctx, ei, blockpc);
+                                if (goto_else) {
+                                        const struct jump *jump_to_else =
+                                                jump + 1;
+                                        assert(jump_to_else->pc ==
+                                               blockpc + 1);
+                                        if (jump_to_else->targetpc != 0) {
+                                                stay_in_block = true;
+                                                jump = jump_to_else;
+                                        }
+                                }
+                                assert(jump->targetpc != 0);
+                                ctx->p = pc2ptr(ctx->instance->module,
+                                                jump->targetpc);
                                 if (stay_in_block) {
+                                        xlog_trace("jump inside a block");
                                         return;
                                 }
                         }
-                }
-                get_arity_for_blocktype(m, blocktype, &param_arity, &arity);
-                if (op == FRAME_OP_LOOP) {
-                        arity = param_arity;
+
+                        /*
+                         * exit from the block.
+                         *
+                         * parse the block op to check
+                         * - if it's a "loop"
+                         * - blocktype
+                         */
+                        struct module *m = ctx->instance->module;
+                        const uint8_t *blockp = pc2ptr(m, blockpc);
+                        const uint8_t *p = blockp;
+                        uint8_t op = *p++;
+                        assert(op == FRAME_OP_LOOP || op == FRAME_OP_IF ||
+                               op == FRAME_OP_BLOCK);
+                        int64_t blocktype = read_leb_s33_nocheck(&p);
+                        /*
+                         * do a jump. (w/o jump table)
+                         */
+                        if (ei->jumps == NULL) {
+                                xlog_trace("jump w/o table");
+                                if (op == FRAME_OP_LOOP) {
+                                        ctx->p = blockp;
+                                } else {
+                                        /*
+                                         * The only way to find out the jump
+                                         * target is to parse every
+                                         * instructions. This is expensive.
+                                         *
+                                         * REVISIT: skipping LEBs can be
+                                         * optimized better than the current
+                                         * code.
+                                         */
+                                        bool stay_in_block =
+                                                skip_expr(&p, goto_else);
+                                        ctx->p = p;
+                                        if (stay_in_block) {
+                                                return;
+                                        }
+                                }
+                        }
+                        get_arity_for_blocktype(m, blocktype, &param_arity,
+                                                &arity);
+                        if (op == FRAME_OP_LOOP) {
+                                arity = param_arity;
+                        }
+
+                        cache->blockpc = blockpc;
+                        cache->goto_else = goto_else;
+                        cache->param_arity = param_arity;
+                        cache->arity = arity;
+                        cache->target = ctx->p;
                 }
                 ctx->labels.lsize -= labelidx + 1;
                 /*

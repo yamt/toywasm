@@ -114,6 +114,15 @@ struct exec_stat {
 
 #define STAT_INC(s) (s)++
 
+struct jump_cache {
+        uint32_t blockpc;
+        uint32_t param_arity;
+        uint32_t arity;
+        bool goto_else;
+        bool stay_in_block;
+        const uint8_t *target;
+};
+
 struct exec_context {
         struct instance *instance; /* REVISIT: redundant */
         const uint8_t *p;
@@ -123,6 +132,7 @@ struct exec_context {
 #if defined(USE_JUMP_CACHE)
         const struct jump *jump_cache;
 #endif
+        struct jump_cache cache[1];
 
         VEC(, struct funcframe) frames;
         VEC(, struct val) stack; /* operand stack */
