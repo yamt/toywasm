@@ -878,7 +878,8 @@ exec_context_clear(struct exec_context *ctx)
         printf("%s %" PRIu32 " (%zu bytes)\n", (name), (vec)->psize,          \
                (vec)->psize * sizeof(*(vec)->p));
 
-#define STAT_PRINT(name) printf("%s %" PRIu64 "\n", #name, ctx->stats.name);
+#define STAT_PRINT(name)                                                      \
+        printf("%20s %12" PRIu64 "\n", #name, ctx->stats.name);
 
 void
 exec_context_print_stats(struct exec_context *ctx)
