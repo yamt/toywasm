@@ -1,0 +1,24 @@
+# https://docs.wasmer.io/ecosystem/wapm/manifest
+
+[package]
+name = "yamt/toywasm"
+version = "0.0.6"
+description = "A WebAssembly interpreter"
+readme = "../README.md"
+license = "BSD-2-Clause"
+license-file = "../LICENSE"
+repository = "https://github.com/yamt/toywasm"
+
+[[module]]
+name = "toywasm"
+source = "build/toywasm"
+abi = "wasi"
+
+[module.interfaces]
+# 0.0.0-unstable -> unstable
+# 0.1.0-unstable -> preview1
+wasi = "0.0.0-unstable"
+
+[[command]]
+name = "toywasm"
+module = "toywasm"
