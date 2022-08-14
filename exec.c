@@ -547,7 +547,8 @@ exec_next_insn(const uint8_t *p, struct val *stack, struct exec_context *ctx)
 #endif
         uint32_t op = *p++;
 #if defined(USE_SEPARATE_EXECUTE)
-        xlog_trace("exec %06" PRIx32 ": %02" PRIx32, pc, op);
+        xlog_trace("exec %06" PRIx32 ": %s (%02" PRIx32 ")", pc,
+                   instructions[op].name, op);
         const struct exec_instruction_desc *desc = &exec_instructions[op];
 #if defined(USE_TAILCALL)
         __musttail
