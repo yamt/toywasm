@@ -113,6 +113,16 @@ frame_clear(struct funcframe *frame)
 {
 }
 
+struct val *
+frame_locals(struct exec_context *ctx, const struct funcframe *frame)
+{
+#if defined(USE_SEPARATE_LOCALS)
+        return &VEC_ELEM(ctx->locals, frame->localidx);
+#else
+        return &VEC_ELEM(ctx->stack, frame->height);
+#endif
+}
+
 int
 stack_prealloc(struct exec_context *ctx, uint32_t count)
 {
@@ -162,11 +172,13 @@ frame_enter(struct exec_context *ctx, struct instance *inst,
         frame->nresults = nresults;
         frame->instance = inst;
         frame->labelidx = ctx->labels.lsize;
+#if defined(USE_SEPARATE_LOCALS)
         frame->localidx = ctx->locals.lsize;
         ret = VEC_PREALLOC(ctx->locals, nlocals);
         if (ret != 0) {
                 return ret;
         }
+#endif
         if (ei->maxlabels > 1) {
                 frame->labelidx = ctx->labels.lsize;
                 ret = VEC_PREALLOC(ctx->labels, ei->maxlabels - 1);
@@ -183,6 +195,7 @@ frame_enter(struct exec_context *ctx, struct instance *inst,
                 frame->callerpc = ptr2pc(ctx->instance->module, ctx->p);
         }
         frame->height = ctx->stack.lsize;
+#if defined(USE_SEPARATE_LOCALS)
         uint32_t i;
         for (i = 0; i < nparams; i++) {
                 VEC_ELEM(ctx->locals, frame->localidx + i) = params[i];
@@ -192,16 +205,6 @@ frame_enter(struct exec_context *ctx, struct instance *inst,
                        sizeof(*ctx->locals.p));
         }
 
-        xlog_trace("frame enter: maxlabels %u maxvals %u", ei->maxlabels,
-                   ei->maxvals);
-        for (i = 0; i < nlocals; i++) {
-                if (i == nparams) {
-                        xlog_trace("-- ^-params v-locals");
-                }
-                xlog_trace("local [%" PRIu32 "] %016" PRIx64, i,
-                           VEC_ELEM(ctx->locals, frame->localidx + i).u.i64);
-        }
-
         /*
          * As we've copied "params" above, now it's safe to resize stack.
          */
@@ -209,16 +212,55 @@ frame_enter(struct exec_context *ctx, struct instance *inst,
         if (ret != 0) {
                 return ret;
         }
+#else
+        const bool params_on_stack = params == &VEC_NEXTELEM(ctx->stack);
+
+        ret = stack_prealloc(ctx, nlocals + ei->maxvals);
+        if (ret != 0) {
+                return ret;
+        }
+
+        struct val *stack = &VEC_NEXTELEM(ctx->stack);
+        uint32_t i;
+        if (params_on_stack) {
+                xlog_trace("params on stack");
+                /* params are already in place */
+                i = nparams;
+        } else {
+                xlog_trace("copying %" PRIu32 " params", nparams);
+                for (i = 0; i < nparams; i++) {
+                        stack[i] = params[i];
+                }
+        }
+        for (; i < nlocals; i++) {
+                memset(&stack[i], 0, sizeof(*stack));
+        }
+#endif
+
+        xlog_trace("frame enter: maxlabels %u maxvals %u", ei->maxlabels,
+                   ei->maxvals);
+        for (i = 0; i < nlocals; i++) {
+                if (i == nparams) {
+                        xlog_trace("-- ^-params v-locals");
+                }
+                xlog_trace("local [%" PRIu32 "] %016" PRIx64, i,
+                           frame_locals(ctx, frame)[i].u.i64);
+        }
 
         /*
          * commit changes.
          */
         ctx->frames.lsize++;
+#if defined(USE_SEPARATE_LOCALS)
         assert(ctx->locals.lsize + nlocals <= ctx->locals.psize);
         ctx->locals.lsize += nlocals;
+#else
+        assert(ctx->stack.lsize + nlocals + ei->maxvals <= ctx->stack.psize);
+        ctx->stack.lsize += nlocals;
+#endif
         ctx->instance = inst;
 #if defined(USE_LOCALS_CACHE)
-        ctx->current_locals = &VEC_ELEM(ctx->locals, frame->localidx);
+        ctx->current_locals = frame_locals(ctx, frame);
 #endif
         return 0;
 }
@@ -235,7 +277,7 @@ frame_exit(struct exec_context *ctx)
         frame = VEC_POP(ctx->frames);
         assert(ctx->instance == frame->instance);
 #if defined(USE_LOCALS_CACHE)
-        assert(ctx->current_locals == &VEC_ELEM(ctx->locals, frame->localidx));
+        assert(ctx->current_locals == frame_locals(ctx, frame));
 #endif
         if (ctx->frames.lsize > 0) {
                 ctx->instance = VEC_LASTELEM(ctx->frames).instance;
@@ -243,13 +285,15 @@ frame_exit(struct exec_context *ctx)
 
 #if defined(USE_LOCALS_CACHE)
                 struct funcframe *pframe = &VEC_LASTELEM(ctx->frames);
-                ctx->current_locals = &VEC_ELEM(ctx->locals, pframe->localidx);
+                ctx->current_locals = frame_locals(ctx, pframe);
 #endif
         }
         assert(frame->labelidx <= ctx->labels.lsize);
-        assert(frame->localidx <= ctx->locals.lsize);
         ctx->labels.lsize = frame->labelidx;
+#if defined(USE_SEPARATE_LOCALS)
+        assert(frame->localidx <= ctx->locals.lsize);
         ctx->locals.lsize = frame->localidx;
+#endif
         frame_clear(frame);
 }
 
@@ -404,7 +448,7 @@ get_arity_for_blocktype(struct module *m, int64_t blocktype,
         *result = ft->result.ntypes;
 }
 
-static void
+void
 rewind_stack(struct exec_context *ctx, uint32_t height, uint32_t arity)
 {
         /*
@@ -428,6 +472,9 @@ rewind_stack(struct exec_context *ctx, uint32_t height, uint32_t arity)
         assert(height <= ctx->stack.lsize);
         assert(arity <= ctx->stack.lsize);
         assert(height + arity <= ctx->stack.lsize);
+        if (height + arity == ctx->stack.lsize) {
+                return;
+        }
         memmove(&VEC_ELEM(ctx->stack, height),
                 &VEC_ELEM(ctx->stack, ctx->stack.lsize - arity),
                 arity * sizeof(*ctx->stack.p));
@@ -812,7 +859,9 @@ exec_context_clear(struct exec_context *ctx)
         VEC_FREE(ctx->frames);
         VEC_FREE(ctx->stack);
         VEC_FREE(ctx->labels);
+#if defined(USE_SEPARATE_LOCALS)
         VEC_FREE(ctx->locals);
+#endif
         report_clear(&ctx->report0);
         ctx->report = NULL;
 }
@@ -826,7 +875,9 @@ exec_context_print_stats(struct exec_context *ctx)
 {
         printf("=== execution statistics ===\n");
         VEC_PRINT_USAGE("operand stack", &ctx->stack);
+#if defined(USE_SEPARATE_LOCALS)
         VEC_PRINT_USAGE("locals", &ctx->locals);
+#endif
         VEC_PRINT_USAGE("labels", &ctx->labels);
         VEC_PRINT_USAGE("frames", &ctx->frames);
 }

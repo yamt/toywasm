@@ -179,6 +179,9 @@ INSN_IMPL(end)
                         VEC_POP_DROP(ectx->labels);
                 } else {
                         frame_exit(ectx);
+                        SAVE_STACK_PTR;
+                        rewind_stack(ectx, frame->height, frame->nresults);
+                        LOAD_STACK_PTR;
                         RELOAD_CTX;
                 }
         } else if (VALIDATING) {
@@ -599,10 +602,7 @@ INSN_IMPL(local_tee)
         POP_VAL(VCTX->locals[localidx], a);
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
-                const struct funcframe *frame = &VEC_LASTELEM(ectx->frames);
-                assert(ectx->locals.lsize >= frame->localidx);
-                assert(localidx < ectx->locals.lsize - frame->localidx);
-                VEC_ELEM(ectx->locals, frame->localidx + localidx) = val_a;
+                *local_getptr(ectx, localidx) = val_a;
         }
         PUSH_VAL(VCTX->locals[localidx], a);
         SAVE_CTX;

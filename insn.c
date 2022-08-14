@@ -59,9 +59,7 @@ local_getptr(struct exec_context *ectx, uint32_t localidx)
         return &ectx->current_locals[localidx];
 #else
         const struct funcframe *frame = &VEC_LASTELEM(ectx->frames);
-        assert(ectx->locals.lsize >= frame->localidx);
-        assert(localidx < ectx->locals.lsize - frame->localidx);
-        return &VEC_ELEM(ectx->locals, frame->localidx + localidx);
+        return &frame_locals(ectx, frame)[localidx];
 #endif
 }
 
@@ -280,6 +278,8 @@ fail:
 #define LOAD_CTX const uint8_t *p = *pp
 #define SAVE_CTX *pp = p
 #define RELOAD_CTX
+#define SAVE_STACK_PTR
+#define LOAD_STACK_PTR
 #define ORIG_P (*pp)
 #define INSN_SUCCESS return 0
 #define INSN_SUCCESS_RETURN INSN_SUCCESS
@@ -295,6 +295,8 @@ fail:
 #undef LOAD_CTX
 #undef SAVE_CTX
 #undef RELOAD_CTX
+#undef SAVE_STACK_PTR
+#undef LOAD_STACK_PTR
 #undef ORIG_P
 #undef INSN_SUCCESS
 #undef INSN_SUCCESS_RETURN
@@ -311,6 +313,8 @@ fail:
 #define LOAD_CTX const uint8_t *p0 __attribute__((__unused__)) = p
 #define SAVE_CTX
 #define RELOAD_CTX p = ctx->p
+#define SAVE_STACK_PTR ctx->stack.lsize = stack - ctx->stack.p
+#define LOAD_STACK_PTR stack = &VEC_NEXTELEM(ctx->stack)
 #define ORIG_P p0
 #if defined(USE_TAILCALL)
 #define INSN_SUCCESS __musttail return exec_next_insn(p, stack, ctx)
@@ -318,7 +322,7 @@ fail:
 #define INSN_SUCCESS INSN_SUCCESS_RETURN
 #endif
 #define INSN_SUCCESS_RETURN                                                   \
-        ctx->stack.lsize = stack - ctx->stack.p;                              \
+        SAVE_STACK_PTR;                                                       \
         ctx->p = p;                                                           \
         return 0
 #define ep NULL
@@ -336,6 +340,8 @@ fail:
 #undef LOAD_CTX
 #undef SAVE_CTX
 #undef RELOAD_CTX
+#undef SAVE_STACK_PTR
+#undef LOAD_STACK_PTR
 #undef ORIG_P
 #undef INSN_SUCCESS
 #undef INSN_SUCCESS_RETURN

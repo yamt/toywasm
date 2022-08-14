@@ -43,7 +43,9 @@ struct funcframe {
 #if !defined(NDEBUG)
         uint32_t nlocals;
 #endif
+#if defined(USE_SEPARATE_LOCALS)
         uint32_t localidx;
+#endif
 
         const struct expr_exec_info *ei;
         struct instance *instance;
@@ -115,7 +117,9 @@ struct exec_context {
         VEC(, struct funcframe) frames;
         VEC(, struct val) stack; /* operand stack */
         VEC(, struct label) labels;
+#if defined(USE_SEPARATE_LOCALS)
         VEC(, struct val) locals;
+#endif
 
         bool trapped; /* used with a combination with EFAULT */
         enum trapid trapid;
@@ -167,6 +171,8 @@ int frame_enter(struct exec_context *ctx, struct instance *inst,
                 uint32_t nparams, uint32_t nresults, const struct val *params);
 void frame_clear(struct funcframe *frame);
 void frame_exit(struct exec_context *ctx);
+struct val *frame_locals(struct exec_context *ctx,
+                         const struct funcframe *frame);
 void exec_context_init(struct exec_context *ctx, struct instance *inst);
 void exec_context_clear(struct exec_context *ctx);
 void exec_context_print_stats(struct exec_context *ctx);
