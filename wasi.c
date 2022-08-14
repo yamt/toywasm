@@ -630,7 +630,7 @@ wasi_clock_res_get(struct exec_context *ctx, struct host_instance *hi,
 {
         xlog_trace("%s called", __func__);
         uint32_t clockid = params[0].u.i32;
-        uint32_t retp = params[2].u.i32;
+        uint32_t retp = params[1].u.i32;
         clockid_t hostclockid;
         int ret;
         ret = wasi_convert_clockid(clockid, &hostclockid);
