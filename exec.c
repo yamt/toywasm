@@ -405,6 +405,36 @@ get_arity_for_blocktype(struct module *m, int64_t blocktype,
 }
 
 static void
+rewind_stack(struct exec_context *ctx, uint32_t height, uint32_t arity)
+{
+        /*
+         * rewind the operand stack. (to `height`)
+         * moving the return values. (of `arity`)
+         *
+         * x x x y y y r r
+         *             ---
+         *             arity
+         *
+         *       <-----
+         *       rewind
+         *
+         * x x x r r
+         *       ^   ^
+         *       |   |
+         *    height |
+         *           |
+         *          new stack lsize
+         */
+        assert(height <= ctx->stack.lsize);
+        assert(arity <= ctx->stack.lsize);
+        assert(height + arity <= ctx->stack.lsize);
+        memmove(&VEC_ELEM(ctx->stack, height),
+                &VEC_ELEM(ctx->stack, ctx->stack.lsize - arity),
+                arity * sizeof(*ctx->stack.p));
+        ctx->stack.lsize = height + arity;
+}
+
+static void
 do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
 {
         struct funcframe *frame = &VEC_LASTELEM(ctx->frames);
@@ -501,17 +531,7 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
                 height = l->height - param_arity;
         }
 
-        /*
-         * rewind the operand stack.
-         * move the return values.
-         */
-        assert(height <= ctx->stack.lsize);
-        assert(arity <= ctx->stack.lsize);
-        assert(height + arity <= ctx->stack.lsize);
-        memmove(&VEC_ELEM(ctx->stack, height),
-                &VEC_ELEM(ctx->stack, ctx->stack.lsize - arity),
-                arity * sizeof(*ctx->stack.p));
-        ctx->stack.lsize = height + arity;
+        rewind_stack(ctx, height, arity);
 }
 
 int
