@@ -46,6 +46,11 @@ if(TOYWASM_USE_LOCALS_CACHE)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DUSE_LOCALS_CACHE")
 endif()
 
+option(TOYWASM_USE_SEPARATE_LOCALS "Separate locals and stack" ON)
+if(TOYWASM_USE_SEPARATE_LOCALS)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DUSE_SEPARATE_LOCALS")
+endif()
+
 # Prefer the homebrew version because xcode clang doesn't have detect_leaks
 if(NOT DEFINED USE_LSAN)
 set(USE_LSAN ON)
