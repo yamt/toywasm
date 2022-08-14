@@ -256,7 +256,7 @@ repl_load_from_buf(struct repl_state *state, struct repl_module_state *mod)
                 xlog_error("load/validation error: %s", ctx.report.msg);
                 printf("load/validation error: %s\n", ctx.report.msg);
         } else if (ret != 0) {
-                printf("load/validation error: unknown\n");
+                printf("load/validation error: no message\n");
         }
         load_context_clear(&ctx);
         if (ret != 0) {
@@ -271,7 +271,7 @@ repl_load_from_buf(struct repl_state *state, struct repl_module_state *mod)
                 xlog_error("instance_create: %s", report.msg);
                 printf("instantiation error: %s\n", report.msg);
         } else if (ret != 0) {
-                printf("instantiation error: unknown\n");
+                printf("instantiation error: no message\n");
         }
         report_clear(&report);
         if (ret != 0) {
