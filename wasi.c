@@ -200,6 +200,36 @@ wasi_convert_filetype(mode_t mode)
         return type;
 }
 
+static int
+wasi_convert_clockid(uint32_t clockid, clockid_t *hostidp)
+{
+        clockid_t hostclockid;
+        int ret = 0;
+        switch (clockid) {
+        case 0:
+                hostclockid = CLOCK_REALTIME;
+                break;
+        case 1:
+                hostclockid = CLOCK_MONOTONIC;
+                break;
+        case 2:
+                /* REVISIT what does this really mean for wasm? */
+                hostclockid = CLOCK_PROCESS_CPUTIME_ID;
+                break;
+        case 3:
+                /* REVISIT what does this really mean for wasm? */
+                hostclockid = CLOCK_THREAD_CPUTIME_ID;
+                break;
+        default:
+                ret = EINVAL;
+                goto fail;
+        }
+        *hostidp = hostclockid;
+        return 0;
+fail:
+        return ret;
+}
+
 static uint32_t
 wasi_convert_errno(int host_errno)
 {
@@ -547,6 +577,33 @@ fail:
 }
 
 static int
+wasi_clock_res_get(struct exec_context *ctx, struct host_instance *hi,
+                   const struct functype *ft, const struct val *params,
+                   struct val *results)
+{
+        xlog_trace("%s called", __func__);
+        uint32_t clockid = params[0].u.i32;
+        uint32_t retp = params[2].u.i32;
+        clockid_t hostclockid;
+        int ret;
+        ret = wasi_convert_clockid(clockid, &hostclockid);
+        if (ret != 0) {
+                goto fail;
+        }
+        struct timespec ts;
+        ret = clock_getres(hostclockid, &ts);
+        if (ret == -1) {
+                ret = errno;
+                goto fail;
+        }
+        uint64_t result = host_to_le64(timespec_to_ns(&ts));
+        ret = wasi_copyout(ctx, &result, retp, sizeof(result));
+fail:
+        results[0].u.i32 = wasi_convert_errno(ret);
+        return 0;
+}
+
+static int
 wasi_clock_time_get(struct exec_context *ctx, struct host_instance *hi,
                     const struct functype *ft, const struct val *params,
                     struct val *results)
@@ -559,23 +616,8 @@ wasi_clock_time_get(struct exec_context *ctx, struct host_instance *hi,
         uint32_t retp = params[2].u.i32;
         clockid_t hostclockid;
         int ret;
-        switch (clockid) {
-        case 0:
-                hostclockid = CLOCK_REALTIME;
-                break;
-        case 1:
-                hostclockid = CLOCK_MONOTONIC;
-                break;
-        case 2:
-                /* REVISIT what does this really mean for wasm? */
-                hostclockid = CLOCK_PROCESS_CPUTIME_ID;
-                break;
-        case 3:
-                /* REVISIT what does this really mean for wasm? */
-                hostclockid = CLOCK_THREAD_CPUTIME_ID;
-                break;
-        default:
-                ret = EINVAL;
+        ret = wasi_convert_clockid(clockid, &hostclockid);
+        if (ret != 0) {
                 goto fail;
         }
         struct timespec ts;
@@ -857,6 +899,7 @@ const struct host_func wasi_funcs[] = {
         WASI_HOST_FUNC(fd_prestat_get, "(ii)i"),
         WASI_HOST_FUNC(fd_prestat_dir_name, "(iii)i"),
         WASI_HOST_FUNC(clock_time_get, "(iIi)i"),
+        WASI_HOST_FUNC(clock_res_get, "(ii)i"),
         WASI_HOST_FUNC(args_sizes_get, "(ii)i"),
         WASI_HOST_FUNC(args_get, "(ii)i"),
         WASI_HOST_FUNC(environ_sizes_get, "(ii)i"),
