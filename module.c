@@ -1463,7 +1463,7 @@ module_load(struct module *m, const uint8_t *p, const uint8_t *ep,
                 goto fail;
         }
         if (v != 0x6d736100) { /* magic */
-                xlog_trace("wrong magic: %" PRIx32, v);
+                report_error(&ctx->report, "wrong magic: %" PRIx32, v);
                 ret = EINVAL;
                 goto fail;
         }
@@ -1473,7 +1473,7 @@ module_load(struct module *m, const uint8_t *p, const uint8_t *ep,
                 goto fail;
         }
         if (v != 1) { /* version */
-                xlog_trace("wrong version: %u", v);
+                report_error(&ctx->report, "wrong version: %u", v);
                 ret = EINVAL;
                 goto fail;
         }
@@ -1483,26 +1483,27 @@ module_load(struct module *m, const uint8_t *p, const uint8_t *ep,
                 struct section s;
                 ret = section_load(&s, &p, ep);
                 if (ret != 0) {
+                        report_error(&ctx->report,
+                                     "section_load failed with %d", ret);
                         goto fail;
                 }
                 const struct section_type *t = get_section_type(s.id);
 
                 if (t == NULL) {
-                        xlog_trace("unknown section %u", s.id);
+                        report_error(&ctx->report, "unknown section %u", s.id);
                         ret = EINVAL;
                         goto fail;
                 }
-#if defined(ENABLE_TRACING)
                 const char *name = t->name;
-#endif
                 /*
                  * sections except the custom section (id=0) should be
                  * seen in order, at most once.
                  */
                 if (s.id > 0) {
                         if (max_seen_section_id >= t->order) {
-                                xlog_trace("unexpected section %u (%s)", s.id,
-                                           name);
+                                report_error(&ctx->report,
+                                             "unexpected section %u (%s)",
+                                             s.id, name);
                                 ret = EINVAL;
                                 goto fail;
                         }
@@ -1516,12 +1517,18 @@ module_load(struct module *m, const uint8_t *p, const uint8_t *ep,
 
                         ret = t->read(&sp, sep, ctx);
                         if (ret != 0) {
+                                report_error(&ctx->report,
+                                             "error (%d) while decodingc "
+                                             "section (%s)",
+                                             ret, name);
                                 goto fail;
                         }
                         if (sp != sep) {
-                                xlog_trace("section (%s) has %zu bytes extra "
-                                           "data",
-                                           name, sep - sp);
+                                report_error(
+                                        &ctx->report,
+                                        "section (%s) has %zu bytes extra "
+                                        "data",
+                                        name, sep - sp);
                                 ret = EINVAL;
                                 goto fail;
                         }
