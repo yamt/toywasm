@@ -196,14 +196,8 @@ frame_enter(struct exec_context *ctx, struct instance *inst,
         }
         frame->height = ctx->stack.lsize;
 #if defined(USE_SEPARATE_LOCALS)
-        uint32_t i;
-        for (i = 0; i < nparams; i++) {
-                VEC_ELEM(ctx->locals, frame->localidx + i) = params[i];
-        }
-        for (; i < nlocals; i++) {
-                memset(&VEC_ELEM(ctx->locals, frame->localidx + i), 0,
-                       sizeof(*ctx->locals.p));
-        }
+        struct val *locals = &VEC_ELEM(ctx->locals, frame->localidx);
+        memcpy(locals, params, nparams * sizeof(*locals));
 
         /*
          * As we've copied "params" above, now it's safe to resize stack.
@@ -220,25 +214,20 @@ frame_enter(struct exec_context *ctx, struct instance *inst,
                 return ret;
         }
 
-        struct val *stack = &VEC_NEXTELEM(ctx->stack);
-        uint32_t i;
+        struct val *locals = &VEC_NEXTELEM(ctx->stack);
         if (params_on_stack) {
                 xlog_trace("params on stack");
                 /* params are already in place */
-                i = nparams;
         } else {
                 xlog_trace("copying %" PRIu32 " params", nparams);
-                for (i = 0; i < nparams; i++) {
-                        stack[i] = params[i];
-                }
-        }
-        for (; i < nlocals; i++) {
-                memset(&stack[i], 0, sizeof(*stack));
+                memcpy(locals, params, nparams * sizeof(*locals));
         }
 #endif
+        memset(locals + nparams, 0, (nlocals - nparams) * sizeof(*locals));
 
         xlog_trace("frame enter: maxlabels %u maxvals %u", ei->maxlabels,
                    ei->maxvals);
+        uint32_t i;
         for (i = 0; i < nlocals; i++) {
                 if (i == nparams) {
                         xlog_trace("-- ^-params v-locals");
