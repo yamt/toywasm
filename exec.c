@@ -513,9 +513,13 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
                 uint32_t param_arity;
                 if (cache->blockpc == blockpc &&
                     cache->goto_else == goto_else) {
+                        STAT_INC(ctx->stats.jump_cache2_hit);
+                        ctx->p = cache->target;
+                        if (cache->stay_in_block) {
+                                return;
+                        }
                         param_arity = cache->param_arity;
                         arity = cache->arity;
-                        ctx->p = cache->target;
                 } else {
 
                         /*
@@ -541,6 +545,10 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
                                 ctx->p = pc2ptr(ctx->instance->module,
                                                 jump->targetpc);
                                 if (stay_in_block) {
+                                        cache->blockpc = blockpc;
+                                        cache->goto_else = goto_else;
+                                        cache->stay_in_block = true;
+                                        cache->target = ctx->p;
                                         xlog_trace("jump inside a block");
                                         return;
                                 }
@@ -581,6 +589,10 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
                                                 skip_expr(&p, goto_else);
                                         ctx->p = p;
                                         if (stay_in_block) {
+                                                cache->blockpc = blockpc;
+                                                cache->goto_else = goto_else;
+                                                cache->stay_in_block = true;
+                                                cache->target = ctx->p;
                                                 return;
                                         }
                                 }
@@ -593,6 +605,7 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
 
                         cache->blockpc = blockpc;
                         cache->goto_else = goto_else;
+                        cache->stay_in_block = false;
                         cache->param_arity = param_arity;
                         cache->arity = arity;
                         cache->target = ctx->p;
@@ -916,6 +929,7 @@ exec_context_print_stats(struct exec_context *ctx)
         STAT_PRINT(call);
         STAT_PRINT(branch);
         STAT_PRINT(branch_goto_else);
+        STAT_PRINT(jump_cache2_hit);
         STAT_PRINT(jump_cache_hit);
         STAT_PRINT(jump_table_search);
 }
