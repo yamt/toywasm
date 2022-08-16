@@ -36,7 +36,7 @@ if(TOYWASM_USE_JUMP_BINARY_SEARCH)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DUSE_JUMP_BINARY_SEARCH")
 endif()
 
-option(TOYWASM_USE_JUMP_CACHE "Enable single-entry cache for jump tables" ON)
+option(TOYWASM_USE_JUMP_CACHE "Enable single-entry cache for jump tables" OFF)
 if(TOYWASM_USE_JUMP_CACHE)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DUSE_JUMP_CACHE")
 endif()
