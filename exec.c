@@ -473,6 +473,31 @@ rewind_stack(struct exec_context *ctx, uint32_t height, uint32_t arity)
         ctx->stack.lsize = height + arity;
 }
 
+#if defined(USE_JUMP_CACHE2)
+static struct jump_cache *
+jump_cache2_lookup(struct exec_context *ctx, uint32_t blockpc, bool goto_else)
+{
+        struct jump_cache *cache = &ctx->cache[0];
+        if (cache->blockpc == blockpc && cache->goto_else == goto_else) {
+                return cache;
+        }
+        return NULL;
+}
+
+static void
+jump_cache2_store(struct exec_context *ctx, uint32_t blockpc, bool goto_else,
+                  bool stay_in_block, uint32_t param_arity, uint32_t arity,
+                  const uint8_t *p)
+{
+        struct jump_cache *cache = &ctx->cache[0];
+        cache->blockpc = blockpc;
+        cache->stay_in_block = stay_in_block;
+        cache->param_arity = param_arity;
+        cache->arity = arity;
+        cache->target = p;
+}
+#endif
+
 static void
 do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
 {
@@ -499,12 +524,14 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
                 uint32_t blockpc = l->pc;
                 uint32_t param_arity;
 #if defined(USE_JUMP_CACHE2)
-                struct jump_cache *cache = &ctx->cache[0];
-                if (cache->blockpc == blockpc &&
-                    cache->goto_else == goto_else) {
+                struct jump_cache *cache;
+                if ((cache = jump_cache2_lookup(ctx, blockpc, goto_else)) !=
+                    NULL) {
                         STAT_INC(ctx->stats.jump_cache2_hit);
                         ctx->p = cache->target;
                         if (cache->stay_in_block) {
+                                assert(cache->param_arity == 0);
+                                assert(cache->arity == 0);
                                 return;
                         }
                         param_arity = cache->param_arity;
@@ -512,7 +539,6 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
                 } else
 #endif
                 {
-
                         /*
                          * do a jump. (w/ jump table)
                          */
@@ -537,10 +563,9 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
                                                 jump->targetpc);
                                 if (stay_in_block) {
 #if defined(USE_JUMP_CACHE2)
-                                        cache->blockpc = blockpc;
-                                        cache->goto_else = goto_else;
-                                        cache->stay_in_block = true;
-                                        cache->target = ctx->p;
+                                        jump_cache2_store(ctx, blockpc,
+                                                          goto_else, true, 0,
+                                                          0, ctx->p);
 #endif
                                         xlog_trace("jump inside a block");
                                         return;
@@ -583,10 +608,10 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
                                         ctx->p = p;
                                         if (stay_in_block) {
 #if defined(USE_JUMP_CACHE2)
-                                                cache->blockpc = blockpc;
-                                                cache->goto_else = goto_else;
-                                                cache->stay_in_block = true;
-                                                cache->target = ctx->p;
+                                                jump_cache2_store(ctx, blockpc,
+                                                                  goto_else,
+                                                                  true, 0, 0,
+                                                                  ctx->p);
 #endif
                                                 return;
                                         }
@@ -599,12 +624,8 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
                         }
 
 #if defined(USE_JUMP_CACHE2)
-                        cache->blockpc = blockpc;
-                        cache->goto_else = goto_else;
-                        cache->stay_in_block = false;
-                        cache->param_arity = param_arity;
-                        cache->arity = arity;
-                        cache->target = ctx->p;
+                        jump_cache2_store(ctx, blockpc, goto_else, false,
+                                          param_arity, arity, ctx->p);
 #endif
                 }
                 ctx->labels.lsize -= labelidx + 1;
