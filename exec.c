@@ -474,11 +474,12 @@ rewind_stack(struct exec_context *ctx, uint32_t height, uint32_t arity)
 }
 
 #if JUMP_CACHE2_SIZE > 0
-static struct jump_cache *
+static const struct jump_cache *
 jump_cache2_lookup(struct exec_context *ctx, uint32_t blockpc, bool goto_else)
 {
         uint32_t hash = blockpc + goto_else;
-        struct jump_cache *cache = &ctx->cache[hash % ARRAYCOUNT(ctx->cache)];
+        const struct jump_cache *cache =
+                &ctx->cache[hash % ARRAYCOUNT(ctx->cache)];
         if (cache->blockpc == blockpc && cache->goto_else == goto_else) {
                 return cache;
         }
@@ -526,7 +527,7 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
                 uint32_t blockpc = l->pc;
                 uint32_t param_arity;
 #if JUMP_CACHE2_SIZE > 0
-                struct jump_cache *cache;
+                const struct jump_cache *cache;
                 if ((cache = jump_cache2_lookup(ctx, blockpc, goto_else)) !=
                     NULL) {
                         STAT_INC(ctx->stats.jump_cache2_hit);
