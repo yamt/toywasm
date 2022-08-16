@@ -133,7 +133,9 @@ struct exec_context {
 #if defined(USE_JUMP_CACHE)
         const struct jump *jump_cache;
 #endif
-        struct jump_cache cache[1];
+#if JUMP_CACHE2_SIZE > 0
+        struct jump_cache cache[JUMP_CACHE2_SIZE];
+#endif
 
         VEC(, struct funcframe) frames;
         VEC(, struct val) stack; /* operand stack */
