@@ -518,7 +518,7 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
         }
         if (ctx->labels.lsize - labelidx == frame->labelidx) {
                 /* exit the function */
-                xlog_trace("do_branch: exititng function");
+                xlog_trace("do_branch: exiting function");
                 frame_exit(ctx);
                 height = frame->height;
                 arity = frame->nresults;
