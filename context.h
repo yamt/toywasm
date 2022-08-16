@@ -116,10 +116,9 @@ struct exec_stat {
 #define STAT_INC(s) (s)++
 
 struct jump_cache {
-        uint32_t blockpc;
+        uint32_t key;
         uint32_t param_arity;
         uint32_t arity;
-        bool goto_else;
         bool stay_in_block;
         const uint8_t *target;
 };
