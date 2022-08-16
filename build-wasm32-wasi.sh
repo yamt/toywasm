@@ -45,5 +45,6 @@ cmake \
 -DCMAKE_TOOLCHAIN_FILE=${WASI_SDK_DIR}/share/cmake/wasi-sdk.cmake \
 -DBUILD_TESTING=OFF \
 -DTOYWASM_USE_TAILCALL=OFF \
+${EXTRA_CMAKE_OPTIONS} \
 .
 cmake --build ${BUILD_DIR}

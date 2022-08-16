@@ -2,11 +2,15 @@
 
 set -e
 
+#EXTRA_CMAKE_OPTIONS="-DTOYWASM_USE_JUMP_CACHE=ON -DTOYWASM_USE_JUMP_CACHE2=OFF"
+
+export EXTRA_CMAKE_OPTIONS
 ./build-wasm32-wasi.sh
 
 cmake \
 -B build.native \
 -DBUILD_TESTING=OFF \
+${EXTRA_CMAKE_OPTIONS} \
 .
 cmake --build build.native
 
