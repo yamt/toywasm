@@ -23,6 +23,7 @@
 #include "instance.h"
 #include "load_context.h"
 #include "module.h"
+#include "module_writer.h"
 #include "repl.h"
 #include "report.h"
 #include "type.h"
@@ -337,6 +338,29 @@ repl_load_hex(struct repl_state *state, size_t sz)
 fail:
         repl_unload(mod);
         return ret;
+}
+
+int
+repl_save(struct repl_state *state, const char *filename)
+{
+#if defined(ENABLE_WRITER)
+        if (state->nmodules == 0) {
+                return EPROTO;
+        }
+        struct repl_module_state *mod = &state->modules[state->nmodules - 1];
+        int ret;
+        ret = module_write(filename, mod->module);
+        if (ret != 0) {
+                xlog_error("failed to write module %s (error %d)", filename,
+                           ret);
+                goto fail;
+        }
+        return 0;
+fail:
+        return ret;
+#else
+        return ENOTSUP;
+#endif
 }
 
 int
@@ -755,6 +779,11 @@ repl(void)
                         }
                 } else if (!strcmp(cmd, ":register") && opt != NULL) {
                         ret = repl_register(state, opt);
+                        if (ret != 0) {
+                                goto fail;
+                        }
+                } else if (!strcmp(cmd, ":save") && opt != NULL) {
+                        ret = repl_save(state, opt);
                         if (ret != 0) {
                                 goto fail;
                         }

@@ -4,6 +4,7 @@ CFLAGS += -std=c99
 CFLAGS += -DUSE_SEPARATE_EXECUTE
 CFLAGS += -DUSE_TAILCALL
 CFLAGS += -DENABLE_TRACING
+CFLAGS += -DENABLE_WRITER
 
 DEBUG = 1
 
@@ -50,6 +51,7 @@ SRCS += instance.c
 SRCS += report.c
 SRCS += repl.c
 SRCS += module.c
+SRCS += module_writer.c
 SRCS += leb128.c
 SRCS += type.c
 SRCS += util.c

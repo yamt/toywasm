@@ -56,6 +56,11 @@ if(TOYWASM_USE_SEPARATE_LOCALS)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DUSE_SEPARATE_LOCALS")
 endif()
 
+option(TOYWASM_ENABLE_WRITER "Enable module writer" ON)
+if(TOYWASM_ENABLE_WRITER)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_WRITER")
+endif()
+
 # Prefer the homebrew version because xcode clang doesn't have detect_leaks
 if(NOT DEFINED USE_LSAN)
 set(USE_LSAN ON)
@@ -158,7 +163,13 @@ set(lib_sources
 	"xlog.c"
 )
 
-add_library(toywasm-lib STATIC ${lib_sources})
+if(TOYWASM_ENABLE_WRITER)
+set(lib_sources_writer
+	"module_writer.c"
+)
+endif()
+
+add_library(toywasm-lib STATIC ${lib_sources} ${lib_sources_writer})
 set_target_properties(toywasm-lib PROPERTIES OUTPUT_NAME toywasm)
 if (USE_IPO)
 # Note: -flto=full seems to produce considerably faster code
