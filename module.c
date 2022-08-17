@@ -1424,18 +1424,15 @@ struct section_type {
  * https://webassembly.github.io/spec/core/binary/modules.html#binary-typeidx
  */
 
-#define SECTION(id, n, o)                                                     \
-        [id] = {.name = #n, .read = read_##n##_section, .order = o}
-#define SECTION_NOOP(id, n, o) [id] = {.name = #n, .read = NULL, .order = o}
+#define SECTION(n, o)                                                         \
+        [SECTION_ID_##n] = {.name = #n, .read = read_##n##_section, .order = o}
 
 const struct section_type section_types[] = {
-        SECTION(0, custom, 0),      SECTION(1, type, 1),
-        SECTION(2, import, 2),      SECTION(3, function, 3),
-        SECTION(4, table, 4),       SECTION(5, memory, 5),
-        SECTION(6, global, 6),      SECTION(7, export, 7),
-        SECTION(8, start, 8),       SECTION(9, element, 9),
-        SECTION(10, code, 11),      SECTION(11, data, 12),
-        SECTION(12, datacount, 10),
+        SECTION(custom, 0),     SECTION(type, 1),   SECTION(import, 2),
+        SECTION(function, 3),   SECTION(table, 4),  SECTION(memory, 5),
+        SECTION(global, 6),     SECTION(export, 7), SECTION(start, 8),
+        SECTION(element, 9),    SECTION(code, 11),  SECTION(data, 12),
+        SECTION(datacount, 10),
 };
 
 const struct section_type *
@@ -1462,7 +1459,7 @@ module_load(struct module *m, const uint8_t *p, const uint8_t *ep,
         if (ret != 0) {
                 goto fail;
         }
-        if (v != 0x6d736100) { /* magic */
+        if (v != WASM_MAGIC) { /* magic */
                 report_error(&ctx->report, "wrong magic: %" PRIx32, v);
                 ret = EINVAL;
                 goto fail;

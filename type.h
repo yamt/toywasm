@@ -7,6 +7,8 @@
 #include "bitmap.h"
 #include "vec.h"
 
+#define WASM_MAGIC 0x6d736100
+
 #define WASM_PAGE_SIZE 65536
 #define WASM_MAX_PAGES 65536
 
@@ -216,6 +218,22 @@ struct data {
         /* only for active */
         uint32_t memory;
         struct expr offset;
+};
+
+enum section_id {
+        SECTION_ID_custom = 0,
+        SECTION_ID_type,
+        SECTION_ID_import,
+        SECTION_ID_function,
+        SECTION_ID_table,
+        SECTION_ID_memory,
+        SECTION_ID_global,
+        SECTION_ID_export,
+        SECTION_ID_start,
+        SECTION_ID_element,
+        SECTION_ID_code,
+        SECTION_ID_data,
+        SECTION_ID_datacount,
 };
 
 /*
