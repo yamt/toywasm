@@ -358,6 +358,57 @@ write_element(struct writer *w, const struct element *e)
 }
 
 static void
+write_locals(struct writer *w, const struct func *func)
+{
+        WRITE_LEB_U32(func->nlocalchunks);
+        uint32_t i;
+        for (i = 0; i < func->nlocalchunks; i++) {
+                const struct localchunk *chunk = &func->localchunks[i];
+                WRITE_LEB_U32(chunk->n);
+                WRITE_U8(chunk->type);
+        }
+}
+
+static void
+write_code(struct writer *w, const struct func *func)
+{
+        write_locals(w, func);
+        write_expr(w, &func->e);
+}
+
+static void
+write_func(struct writer *w, const struct func *func)
+{
+        struct writer counter;
+        counter_init(&counter);
+        write_code(&counter, func);
+        if (counter.error != 0) {
+                w->error = counter.error;
+                return;
+        }
+        WRITE_LEB_U32(counter.size);
+        write_code(w, func);
+}
+
+static void
+write_data(struct writer *w, const struct data *data)
+{
+        if (data->mode == DATA_MODE_PASSIVE) {
+                WRITE_LEB_U32(0x01);
+        } else {
+                if (data->memory == 0) {
+                        WRITE_LEB_U32(0x00);
+                } else {
+                        WRITE_LEB_U32(0x02);
+                        WRITE_LEB_U32(data->memory);
+                }
+                write_expr(w, &data->offset);
+        }
+        WRITE_LEB_U32(data->init_size);
+        WRITE_BYTES(data->init, data->init_size);
+}
+
+static void
 write_type_section(struct writer *w, const struct module *m)
 {
         if (m->ntypes == 0) {
@@ -471,6 +522,41 @@ write_element_section(struct writer *w, const struct module *m)
 }
 
 static void
+write_datacount_section(struct writer *w, const struct module *m)
+{
+        if (m->ndatas == 0) {
+                return;
+        }
+        WRITE_LEB_U32(m->ndatas);
+}
+
+static void
+write_code_section(struct writer *w, const struct module *m)
+{
+        if (m->nfuncs == 0) {
+                return;
+        }
+        WRITE_LEB_U32(m->nfuncs);
+        uint32_t i;
+        for (i = 0; i < m->nfuncs; i++) {
+                write_func(w, &m->funcs[i]);
+        }
+}
+
+static void
+write_data_section(struct writer *w, const struct module *m)
+{
+        if (m->ndatas == 0) {
+                return;
+        }
+        WRITE_LEB_U32(m->ndatas);
+        uint32_t i;
+        for (i = 0; i < m->ndatas; i++) {
+                write_data(w, &m->datas[i]);
+        }
+}
+
+static void
 write_section(struct writer *w, uint8_t id,
               void (*fn)(struct writer *w, const struct module *m),
               const struct module *m)
@@ -497,14 +583,10 @@ const static struct section {
         uint8_t id;
         void (*write)(struct writer *w, const struct module *m);
 } sections[] = {
-        SECTION(type),   SECTION(import), SECTION(function),
-        SECTION(table),  SECTION(memory), SECTION(global),
-        SECTION(export), SECTION(start),  SECTION(element),
-#if 0
-	SECTION(datacount),
-	SECTION(code),
-	SECTION(data),
-#endif
+        SECTION(type),      SECTION(import), SECTION(function),
+        SECTION(table),     SECTION(memory), SECTION(global),
+        SECTION(export),    SECTION(start),  SECTION(element),
+        SECTION(datacount), SECTION(code),   SECTION(data),
 };
 
 static void
