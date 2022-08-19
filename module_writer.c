@@ -320,6 +320,7 @@ write_element(struct writer *w, const struct element *e)
                         elemkind = 0x00;
                         break;
                 default:
+                        elemkind = 0; /* just to appease a compiler warning */
                         assert(0);
                 }
                 WRITE_U8(elemkind);
