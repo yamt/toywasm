@@ -347,6 +347,12 @@ struct import_object_entry {
         } u;
 };
 
+/*
+ * instance_create() takes a list of import_object, chained together
+ * with the "next" member. The list logically represents a single list
+ * of import_object_entry. If there are multiple matching entries,
+ * the first one is used.
+ */
 struct import_object {
         size_t nentries;
         struct import_object_entry *entries;

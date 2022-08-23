@@ -9,6 +9,10 @@ struct import_object;
 struct report;
 struct name;
 
+/*
+ * This API is inspired from js-api.
+ * https://webassembly.github.io/spec/js-api/index.html#instances
+ */
 int instance_create(struct module *m, struct instance **instp,
                     const struct import_object *imports,
                     struct report *report);
