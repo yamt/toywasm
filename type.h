@@ -331,6 +331,11 @@ struct instance {
         VEC(, struct tableinst *) tables;
         VEC(, struct globalinst *) globals;
 
+        /*
+         * Track which data/element has been dropped. It's unfortunate
+         * that the functionality for space-saving actually just consumes
+         * extra space for this implementation.
+         */
         struct bitmap data_dropped;
         struct bitmap elem_dropped;
 };
