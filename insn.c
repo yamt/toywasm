@@ -78,6 +78,7 @@ local_getptr(struct exec_context *ectx, uint32_t localidx, uint32_t *cszp)
         if (localidx < nparams) {
             cidx = resulttype_cellidx(frame->paramtype, localidx, cszp);
         } else {
+            assert(localidx < nparams + frame->localtype->nlocals);
             cidx = resulttype_cellsize(frame->paramtype);
             cidx += localtype_cellidx(frame->localtype, localidx - nparams, cszp);
         }
@@ -89,21 +90,19 @@ local_getptr(struct exec_context *ectx, uint32_t localidx, uint32_t *cszp)
 }
 
 static void
-local_get(struct exec_context *ectx, uint32_t localidx, struct val *val)
+local_get(struct exec_context *ectx, uint32_t localidx, struct cell *stack, uint32_t *cszp)
 {
-	struct cell *cell;
-    uint32_t csz;
-    cell = local_getptr(ectx, localidx, &csz);
-    val_from_cells(val, cell, csz);
+	const struct cell *cells;
+    cells = local_getptr(ectx, localidx, cszp);
+    cells_copy(stack, cells, *cszp);
 }
 
 static void
-local_set(struct exec_context *ectx, uint32_t localidx, const struct val *val)
+local_set(struct exec_context *ectx, uint32_t localidx, const struct cell *stack, uint32_t *cszp)
 {
-	struct cell *cell;
-    uint32_t csz;
-    cell = local_getptr(ectx, localidx, &csz);
-    val_to_cells(val, cell, csz);
+	struct cell *cells;
+    cells = local_getptr(ectx, localidx, cszp);
+    cells_copy(cells, stack - *cszp, *cszp);
 }
 
 static float
@@ -327,6 +326,7 @@ fail:
 #define INSN_SUCCESS return 0
 #define INSN_SUCCESS_RETURN INSN_SUCCESS
 #define STACK &VEC_NEXTELEM(ECTX->stack)
+#define STACK_ADJ(n) ECTX->stack.lsize += (n)
 
 #include "insn_impl.h"
 
@@ -344,6 +344,7 @@ fail:
 #undef INSN_SUCCESS
 #undef INSN_SUCCESS_RETURN
 #undef STACK
+#undef STACK_ADJ
 
 #if defined(USE_SEPARATE_EXECUTE)
 #define EXECUTING true
@@ -370,6 +371,7 @@ fail:
         return 0
 #define ep NULL
 #define STACK stack
+#define STACK_ADJ(n) stack += (n)
 #define push_val(v, csz, ctx) stack_push_val(v, &stack, csz)
 #define pop_val(v, csz, ctx) stack_pop_val(v, &stack, csz)
 
@@ -390,6 +392,7 @@ fail:
 #undef INSN_SUCCESS_RETURN
 #undef ep
 #undef STACK
+#undef STACK_ADJ
 #endif /* defined(USE_SEPARATE_EXECUTE) */
 
 #if defined(USE_SEPARATE_EXECUTE)

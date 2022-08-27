@@ -29,6 +29,7 @@ struct ctrlframe {
         struct resulttype *end_types;
 
         uint32_t height;
+        uint32_t height_cell;
         bool unreachable;
 };
 
@@ -83,6 +84,7 @@ struct validation_context {
 
         enum valtype *valtypes;
         uint32_t nvaltypes;
+        uint32_t ncells;
 
         struct module *module;
         struct expr_exec_info *ei;

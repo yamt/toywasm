@@ -564,11 +564,13 @@ INSN_IMPL(local_get)
         struct val val_c;
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
-                local_get(ectx, localidx, &val_c);
+                uint32_t csz;
+                local_get(ectx, localidx, STACK, &csz);
+                STACK_ADJ(csz);
         } else if (VALIDATING) {
                 CHECK(localidx < VCTX->nlocals);
+                PUSH_VAL(VCTX->locals[localidx], c);
         }
-        PUSH_VAL(VCTX->locals[localidx], c);
         SAVE_CTX;
         INSN_SUCCESS;
 fail:
@@ -584,10 +586,13 @@ INSN_IMPL(local_set)
         if (VALIDATING) {
                 CHECK(localidx < VCTX->nlocals);
         }
-        POP_VAL(VCTX->locals[localidx], a);
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
-                local_set(ectx, localidx, &val_a);
+                uint32_t csz;
+                local_set(ectx, localidx, STACK, &csz);
+                STACK_ADJ(-csz);
+        } else {
+                POP_VAL(VCTX->locals[localidx], a);
         }
         SAVE_CTX;
         INSN_SUCCESS;
@@ -604,12 +609,14 @@ INSN_IMPL(local_tee)
         if (VALIDATING) {
                 CHECK(localidx < VCTX->nlocals);
         }
-        POP_VAL(VCTX->locals[localidx], a);
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
-                local_set(ectx, localidx, &val_a);
+                uint32_t csz;
+                local_set(ectx, localidx, STACK, &csz);
+        } else {
+                POP_VAL(VCTX->locals[localidx], a);
+                PUSH_VAL(VCTX->locals[localidx], a);
         }
-        PUSH_VAL(VCTX->locals[localidx], a);
         SAVE_CTX;
         INSN_SUCCESS;
 fail:

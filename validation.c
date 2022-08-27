@@ -30,8 +30,9 @@ push_valtype(enum valtype type, struct validation_context *ctx)
         }
         ctx->valtypes[ctx->nvaltypes] = type;
         ctx->nvaltypes = nsize;
-        if (ctx->nvaltypes > ctx->ei->maxvals) {
-                ctx->ei->maxvals = ctx->nvaltypes;
+        ctx->ncells += valtype_cellsize(type);
+        if (ctx->ncells > ctx->ei->maxvals) {
+                ctx->ei->maxvals = ctx->ncells;
         }
         return 0;
 }
@@ -46,7 +47,9 @@ pop_valtype(enum valtype expected_type, enum valtype *typep,
         assert(ctx->ncframes > 0);
         cframe = &ctx->cframes[ctx->ncframes - 1];
         assert(ctx->nvaltypes >= cframe->height);
+        assert(ctx->ncells >= cframe->height_cell);
         if (ctx->nvaltypes == cframe->height) {
+                assert(ctx->ncells == cframe->height_cell);
                 if (cframe->unreachable) {
                         *typep = TYPE_UNKNOWN;
                         return 0;
@@ -56,6 +59,9 @@ pop_valtype(enum valtype expected_type, enum valtype *typep,
         ctx->nvaltypes--;
         enum valtype t = ctx->valtypes[ctx->nvaltypes];
         assert(t != TYPE_ANYREF);
+        uint32_t csz = valtype_cellsize(t);
+        assert(ctx->ncells >= csz);
+        ctx->ncells -= csz;
         if (expected_type != TYPE_UNKNOWN && t != TYPE_UNKNOWN &&
             t != expected_type &&
             !(expected_type == TYPE_ANYREF && is_reftype(t))) {
@@ -111,8 +117,10 @@ int
 peek_valtypes(const struct resulttype *types, struct validation_context *ctx)
 {
         uint32_t saved_height = ctx->nvaltypes;
+        uint32_t saved_ncells = ctx->ncells;
         int ret = pop_valtypes(types, ctx);
         ctx->nvaltypes = saved_height;
+        ctx->ncells = saved_ncells;
         return ret;
 }
 
@@ -178,6 +186,7 @@ push_ctrlframe(uint32_t pc, enum ctrlframe_op op, uint32_t jumpslot,
         cframe->end_types = end_types;
         cframe->unreachable = false;
         cframe->height = ctx->nvaltypes;
+        cframe->height_cell = ctx->ncells;
         ctx->ncframes++;
         if (ctx->ncframes > ei->maxlabels) {
                 ei->maxlabels = ctx->ncframes;
@@ -225,6 +234,7 @@ pop_ctrlframe(uint32_t pc, bool is_else, struct ctrlframe *cframep,
                                           " != %" PRIu32,
                                           ctx->nvaltypes, cframe->height);
         }
+        assert(ctx->ncells == cframe->height_cell);
         *cframep = *cframe;
         ctx->ncframes--;
         return 0;
@@ -235,6 +245,7 @@ mark_unreachable(struct validation_context *ctx)
 {
         struct ctrlframe *cframe = &ctx->cframes[ctx->ncframes - 1];
         ctx->nvaltypes = cframe->height;
+        ctx->ncells = cframe->height_cell;
         cframe->unreachable = true;
 }
 
