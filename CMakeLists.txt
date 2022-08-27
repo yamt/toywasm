@@ -141,6 +141,7 @@ message(STATUS "TOYWASM_USE_SEPARATE_LOCALS: ${TOYWASM_USE_SEPARATE_LOCALS}")
 
 set(lib_sources
 	"bitmap.c"
+	"cell.c"
 	"context.c"
 	"decode.c"
 	"endian.c"

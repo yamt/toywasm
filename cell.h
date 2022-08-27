@@ -30,6 +30,11 @@ val_to_cells(const struct val *val, struct cell *cells, uint32_t ncells);
 void
 val_from_cells(struct val *val, const struct cell *cells, uint32_t ncells);
 
+void
+vals_to_cells(const struct val *vals, struct cell *cells, const struct resulttype *rt);
+void
+vals_from_cells(struct val *vals, const struct cell *cells, const struct resulttype *rt);
+
 void cells_zero(struct cell *cells, uint32_t ncells);
 void cells_copy(struct cell *dst, const struct cell *src, uint32_t ncells);
 void cells_move(struct cell *dst, const struct cell *src, uint32_t ncells);

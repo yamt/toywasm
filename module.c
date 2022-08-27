@@ -691,7 +691,8 @@ read_locals(const uint8_t **pp, const uint8_t *ep, struct func *func)
         if (ret != 0) {
                 goto fail;
         }
-        func->nlocalchunks = vec_count;
+        struct localtype *lt = &func->localtype;
+        lt->nlocalchunks = vec_count;
         chunks = calloc(vec_count, sizeof(*chunks));
 
         uint32_t i;
@@ -721,8 +722,8 @@ read_locals(const uint8_t **pp, const uint8_t *ep, struct func *func)
                 chunks[i].n = count;
                 chunks[i].type = u8;
         }
-        func->localchunks = chunks;
-        func->nlocals = nlocals;
+        lt->localchunks = chunks;
+        lt->nlocals = nlocals;
         *pp = p;
         return 0;
 fail:
@@ -736,11 +737,12 @@ read_func(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
 {
         struct load_context *ctx = vp;
         struct module *m = ctx->module;
+		struct localtype *lt = &func->localtype;
         const uint8_t *p = *pp;
         uint32_t size;
         int ret;
 
-        func->localchunks = NULL;
+        lt->localchunks = NULL;
         uint32_t funcidx = m->nimportedfuncs + idx;
         if (funcidx >= m->nimportedfuncs + m->nfuncs) {
                 xlog_trace("read_func: funcidx out of range");
@@ -765,7 +767,7 @@ read_func(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
         if (ret != 0) {
                 goto fail;
         }
-        ret = read_expr(&p, cep, &func->e, func->nlocals, func->localchunks,
+        ret = read_expr(&p, cep, &func->e, lt->nlocals, lt->localchunks,
                         &ft->parameter, &ft->result, ctx);
         if (ret != 0) {
                 goto fail;
@@ -778,7 +780,7 @@ read_func(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
         *pp = p;
         return 0;
 fail:
-        free(func->localchunks);
+        free(lt->localchunks);
         return ret;
 }
 
@@ -797,7 +799,8 @@ clear_expr(struct expr *expr)
 void
 clear_func(struct func *func)
 {
-        free(func->localchunks);
+		struct localtype *lt = &func->localtype;
+        free(lt->localchunks);
         clear_expr(&func->e);
 }
 
