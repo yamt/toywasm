@@ -234,8 +234,8 @@ frame_enter(struct exec_context *ctx, struct instance *inst,
                 if (i == nparams) {
                         xlog_trace("-- ^-params v-locals");
                 }
-                xlog_trace("local [%" PRIu32 "] %016" PRIx64, i,
-                           frame_locals(ctx, frame)[i].u.i64);
+                xlog_trace("local [%" PRIu32 "] %08" PRIx32, i,
+                           frame_locals(ctx, frame)[i].x);
         }
 
         /*

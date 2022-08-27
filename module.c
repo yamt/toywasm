@@ -1259,7 +1259,7 @@ read_code_section(const uint8_t **pp, const uint8_t *ep,
 
         uint32_t i;
         for (i = 0; i < m->nfuncs; i++) {
-                xlog_trace("func nlocals %u", m->funcs[i].nlocals);
+                xlog_trace("func nlocals %u", m->funcs[i].localtype.nlocals);
         }
 
         *pp = p;
