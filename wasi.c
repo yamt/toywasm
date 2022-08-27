@@ -320,8 +320,8 @@ wasi_proc_exit(struct exec_context *ctx, struct host_instance *hi,
 
 static int
 wasi_fd_close(struct exec_context *ctx, struct host_instance *hi,
-               const struct functype *ft, const struct cell *params,
-               struct cell *results)
+              const struct functype *ft, const struct cell *params,
+              struct cell *results)
 {
         struct wasi_instance *wasi = (void *)hi;
         HOST_FUNC_CONVERT_PARAMS(ft, params);
@@ -351,8 +351,8 @@ fail:
 
 static int
 wasi_fd_write(struct exec_context *ctx, struct host_instance *hi,
-               const struct functype *ft, const struct cell *params,
-               struct cell *results)
+              const struct functype *ft, const struct cell *params,
+              struct cell *results)
 {
         struct wasi_instance *wasi = (void *)hi;
         HOST_FUNC_CONVERT_PARAMS(ft, params);
@@ -395,8 +395,8 @@ fail:
 
 static int
 wasi_fd_read(struct exec_context *ctx, struct host_instance *hi,
-               const struct functype *ft, const struct cell *params,
-               struct cell *results)
+             const struct functype *ft, const struct cell *params,
+             struct cell *results)
 {
         struct wasi_instance *wasi = (void *)hi;
         HOST_FUNC_CONVERT_PARAMS(ft, params);
@@ -439,8 +439,8 @@ fail:
 
 static int
 wasi_fd_fdstat_get(struct exec_context *ctx, struct host_instance *hi,
-               const struct functype *ft, const struct cell *params,
-               struct cell *results)
+                   const struct functype *ft, const struct cell *params,
+                   struct cell *results)
 {
         struct wasi_instance *wasi = (void *)hi;
         HOST_FUNC_CONVERT_PARAMS(ft, params);
@@ -477,8 +477,8 @@ fail:
 
 static int
 wasi_fd_fdstat_set_flags(struct exec_context *ctx, struct host_instance *hi,
-               const struct functype *ft, const struct cell *params,
-               struct cell *results)
+                         const struct functype *ft, const struct cell *params,
+                         struct cell *results)
 {
         struct wasi_instance *wasi = (void *)hi;
         HOST_FUNC_CONVERT_PARAMS(ft, params);
@@ -501,8 +501,8 @@ fail:
 
 static int
 wasi_fd_seek(struct exec_context *ctx, struct host_instance *hi,
-               const struct functype *ft, const struct cell *params,
-               struct cell *results)
+             const struct functype *ft, const struct cell *params,
+             struct cell *results)
 {
         struct wasi_instance *wasi = (void *)hi;
         HOST_FUNC_CONVERT_PARAMS(ft, params);
@@ -546,8 +546,8 @@ fail:
 
 static int
 wasi_fd_filestat_get(struct exec_context *ctx, struct host_instance *hi,
-               const struct functype *ft, const struct cell *params,
-               struct cell *results)
+                     const struct functype *ft, const struct cell *params,
+                     struct cell *results)
 {
         struct wasi_instance *wasi = (void *)hi;
         HOST_FUNC_CONVERT_PARAMS(ft, params);
@@ -591,8 +591,8 @@ fail:
 
 static int
 wasi_fd_prestat_get(struct exec_context *ctx, struct host_instance *hi,
-               const struct functype *ft, const struct cell *params,
-               struct cell *results)
+                    const struct functype *ft, const struct cell *params,
+                    struct cell *results)
 {
         struct wasi_instance *wasi = (void *)hi;
         HOST_FUNC_CONVERT_PARAMS(ft, params);
@@ -621,8 +621,8 @@ fail:
 
 static int
 wasi_fd_prestat_dir_name(struct exec_context *ctx, struct host_instance *hi,
-               const struct functype *ft, const struct cell *params,
-               struct cell *results)
+                         const struct functype *ft, const struct cell *params,
+                         struct cell *results)
 {
         struct wasi_instance *wasi = (void *)hi;
         HOST_FUNC_CONVERT_PARAMS(ft, params);
@@ -658,8 +658,8 @@ fail:
 
 static int
 wasi_clock_res_get(struct exec_context *ctx, struct host_instance *hi,
-               const struct functype *ft, const struct cell *params,
-               struct cell *results)
+                   const struct functype *ft, const struct cell *params,
+                   struct cell *results)
 {
         xlog_trace("%s called", __func__);
         HOST_FUNC_CONVERT_PARAMS(ft, params);
@@ -686,8 +686,8 @@ fail:
 
 static int
 wasi_clock_time_get(struct exec_context *ctx, struct host_instance *hi,
-               const struct functype *ft, const struct cell *params,
-               struct cell *results)
+                    const struct functype *ft, const struct cell *params,
+                    struct cell *results)
 {
         xlog_trace("%s called", __func__);
         HOST_FUNC_CONVERT_PARAMS(ft, params);
@@ -717,8 +717,8 @@ fail:
 
 static int
 wasi_args_sizes_get(struct exec_context *ctx, struct host_instance *hi,
-               const struct functype *ft, const struct cell *params,
-               struct cell *results)
+                    const struct functype *ft, const struct cell *params,
+                    struct cell *results)
 {
         struct wasi_instance *wasi = (void *)hi;
         HOST_FUNC_CONVERT_PARAMS(ft, params);
@@ -748,8 +748,8 @@ fail:
 
 static int
 wasi_args_get(struct exec_context *ctx, struct host_instance *hi,
-               const struct functype *ft, const struct cell *params,
-               struct cell *results)
+              const struct functype *ft, const struct cell *params,
+              struct cell *results)
 {
         xlog_trace("%s called", __func__);
         struct wasi_instance *wasi = (void *)hi;
@@ -789,8 +789,8 @@ fail:
 
 static int
 wasi_environ_sizes_get(struct exec_context *ctx, struct host_instance *hi,
-               const struct functype *ft, const struct cell *params,
-               struct cell *results)
+                       const struct functype *ft, const struct cell *params,
+                       struct cell *results)
 {
         xlog_trace("%s called", __func__);
         HOST_FUNC_CONVERT_PARAMS(ft, params);
@@ -810,8 +810,8 @@ fail:
 
 static int
 wasi_environ_get(struct exec_context *ctx, struct host_instance *hi,
-               const struct functype *ft, const struct cell *params,
-               struct cell *results)
+                 const struct functype *ft, const struct cell *params,
+                 struct cell *results)
 {
         xlog_trace("%s called", __func__);
         /* REVISIT */
@@ -821,8 +821,8 @@ wasi_environ_get(struct exec_context *ctx, struct host_instance *hi,
 
 static int
 wasi_random_get(struct exec_context *ctx, struct host_instance *hi,
-               const struct functype *ft, const struct cell *params,
-               struct cell *results)
+                const struct functype *ft, const struct cell *params,
+                struct cell *results)
 {
         xlog_trace("%s called", __func__);
         HOST_FUNC_CONVERT_PARAMS(ft, params);
@@ -947,8 +947,8 @@ fail:
 
 static int
 wasi_path_unlink_file(struct exec_context *ctx, struct host_instance *hi,
-               const struct functype *ft, const struct cell *params,
-               struct cell *results)
+                      const struct functype *ft, const struct cell *params,
+                      struct cell *results)
 {
         struct wasi_instance *wasi = (void *)hi;
         HOST_FUNC_CONVERT_PARAMS(ft, params);
@@ -977,8 +977,8 @@ fail:
 
 static int
 wasi_path_remove_directory(struct exec_context *ctx, struct host_instance *hi,
-               const struct functype *ft, const struct cell *params,
-               struct cell *results)
+                           const struct functype *ft,
+                           const struct cell *params, struct cell *results)
 {
         struct wasi_instance *wasi = (void *)hi;
         HOST_FUNC_CONVERT_PARAMS(ft, params);

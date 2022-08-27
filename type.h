@@ -103,7 +103,7 @@ struct localtype {
 };
 
 struct func {
-		struct localtype localtype;
+        struct localtype localtype;
         struct expr e;
 };
 
@@ -293,8 +293,8 @@ struct host_instance;
 
 struct cell;
 typedef int (*host_func_t)(struct exec_context *, struct host_instance *hi,
-                           const struct functype *ft, const struct cell *params,
-                           struct cell *results);
+                           const struct functype *ft,
+                           const struct cell *params, struct cell *results);
 
 struct funcinst {
         bool is_host;

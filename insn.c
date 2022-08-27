@@ -71,16 +71,17 @@ push_label(const uint8_t *p, struct cell *stack, struct exec_context *ctx)
 static struct cell *
 local_getptr(struct exec_context *ectx, uint32_t localidx, uint32_t *cszp)
 {
-		/* REVISIT: very inefficient */
+        /* REVISIT: very inefficient */
         const struct funcframe *frame = &VEC_LASTELEM(ectx->frames);
         uint32_t cidx;
         uint32_t nparams = frame->paramtype->ntypes;
         if (localidx < nparams) {
-            cidx = resulttype_cellidx(frame->paramtype, localidx, cszp);
+                cidx = resulttype_cellidx(frame->paramtype, localidx, cszp);
         } else {
-            assert(localidx < nparams + frame->localtype->nlocals);
-            cidx = resulttype_cellsize(frame->paramtype);
-            cidx += localtype_cellidx(frame->localtype, localidx - nparams, cszp);
+                assert(localidx < nparams + frame->localtype->nlocals);
+                cidx = resulttype_cellsize(frame->paramtype);
+                cidx += localtype_cellidx(frame->localtype, localidx - nparams,
+                                          cszp);
         }
 #if defined(USE_LOCALS_CACHE)
         return &ectx->current_locals[cidx];
@@ -90,19 +91,21 @@ local_getptr(struct exec_context *ectx, uint32_t localidx, uint32_t *cszp)
 }
 
 static void
-local_get(struct exec_context *ectx, uint32_t localidx, struct cell *stack, uint32_t *cszp)
+local_get(struct exec_context *ectx, uint32_t localidx, struct cell *stack,
+          uint32_t *cszp)
 {
-	const struct cell *cells;
-    cells = local_getptr(ectx, localidx, cszp);
-    cells_copy(stack, cells, *cszp);
+        const struct cell *cells;
+        cells = local_getptr(ectx, localidx, cszp);
+        cells_copy(stack, cells, *cszp);
 }
 
 static void
-local_set(struct exec_context *ectx, uint32_t localidx, const struct cell *stack, uint32_t *cszp)
+local_set(struct exec_context *ectx, uint32_t localidx,
+          const struct cell *stack, uint32_t *cszp)
 {
-	struct cell *cells;
-    cells = local_getptr(ectx, localidx, cszp);
-    cells_copy(cells, stack - *cszp, *cszp);
+        struct cell *cells;
+        cells = local_getptr(ectx, localidx, cszp);
+        cells_copy(cells, stack - *cszp, *cszp);
 }
 
 static float
@@ -352,7 +355,7 @@ fail:
 #define ECTX ctx
 #define VCTX ((struct validation_context *)NULL)
 #define INSN_IMPL(NAME)                                                       \
-        int execute_##NAME(const uint8_t *p, struct cell *stack,               \
+        int execute_##NAME(const uint8_t *p, struct cell *stack,              \
                            struct exec_context *ctx)
 #define LOAD_CTX const uint8_t *p0 __attribute__((__unused__)) = p
 #define SAVE_CTX

@@ -144,11 +144,9 @@ stack_prealloc(struct exec_context *ctx, uint32_t count)
 
 int
 frame_enter(struct exec_context *ctx, struct instance *inst,
-            const struct expr_exec_info *ei,
-            const struct localtype *localtype,
-            const struct resulttype *paramtype,
-            uint32_t nresults,
-		    const struct cell *params)
+            const struct expr_exec_info *ei, const struct localtype *localtype,
+            const struct resulttype *paramtype, uint32_t nresults,
+            const struct cell *params)
 {
         /*
          * Note: params can be in ctx->stack.
@@ -227,7 +225,7 @@ frame_enter(struct exec_context *ctx, struct instance *inst,
                 cells_copy(locals, params, nparams);
         }
 #endif
-		cells_zero(locals + nparams, nlocals - nparams);
+        cells_zero(locals + nparams, nlocals - nparams);
 
         xlog_trace("frame enter: maxlabels %u maxvals %u", ei->maxlabels,
                    ei->maxvals);
@@ -375,7 +373,8 @@ do_wasm_call(struct exec_context *ctx, const struct funcinst *finst)
         assert(ctx->stack.lsize >= nparams);
         ctx->stack.lsize -= nparams;
         ret = frame_enter(ctx, callee_inst, &func->e.ei, &func->localtype,
-                          &type->parameter, nresults, &VEC_NEXTELEM(ctx->stack));
+                          &type->parameter, nresults,
+                          &VEC_NEXTELEM(ctx->stack));
         if (ret != 0) {
                 return ret;
         }
@@ -474,7 +473,8 @@ rewind_stack(struct exec_context *ctx, uint32_t height, uint32_t arity)
         if (height + arity == ctx->stack.lsize) {
                 return;
         }
-        cells_move(&VEC_ELEM(ctx->stack, height), &VEC_ELEM(ctx->stack, ctx->stack.lsize - arity), arity);
+        cells_move(&VEC_ELEM(ctx->stack, height),
+                   &VEC_ELEM(ctx->stack, ctx->stack.lsize - arity), arity);
         ctx->stack.lsize = height + arity;
 }
 
@@ -687,11 +687,10 @@ exec_next_insn(const uint8_t *p, struct cell *stack, struct exec_context *ctx)
 }
 
 int
-exec_expr(const struct expr *expr,
-          const struct localtype *localtype,
-          const struct resulttype *parametertype,
-          uint32_t nresults, const struct cell *params,
-          struct cell *results, struct exec_context *ctx)
+exec_expr(const struct expr *expr, const struct localtype *localtype,
+          const struct resulttype *parametertype, uint32_t nresults,
+          const struct cell *params, struct cell *results,
+          struct exec_context *ctx)
 {
         uint32_t nstackused_saved = ctx->stack.lsize;
         int ret;
@@ -737,7 +736,7 @@ exec_expr(const struct expr *expr,
         }
         assert(ctx->stack.lsize == nstackused_saved + nresults);
         cells_copy(results, &VEC_ELEM(ctx->stack, ctx->stack.lsize - nresults),
-               nresults);
+                   nresults);
         ctx->stack.lsize -= nresults;
         return 0;
 }
@@ -998,9 +997,8 @@ invoke(struct funcinst *finst, const struct resulttype *paramtype,
         }
         const struct func *func = funcinst_func(finst);
         ctx->instance = finst->u.wasm.instance;
-		uint32_t nresults = resulttype_cellsize(&ft->result);
-        return exec_expr(&func->e, &func->localtype, &ft->parameter,
-                        nresults,
+        uint32_t nresults = resulttype_cellsize(&ft->result);
+        return exec_expr(&func->e, &func->localtype, &ft->parameter, nresults,
                          params, results, ctx);
 }
 

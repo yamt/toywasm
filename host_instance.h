@@ -8,19 +8,20 @@ struct host_func {
         host_func_t func;
 };
 
-#define HOST_FUNC_CONVERT_PARAMS(FT, PARAMS) \
-	struct val converted_params[(FT)->parameter.ntypes]; \
-    vals_from_cells(converted_params, (PARAMS), &(FT)->parameter);
+#define HOST_FUNC_CONVERT_PARAMS(FT, PARAMS)                                  \
+        struct val converted_params[(FT)->parameter.ntypes];                  \
+        vals_from_cells(converted_params, (PARAMS), &(FT)->parameter);
 #define HOST_FUNC_PARAM(FT, PARAMS, IDX, TYPE) converted_params[IDX].u.TYPE
 
-#define HOST_FUNC_RESULT_SET(FT, RESULTS, IDX, TYPE, V) \
-	do { \
-        struct val tmp; \
-        tmp.u.TYPE = V; \
-        uint32_t csz; \
-        uint32_t cidx = resulttype_cellidx(&(FT)->result, (IDX), &csz); \
-        val_to_cells(&tmp, &(RESULTS)[cidx], csz); \
-    } while (0)
+#define HOST_FUNC_RESULT_SET(FT, RESULTS, IDX, TYPE, V)                       \
+        do {                                                                  \
+                struct val tmp;                                               \
+                tmp.u.TYPE = V;                                               \
+                uint32_t csz;                                                 \
+                uint32_t cidx =                                               \
+                        resulttype_cellidx(&(FT)->result, (IDX), &csz);       \
+                val_to_cells(&tmp, &(RESULTS)[cidx], csz);                    \
+        } while (0)
 
 struct host_instance {
         int dummy;

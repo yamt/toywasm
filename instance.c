@@ -440,19 +440,21 @@ instance_execute_func(struct exec_context *ctx, uint32_t funcidx,
         uint32_t param_ncells = resulttype_cellsize(paramtype);
         uint32_t result_ncells = resulttype_cellsize(resulttype);
         struct cell *param_cells = calloc(param_ncells, sizeof(*param_cells));
-        struct cell *result_cells = calloc(result_ncells, sizeof(*result_cells));
+        struct cell *result_cells =
+                calloc(result_ncells, sizeof(*result_cells));
         int ret;
         if (param_cells == NULL || result_cells == NULL) {
-            ret = ENOMEM;
-            goto fail;
+                ret = ENOMEM;
+                goto fail;
         }
         vals_to_cells(params, param_cells, paramtype);
-        ret = invoke(finst, paramtype, resulttype, param_cells, result_cells, ctx);
+        ret = invoke(finst, paramtype, resulttype, param_cells, result_cells,
+                     ctx);
         if (ret == 0) {
-            vals_from_cells(results, result_cells, resulttype);
+                vals_from_cells(results, result_cells, resulttype);
         }
 fail:
-		free(param_cells);
-		free(result_cells);
+        free(param_cells);
+        free(result_cells);
         return ret;
 }

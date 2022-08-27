@@ -737,7 +737,7 @@ read_func(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
 {
         struct load_context *ctx = vp;
         struct module *m = ctx->module;
-		struct localtype *lt = &func->localtype;
+        struct localtype *lt = &func->localtype;
         const uint8_t *p = *pp;
         uint32_t size;
         int ret;
@@ -799,7 +799,7 @@ clear_expr(struct expr *expr)
 void
 clear_func(struct func *func)
 {
-		struct localtype *lt = &func->localtype;
+        struct localtype *lt = &func->localtype;
         free(lt->localchunks);
         clear_expr(&func->e);
 }

@@ -46,9 +46,9 @@ struct funcframe {
         uint32_t localidx;
 #endif
 
-		/* REVISIT: simpler to have func/functype references? */
-		const struct resulttype *paramtype;
-		const struct localtype *localtype;
+        /* REVISIT: simpler to have func/functype references? */
+        const struct resulttype *paramtype;
+        const struct localtype *localtype;
         const struct expr_exec_info *ei;
 
         struct instance *instance;
@@ -196,11 +196,12 @@ int memory_getptr2(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
 int frame_enter(struct exec_context *ctx, struct instance *inst,
                 const struct expr_exec_info *ei,
                 const struct localtype *localtype,
-                const struct resulttype *paramtype,
-                uint32_t nresults, const struct cell *params);
+                const struct resulttype *paramtype, uint32_t nresults,
+                const struct cell *params);
 void frame_clear(struct funcframe *frame);
 void frame_exit(struct exec_context *ctx);
-struct cell *frame_locals(struct exec_context *ctx, const struct funcframe *frame);
+struct cell *frame_locals(struct exec_context *ctx,
+                          const struct funcframe *frame);
 void exec_context_init(struct exec_context *ctx, struct instance *inst);
 void exec_context_clear(struct exec_context *ctx);
 void exec_context_print_stats(struct exec_context *ctx);
