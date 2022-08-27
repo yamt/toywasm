@@ -499,8 +499,21 @@ fail:
 
 INSN_IMPL(drop)
 {
+        LOAD_CTX;
         int ret;
-        POP_VAL(TYPE_UNKNOWN, a);
+        enum valtype t;
+        if (EXECUTING) {
+                t = find_type_annotation(ECTX, p);
+        } else {
+                t = TYPE_UNKNOWN;
+        }
+        POP_VAL(t, a);
+        if (VALIDATING) {
+                ret = record_type_annotation(VCTX, p, type_a);
+                if (ret != 0) {
+                        goto fail;
+                }
+        }
         INSN_SUCCESS;
 fail:
         return ret;
@@ -508,19 +521,24 @@ fail:
 
 INSN_IMPL(select)
 {
+        LOAD_CTX;
         int ret;
         POP_VAL(TYPE_i32, cond);
         struct val val_c;
+        enum valtype t;
         if (EXECUTING) {
-                /* TODO implement */
-                ret = ENOTSUP;
-                goto fail;
-#if 0
+                t = find_type_annotation(ECTX, p);
+                POP_VAL(t, v2);
+                POP_VAL(t, v1);
                 val_c = val_cond.u.i32 != 0 ? val_v1 : val_v2;
-#endif
+                PUSH_VAL(t, c);
         } else if (VALIDATING) {
                 POP_VAL(TYPE_UNKNOWN, v2);
                 POP_VAL(type_v2, v1);
+                ret = record_type_annotation(VCTX, p, type_v2);
+                if (ret != 0) {
+                        goto fail;
+                }
                 CHECK(is_numtype(type_v2) || is_vectype(type_v2) ||
                       type_v2 == TYPE_UNKNOWN);
                 PUSH_VAL(type_v2, c);

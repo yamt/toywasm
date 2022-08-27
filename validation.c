@@ -312,3 +312,35 @@ target_label_types(struct validation_context *ctx, uint32_t labelidx,
         *rtp = rt;
         return 0;
 }
+
+int
+record_type_annotation(struct validation_context *vctx, const uint8_t *p,
+                       enum valtype t)
+{
+        assert(is_valtype(t));
+        struct expr_exec_info *ei = vctx->ei;
+        if (ei->type == TYPE_UNKNOWN) {
+                ei->type = t;
+                return 0;
+        }
+        const uint32_t pc = ptr2pc(vctx->module, p);
+        if (ei->ntypes == 0) {
+            if (ei->type == t) {
+                return 0;
+            }
+        } else {
+            assert(ei->types[ei->ntypes - 1].pc < pc);
+            if (ei->types[ei->ntypes - 1].type == t) {
+                return 0;
+            }
+        }
+        int ret;
+        ret = resize_array((void **)&ei->types, sizeof(*ei->types), ei->ntypes + 1);
+        if (ret != 0) {
+            return ret;
+        }
+        ei->types[ei->ntypes].pc = pc;
+        ei->types[ei->ntypes].type = t;
+        ei->ntypes++;
+        return 0;
+}

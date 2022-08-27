@@ -19,27 +19,6 @@
 #define MAX_FRAMES 2000
 #define MAX_STACKVALS 10000
 
-struct jump {
-        uint32_t pc;
-        uint32_t targetpc;
-};
-
-/* hints for execution */
-struct expr_exec_info {
-        uint32_t njumps;
-        struct jump *jumps;
-
-        uint32_t maxlabels; /* max labels (including the implicit one) */
-        uint32_t maxvals;   /* max vals on stack */
-};
-
-struct expr {
-        const uint8_t *start;
-        const uint8_t *end;
-
-        struct expr_exec_info ei;
-};
-
 enum valtype {
         /* numtype */
         TYPE_i32 = 0x7f,
@@ -57,6 +36,40 @@ enum valtype {
         /* a pseudo type for validation logic */
         TYPE_ANYREF = 0xfe, /* any reftype */
         TYPE_UNKNOWN = 0xff,
+};
+
+struct jump {
+        uint32_t pc;
+        uint32_t targetpc;
+};
+
+struct type_annotation {
+		uint32_t pc;
+        enum valtype type;
+};
+
+/* hints for execution */
+struct expr_exec_info {
+        uint32_t njumps;
+        struct jump *jumps;
+
+        uint32_t maxlabels; /* max labels (including the implicit one) */
+        uint32_t maxvals;   /* max vals on stack */
+
+        /*
+         * annotations for value-polymorphic instructions
+         * REVISIT: probably the size of type is enough.
+         */
+        enum valtype type;
+        uint32_t ntypes;
+        struct type_annotation *types;
+};
+
+struct expr {
+        const uint8_t *start;
+        const uint8_t *end;
+
+        struct expr_exec_info ei;
 };
 
 struct resulttype {

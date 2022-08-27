@@ -788,6 +788,7 @@ void
 clear_expr_exec_info(struct expr_exec_info *ei)
 {
         free(ei->jumps);
+        free(ei->types);
 }
 
 void

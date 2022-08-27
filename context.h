@@ -206,6 +206,8 @@ void exec_context_init(struct exec_context *ctx, struct instance *inst);
 void exec_context_clear(struct exec_context *ctx);
 void exec_context_print_stats(struct exec_context *ctx);
 
+enum valtype find_type_annotation(struct exec_context *ectx, const uint8_t *p);
+
 /* validation */
 
 int push_valtype(enum valtype type, struct validation_context *ctx);
@@ -235,3 +237,6 @@ void validation_context_clear(struct validation_context *ctx);
 void ctrlframe_clear(struct ctrlframe *cframe);
 int target_label_types(struct validation_context *ctx, uint32_t labelidx,
                        const struct resulttype **rtp);
+
+int record_type_annotation(struct validation_context *vctx, const uint8_t *p,
+                           enum valtype t);
