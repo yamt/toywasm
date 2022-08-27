@@ -510,16 +510,21 @@ INSN_IMPL(select)
 {
         int ret;
         POP_VAL(TYPE_i32, cond);
-        POP_VAL(TYPE_UNKNOWN, v2);
-        POP_VAL(type_v2, v1);
         struct val val_c;
         if (EXECUTING) {
+                /* TODO implement */
+                ret = ENOTSUP;
+                goto fail;
+#if 0
                 val_c = val_cond.u.i32 != 0 ? val_v1 : val_v2;
+#endif
         } else if (VALIDATING) {
+                POP_VAL(TYPE_UNKNOWN, v2);
+                POP_VAL(type_v2, v1);
                 CHECK(is_numtype(type_v2) || is_vectype(type_v2) ||
                       type_v2 == TYPE_UNKNOWN);
+                PUSH_VAL(type_v2, c);
         }
-        PUSH_VAL(type_v2, c);
         INSN_SUCCESS;
 fail:
         return ret;
@@ -559,7 +564,7 @@ INSN_IMPL(local_get)
         struct val val_c;
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
-                val_c = *local_getptr(ectx, localidx);
+                local_get(ectx, localidx, &val_c);
         } else if (VALIDATING) {
                 CHECK(localidx < VCTX->nlocals);
         }
@@ -582,7 +587,7 @@ INSN_IMPL(local_set)
         POP_VAL(VCTX->locals[localidx], a);
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
-                *local_getptr(ectx, localidx) = val_a;
+                local_set(ectx, localidx, &val_a);
         }
         SAVE_CTX;
         INSN_SUCCESS;
@@ -602,7 +607,7 @@ INSN_IMPL(local_tee)
         POP_VAL(VCTX->locals[localidx], a);
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
-                *local_getptr(ectx, localidx) = val_a;
+                local_set(ectx, localidx, &val_a);
         }
         PUSH_VAL(VCTX->locals[localidx], a);
         SAVE_CTX;

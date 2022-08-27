@@ -3,10 +3,10 @@
 
 struct context;
 struct exec_context;
-struct val;
+struct cell;
 
 struct exec_instruction_desc {
-        int (*execute)(const uint8_t *p, struct val *stack,
+        int (*execute)(const uint8_t *p, struct cell *stack,
                        struct exec_context *ctx);
 };
 

@@ -29,22 +29,38 @@
  */
 
 static void
-push_val(const struct val *val, struct exec_context *ctx)
+stack_push_val(const struct val *val, struct cell **stackp, uint32_t csz)
 {
-        *VEC_PUSH(ctx->stack) = *val;
+        val_to_cells(val, *stackp, csz);
+        *stackp += csz;
+}
+
+static void
+stack_pop_val(struct val *val, struct cell **stackp, uint32_t csz)
+{
+        *stackp -= csz;
+        val_from_cells(val, *stackp, csz);
+}
+
+static void
+push_val(const struct val *val, uint32_t csz, struct exec_context *ctx)
+{
+        val_to_cells(val, &VEC_NEXTELEM(ctx->stack), csz);
+        ctx->stack.lsize += csz;
         xlog_trace("stack push %016" PRIx64, val->u.i64);
 }
 
 static void
-pop_val(struct val *val, struct exec_context *ctx)
+pop_val(struct val *val, uint32_t csz, struct exec_context *ctx)
 {
-        assert(ctx->stack.lsize > 0);
-        *val = *VEC_POP(ctx->stack);
+        assert(ctx->stack.lsize > csz);
+        ctx->stack.lsize -= csz;
+        val_from_cells(val, &VEC_NEXTELEM(ctx->stack), csz);
         xlog_trace("stack pop  %016" PRIx64, val->u.i64);
 }
 
 static void
-push_label(const uint8_t *p, struct val *stack, struct exec_context *ctx)
+push_label(const uint8_t *p, struct cell *stack, struct exec_context *ctx)
 {
         uint32_t pc = ptr2pc(ctx->instance->module, p - 1);
         struct label *l = VEC_PUSH(ctx->labels);
@@ -52,15 +68,42 @@ push_label(const uint8_t *p, struct val *stack, struct exec_context *ctx)
         l->height = stack - ctx->stack.p;
 }
 
-static struct val *
-local_getptr(struct exec_context *ectx, uint32_t localidx)
+static struct cell *
+local_getptr(struct exec_context *ectx, uint32_t localidx, uint32_t *cszp)
 {
-#if defined(USE_LOCALS_CACHE)
-        return &ectx->current_locals[localidx];
-#else
+		/* REVISIT: very inefficient */
         const struct funcframe *frame = &VEC_LASTELEM(ectx->frames);
-        return &frame_locals(ectx, frame)[localidx];
+        uint32_t cidx;
+        uint32_t nparams = frame->paramtype->ntypes;
+        if (localidx < nparams) {
+            cidx = resulttype_cellidx(frame->paramtype, localidx, cszp);
+        } else {
+            cidx = resulttype_cellsize(frame->paramtype);
+            cidx += localtype_cellidx(frame->localtype, localidx - nparams, cszp);
+        }
+#if defined(USE_LOCALS_CACHE)
+        return &ectx->current_locals[cidx];
+#else
+        return &frame_locals(ectx, frame)[cidx];
 #endif
+}
+
+static void
+local_get(struct exec_context *ectx, uint32_t localidx, struct val *val)
+{
+	struct cell *cell;
+    uint32_t csz;
+    cell = local_getptr(ectx, localidx, &csz);
+    val_from_cells(val, cell, csz);
+}
+
+static void
+local_set(struct exec_context *ectx, uint32_t localidx, const struct val *val)
+{
+	struct cell *cell;
+    uint32_t csz;
+    cell = local_getptr(ectx, localidx, &csz);
+    val_to_cells(val, cell, csz);
 }
 
 static float
@@ -308,7 +351,7 @@ fail:
 #define ECTX ctx
 #define VCTX ((struct validation_context *)NULL)
 #define INSN_IMPL(NAME)                                                       \
-        int execute_##NAME(const uint8_t *p, struct val *stack,               \
+        int execute_##NAME(const uint8_t *p, struct cell *stack,               \
                            struct exec_context *ctx)
 #define LOAD_CTX const uint8_t *p0 __attribute__((__unused__)) = p
 #define SAVE_CTX
@@ -327,8 +370,8 @@ fail:
         return 0
 #define ep NULL
 #define STACK stack
-#define push_val(v, ctx) *(stack++) = *v
-#define pop_val(v, ctx) *v = *(--stack)
+#define push_val(v, csz, ctx) stack_push_val(v, &stack, csz)
+#define pop_val(v, csz, ctx) stack_pop_val(v, &stack, csz)
 
 #include "insn_impl.h"
 
@@ -353,7 +396,7 @@ fail:
 const static struct exec_instruction_desc exec_instructions_fc[];
 
 static int
-exec_next_insn_fc(const uint8_t *p, struct val *stack,
+exec_next_insn_fc(const uint8_t *p, struct cell *stack,
                   struct exec_context *ctx)
 {
 #if !(defined(USE_SEPARATE_EXECUTE) && defined(USE_TAILCALL))

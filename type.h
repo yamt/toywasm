@@ -96,10 +96,14 @@ struct localchunk {
         uint32_t n;
 };
 
-struct func {
+struct localtype {
         uint32_t nlocals;
         uint32_t nlocalchunks;
         struct localchunk *localchunks;
+};
+
+struct func {
+		struct localtype localtype;
         struct expr e;
 };
 
@@ -287,9 +291,10 @@ struct module {
 struct exec_context;
 struct host_instance;
 
+struct cell;
 typedef int (*host_func_t)(struct exec_context *, struct host_instance *hi,
-                           const struct functype *ft, const struct val *params,
-                           struct val *results);
+                           const struct functype *ft, const struct cell *params,
+                           struct cell *results);
 
 struct funcinst {
         bool is_host;

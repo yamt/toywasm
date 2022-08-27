@@ -35,7 +35,7 @@
         enum valtype type_##var;                                              \
         do {                                                                  \
                 if (EXECUTING) {                                              \
-                        pop_val(&val_##var, ECTX);                            \
+                        pop_val(&val_##var, valtype_cellsize(t), ECTX);                            \
                 } else if (VALIDATING) {                                      \
                         ret = pop_valtype(t, &type_##var, VCTX);              \
                         if (ret != 0) {                                       \
@@ -47,7 +47,7 @@
 #define PUSH_VAL(t, var)                                                      \
         do {                                                                  \
                 if (EXECUTING) {                                              \
-                        push_val(&val_##var, ECTX);                           \
+                        push_val(&val_##var, valtype_cellsize(t), ECTX);                           \
                 } else if (VALIDATING) {                                      \
                         ret = push_valtype(t, VCTX);                          \
                         if (ret != 0) {                                       \
