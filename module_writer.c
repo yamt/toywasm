@@ -359,12 +359,12 @@ write_element(struct writer *w, const struct element *e)
 }
 
 static void
-write_locals(struct writer *w, const struct func *func)
+write_locals(struct writer *w, const struct localtype *lt)
 {
-        WRITE_LEB_U32(func->nlocalchunks);
+        WRITE_LEB_U32(lt->nlocalchunks);
         uint32_t i;
-        for (i = 0; i < func->nlocalchunks; i++) {
-                const struct localchunk *chunk = &func->localchunks[i];
+        for (i = 0; i < lt->nlocalchunks; i++) {
+                const struct localchunk *chunk = &lt->localchunks[i];
                 WRITE_LEB_U32(chunk->n);
                 WRITE_U8(chunk->type);
         }
@@ -373,7 +373,7 @@ write_locals(struct writer *w, const struct func *func)
 static void
 write_code(struct writer *w, const struct func *func)
 {
-        write_locals(w, func);
+        write_locals(w, &func->localtype);
         write_expr(w, &func->e);
 }
 

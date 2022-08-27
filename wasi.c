@@ -311,6 +311,7 @@ wasi_proc_exit(struct exec_context *ctx, struct host_instance *hi,
                struct cell *results)
 {
         xlog_trace("%s called", __func__);
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t code = HOST_FUNC_PARAM(ft, params, 0, i32);
         ctx->exit_code = code;
         return trap_with_id(ctx, TRAP_VOLUNTARY_EXIT,
@@ -323,6 +324,7 @@ wasi_fd_close(struct exec_context *ctx, struct host_instance *hi,
                struct cell *results)
 {
         struct wasi_instance *wasi = (void *)hi;
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         xlog_trace("%s called for fd %" PRIu32, __func__, wasifd);
         struct wasi_fdinfo *fdinfo;
@@ -353,6 +355,7 @@ wasi_fd_write(struct exec_context *ctx, struct host_instance *hi,
                struct cell *results)
 {
         struct wasi_instance *wasi = (void *)hi;
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         xlog_trace("%s called for fd %" PRIu32, __func__, wasifd);
         uint32_t iov_addr = HOST_FUNC_PARAM(ft, params, 1, i32);
@@ -396,6 +399,7 @@ wasi_fd_read(struct exec_context *ctx, struct host_instance *hi,
                struct cell *results)
 {
         struct wasi_instance *wasi = (void *)hi;
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         xlog_trace("%s called for fd %" PRIu32, __func__, wasifd);
         uint32_t iov_addr = HOST_FUNC_PARAM(ft, params, 1, i32);
@@ -439,6 +443,7 @@ wasi_fd_fdstat_get(struct exec_context *ctx, struct host_instance *hi,
                struct cell *results)
 {
         struct wasi_instance *wasi = (void *)hi;
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         xlog_trace("%s called for fd %" PRIu32, __func__, wasifd);
         uint32_t stat_addr = HOST_FUNC_PARAM(ft, params, 1, i32);
@@ -476,6 +481,7 @@ wasi_fd_fdstat_set_flags(struct exec_context *ctx, struct host_instance *hi,
                struct cell *results)
 {
         struct wasi_instance *wasi = (void *)hi;
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         xlog_trace("%s called for fd %" PRIu32, __func__, wasifd);
 #if 0
@@ -499,6 +505,7 @@ wasi_fd_seek(struct exec_context *ctx, struct host_instance *hi,
                struct cell *results)
 {
         struct wasi_instance *wasi = (void *)hi;
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         xlog_trace("%s called for fd %" PRIu32, __func__, wasifd);
         int64_t offset = HOST_FUNC_PARAM(ft, params, 1, i32);
@@ -543,6 +550,7 @@ wasi_fd_filestat_get(struct exec_context *ctx, struct host_instance *hi,
                struct cell *results)
 {
         struct wasi_instance *wasi = (void *)hi;
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         xlog_trace("%s called for fd %" PRIu32, __func__, wasifd);
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 1, i32);
@@ -587,6 +595,7 @@ wasi_fd_prestat_get(struct exec_context *ctx, struct host_instance *hi,
                struct cell *results)
 {
         struct wasi_instance *wasi = (void *)hi;
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 1, i32);
         xlog_trace("%s called for fd %" PRIu32, __func__, wasifd);
@@ -616,6 +625,7 @@ wasi_fd_prestat_dir_name(struct exec_context *ctx, struct host_instance *hi,
                struct cell *results)
 {
         struct wasi_instance *wasi = (void *)hi;
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         uint32_t path = HOST_FUNC_PARAM(ft, params, 1, i32);
         uint32_t pathlen = HOST_FUNC_PARAM(ft, params, 2, i32);
@@ -652,6 +662,7 @@ wasi_clock_res_get(struct exec_context *ctx, struct host_instance *hi,
                struct cell *results)
 {
         xlog_trace("%s called", __func__);
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t clockid = HOST_FUNC_PARAM(ft, params, 0, i32);
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 1, i32);
         clockid_t hostclockid;
@@ -679,6 +690,7 @@ wasi_clock_time_get(struct exec_context *ctx, struct host_instance *hi,
                struct cell *results)
 {
         xlog_trace("%s called", __func__);
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t clockid = HOST_FUNC_PARAM(ft, params, 0, i32);
 #if 0 /* REVISIT what to do with the precision? */
         uint64_t precision = HOST_FUNC_PARAM(ft, params, 1, i64);
@@ -709,6 +721,7 @@ wasi_args_sizes_get(struct exec_context *ctx, struct host_instance *hi,
                struct cell *results)
 {
         struct wasi_instance *wasi = (void *)hi;
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t argcp = HOST_FUNC_PARAM(ft, params, 0, i32);
         uint32_t argv_buf_sizep = HOST_FUNC_PARAM(ft, params, 1, i32);
         int argc = wasi->argc;
@@ -740,6 +753,7 @@ wasi_args_get(struct exec_context *ctx, struct host_instance *hi,
 {
         xlog_trace("%s called", __func__);
         struct wasi_instance *wasi = (void *)hi;
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t argvp = HOST_FUNC_PARAM(ft, params, 0, i32);
         uint32_t argv_buf = HOST_FUNC_PARAM(ft, params, 1, i32);
         int argc = wasi->argc;
@@ -779,6 +793,7 @@ wasi_environ_sizes_get(struct exec_context *ctx, struct host_instance *hi,
                struct cell *results)
 {
         xlog_trace("%s called", __func__);
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t environ_count_p = HOST_FUNC_PARAM(ft, params, 0, i32);
         uint32_t environ_buf_size_p = HOST_FUNC_PARAM(ft, params, 1, i32);
         uint32_t zero = 0; /* REVISIT */
@@ -810,6 +825,7 @@ wasi_random_get(struct exec_context *ctx, struct host_instance *hi,
                struct cell *results)
 {
         xlog_trace("%s called", __func__);
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t buf = HOST_FUNC_PARAM(ft, params, 0, i32);
         uint32_t buflen = HOST_FUNC_PARAM(ft, params, 1, i32);
         int ret;
@@ -850,6 +866,7 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
                struct cell *results)
 {
         struct wasi_instance *wasi = (void *)hi;
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t dirwasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         xlog_trace("%s called", __func__);
 #if 0
@@ -934,6 +951,7 @@ wasi_path_unlink_file(struct exec_context *ctx, struct host_instance *hi,
                struct cell *results)
 {
         struct wasi_instance *wasi = (void *)hi;
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t dirwasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         xlog_trace("%s called", __func__);
         uint32_t path = HOST_FUNC_PARAM(ft, params, 1, i32);
@@ -963,6 +981,7 @@ wasi_path_remove_directory(struct exec_context *ctx, struct host_instance *hi,
                struct cell *results)
 {
         struct wasi_instance *wasi = (void *)hi;
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t dirwasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         xlog_trace("%s called", __func__);
         uint32_t path = HOST_FUNC_PARAM(ft, params, 1, i32);
