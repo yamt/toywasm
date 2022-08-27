@@ -29,15 +29,21 @@
  */
 
 static void
-stack_push_val(const struct val *val, struct cell **stackp, uint32_t csz)
+stack_push_val(const struct exec_context *ctx, const struct val *val,
+               struct cell **stackp, uint32_t csz)
 {
+        assert(ctx->stack.p <= *stackp);
+        assert(*stackp + csz <= ctx->stack.p + ctx->stack.psize);
         val_to_cells(val, *stackp, csz);
         *stackp += csz;
 }
 
 static void
-stack_pop_val(struct val *val, struct cell **stackp, uint32_t csz)
+stack_pop_val(const struct exec_context *ctx, struct val *val,
+              struct cell **stackp, uint32_t csz)
 {
+        assert(ctx->stack.p + csz <= *stackp);
+        assert(*stackp <= ctx->stack.p + ctx->stack.psize);
         *stackp -= csz;
         val_from_cells(val, *stackp, csz);
 }
@@ -375,8 +381,8 @@ fail:
 #define ep NULL
 #define STACK stack
 #define STACK_ADJ(n) stack += (n)
-#define push_val(v, csz, ctx) stack_push_val(v, &stack, csz)
-#define pop_val(v, csz, ctx) stack_pop_val(v, &stack, csz)
+#define push_val(v, csz, ctx) stack_push_val(ctx, v, &stack, csz)
+#define pop_val(v, csz, ctx) stack_pop_val(ctx, v, &stack, csz)
 
 #include "insn_impl.h"
 
