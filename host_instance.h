@@ -8,6 +8,9 @@ struct host_func {
         host_func_t func;
 };
 
+#define HOST_FUNC_PARAM(FT, PARAMS, IDX, TYPE) PARAMS[IDX].u.TYPE
+#define HOST_FUNC_RESULT_SET(FT, RESULTS, IDX, TYPE, V) RESULTS[IDX].u.TYPE = V
+
 struct host_instance {
         int dummy;
 };

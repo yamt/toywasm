@@ -311,7 +311,7 @@ wasi_proc_exit(struct exec_context *ctx, struct host_instance *hi,
                struct val *results)
 {
         xlog_trace("%s called", __func__);
-        uint32_t code = params[0].u.i32;
+        uint32_t code = HOST_FUNC_PARAM(ft, params, 0, i32);
         ctx->exit_code = code;
         return trap_with_id(ctx, TRAP_VOLUNTARY_EXIT,
                             "proc_exit with %" PRIu32, code);
@@ -323,7 +323,7 @@ wasi_fd_close(struct exec_context *ctx, struct host_instance *hi,
               struct val *results)
 {
         struct wasi_instance *wasi = (void *)hi;
-        uint32_t wasifd = params[0].u.i32;
+        uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         xlog_trace("%s called for fd %" PRIu32, __func__, wasifd);
         struct wasi_fdinfo *fdinfo;
         int ret;
@@ -343,7 +343,7 @@ wasi_fd_close(struct exec_context *ctx, struct host_instance *hi,
         }
         ret = 0;
 fail:
-        results[0].u.i32 = wasi_convert_errno(ret);
+        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         return 0;
 }
 
@@ -353,11 +353,11 @@ wasi_fd_write(struct exec_context *ctx, struct host_instance *hi,
               struct val *results)
 {
         struct wasi_instance *wasi = (void *)hi;
-        uint32_t wasifd = params[0].u.i32;
+        uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         xlog_trace("%s called for fd %" PRIu32, __func__, wasifd);
-        uint32_t iov_addr = params[1].u.i32;
-        uint32_t iov_count = params[2].u.i32;
-        uint32_t retp = params[3].u.i32;
+        uint32_t iov_addr = HOST_FUNC_PARAM(ft, params, 1, i32);
+        uint32_t iov_count = HOST_FUNC_PARAM(ft, params, 2, i32);
+        uint32_t retp = HOST_FUNC_PARAM(ft, params, 3, i32);
         struct iovec *hostiov = NULL;
         int ret;
         int hostfd;
@@ -385,7 +385,7 @@ wasi_fd_write(struct exec_context *ctx, struct host_instance *hi,
         uint32_t r = host_to_le32(n);
         ret = wasi_copyout(ctx, &r, retp, sizeof(r));
 fail:
-        results[0].u.i32 = wasi_convert_errno(ret);
+        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         free(hostiov);
         return 0;
 }
@@ -396,11 +396,11 @@ wasi_fd_read(struct exec_context *ctx, struct host_instance *hi,
              struct val *results)
 {
         struct wasi_instance *wasi = (void *)hi;
-        uint32_t wasifd = params[0].u.i32;
+        uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         xlog_trace("%s called for fd %" PRIu32, __func__, wasifd);
-        uint32_t iov_addr = params[1].u.i32;
-        uint32_t iov_count = params[2].u.i32;
-        uint32_t retp = params[3].u.i32;
+        uint32_t iov_addr = HOST_FUNC_PARAM(ft, params, 1, i32);
+        uint32_t iov_count = HOST_FUNC_PARAM(ft, params, 2, i32);
+        uint32_t retp = HOST_FUNC_PARAM(ft, params, 3, i32);
         struct iovec *hostiov = NULL;
         int ret;
         int hostfd;
@@ -428,7 +428,7 @@ wasi_fd_read(struct exec_context *ctx, struct host_instance *hi,
         uint32_t r = host_to_le32(n);
         ret = wasi_copyout(ctx, &r, retp, sizeof(r));
 fail:
-        results[0].u.i32 = wasi_convert_errno(ret);
+        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         free(hostiov);
         return 0;
 }
@@ -439,9 +439,9 @@ wasi_fd_fdstat_get(struct exec_context *ctx, struct host_instance *hi,
                    struct val *results)
 {
         struct wasi_instance *wasi = (void *)hi;
-        uint32_t wasifd = params[0].u.i32;
+        uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         xlog_trace("%s called for fd %" PRIu32, __func__, wasifd);
-        uint32_t stat_addr = params[1].u.i32;
+        uint32_t stat_addr = HOST_FUNC_PARAM(ft, params, 1, i32);
         struct wasi_fdinfo *fdinfo;
         int ret;
         ret = wasi_fd_lookup(wasi, wasifd, &fdinfo);
@@ -466,7 +466,7 @@ wasi_fd_fdstat_get(struct exec_context *ctx, struct host_instance *hi,
         /* TODO fs_rights_inheriting */
         ret = wasi_copyout(ctx, &st, stat_addr, sizeof(st));
 fail:
-        results[0].u.i32 = wasi_convert_errno(ret);
+        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         return 0;
 }
 
@@ -476,10 +476,10 @@ wasi_fd_fdstat_set_flags(struct exec_context *ctx, struct host_instance *hi,
                          struct val *results)
 {
         struct wasi_instance *wasi = (void *)hi;
-        uint32_t wasifd = params[0].u.i32;
+        uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         xlog_trace("%s called for fd %" PRIu32, __func__, wasifd);
 #if 0
-        uint32_t fdflags = params[1].u.i32;
+        uint32_t fdflags = HOST_FUNC_PARAM(ft, params, 1, i32);
 #endif
         struct wasi_fdinfo *fdinfo;
         int ret;
@@ -489,7 +489,7 @@ wasi_fd_fdstat_set_flags(struct exec_context *ctx, struct host_instance *hi,
         }
         /* TODO implement */
 fail:
-        results[0].u.i32 = wasi_convert_errno(ret);
+        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         return 0;
 }
 
@@ -499,11 +499,11 @@ wasi_fd_seek(struct exec_context *ctx, struct host_instance *hi,
              struct val *results)
 {
         struct wasi_instance *wasi = (void *)hi;
-        uint32_t wasifd = params[0].u.i32;
+        uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         xlog_trace("%s called for fd %" PRIu32, __func__, wasifd);
-        int64_t offset = params[1].u.i64;
-        uint32_t whence = params[2].u.i32;
-        uint32_t retp = params[3].u.i32;
+        int64_t offset = HOST_FUNC_PARAM(ft, params, 1, i32);
+        uint32_t whence = HOST_FUNC_PARAM(ft, params, 2, i32);
+        uint32_t retp = HOST_FUNC_PARAM(ft, params, 3, i32);
         int hostfd;
         int ret;
         ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd);
@@ -533,7 +533,7 @@ wasi_fd_seek(struct exec_context *ctx, struct host_instance *hi,
         uint64_t result = host_to_le64(ret1);
         ret = wasi_copyout(ctx, &result, retp, sizeof(result));
 fail:
-        results[0].u.i32 = wasi_convert_errno(ret);
+        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         return 0;
 }
 
@@ -543,9 +543,9 @@ wasi_fd_filestat_get(struct exec_context *ctx, struct host_instance *hi,
                      struct val *results)
 {
         struct wasi_instance *wasi = (void *)hi;
-        uint32_t wasifd = params[0].u.i32;
+        uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         xlog_trace("%s called for fd %" PRIu32, __func__, wasifd);
-        uint32_t retp = params[1].u.i32;
+        uint32_t retp = HOST_FUNC_PARAM(ft, params, 1, i32);
         int hostfd;
         int ret;
         ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd);
@@ -577,7 +577,7 @@ wasi_fd_filestat_get(struct exec_context *ctx, struct host_instance *hi,
 #endif
         ret = wasi_copyout(ctx, &wst, retp, sizeof(wst));
 fail:
-        results[0].u.i32 = wasi_convert_errno(ret);
+        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         return 0;
 }
 
@@ -587,8 +587,8 @@ wasi_fd_prestat_get(struct exec_context *ctx, struct host_instance *hi,
                     struct val *results)
 {
         struct wasi_instance *wasi = (void *)hi;
-        uint32_t wasifd = params[0].u.i32;
-        uint32_t retp = params[1].u.i32;
+        uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
+        uint32_t retp = HOST_FUNC_PARAM(ft, params, 1, i32);
         xlog_trace("%s called for fd %" PRIu32, __func__, wasifd);
         int ret;
         struct wasi_fdinfo *fdinfo;
@@ -606,7 +606,7 @@ wasi_fd_prestat_get(struct exec_context *ctx, struct host_instance *hi,
         st.dir_name_len = host_to_le32(strlen(fdinfo->prestat_path));
         ret = wasi_copyout(ctx, &st, retp, sizeof(st));
 fail:
-        results[0].u.i32 = wasi_convert_errno(ret);
+        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         return 0;
 }
 
@@ -616,9 +616,9 @@ wasi_fd_prestat_dir_name(struct exec_context *ctx, struct host_instance *hi,
                          struct val *results)
 {
         struct wasi_instance *wasi = (void *)hi;
-        uint32_t wasifd = params[0].u.i32;
-        uint32_t path = params[1].u.i32;
-        uint32_t pathlen = params[2].u.i32;
+        uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
+        uint32_t path = HOST_FUNC_PARAM(ft, params, 1, i32);
+        uint32_t pathlen = HOST_FUNC_PARAM(ft, params, 2, i32);
         xlog_trace("%s called for fd %" PRIu32, __func__, wasifd);
         int ret;
         struct wasi_fdinfo *fdinfo;
@@ -642,7 +642,7 @@ wasi_fd_prestat_dir_name(struct exec_context *ctx, struct host_instance *hi,
         }
         ret = wasi_copyout(ctx, fdinfo->prestat_path, path, len);
 fail:
-        results[0].u.i32 = wasi_convert_errno(ret);
+        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         return 0;
 }
 
@@ -652,8 +652,8 @@ wasi_clock_res_get(struct exec_context *ctx, struct host_instance *hi,
                    struct val *results)
 {
         xlog_trace("%s called", __func__);
-        uint32_t clockid = params[0].u.i32;
-        uint32_t retp = params[1].u.i32;
+        uint32_t clockid = HOST_FUNC_PARAM(ft, params, 0, i32);
+        uint32_t retp = HOST_FUNC_PARAM(ft, params, 1, i32);
         clockid_t hostclockid;
         int ret;
         ret = wasi_convert_clockid(clockid, &hostclockid);
@@ -669,7 +669,7 @@ wasi_clock_res_get(struct exec_context *ctx, struct host_instance *hi,
         uint64_t result = host_to_le64(timespec_to_ns(&ts));
         ret = wasi_copyout(ctx, &result, retp, sizeof(result));
 fail:
-        results[0].u.i32 = wasi_convert_errno(ret);
+        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         return 0;
 }
 
@@ -679,11 +679,11 @@ wasi_clock_time_get(struct exec_context *ctx, struct host_instance *hi,
                     struct val *results)
 {
         xlog_trace("%s called", __func__);
-        uint32_t clockid = params[0].u.i32;
+        uint32_t clockid = HOST_FUNC_PARAM(ft, params, 0, i32);
 #if 0 /* REVISIT what to do with the precision? */
-        uint64_t precision = params[1].u.i64;
+        uint64_t precision = HOST_FUNC_PARAM(ft, params, 1, i64);
 #endif
-        uint32_t retp = params[2].u.i32;
+        uint32_t retp = HOST_FUNC_PARAM(ft, params, 2, i32);
         clockid_t hostclockid;
         int ret;
         ret = wasi_convert_clockid(clockid, &hostclockid);
@@ -699,7 +699,7 @@ wasi_clock_time_get(struct exec_context *ctx, struct host_instance *hi,
         uint64_t result = host_to_le64(timespec_to_ns(&ts));
         ret = wasi_copyout(ctx, &result, retp, sizeof(result));
 fail:
-        results[0].u.i32 = wasi_convert_errno(ret);
+        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         return 0;
 }
 
@@ -709,8 +709,8 @@ wasi_args_sizes_get(struct exec_context *ctx, struct host_instance *hi,
                     struct val *results)
 {
         struct wasi_instance *wasi = (void *)hi;
-        uint32_t argcp = params[0].u.i32;
-        uint32_t argv_buf_sizep = params[1].u.i32;
+        uint32_t argcp = HOST_FUNC_PARAM(ft, params, 0, i32);
+        uint32_t argv_buf_sizep = HOST_FUNC_PARAM(ft, params, 1, i32);
         int argc = wasi->argc;
         char *const *argv = wasi->argv;
         xlog_trace("%s called argc=%u", __func__, argc);
@@ -729,7 +729,7 @@ wasi_args_sizes_get(struct exec_context *ctx, struct host_instance *hi,
         ret = wasi_copyout(ctx, &argv_buf_size, argv_buf_sizep,
                            sizeof(argv_buf_size));
 fail:
-        results[0].u.i32 = wasi_convert_errno(ret);
+        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         return 0;
 }
 
@@ -740,8 +740,8 @@ wasi_args_get(struct exec_context *ctx, struct host_instance *hi,
 {
         xlog_trace("%s called", __func__);
         struct wasi_instance *wasi = (void *)hi;
-        uint32_t argvp = params[0].u.i32;
-        uint32_t argv_buf = params[1].u.i32;
+        uint32_t argvp = HOST_FUNC_PARAM(ft, params, 0, i32);
+        uint32_t argv_buf = HOST_FUNC_PARAM(ft, params, 1, i32);
         int argc = wasi->argc;
         char *const *argv = wasi->argv;
         xlog_trace("%s called argc=%u", __func__, argc);
@@ -769,7 +769,7 @@ wasi_args_get(struct exec_context *ctx, struct host_instance *hi,
         ret = wasi_copyout(ctx, wasm_argv, argvp, argc * sizeof(*wasm_argv));
 fail:
         free(wasm_argv);
-        results[0].u.i32 = wasi_convert_errno(ret);
+        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         return 0;
 }
 
@@ -779,8 +779,8 @@ wasi_environ_sizes_get(struct exec_context *ctx, struct host_instance *hi,
                        struct val *results)
 {
         xlog_trace("%s called", __func__);
-        uint32_t environ_count_p = params[0].u.i32;
-        uint32_t environ_buf_size_p = params[1].u.i32;
+        uint32_t environ_count_p = HOST_FUNC_PARAM(ft, params, 0, i32);
+        uint32_t environ_buf_size_p = HOST_FUNC_PARAM(ft, params, 1, i32);
         uint32_t zero = 0; /* REVISIT */
         int ret;
         ret = wasi_copyout(ctx, &zero, environ_count_p, sizeof(zero));
@@ -789,7 +789,7 @@ wasi_environ_sizes_get(struct exec_context *ctx, struct host_instance *hi,
         }
         ret = wasi_copyout(ctx, &zero, environ_buf_size_p, sizeof(zero));
 fail:
-        results[0].u.i32 = wasi_convert_errno(ret);
+        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         return 0;
 }
 
@@ -800,7 +800,7 @@ wasi_environ_get(struct exec_context *ctx, struct host_instance *hi,
 {
         xlog_trace("%s called", __func__);
         /* REVISIT */
-        results[0].u.i32 = wasi_convert_errno(0);
+        HOST_FUNC_RESULT_SET(ft, results, 0, i32, 0);
         return 0;
 }
 
@@ -810,8 +810,8 @@ wasi_random_get(struct exec_context *ctx, struct host_instance *hi,
                 struct val *results)
 {
         xlog_trace("%s called", __func__);
-        uint32_t buf = params[0].u.i32;
-        uint32_t buflen = params[1].u.i32;
+        uint32_t buf = HOST_FUNC_PARAM(ft, params, 0, i32);
+        uint32_t buflen = HOST_FUNC_PARAM(ft, params, 1, i32);
         int ret;
         void *p;
         ret = memory_getptr(ctx, 0, buf, 0, buflen, &p);
@@ -840,7 +840,7 @@ wasi_random_get(struct exec_context *ctx, struct host_instance *hi,
         ret = 0;
 #endif
 fail:
-        results[0].u.i32 = wasi_convert_errno(ret);
+        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         return 0;
 }
 
@@ -850,20 +850,20 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
                struct val *results)
 {
         struct wasi_instance *wasi = (void *)hi;
-        uint32_t dirwasifd = params[0].u.i32;
+        uint32_t dirwasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         xlog_trace("%s called", __func__);
 #if 0
-        uint32_t dirflags = params[1].u.i32;
+        uint32_t dirflags = HOST_FUNC_PARAM(ft, params, 1, i32);
 #endif
-        uint32_t path = params[2].u.i32;
-        uint32_t pathlen = params[3].u.i32;
-        uint32_t wasmoflags = params[4].u.i32;
-        uint64_t rights_base = params[5].u.i64;
+        uint32_t path = HOST_FUNC_PARAM(ft, params, 2, i32);
+        uint32_t pathlen = HOST_FUNC_PARAM(ft, params, 3, i32);
+        uint32_t wasmoflags = HOST_FUNC_PARAM(ft, params, 4, i32);
+        uint64_t rights_base = HOST_FUNC_PARAM(ft, params, 5, i64);
 #if 0
-        uint64_t rights_inherit = params[6].u.i64;
+        uint64_t rights_inherit = HOST_FUNC_PARAM(ft, params, 6, i64);
 #endif
-        uint32_t fdflags = params[7].u.i32;
-        uint32_t retp = params[8].u.i32;
+        uint32_t fdflags = HOST_FUNC_PARAM(ft, params, 7, i32);
+        uint32_t retp = HOST_FUNC_PARAM(ft, params, 8, i32);
         char *hostpath = NULL;
         char *wasmpath = NULL;
         int hostfd = -1;
@@ -924,7 +924,7 @@ fail:
         }
         free(hostpath);
         free(wasmpath);
-        results[0].u.i32 = wasi_convert_errno(ret);
+        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         return 0;
 }
 
@@ -934,10 +934,10 @@ wasi_path_unlink_file(struct exec_context *ctx, struct host_instance *hi,
                       struct val *results)
 {
         struct wasi_instance *wasi = (void *)hi;
-        uint32_t dirwasifd = params[0].u.i32;
+        uint32_t dirwasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         xlog_trace("%s called", __func__);
-        uint32_t path = params[1].u.i32;
-        uint32_t pathlen = params[2].u.i32;
+        uint32_t path = HOST_FUNC_PARAM(ft, params, 1, i32);
+        uint32_t pathlen = HOST_FUNC_PARAM(ft, params, 2, i32);
         char *hostpath = NULL;
         char *wasmpath = NULL;
         int ret;
@@ -953,7 +953,7 @@ wasi_path_unlink_file(struct exec_context *ctx, struct host_instance *hi,
 fail:
         free(hostpath);
         free(wasmpath);
-        results[0].u.i32 = wasi_convert_errno(ret);
+        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         return 0;
 }
 
@@ -963,10 +963,10 @@ wasi_path_remove_directory(struct exec_context *ctx, struct host_instance *hi,
                            struct val *results)
 {
         struct wasi_instance *wasi = (void *)hi;
-        uint32_t dirwasifd = params[0].u.i32;
+        uint32_t dirwasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         xlog_trace("%s called", __func__);
-        uint32_t path = params[1].u.i32;
-        uint32_t pathlen = params[2].u.i32;
+        uint32_t path = HOST_FUNC_PARAM(ft, params, 1, i32);
+        uint32_t pathlen = HOST_FUNC_PARAM(ft, params, 2, i32);
         char *hostpath = NULL;
         char *wasmpath = NULL;
         int ret;
@@ -982,7 +982,7 @@ wasi_path_remove_directory(struct exec_context *ctx, struct host_instance *hi,
 fail:
         free(hostpath);
         free(wasmpath);
-        results[0].u.i32 = wasi_convert_errno(ret);
+        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         return 0;
 }
 
