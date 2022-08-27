@@ -972,17 +972,17 @@ find_type_annotation(struct exec_context *ctx, const uint8_t *p)
         const struct expr_exec_info *ei = frame->ei;
         assert(is_valtype(ei->type));
         if (ei->ntypes == 0) {
-            return ei->type;
+                return ei->type;
         }
         const uint32_t pc = ptr2pc(ctx->instance->module, p);
         uint32_t i;
         for (i = 0; i < ei->ntypes; i++) {
-            if (pc < ei->types[i].pc) {
-                break;
-            }
+                if (pc < ei->types[i].pc) {
+                        break;
+                }
         }
         if (i == 0) {
-            return ei->type;
+                return ei->type;
         }
         assert(is_valtype(ei->types[i - 1].type));
         return ei->types[i - 1].type;

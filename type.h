@@ -44,7 +44,7 @@ struct jump {
 };
 
 struct type_annotation {
-		uint32_t pc;
+        uint32_t pc;
         enum valtype type;
 };
 

@@ -325,19 +325,20 @@ record_type_annotation(struct validation_context *vctx, const uint8_t *p,
         }
         const uint32_t pc = ptr2pc(vctx->module, p);
         if (ei->ntypes == 0) {
-            if (ei->type == t) {
-                return 0;
-            }
+                if (ei->type == t) {
+                        return 0;
+                }
         } else {
-            assert(ei->types[ei->ntypes - 1].pc < pc);
-            if (ei->types[ei->ntypes - 1].type == t) {
-                return 0;
-            }
+                assert(ei->types[ei->ntypes - 1].pc < pc);
+                if (ei->types[ei->ntypes - 1].type == t) {
+                        return 0;
+                }
         }
         int ret;
-        ret = resize_array((void **)&ei->types, sizeof(*ei->types), ei->ntypes + 1);
+        ret = resize_array((void **)&ei->types, sizeof(*ei->types),
+                           ei->ntypes + 1);
         if (ret != 0) {
-            return ret;
+                return ret;
         }
         ei->types[ei->ntypes].pc = pc;
         ei->types[ei->ntypes].type = t;
