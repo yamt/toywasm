@@ -792,11 +792,17 @@ exec_const_expr(const struct expr *expr, enum valtype type, struct val *result,
                 .ntypes = 0,
                 .is_static = true,
         };
+        static const struct localtype no_locals = {
+                .nlocals = 0,
+                .nlocalchunks = 0,
+                .localchunks = NULL,
+        };
         int ret;
         uint32_t csz = valtype_cellsize(type);
         struct cell result_cells[4];
         assert(ARRAYCOUNT(result_cells) >= csz);
-        ret = exec_expr(expr, NULL, &empty, csz, NULL, result_cells, ctx);
+        ret = exec_expr(expr, &no_locals, &empty, csz, NULL, result_cells,
+                        ctx);
         if (ret != 0) {
                 return ret;
         }
