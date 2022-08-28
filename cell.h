@@ -10,7 +10,11 @@ struct funcframe;
 struct val;
 
 struct cell {
+#if defined(USE_SMALL_CELLS)
         uint32_t x;
+#else
+        uint64_t x;
+#endif
 };
 
 uint32_t valtype_cellsize(enum valtype t);

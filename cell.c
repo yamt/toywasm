@@ -9,6 +9,7 @@
 uint32_t
 valtype_cellsize(enum valtype t)
 {
+#if defined(USE_SMALL_CELLS)
         uint32_t sz;
         switch (t) {
         case TYPE_i32:
@@ -30,11 +31,15 @@ valtype_cellsize(enum valtype t)
                 break;
         }
         return sz;
+#else
+        return 1;
+#endif
 }
 
 uint32_t
 resulttype_cellidx(const struct resulttype *rt, uint32_t idx, uint32_t *cszp)
 {
+#if defined(USE_SMALL_CELLS)
         /* REVISIT: very inefficient */
         assert(idx < rt->ntypes || (idx == rt->ntypes && cszp == NULL));
         uint32_t sz = 0;
@@ -48,6 +53,12 @@ resulttype_cellidx(const struct resulttype *rt, uint32_t idx, uint32_t *cszp)
                 *cszp = valtype_cellsize(rt->types[idx]);
         }
         return sz;
+#else
+        if (cszp != NULL) {
+                *cszp = 1;
+        }
+        return idx;
+#endif
 }
 
 uint32_t
@@ -60,6 +71,7 @@ static uint32_t
 localchunk_cellidx(const struct localchunk *localchunks, uint32_t localidx,
                    uint32_t *cszp)
 {
+#if defined(USE_SMALL_CELLS)
         /* REVISIT: very inefficient */
         const struct localchunk *chunk = localchunks;
         uint32_t cellidx = 0;
@@ -82,6 +94,12 @@ localchunk_cellidx(const struct localchunk *localchunks, uint32_t localidx,
                 *cszp = valtype_cellsize(chunk->type);
         }
         return cellidx;
+#else
+        if (cszp != NULL) {
+                *cszp = 1;
+        }
+        return localidx;
+#endif
 }
 
 uint32_t
@@ -101,6 +119,7 @@ uint32_t
 frame_locals_cellidx(const struct funcframe *frame, uint32_t localidx,
                      uint32_t *cszp)
 {
+#if defined(USE_SMALL_CELLS)
         /* REVISIT: very inefficient */
         uint32_t cidx;
         uint32_t nparams = frame->paramtype->ntypes;
@@ -113,6 +132,10 @@ frame_locals_cellidx(const struct funcframe *frame, uint32_t localidx,
                                           cszp);
         }
         return cidx;
+#else
+        *cszp = 1;
+        return localidx;
+#endif
 }
 
 void
