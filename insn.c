@@ -28,6 +28,7 @@
  * https://webassembly.github.io/spec/core/appendix/algorithm.html
  */
 
+#if defined(USE_SMALL_CELLS)
 static void
 stack_push_val(const struct exec_context *ctx, const struct val *val,
                struct cell **stackp, uint32_t csz)
@@ -47,6 +48,7 @@ stack_pop_val(const struct exec_context *ctx, struct val *val,
         *stackp -= csz;
         val_from_cells(val, *stackp, csz);
 }
+#endif
 
 static void
 push_val(const struct val *val, uint32_t csz, struct exec_context *ctx)
@@ -375,8 +377,13 @@ fail:
 #define ep NULL
 #define STACK stack
 #define STACK_ADJ(n) stack += (n)
+#if defined(USE_SMALL_CELLS)
 #define push_val(v, csz, ctx) stack_push_val(ctx, v, &stack, csz)
 #define pop_val(v, csz, ctx) stack_pop_val(ctx, v, &stack, csz)
+#else
+#define push_val(v, csz, ctx) (stack++)->x = (v)->u.i64
+#define pop_val(v, csz, ctx) (v)->u.i64 = (--stack)->x
+#endif
 
 #include "insn_impl.h"
 
