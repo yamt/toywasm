@@ -77,18 +77,8 @@ push_label(const uint8_t *p, struct cell *stack, struct exec_context *ctx)
 static struct cell *
 local_getptr(struct exec_context *ectx, uint32_t localidx, uint32_t *cszp)
 {
-        /* REVISIT: very inefficient */
         const struct funcframe *frame = &VEC_LASTELEM(ectx->frames);
-        uint32_t cidx;
-        uint32_t nparams = frame->paramtype->ntypes;
-        if (localidx < nparams) {
-                cidx = resulttype_cellidx(frame->paramtype, localidx, cszp);
-        } else {
-                assert(localidx < nparams + frame->localtype->nlocals);
-                cidx = resulttype_cellsize(frame->paramtype);
-                cidx += localtype_cellidx(frame->localtype, localidx - nparams,
-                                          cszp);
-        }
+        uint32_t cidx = frame_locals_cellidx(frame, localidx, cszp);
 #if defined(USE_LOCALS_CACHE)
         return &ectx->current_locals[cidx];
 #else

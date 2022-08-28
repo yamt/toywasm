@@ -6,6 +6,7 @@
 enum valtype;
 struct localtype;
 struct resulttype;
+struct funcframe;
 struct val;
 
 struct cell {
@@ -21,6 +22,9 @@ uint32_t resulttype_cellsize(const struct resulttype *rt);
 uint32_t localtype_cellidx(const struct localtype *lt, uint32_t idx,
                            uint32_t *cszp);
 uint32_t localtype_cellsize(const struct localtype *lt);
+
+uint32_t frame_locals_cellidx(const struct funcframe *frame, uint32_t localidx,
+                              uint32_t *cszp);
 
 void val_to_cells(const struct val *val, struct cell *cells, uint32_t ncells);
 void val_from_cells(struct val *val, const struct cell *cells,

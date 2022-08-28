@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "cell.h"
+#include "context.h"
 #include "type.h"
 
 uint32_t
@@ -94,6 +95,24 @@ uint32_t
 localtype_cellsize(const struct localtype *lt)
 {
         return localtype_cellidx(lt, lt->nlocals, NULL);
+}
+
+uint32_t
+frame_locals_cellidx(const struct funcframe *frame, uint32_t localidx,
+                     uint32_t *cszp)
+{
+        /* REVISIT: very inefficient */
+        uint32_t cidx;
+        uint32_t nparams = frame->paramtype->ntypes;
+        if (localidx < nparams) {
+                cidx = resulttype_cellidx(frame->paramtype, localidx, cszp);
+        } else {
+                assert(localidx < nparams + frame->localtype->nlocals);
+                cidx = resulttype_cellsize(frame->paramtype);
+                cidx += localtype_cellidx(frame->localtype, localidx - nparams,
+                                          cszp);
+        }
+        return cidx;
 }
 
 void
