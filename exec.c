@@ -976,6 +976,7 @@ exec_context_print_stats(struct exec_context *ctx)
 uint32_t
 find_type_annotation(struct exec_context *ctx, const uint8_t *p)
 {
+#if defined(USE_SMALL_CELLS)
         const struct funcframe *frame = &VEC_LASTELEM(ctx->frames);
         const struct expr_exec_info *ei = frame->ei;
         const struct type_annotations *an = &ei->type_annotations;
@@ -998,6 +999,9 @@ find_type_annotation(struct exec_context *ctx, const uint8_t *p)
         assert(an->types[i - 1].size > 0);
         STAT_INC(ctx->stats.type_annotation_lookup3);
         return an->types[i - 1].size;
+#else
+        return 1;
+#endif
 }
 
 uint32_t

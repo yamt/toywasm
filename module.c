@@ -788,7 +788,9 @@ void
 clear_expr_exec_info(struct expr_exec_info *ei)
 {
         free(ei->jumps);
+#if defined(USE_SMALL_CELLS)
         free(ei->type_annotations.types);
+#endif
 }
 
 void
