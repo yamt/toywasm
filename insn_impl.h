@@ -608,7 +608,7 @@ INSN_IMPL(local_set)
                 struct exec_context *ectx = ECTX;
                 uint32_t csz;
                 local_set(ectx, localidx, STACK, &csz);
-                STACK_ADJ(-csz);
+                STACK_ADJ(-(int32_t)csz);
         } else {
                 POP_VAL(VCTX->locals[localidx], a);
         }

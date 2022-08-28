@@ -97,20 +97,24 @@ local_getptr(struct exec_context *ectx, uint32_t localidx, uint32_t *cszp)
 }
 
 static void
-local_get(struct exec_context *ectx, uint32_t localidx, struct cell *stack,
+local_get(struct exec_context *ctx, uint32_t localidx, struct cell *stack,
           uint32_t *cszp)
 {
+        assert(ctx->stack.p <= stack);
+        assert(stack < ctx->stack.p + ctx->stack.psize);
         const struct cell *cells;
-        cells = local_getptr(ectx, localidx, cszp);
+        cells = local_getptr(ctx, localidx, cszp);
         cells_copy(stack, cells, *cszp);
 }
 
 static void
-local_set(struct exec_context *ectx, uint32_t localidx,
+local_set(struct exec_context *ctx, uint32_t localidx,
           const struct cell *stack, uint32_t *cszp)
 {
+        assert(ctx->stack.p < stack);
+        assert(stack <= ctx->stack.p + ctx->stack.psize);
         struct cell *cells;
-        cells = local_getptr(ectx, localidx, cszp);
+        cells = local_getptr(ctx, localidx, cszp);
         cells_copy(cells, stack - *cszp, *cszp);
 }
 
