@@ -214,10 +214,16 @@ INSN_IMPL(end)
                                 return ret;
                         }
                 }
-                ret = push_valtypes(cframe.end_types, vctx);
-                ctrlframe_clear(&cframe);
-                if (ret != 0) {
-                        return ret;
+                assert((cframe.op == FRAME_OP_INVOKE) ==
+                       (vctx->ncframes == 0));
+                if (cframe.op == FRAME_OP_INVOKE) {
+                        ctrlframe_clear(&cframe);
+                } else {
+                        ret = push_valtypes(cframe.end_types, vctx);
+                        ctrlframe_clear(&cframe);
+                        if (ret != 0) {
+                                return ret;
+                        }
                 }
         }
         INSN_SUCCESS_RETURN;

@@ -30,9 +30,14 @@ push_valtype(enum valtype type, struct validation_context *ctx)
         }
         ctx->valtypes[ctx->nvaltypes] = type;
         ctx->nvaltypes = nsize;
-        ctx->ncells += valtype_cellsize(type);
-        if (ctx->ncells > ctx->ei->maxvals) {
-                ctx->ei->maxvals = ctx->ncells;
+        assert(ctx->cframes != NULL);
+        assert(ctx->ncframes > 0);
+        const struct ctrlframe *cframe = &ctx->cframes[ctx->ncframes - 1];
+        if (!cframe->unreachable) {
+                ctx->ncells += valtype_cellsize(type);
+                if (ctx->ncells > ctx->ei->maxvals) {
+                        ctx->ei->maxvals = ctx->ncells;
+                }
         }
         return 0;
 }
@@ -59,9 +64,11 @@ pop_valtype(enum valtype expected_type, enum valtype *typep,
         ctx->nvaltypes--;
         enum valtype t = ctx->valtypes[ctx->nvaltypes];
         assert(t != TYPE_ANYREF);
-        uint32_t csz = valtype_cellsize(t);
-        assert(ctx->ncells >= csz);
-        ctx->ncells -= csz;
+        if (!cframe->unreachable) {
+                uint32_t csz = valtype_cellsize(t);
+                assert(ctx->ncells >= csz);
+                ctx->ncells -= csz;
+        }
         if (expected_type != TYPE_UNKNOWN && t != TYPE_UNKNOWN &&
             t != expected_type &&
             !(expected_type == TYPE_ANYREF && is_reftype(t))) {
@@ -317,6 +324,11 @@ int
 record_type_annotation(struct validation_context *vctx, const uint8_t *p,
                        enum valtype t)
 {
+        const struct ctrlframe *cframe = &vctx->cframes[vctx->ncframes - 1];
+        if (cframe->unreachable) {
+                assert(is_valtype(t) || t == TYPE_UNKNOWN);
+                return 0;
+        }
         assert(is_valtype(t));
         struct expr_exec_info *ei = vctx->ei;
         if (ei->type == TYPE_UNKNOWN) {
