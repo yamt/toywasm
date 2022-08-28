@@ -1020,12 +1020,33 @@ fail:
 
 INSN_IMPL(ref_is_null)
 {
+        /*
+         * REVISIT: is this a correct interpretation of the spec
+         * to treat ref.is_null as a value-polymorphic instruction?
+         *
+         * Subtyping and "anyref" has some back-and-forth history:
+         * https://github.com/WebAssembly/reference-types/pull/43
+         * https://github.com/WebAssembly/reference-types/pull/87
+         * https://github.com/WebAssembly/reference-types/pull/100
+         * https://github.com/WebAssembly/reference-types/pull/116
+         */
         int ret;
         LOAD_CTX;
-        POP_VAL(TYPE_ANYREF, n);
+        enum valtype t;
+        if (EXECUTING) {
+                t = find_type_annotation(ECTX, p);
+        } else {
+                t = TYPE_ANYREF;
+        }
+        POP_VAL(t, n);
         struct val val_result;
         if (EXECUTING) {
                 val_result.u.i32 = (int)(val_n.u.funcref.func == NULL);
+        } else if (VALIDATING) {
+                ret = record_type_annotation(VCTX, p, type_n);
+                if (ret != 0) {
+                        goto fail;
+                }
         }
         PUSH_VAL(TYPE_i32, result);
         SAVE_CTX;
