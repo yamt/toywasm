@@ -949,7 +949,7 @@ exec_context_clear(struct exec_context *ctx)
                (vec)->psize * sizeof(*(vec)->p));
 
 #define STAT_PRINT(name)                                                      \
-        printf("%20s %12" PRIu64 "\n", #name, ctx->stats.name);
+        printf("%23s %12" PRIu64 "\n", #name, ctx->stats.name);
 
 void
 exec_context_print_stats(struct exec_context *ctx)
@@ -968,6 +968,9 @@ exec_context_print_stats(struct exec_context *ctx)
         STAT_PRINT(jump_cache2_hit);
         STAT_PRINT(jump_cache_hit);
         STAT_PRINT(jump_table_search);
+        STAT_PRINT(type_annotation_lookup1);
+        STAT_PRINT(type_annotation_lookup2);
+        STAT_PRINT(type_annotation_lookup3);
 }
 
 enum valtype
@@ -977,6 +980,7 @@ find_type_annotation(struct exec_context *ctx, const uint8_t *p)
         const struct expr_exec_info *ei = frame->ei;
         assert(is_valtype(ei->type));
         if (ei->ntypes == 0) {
+                STAT_INC(ctx->stats.type_annotation_lookup1);
                 return ei->type;
         }
         const uint32_t pc = ptr2pc(ctx->instance->module, p);
@@ -987,9 +991,11 @@ find_type_annotation(struct exec_context *ctx, const uint8_t *p)
                 }
         }
         if (i == 0) {
+                STAT_INC(ctx->stats.type_annotation_lookup2);
                 return ei->type;
         }
         assert(is_valtype(ei->types[i - 1].type));
+        STAT_INC(ctx->stats.type_annotation_lookup3);
         return ei->types[i - 1].type;
 }
 
