@@ -59,7 +59,7 @@ push_val(const struct val *val, uint32_t csz, struct exec_context *ctx)
 static void
 pop_val(struct val *val, uint32_t csz, struct exec_context *ctx)
 {
-        assert(ctx->stack.lsize > csz);
+        assert(ctx->stack.lsize >= csz);
         ctx->stack.lsize -= csz;
         val_from_cells(val, &VEC_NEXTELEM(ctx->stack), csz);
         xlog_trace("stack pop  %016" PRIx64, val->u.i64);
