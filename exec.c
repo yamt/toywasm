@@ -973,30 +973,31 @@ exec_context_print_stats(struct exec_context *ctx)
         STAT_PRINT(type_annotation_lookup3);
 }
 
-enum valtype
+uint32_t
 find_type_annotation(struct exec_context *ctx, const uint8_t *p)
 {
         const struct funcframe *frame = &VEC_LASTELEM(ctx->frames);
         const struct expr_exec_info *ei = frame->ei;
-        assert(is_valtype(ei->type));
-        if (ei->ntypes == 0) {
+        const struct type_annotations *an = &ei->type_annotations;
+        assert(an->default_size > 0);
+        if (an->ntypes == 0) {
                 STAT_INC(ctx->stats.type_annotation_lookup1);
-                return ei->type;
+                return an->default_size;
         }
         const uint32_t pc = ptr2pc(ctx->instance->module, p);
         uint32_t i;
-        for (i = 0; i < ei->ntypes; i++) {
-                if (pc < ei->types[i].pc) {
+        for (i = 0; i < an->ntypes; i++) {
+                if (pc < an->types[i].pc) {
                         break;
                 }
         }
         if (i == 0) {
                 STAT_INC(ctx->stats.type_annotation_lookup2);
-                return ei->type;
+                return an->default_size;
         }
-        assert(is_valtype(ei->types[i - 1].type));
+        assert(an->types[i - 1].size > 0);
         STAT_INC(ctx->stats.type_annotation_lookup3);
-        return ei->types[i - 1].type;
+        return an->types[i - 1].size;
 }
 
 uint32_t

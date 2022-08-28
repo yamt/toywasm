@@ -209,7 +209,7 @@ void exec_context_init(struct exec_context *ctx, struct instance *inst);
 void exec_context_clear(struct exec_context *ctx);
 void exec_context_print_stats(struct exec_context *ctx);
 
-enum valtype find_type_annotation(struct exec_context *ectx, const uint8_t *p);
+uint32_t find_type_annotation(struct exec_context *ectx, const uint8_t *p);
 
 /* validation */
 

@@ -87,7 +87,6 @@ read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
         struct expr_exec_info *ei;
         vctx->ei = ei = &expr->ei;
         memset(ei, 0, sizeof(*ei));
-        ei->type = TYPE_UNKNOWN;
 
         vctx->nlocals = parameter_types->ntypes + nlocals;
         ret = ARRAY_RESIZE(vctx->locals, vctx->nlocals);

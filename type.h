@@ -45,7 +45,13 @@ struct jump {
 
 struct type_annotation {
         uint32_t pc;
-        enum valtype type;
+        uint32_t size;
+};
+
+struct type_annotations {
+        uint32_t default_size;
+        uint32_t ntypes;
+        struct type_annotation *types;
 };
 
 /* hints for execution */
@@ -58,11 +64,8 @@ struct expr_exec_info {
 
         /*
          * annotations for value-polymorphic instructions
-         * REVISIT: probably the size of type is enough.
          */
-        enum valtype type;
-        uint32_t ntypes;
-        struct type_annotation *types;
+        struct type_annotations type_annotations;
 };
 
 struct expr {

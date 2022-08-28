@@ -330,30 +330,32 @@ record_type_annotation(struct validation_context *vctx, const uint8_t *p,
                 return 0;
         }
         assert(is_valtype(t));
+        const uint32_t csz = valtype_cellsize(t);
         struct expr_exec_info *ei = vctx->ei;
-        if (ei->type == TYPE_UNKNOWN) {
-                ei->type = t;
+        struct type_annotations *an = &ei->type_annotations;
+        if (an->default_size == 0) {
+                an->default_size = csz;
                 return 0;
         }
         const uint32_t pc = ptr2pc(vctx->module, p);
-        if (ei->ntypes == 0) {
-                if (ei->type == t) {
+        if (an->ntypes == 0) {
+                if (an->default_size == csz) {
                         return 0;
                 }
         } else {
-                assert(ei->types[ei->ntypes - 1].pc < pc);
-                if (ei->types[ei->ntypes - 1].type == t) {
+                assert(an->types[an->ntypes - 1].pc < pc);
+                if (an->types[an->ntypes - 1].size == t) {
                         return 0;
                 }
         }
         int ret;
-        ret = resize_array((void **)&ei->types, sizeof(*ei->types),
-                           ei->ntypes + 1);
+        ret = resize_array((void **)&an->types, sizeof(*an->types),
+                           an->ntypes + 1);
         if (ret != 0) {
                 return ret;
         }
-        ei->types[ei->ntypes].pc = pc;
-        ei->types[ei->ntypes].type = t;
-        ei->ntypes++;
+        an->types[an->ntypes].pc = pc;
+        an->types[an->ntypes].size = csz;
+        an->ntypes++;
         return 0;
 }

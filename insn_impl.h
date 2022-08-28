@@ -507,15 +507,17 @@ INSN_IMPL(drop)
 {
         LOAD_CTX;
         int ret;
-        enum valtype t;
         if (EXECUTING) {
-                t = find_type_annotation(ECTX, p);
-        } else {
-                t = TYPE_UNKNOWN;
-        }
-        POP_VAL(t, a);
-        if (VALIDATING) {
-                ret = record_type_annotation(VCTX, p, type_a);
+                uint32_t csz = find_type_annotation(ECTX, p);
+                STACK_ADJ(-(int32_t)csz);
+        } else if (VALIDATING) {
+                struct validation_context *vctx = VCTX;
+                enum valtype type_a;
+                ret = pop_valtype(TYPE_UNKNOWN, &type_a, vctx);
+                if (ret != 0) {
+                        goto fail;
+                }
+                ret = record_type_annotation(vctx, p, type_a);
                 if (ret != 0) {
                         goto fail;
                 }
@@ -533,11 +535,14 @@ INSN_IMPL(select)
         struct val val_c;
         enum valtype t;
         if (EXECUTING) {
-                t = find_type_annotation(ECTX, p);
-                POP_VAL(t, v2);
-                POP_VAL(t, v1);
+                struct exec_context *ectx = ECTX;
+                uint32_t csz = find_type_annotation(ectx, p);
+                struct val val_v2;
+                pop_val(&val_v2, csz, ectx);
+                struct val val_v1;
+                pop_val(&val_v1, csz, ectx);
                 val_c = val_cond.u.i32 != 0 ? val_v1 : val_v2;
-                PUSH_VAL(t, c);
+                push_val(&val_c, csz, ectx);
         } else if (VALIDATING) {
                 POP_VAL(TYPE_UNKNOWN, v2);
                 POP_VAL(type_v2, v1);
@@ -1032,17 +1037,20 @@ INSN_IMPL(ref_is_null)
          */
         int ret;
         LOAD_CTX;
-        enum valtype t;
-        if (EXECUTING) {
-                t = find_type_annotation(ECTX, p);
-        } else {
-                t = TYPE_ANYREF;
-        }
-        POP_VAL(t, n);
         struct val val_result;
         if (EXECUTING) {
+                struct exec_context *ectx = ECTX;
+                uint32_t csz = find_type_annotation(ectx, p);
+                struct val val_n;
+                pop_val(&val_n, csz, ectx);
                 val_result.u.i32 = (int)(val_n.u.funcref.func == NULL);
         } else if (VALIDATING) {
+                struct validation_context *vctx = VCTX;
+                enum valtype type_n;
+                ret = pop_valtype(TYPE_ANYREF, &type_n, vctx);
+                if (ret != 0) {
+                        goto fail;
+                }
                 ret = record_type_annotation(VCTX, p, type_n);
                 if (ret != 0) {
                         goto fail;
