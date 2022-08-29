@@ -28,7 +28,7 @@
  * https://webassembly.github.io/spec/core/appendix/algorithm.html
  */
 
-#if defined(USE_SMALL_CELLS)
+#if defined(USE_SEPARATE_EXECUTE) && defined(USE_SMALL_CELLS)
 static void
 stack_push_val(const struct exec_context *ctx, const struct val *val,
                struct cell **stackp, uint32_t csz)
