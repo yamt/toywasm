@@ -533,7 +533,6 @@ INSN_IMPL(select)
         int ret;
         POP_VAL(TYPE_i32, cond);
         struct val val_c;
-        enum valtype t;
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
                 uint32_t csz = find_type_annotation(ectx, p);
