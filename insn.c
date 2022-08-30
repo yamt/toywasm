@@ -322,12 +322,12 @@ fail:
 #define INSN_IMPL(NAME)                                                       \
         int process_##NAME(const uint8_t **pp, const uint8_t *ep,             \
                            struct context *ctx)
-#define LOAD_CTX const uint8_t *p = *pp
-#define SAVE_CTX *pp = p
-#define RELOAD_CTX
+#define LOAD_PC const uint8_t *p = *pp
+#define SAVE_PC *pp = p
+#define RELOAD_PC
 #define SAVE_STACK_PTR
 #define LOAD_STACK_PTR
-#define ORIG_P (*pp)
+#define ORIG_PC (*pp)
 #define INSN_SUCCESS return 0
 #define INSN_SUCCESS_RETURN INSN_SUCCESS
 #define STACK &VEC_NEXTELEM(ECTX->stack)
@@ -340,12 +340,12 @@ fail:
 #undef ECTX
 #undef VCTX
 #undef INSN_IMPL
-#undef LOAD_CTX
-#undef SAVE_CTX
-#undef RELOAD_CTX
+#undef LOAD_PC
+#undef SAVE_PC
+#undef RELOAD_PC
 #undef SAVE_STACK_PTR
 #undef LOAD_STACK_PTR
-#undef ORIG_P
+#undef ORIG_PC
 #undef INSN_SUCCESS
 #undef INSN_SUCCESS_RETURN
 #undef STACK
@@ -359,12 +359,12 @@ fail:
 #define INSN_IMPL(NAME)                                                       \
         int execute_##NAME(const uint8_t *p, struct cell *stack,              \
                            struct exec_context *ctx)
-#define LOAD_CTX const uint8_t *p0 __attribute__((__unused__)) = p
-#define SAVE_CTX
-#define RELOAD_CTX p = ctx->p
+#define LOAD_PC const uint8_t *p0 __attribute__((__unused__)) = p
+#define SAVE_PC
+#define RELOAD_PC p = ctx->p
 #define SAVE_STACK_PTR ctx->stack.lsize = stack - ctx->stack.p
 #define LOAD_STACK_PTR stack = &VEC_NEXTELEM(ctx->stack)
-#define ORIG_P p0
+#define ORIG_PC p0
 #if defined(USE_TAILCALL)
 #define INSN_SUCCESS __musttail return exec_next_insn(p, stack, ctx)
 #else
@@ -392,12 +392,12 @@ fail:
 #undef ECTX
 #undef VCTX
 #undef INSN_IMPL
-#undef LOAD_CTX
-#undef SAVE_CTX
-#undef RELOAD_CTX
+#undef LOAD_PC
+#undef SAVE_PC
+#undef RELOAD_PC
 #undef SAVE_STACK_PTR
 #undef LOAD_STACK_PTR
-#undef ORIG_P
+#undef ORIG_PC
 #undef INSN_SUCCESS
 #undef INSN_SUCCESS_RETURN
 #undef ep

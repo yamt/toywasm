@@ -17,10 +17,10 @@ INSN_IMPL(block)
         struct resulttype *rt_parameter = NULL;
         struct resulttype *rt_result = NULL;
 
-        LOAD_CTX;
+        LOAD_PC;
         READ_LEB_S33(blocktype);
         if (EXECUTING) {
-                push_label(ORIG_P, STACK, ECTX);
+                push_label(ORIG_PC, STACK, ECTX);
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
                 struct module *m = vctx->module;
@@ -33,7 +33,7 @@ INSN_IMPL(block)
                 if (ret != 0) {
                         goto fail;
                 }
-                uint32_t pc = ptr2pc(m, ORIG_P - 1);
+                uint32_t pc = ptr2pc(m, ORIG_PC - 1);
                 ret = push_ctrlframe(pc, FRAME_OP_BLOCK, 0, rt_parameter,
                                      rt_result, vctx);
                 if (ret != 0) {
@@ -42,7 +42,7 @@ INSN_IMPL(block)
                 rt_parameter = NULL;
                 rt_result = NULL;
         }
-        SAVE_CTX;
+        SAVE_PC;
         INSN_SUCCESS_RETURN;
 fail:
         resulttype_free(rt_parameter);
@@ -56,10 +56,10 @@ INSN_IMPL(loop)
         struct resulttype *rt_result = NULL;
         int ret;
 
-        LOAD_CTX;
+        LOAD_PC;
         READ_LEB_S33(blocktype);
         if (EXECUTING) {
-                push_label(ORIG_P, STACK, ECTX);
+                push_label(ORIG_PC, STACK, ECTX);
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
                 struct module *m = vctx->module;
@@ -72,7 +72,7 @@ INSN_IMPL(loop)
                 if (ret != 0) {
                         goto fail;
                 }
-                uint32_t pc = ptr2pc(m, ORIG_P - 1);
+                uint32_t pc = ptr2pc(m, ORIG_PC - 1);
                 ret = push_ctrlframe(pc, FRAME_OP_LOOP, 0, rt_parameter,
                                      rt_result, vctx);
                 if (ret != 0) {
@@ -81,7 +81,7 @@ INSN_IMPL(loop)
                 rt_parameter = NULL;
                 rt_result = NULL;
         }
-        SAVE_CTX;
+        SAVE_PC;
         INSN_SUCCESS_RETURN;
 fail:
         resulttype_free(rt_parameter);
@@ -95,12 +95,12 @@ INSN_IMPL(if)
         struct resulttype *rt_result = NULL;
         int ret;
 
-        LOAD_CTX;
+        LOAD_PC;
         READ_LEB_S33(blocktype);
         POP_VAL(TYPE_i32, c);
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
-                push_label(ORIG_P, STACK, ECTX);
+                push_label(ORIG_PC, STACK, ECTX);
                 if (val_c.u.i32 == 0) {
                         ectx->event_u.branch.index = 0;
                         ectx->event_u.branch.goto_else = true;
@@ -118,7 +118,7 @@ INSN_IMPL(if)
                 if (ret != 0) {
                         goto fail;
                 }
-                uint32_t pc = ptr2pc(m, ORIG_P - 1);
+                uint32_t pc = ptr2pc(m, ORIG_PC - 1);
                 ret = push_ctrlframe(pc, FRAME_OP_IF, 0, rt_parameter,
                                      rt_result, vctx);
                 if (ret != 0) {
@@ -127,7 +127,7 @@ INSN_IMPL(if)
                 rt_parameter = NULL;
                 rt_result = NULL;
         }
-        SAVE_CTX;
+        SAVE_PC;
         INSN_SUCCESS_RETURN;
 fail:
         resulttype_free(rt_parameter);
@@ -148,7 +148,7 @@ INSN_IMPL(else)
                 struct ctrlframe cframe;
                 int ret;
 
-                LOAD_CTX;
+                LOAD_PC;
                 uint32_t pc = ptr2pc(vctx->module, p);
                 ret = pop_ctrlframe(pc, true, &cframe, vctx);
                 if (ret != 0) {
@@ -182,14 +182,14 @@ INSN_IMPL(end)
                         SAVE_STACK_PTR;
                         rewind_stack(ectx, frame->height, frame->nresults);
                         LOAD_STACK_PTR;
-                        RELOAD_CTX;
+                        RELOAD_PC;
                 }
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
                 struct ctrlframe cframe;
                 int ret;
 
-                LOAD_CTX;
+                LOAD_PC;
                 uint32_t pc = ptr2pc(vctx->module, p);
                 ret = pop_ctrlframe(pc, false, &cframe, vctx);
                 if (ret != 0) {
@@ -233,7 +233,7 @@ INSN_IMPL(br)
 {
         int ret;
 
-        LOAD_CTX;
+        LOAD_PC;
         READ_LEB_U32(labelidx);
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
@@ -253,7 +253,7 @@ INSN_IMPL(br)
                 }
                 mark_unreachable(vctx);
         }
-        SAVE_CTX;
+        SAVE_PC;
         INSN_SUCCESS_RETURN;
 fail:
         return ret;
@@ -263,7 +263,7 @@ INSN_IMPL(br_if)
 {
         int ret;
 
-        LOAD_CTX;
+        LOAD_PC;
         READ_LEB_U32(labelidx);
         POP_VAL(TYPE_i32, l);
         if (EXECUTING) {
@@ -289,7 +289,7 @@ INSN_IMPL(br_if)
                         goto fail;
                 }
         }
-        SAVE_CTX;
+        SAVE_PC;
         INSN_SUCCESS_RETURN;
 fail:
         return ret;
@@ -308,7 +308,7 @@ INSN_IMPL(br_table)
         ret = 0;
 #endif
 
-        LOAD_CTX;
+        LOAD_PC;
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
                 vec_count = read_leb_u32_nocheck(&p);
@@ -328,7 +328,7 @@ INSN_IMPL(br_table)
                 ectx->event_u.branch.index = idx;
                 ectx->event_u.branch.goto_else = false;
                 ectx->event = EXEC_EVENT_BRANCH;
-                SAVE_CTX;
+                SAVE_PC;
                 INSN_SUCCESS_RETURN;
         }
         ret = read_vec_u32(&p, ep, &vec_count, &table);
@@ -367,7 +367,7 @@ INSN_IMPL(br_table)
                 mark_unreachable(vctx);
         }
         free(table);
-        SAVE_CTX;
+        SAVE_PC;
         INSN_SUCCESS_RETURN;
 fail:
         free(table);
@@ -404,7 +404,7 @@ INSN_IMPL(call)
         struct module *m;
         int ret;
 
-        LOAD_CTX;
+        LOAD_PC;
         READ_LEB_U32(funcidx);
         m = MODULE;
         CHECK(funcidx < m->nimportedfuncs + m->nfuncs);
@@ -425,7 +425,7 @@ INSN_IMPL(call)
                         goto fail;
                 }
         }
-        SAVE_CTX;
+        SAVE_PC;
         INSN_SUCCESS_RETURN;
 fail:
         return ret;
@@ -436,7 +436,7 @@ INSN_IMPL(call_indirect)
         struct module *m = MODULE;
         int ret;
 
-        LOAD_CTX;
+        LOAD_PC;
         READ_LEB_U32(typeidx);
         READ_LEB_U32(tableidx);
         CHECK(tableidx < m->nimportedtables + m->ntables);
@@ -497,7 +497,7 @@ INSN_IMPL(call_indirect)
                         goto fail;
                 }
         }
-        SAVE_CTX;
+        SAVE_PC;
         INSN_SUCCESS_RETURN;
 fail:
         return ret;
@@ -505,7 +505,7 @@ fail:
 
 INSN_IMPL(drop)
 {
-        LOAD_CTX;
+        LOAD_PC;
         int ret;
         if (EXECUTING) {
                 uint32_t csz = find_type_annotation(ECTX, p);
@@ -529,7 +529,7 @@ fail:
 
 INSN_IMPL(select)
 {
-        LOAD_CTX;
+        LOAD_PC;
         int ret;
         POP_VAL(TYPE_i32, cond);
         struct val val_c;
@@ -561,7 +561,7 @@ fail:
 INSN_IMPL(select_t)
 {
         int ret;
-        LOAD_CTX;
+        LOAD_PC;
         READ_LEB_U32(vec_count);
         CHECK(vec_count == 1);
         uint8_t u8;
@@ -577,7 +577,7 @@ INSN_IMPL(select_t)
                 val_c = val_cond.u.i32 != 0 ? val_v1 : val_v2;
         }
         PUSH_VAL(t, c);
-        SAVE_CTX;
+        SAVE_PC;
         INSN_SUCCESS;
 fail:
         return ret;
@@ -587,7 +587,7 @@ INSN_IMPL(local_get)
 {
         int ret;
 
-        LOAD_CTX;
+        LOAD_PC;
         READ_LEB_U32(localidx);
         struct val val_c;
         if (EXECUTING) {
@@ -599,7 +599,7 @@ INSN_IMPL(local_get)
                 CHECK(localidx < VCTX->nlocals);
                 PUSH_VAL(VCTX->locals[localidx], c);
         }
-        SAVE_CTX;
+        SAVE_PC;
         INSN_SUCCESS;
 fail:
         return ret;
@@ -609,7 +609,7 @@ INSN_IMPL(local_set)
 {
         int ret;
 
-        LOAD_CTX;
+        LOAD_PC;
         READ_LEB_U32(localidx);
         if (VALIDATING) {
                 CHECK(localidx < VCTX->nlocals);
@@ -622,7 +622,7 @@ INSN_IMPL(local_set)
         } else {
                 POP_VAL(VCTX->locals[localidx], a);
         }
-        SAVE_CTX;
+        SAVE_PC;
         INSN_SUCCESS;
 fail:
         return ret;
@@ -632,7 +632,7 @@ INSN_IMPL(local_tee)
 {
         int ret;
 
-        LOAD_CTX;
+        LOAD_PC;
         READ_LEB_U32(localidx);
         if (VALIDATING) {
                 CHECK(localidx < VCTX->nlocals);
@@ -645,7 +645,7 @@ INSN_IMPL(local_tee)
                 POP_VAL(VCTX->locals[localidx], a);
                 PUSH_VAL(VCTX->locals[localidx], a);
         }
-        SAVE_CTX;
+        SAVE_PC;
         INSN_SUCCESS;
 fail:
         return ret;
@@ -656,7 +656,7 @@ INSN_IMPL(global_get)
         struct module *m = MODULE;
         int ret;
 
-        LOAD_CTX;
+        LOAD_PC;
         READ_LEB_U32(globalidx);
         CHECK(globalidx < m->nimportedglobals + m->nglobals);
         struct val val_c;
@@ -674,7 +674,7 @@ INSN_IMPL(global_get)
                 }
         }
         PUSH_VAL(module_globaltype(m, globalidx)->t, c);
-        SAVE_CTX;
+        SAVE_PC;
         INSN_SUCCESS;
 fail:
         return ret;
@@ -685,7 +685,7 @@ INSN_IMPL(global_set)
         struct module *m = MODULE;
         int ret;
 
-        LOAD_CTX;
+        LOAD_PC;
         READ_LEB_U32(globalidx);
         CHECK(globalidx < m->nimportedglobals + m->nglobals);
         const struct globaltype *gt;
@@ -697,7 +697,7 @@ INSN_IMPL(global_set)
         if (EXECUTING) {
                 VEC_ELEM(ECTX->instance->globals, globalidx)->val = val_a;
         }
-        SAVE_CTX;
+        SAVE_PC;
         INSN_SUCCESS;
 fail:
         return ret;
@@ -708,7 +708,7 @@ INSN_IMPL(table_get)
         struct module *m = MODULE;
         int ret;
 
-        LOAD_CTX;
+        LOAD_PC;
         READ_LEB_U32(tableidx);
         CHECK(tableidx < m->nimportedtables + m->ntables);
         POP_VAL(TYPE_i32, offset);
@@ -725,7 +725,7 @@ INSN_IMPL(table_get)
                 val_c = t->vals[offset];
         }
         PUSH_VAL(module_tabletype(m, tableidx)->et, c);
-        SAVE_CTX;
+        SAVE_PC;
         INSN_SUCCESS;
 fail:
         return ret;
@@ -736,7 +736,7 @@ INSN_IMPL(table_set)
         struct module *m = MODULE;
         int ret;
 
-        LOAD_CTX;
+        LOAD_PC;
         READ_LEB_U32(tableidx);
         CHECK(tableidx < m->nimportedtables + m->ntables);
         POP_VAL(module_tabletype(m, tableidx)->et, a);
@@ -752,7 +752,7 @@ INSN_IMPL(table_set)
                 struct tableinst *t = VEC_ELEM(inst->tables, tableidx);
                 t->vals[offset] = val_a;
         }
-        SAVE_CTX;
+        SAVE_PC;
         INSN_SUCCESS;
 fail:
         return ret;
@@ -772,7 +772,7 @@ INSN_IMPL(memory_size)
 {
         uint8_t zero;
         int ret;
-        LOAD_CTX;
+        LOAD_PC;
         ret = read_u8(&p, ep, &zero);
         CHECK_RET(ret);
         CHECK(zero == 0);
@@ -787,7 +787,7 @@ INSN_IMPL(memory_size)
                 val_sz.u.i32 = minst->size_in_pages;
         }
         PUSH_VAL(TYPE_i32, sz);
-        SAVE_CTX;
+        SAVE_PC;
         INSN_SUCCESS;
 fail:
         return ret;
@@ -797,7 +797,7 @@ INSN_IMPL(memory_grow)
 {
         uint8_t zero;
         int ret;
-        LOAD_CTX;
+        LOAD_PC;
         ret = read_u8(&p, ep, &zero);
         CHECK_RET(ret);
         CHECK(zero == 0);
@@ -810,7 +810,7 @@ INSN_IMPL(memory_grow)
                 val_error.u.i32 = memory_grow(ECTX, memidx, val_n.u.i32);
         }
         PUSH_VAL(TYPE_i32, error);
-        SAVE_CTX;
+        SAVE_PC;
         INSN_SUCCESS;
 fail:
         return ret;
@@ -1005,7 +1005,7 @@ CVTOP(i64_trunc_sat_f64_u, f64, i64, TRUNC_SAT_U_64_64)
 INSN_IMPL(ref_null)
 {
         int ret;
-        LOAD_CTX;
+        LOAD_PC;
         uint8_t u8;
         ret = read_u8(&p, ep, &u8);
         CHECK_RET(ret);
@@ -1016,7 +1016,7 @@ INSN_IMPL(ref_null)
                 memset(&val_null, 0, sizeof(val_null));
         }
         PUSH_VAL(type, null);
-        SAVE_CTX;
+        SAVE_PC;
         INSN_SUCCESS;
 fail:
         return ret;
@@ -1035,7 +1035,7 @@ INSN_IMPL(ref_is_null)
          * https://github.com/WebAssembly/reference-types/pull/116
          */
         int ret;
-        LOAD_CTX;
+        LOAD_PC;
         struct val val_result;
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
@@ -1056,7 +1056,7 @@ INSN_IMPL(ref_is_null)
                 }
         }
         PUSH_VAL(TYPE_i32, result);
-        SAVE_CTX;
+        SAVE_PC;
         INSN_SUCCESS;
 fail:
         return ret;
@@ -1065,7 +1065,7 @@ fail:
 INSN_IMPL(ref_func)
 {
         int ret;
-        LOAD_CTX;
+        LOAD_PC;
         READ_LEB_U32(funcidx);
         struct module *m = MODULE;
         CHECK(funcidx < m->nimportedfuncs + m->nfuncs);
@@ -1092,7 +1092,7 @@ INSN_IMPL(ref_func)
                 }
         }
         PUSH_VAL(TYPE_FUNCREF, result);
-        SAVE_CTX;
+        SAVE_PC;
         INSN_SUCCESS;
 fail:
         return ret;
@@ -1101,7 +1101,7 @@ fail:
 INSN_IMPL(memory_init)
 {
         int ret;
-        LOAD_CTX;
+        LOAD_PC;
         uint32_t memidx = 0;
         READ_LEB_U32(dataidx);
         uint8_t zero;
@@ -1127,7 +1127,7 @@ INSN_IMPL(memory_init)
                 CHECK(vctx->has_datacount);
                 CHECK(dataidx < vctx->ndatas_in_datacount);
         }
-        SAVE_CTX;
+        SAVE_PC;
         INSN_SUCCESS;
 fail:
         return ret;
@@ -1136,7 +1136,7 @@ fail:
 INSN_IMPL(data_drop)
 {
         int ret;
-        LOAD_CTX;
+        LOAD_PC;
         READ_LEB_U32(dataidx);
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
@@ -1146,7 +1146,7 @@ INSN_IMPL(data_drop)
                 CHECK(vctx->has_datacount);
                 CHECK(dataidx < vctx->ndatas_in_datacount);
         }
-        SAVE_CTX;
+        SAVE_PC;
         INSN_SUCCESS;
 fail:
         return ret;
@@ -1155,7 +1155,7 @@ fail:
 INSN_IMPL(memory_copy)
 {
         int ret;
-        LOAD_CTX;
+        LOAD_PC;
         uint32_t memidx = 0;
         uint8_t zero;
         ret = read_u8(&p, ep, &zero);
@@ -1191,7 +1191,7 @@ retry:
                 }
                 memmove(dst_p, src_p, n);
         }
-        SAVE_CTX;
+        SAVE_PC;
         INSN_SUCCESS;
 fail:
         return ret;
@@ -1200,7 +1200,7 @@ fail:
 INSN_IMPL(memory_fill)
 {
         int ret;
-        LOAD_CTX;
+        LOAD_PC;
         uint32_t memidx = 0;
         uint8_t zero;
         ret = read_u8(&p, ep, &zero);
@@ -1221,7 +1221,7 @@ INSN_IMPL(memory_fill)
                 }
                 memset(p, (uint8_t)val_val.u.i32, n);
         }
-        SAVE_CTX;
+        SAVE_PC;
         INSN_SUCCESS;
 fail:
         return ret;
@@ -1230,7 +1230,7 @@ fail:
 INSN_IMPL(table_init)
 {
         int ret;
-        LOAD_CTX;
+        LOAD_PC;
         READ_LEB_U32(elemidx);
         READ_LEB_U32(tableidx);
         struct module *m = MODULE;
@@ -1250,7 +1250,7 @@ INSN_IMPL(table_init)
                         goto fail;
                 }
         }
-        SAVE_CTX;
+        SAVE_PC;
         INSN_SUCCESS;
 fail:
         return ret;
@@ -1259,7 +1259,7 @@ fail:
 INSN_IMPL(elem_drop)
 {
         int ret;
-        LOAD_CTX;
+        LOAD_PC;
         READ_LEB_U32(elemidx);
         struct module *m = MODULE;
         CHECK(elemidx < m->nelems);
@@ -1267,7 +1267,7 @@ INSN_IMPL(elem_drop)
                 struct exec_context *ectx = ECTX;
                 elem_drop(ectx, elemidx);
         }
-        SAVE_CTX;
+        SAVE_PC;
         INSN_SUCCESS;
 fail:
         return ret;
@@ -1276,7 +1276,7 @@ fail:
 INSN_IMPL(table_copy)
 {
         int ret;
-        LOAD_CTX;
+        LOAD_PC;
         READ_LEB_U32(tableidx_dst);
         READ_LEB_U32(tableidx_src);
         struct module *m = MODULE;
@@ -1304,7 +1304,7 @@ INSN_IMPL(table_copy)
                         &VEC_ELEM(inst->tables, tableidx_src)->vals[s],
                         n * sizeof(struct val));
         }
-        SAVE_CTX;
+        SAVE_PC;
         INSN_SUCCESS;
 fail:
         return ret;
@@ -1313,7 +1313,7 @@ fail:
 INSN_IMPL(table_grow)
 {
         int ret;
-        LOAD_CTX;
+        LOAD_PC;
         READ_LEB_U32(tableidx);
         struct module *m = MODULE;
         CHECK(tableidx < m->nimportedtables + m->ntables);
@@ -1344,7 +1344,7 @@ INSN_IMPL(table_grow)
                 }
         }
         PUSH_VAL(TYPE_i32, result);
-        SAVE_CTX;
+        SAVE_PC;
         INSN_SUCCESS;
 fail:
         return ret;
@@ -1353,7 +1353,7 @@ fail:
 INSN_IMPL(table_size)
 {
         int ret;
-        LOAD_CTX;
+        LOAD_PC;
         READ_LEB_U32(tableidx);
         struct module *m = MODULE;
         CHECK(tableidx < m->nimportedtables + m->ntables);
@@ -1365,7 +1365,7 @@ INSN_IMPL(table_size)
                 val_n.u.i32 = t->size;
         }
         PUSH_VAL(TYPE_i32, n);
-        SAVE_CTX;
+        SAVE_PC;
         INSN_SUCCESS;
 fail:
         return ret;
@@ -1374,7 +1374,7 @@ fail:
 INSN_IMPL(table_fill)
 {
         int ret;
-        LOAD_CTX;
+        LOAD_PC;
         READ_LEB_U32(tableidx);
         struct module *m = MODULE;
         CHECK(tableidx < m->nimportedtables + m->ntables);
@@ -1397,7 +1397,7 @@ INSN_IMPL(table_fill)
                         t->vals[i] = val_val;
                 }
         }
-        SAVE_CTX;
+        SAVE_PC;
         INSN_SUCCESS;
 fail:
         return ret;
