@@ -116,19 +116,19 @@ localtype_cellsize(const struct localtype *lt)
 }
 
 uint32_t
-frame_locals_cellidx(const struct funcframe *frame, uint32_t localidx,
+frame_locals_cellidx(struct exec_context *ctx, uint32_t localidx,
                      uint32_t *cszp)
 {
 #if defined(USE_SMALL_CELLS)
         /* REVISIT: very inefficient */
         uint32_t cidx;
-        uint32_t nparams = frame->paramtype->ntypes;
+        uint32_t nparams = ctx->paramtype->ntypes;
         if (localidx < nparams) {
-                cidx = resulttype_cellidx(frame->paramtype, localidx, cszp);
+                cidx = resulttype_cellidx(ctx->paramtype, localidx, cszp);
         } else {
-                assert(localidx < nparams + frame->localtype->nlocals);
-                cidx = resulttype_cellsize(frame->paramtype);
-                cidx += localtype_cellidx(frame->localtype, localidx - nparams,
+                assert(localidx < nparams + ctx->localtype->nlocals);
+                cidx = resulttype_cellsize(ctx->paramtype);
+                cidx += localtype_cellidx(ctx->localtype, localidx - nparams,
                                           cszp);
         }
         return cidx;

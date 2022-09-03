@@ -137,13 +137,51 @@ stack_prealloc(struct exec_context *ctx, uint32_t count)
         return VEC_PREALLOC(ctx->stack, count);
 }
 
+static void
+set_current_frame(struct exec_context *ctx, const struct funcframe *frame,
+                  const struct expr_exec_info *ei)
+{
+        struct instance *inst = frame->instance;
+        uint32_t funcidx = frame->funcidx;
+        ctx->instance = inst;
+        if (__predict_false(funcidx == FUNCIDX_INVALID)) {
+                /*
+                 * Exprs which is not in a function.
+                 *
+                 * Note: such exprs do never have function calls.
+                 * (thus ei != NULL)
+                 */
+                assert(ei != NULL);
+                ctx->paramtype = NULL;
+                ctx->localtype = NULL;
+                ctx->ei = ei;
+        } else {
+                struct module *m = inst->module;
+                const struct functype *ft = module_functype(m, funcidx);
+                const struct func *func =
+                        &m->funcs[funcidx - m->nimportedfuncs];
+                ctx->paramtype = &ft->parameter;
+                assert(frame->nresults == resulttype_cellsize(&ft->result));
+                ctx->localtype = &func->localtype;
+                assert(ei == NULL || ei == &func->e.ei);
+                ctx->ei = &func->e.ei;
+        }
+#if defined(USE_LOCALS_CACHE)
+        ctx->current_locals = frame_locals(ctx, frame);
+#endif
+}
+
 /*
  * https://webassembly.github.io/spec/core/exec/instructions.html#function-calls
  * https://webassembly.github.io/spec/core/exec/runtime.html#default-val
  */
 
+/*
+ * Note: the parameters of this function is redundant.
+ * localtype, paramtype, nresults can be obtained from instance+funcidx.
+ */
 int
-frame_enter(struct exec_context *ctx, struct instance *inst,
+frame_enter(struct exec_context *ctx, struct instance *inst, uint32_t funcidx,
             const struct expr_exec_info *ei, const struct localtype *localtype,
             const struct resulttype *paramtype, uint32_t nresults,
             const struct cell *params)
@@ -152,7 +190,6 @@ frame_enter(struct exec_context *ctx, struct instance *inst,
          * Note: params can be in ctx->stack.
          * Be careful when resizing the later.
          */
-
         struct funcframe *frame;
         int ret;
 
@@ -168,11 +205,9 @@ frame_enter(struct exec_context *ctx, struct instance *inst,
         const uint32_t func_nlocals = localtype_cellsize(localtype);
         const uint32_t nlocals = nparams + func_nlocals;
         frame = &VEC_NEXTELEM(ctx->frames);
-        frame->ei = ei;
-        frame->paramtype = paramtype;
-        frame->localtype = localtype;
-        frame->nresults = nresults;
         frame->instance = inst;
+        frame->funcidx = funcidx;
+        frame->nresults = nresults;
         frame->labelidx = ctx->labels.lsize;
 #if defined(USE_SEPARATE_LOCALS)
         frame->localidx = ctx->locals.lsize;
@@ -254,10 +289,10 @@ frame_enter(struct exec_context *ctx, struct instance *inst,
         assert(ctx->stack.lsize + nlocals + ei->maxvals <= ctx->stack.psize);
         ctx->stack.lsize += nlocals;
 #endif
-        ctx->instance = inst;
-#if defined(USE_LOCALS_CACHE)
-        ctx->current_locals = frame_locals(ctx, frame);
-#endif
+        set_current_frame(ctx, frame, ei);
+        assert(funcidx == FUNCIDX_INVALID || ctx->paramtype == paramtype);
+        assert(funcidx == FUNCIDX_INVALID || ctx->localtype == localtype);
+        assert(ctx->ei == ei);
         return 0;
 }
 
@@ -276,13 +311,9 @@ frame_exit(struct exec_context *ctx)
         assert(ctx->current_locals == frame_locals(ctx, frame));
 #endif
         if (ctx->frames.lsize > 0) {
-                ctx->instance = VEC_LASTELEM(ctx->frames).instance;
+                const struct funcframe *pframe = &VEC_LASTELEM(ctx->frames);
+                set_current_frame(ctx, pframe, NULL);
                 ctx->p = pc2ptr(ctx->instance->module, frame->callerpc);
-
-#if defined(USE_LOCALS_CACHE)
-                struct funcframe *pframe = &VEC_LASTELEM(ctx->frames);
-                ctx->current_locals = frame_locals(ctx, pframe);
-#endif
         }
         assert(frame->labelidx <= ctx->labels.lsize);
         ctx->labels.lsize = frame->labelidx;
@@ -377,8 +408,8 @@ do_wasm_call(struct exec_context *ctx, const struct funcinst *finst)
         uint32_t nresults = resulttype_cellsize(&type->result);
         assert(ctx->stack.lsize >= nparams);
         ctx->stack.lsize -= nparams;
-        ret = frame_enter(ctx, callee_inst, &func->e.ei, &func->localtype,
-                          &type->parameter, nresults,
+        ret = frame_enter(ctx, callee_inst, finst->u.wasm.funcidx, &func->e.ei,
+                          &func->localtype, &type->parameter, nresults,
                           &VEC_NEXTELEM(ctx->stack));
         if (ret != 0) {
                 return ret;
@@ -556,7 +587,7 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
                         /*
                          * do a jump. (w/ jump table)
                          */
-                        const struct expr_exec_info *ei = frame->ei;
+                        const struct expr_exec_info *ei = ctx->ei;
                         if (ei->jumps != NULL) {
                                 xlog_trace("jump w/ table");
                                 bool stay_in_block = false;
@@ -692,7 +723,8 @@ exec_next_insn(const uint8_t *p, struct cell *stack, struct exec_context *ctx)
 }
 
 int
-exec_expr(const struct expr *expr, const struct localtype *localtype,
+exec_expr(uint32_t funcidx, const struct expr *expr,
+          const struct localtype *localtype,
           const struct resulttype *parametertype, uint32_t nresults,
           const struct cell *params, struct cell *results,
           struct exec_context *ctx)
@@ -703,7 +735,7 @@ exec_expr(const struct expr *expr, const struct localtype *localtype,
         assert(ctx->instance != NULL);
         assert(ctx->instance->module != NULL);
 
-        ret = frame_enter(ctx, ctx->instance, &expr->ei, localtype,
+        ret = frame_enter(ctx, ctx->instance, funcidx, &expr->ei, localtype,
                           parametertype, nresults, params);
         if (ret != 0) {
                 return ret;
@@ -806,8 +838,8 @@ exec_const_expr(const struct expr *expr, enum valtype type, struct val *result,
         uint32_t csz = valtype_cellsize(type);
         struct cell result_cells[4];
         assert(ARRAYCOUNT(result_cells) >= csz);
-        ret = exec_expr(expr, &no_locals, &empty, csz, NULL, result_cells,
-                        ctx);
+        ret = exec_expr(FUNCIDX_INVALID, expr, &no_locals, &empty, csz, NULL,
+                        result_cells, ctx);
         if (ret != 0) {
                 return ret;
         }
@@ -977,8 +1009,7 @@ uint32_t
 find_type_annotation(struct exec_context *ctx, const uint8_t *p)
 {
 #if defined(USE_SMALL_CELLS)
-        const struct funcframe *frame = &VEC_LASTELEM(ctx->frames);
-        const struct expr_exec_info *ei = frame->ei;
+        const struct expr_exec_info *ei = ctx->ei;
         const struct type_annotations *an = &ei->type_annotations;
         assert(an->default_size > 0);
         if (an->ntypes == 0) {
@@ -1043,8 +1074,8 @@ invoke(struct funcinst *finst, const struct resulttype *paramtype,
         const struct func *func = funcinst_func(finst);
         ctx->instance = finst->u.wasm.instance;
         uint32_t nresults = resulttype_cellsize(&ft->result);
-        return exec_expr(&func->e, &func->localtype, &ft->parameter, nresults,
-                         params, results, ctx);
+        return exec_expr(finst->u.wasm.funcidx, &func->e, &func->localtype,
+                         &ft->parameter, nresults, params, results, ctx);
 }
 
 void

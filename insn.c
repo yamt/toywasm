@@ -79,11 +79,11 @@ push_label(const uint8_t *p, struct cell *stack, struct exec_context *ctx)
 static struct cell *
 local_getptr(struct exec_context *ectx, uint32_t localidx, uint32_t *cszp)
 {
-        const struct funcframe *frame = &VEC_LASTELEM(ectx->frames);
-        uint32_t cidx = frame_locals_cellidx(frame, localidx, cszp);
+        uint32_t cidx = frame_locals_cellidx(ectx, localidx, cszp);
 #if defined(USE_LOCALS_CACHE)
         return &ectx->current_locals[cidx];
 #else
+        const struct funcframe *frame = &VEC_LASTELEM(ectx->frames);
         return &frame_locals(ectx, frame)[cidx];
 #endif
 }

@@ -39,6 +39,9 @@ struct label {
 };
 
 struct funcframe {
+        struct instance *instance;
+        uint32_t funcidx;
+
         /* this doesn't include the implicit label */
         uint32_t labelidx;
 
@@ -46,16 +49,13 @@ struct funcframe {
         uint32_t localidx;
 #endif
 
-        /* REVISIT: simpler to have func/functype references? */
-        const struct resulttype *paramtype;
-        const struct localtype *localtype;
-        const struct expr_exec_info *ei;
-
-        struct instance *instance;
         uint32_t callerpc;
         uint32_t height;
         uint32_t nresults;
 };
+
+/* For funcframe.funcidx */
+#define FUNCIDX_INVALID UINT32_MAX
 
 enum trapid {
         TRAP_MISC,
@@ -131,7 +131,12 @@ struct jump_cache {
 };
 
 struct exec_context {
-        struct instance *instance; /* REVISIT: redundant */
+        /* Some cached info about the current frame. */
+        struct instance *instance;
+        const struct resulttype *paramtype;
+        const struct localtype *localtype;
+        const struct expr_exec_info *ei;
+
         const uint8_t *p;
 #if defined(USE_LOCALS_CACHE)
         struct cell *current_locals;
@@ -197,7 +202,7 @@ int memory_getptr(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
 int memory_getptr2(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
                    uint32_t offset, uint32_t size, void **pp, bool *movedp);
 int frame_enter(struct exec_context *ctx, struct instance *inst,
-                const struct expr_exec_info *ei,
+                uint32_t funcidx, const struct expr_exec_info *ei,
                 const struct localtype *localtype,
                 const struct resulttype *paramtype, uint32_t nresults,
                 const struct cell *params);
