@@ -433,12 +433,12 @@ exec_next_insn_fc(const uint8_t *p, struct cell *stack,
 #define INSTRUCTION(b, n, f, FLAGS)                                           \
         [b] = {                                                               \
                 .execute = execute_##f,                                       \
-        }
+        },
 
 #define INSTRUCTION_INDIRECT(b, n, t)                                         \
         [b] = {                                                               \
                 .execute = exec_next_insn_fc,                                 \
-        }
+        },
 
 const static struct exec_instruction_desc exec_instructions_fc[] = {
 #include "insn_list_fc.h"
@@ -459,14 +459,14 @@ const struct exec_instruction_desc exec_instructions[] = {
                 .process = process_##f,                                       \
                 .flags = FLAGS,                                               \
                 .next_table = NULL,                                           \
-        }
+        },
 
 #define INSTRUCTION_INDIRECT(b, n, t)                                         \
         [b] = {                                                               \
                 .name = n,                                                    \
                 .next_table = t,                                              \
                 .next_table_size = ARRAYCOUNT(t),                             \
-        }
+        },
 
 const static struct instruction_desc instructions_fc[] = {
 #include "insn_list_fc.h"
