@@ -115,19 +115,19 @@ main(int argc, char *const *argv)
                         g_repl_use_jump_table = false;
                         break;
                 case opt_invoke:
-                        ret = repl_invoke(state, optarg, true);
+                        ret = repl_invoke(state, NULL, optarg, true);
                         if (ret != 0) {
                                 goto fail;
                         }
                         break;
                 case opt_load:
-                        ret = repl_load(state, optarg);
+                        ret = repl_load(state, NULL, optarg);
                         if (ret != 0) {
                                 goto fail;
                         }
                         break;
                 case opt_register:
-                        ret = repl_register(state, optarg);
+                        ret = repl_register(state, NULL, optarg);
                         if (ret != 0) {
                                 goto fail;
                         }
@@ -179,12 +179,12 @@ main(int argc, char *const *argv)
                 goto fail;
         }
         const char *filename = argv[0];
-        ret = repl_load(state, filename);
+        ret = repl_load(state, NULL, filename);
         if (ret != 0) {
                 xlog_error("load failed");
                 goto fail;
         }
-        ret = repl_invoke(state, "_start", false);
+        ret = repl_invoke(state, NULL, "_start", false);
         if (ret != 0) {
                 xlog_error("invoke failed with %d", ret);
                 goto fail;

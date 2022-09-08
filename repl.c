@@ -52,6 +52,7 @@ bool g_repl_use_jump_table = true;
 bool g_repl_print_stats = false;
 
 struct repl_module_state {
+        char *name;
         uint8_t *buf;
         size_t bufsize;
         bool buf_mapped;
@@ -163,6 +164,10 @@ repl_unload(struct repl_module_state *mod)
                 }
                 mod->buf = NULL;
         }
+        if (mod->name != NULL) {
+                free(mod->name);
+                mod->name = NULL;
+        }
 }
 
 void
@@ -240,7 +245,31 @@ repl_set_wasi_prestat(struct repl_state *state, const char *path)
 }
 
 int
-repl_load_from_buf(struct repl_state *state, struct repl_module_state *mod)
+find_mod(struct repl_state *state, const char *modname,
+         struct repl_module_state **modp)
+{
+        if (state->nmodules == 0) {
+                xlog_printf("no module loaded\n");
+                return EPROTO;
+        }
+        if (modname == NULL) {
+                *modp = &state->modules[state->nmodules - 1];
+                return 0;
+        }
+        uint32_t i;
+        for (i = 0; i < state->nmodules; i++) {
+                struct repl_module_state *mod = &state->modules[i];
+                if (mod->name != NULL && !strcmp(modname, mod->name)) {
+                        *modp = mod;
+                        return 0;
+                }
+        }
+        return ENOENT;
+}
+
+int
+repl_load_from_buf(struct repl_state *state, const char *modname,
+                   struct repl_module_state *mod)
 {
         int ret;
         ret = module_create(&mod->module);
@@ -279,12 +308,19 @@ repl_load_from_buf(struct repl_state *state, struct repl_module_state *mod)
                 xlog_printf("instance_create failed\n");
                 goto fail;
         }
+        if (modname != NULL) {
+                mod->name = strdup(modname);
+                if (mod->name == NULL) {
+                        ret = ENOMEM;
+                        goto fail;
+                }
+        }
 fail:
         return ret;
 }
 
 int
-repl_load(struct repl_state *state, const char *filename)
+repl_load(struct repl_state *state, const char *modname, const char *filename)
 {
         if (state->nmodules == MAX_MODULES) {
                 return EOVERFLOW;
@@ -297,7 +333,7 @@ repl_load(struct repl_state *state, const char *filename)
                 goto fail;
         }
         mod->buf_mapped = true;
-        ret = repl_load_from_buf(state, mod);
+        ret = repl_load_from_buf(state, modname, mod);
         if (ret != 0) {
                 goto fail;
         }
@@ -309,13 +345,14 @@ fail:
 }
 
 int
-repl_load_hex(struct repl_state *state, size_t sz)
+repl_load_hex(struct repl_state *state, const char *modname, const char *opt)
 {
         if (state->nmodules == MAX_MODULES) {
                 return EOVERFLOW;
         }
         struct repl_module_state *mod = &state->modules[state->nmodules];
         int ret;
+        size_t sz = atoi(opt);
         mod->bufsize = sz;
         mod->buf = malloc(mod->bufsize);
         if (mod->buf == NULL) {
@@ -329,7 +366,7 @@ repl_load_hex(struct repl_state *state, size_t sz)
                 xlog_printf("failed to read module from stdin\n");
                 goto fail;
         }
-        ret = repl_load_from_buf(state, mod);
+        ret = repl_load_from_buf(state, modname, mod);
         if (ret != 0) {
                 goto fail;
         }
@@ -341,21 +378,25 @@ fail:
 }
 
 int
-repl_save(struct repl_state *state, const char *filename)
+repl_save(struct repl_state *state, const char *modname, const char *filename)
 {
 #if defined(ENABLE_WRITER)
         if (state->nmodules == 0) {
                 return EPROTO;
         }
-        struct repl_module_state *mod = &state->modules[state->nmodules - 1];
+        struct repl_module_state *mod;
         int ret;
+        ret = find_mod(state, modname, &mod);
+        if (ret != 0) {
+                goto fail;
+        }
         ret = module_write(filename, mod->module);
         if (ret != 0) {
                 xlog_error("failed to write module %s (error %d)", filename,
                            ret);
                 goto fail;
         }
-        return 0;
+        ret = 0;
 fail:
         return ret;
 #else
@@ -364,7 +405,8 @@ fail:
 }
 
 int
-repl_register(struct repl_state *state, const char *module_name)
+repl_register(struct repl_state *state, const char *modname,
+              const char *register_name)
 {
         if (state->nmodules == 0) {
                 return EPROTO;
@@ -372,27 +414,33 @@ repl_register(struct repl_state *state, const char *module_name)
         if (state->nregister == MAX_MODULES) {
                 return EOVERFLOW;
         }
-        char *module_name1 = strdup(module_name);
-        if (module_name1 == NULL) {
-                return ENOMEM;
+        struct repl_module_state *mod;
+        int ret;
+        ret = find_mod(state, modname, &mod);
+        if (ret != 0) {
+                goto fail;
         }
-        struct repl_module_state *mod = &state->modules[state->nmodules - 1];
         struct instance *inst = mod->inst;
         assert(inst != NULL);
         struct import_object *im;
-        int ret;
-
+        char *register_modname1 = strdup(register_name);
+        if (register_modname1 == NULL) {
+                ret = ENOMEM;
+                goto fail;
+        }
         struct name *name = &state->registered_names[state->nregister];
-        set_name_cstr(name, module_name1);
+        set_name_cstr(name, register_modname1);
         ret = import_object_create_for_exports(inst, name, &im);
         if (ret != 0) {
-                free(module_name1);
-                return ret;
+                free(register_modname1);
+                goto fail;
         }
         im->next = state->imports;
         state->imports = im;
         state->nregister++;
-        return 0;
+        ret = 0;
+fail:
+        return ret;
 }
 
 int
@@ -601,7 +649,8 @@ unescape(char *p0, size_t *lenp)
  * "cmd" is like "add 1 2"
  */
 int
-repl_invoke(struct repl_state *state, const char *cmd, bool print_result)
+repl_invoke(struct repl_state *state, const char *modname, const char *cmd,
+            bool print_result)
 {
         char *cmd1 = strdup(cmd);
         if (cmd1 == NULL) {
@@ -625,12 +674,11 @@ repl_invoke(struct repl_state *state, const char *cmd, bool print_result)
         struct name funcname_name;
         funcname_name.data = funcname;
         funcname_name.nbytes = len;
-        if (state->nmodules == 0) {
-                xlog_printf("no module loaded\n");
-                ret = EPROTO;
+        struct repl_module_state *mod;
+        ret = find_mod(state, modname, &mod);
+        if (ret != 0) {
                 goto fail;
         }
-        struct repl_module_state *mod = &state->modules[state->nmodules - 1];
         struct instance *inst = mod->inst;
         struct module *module = mod->module;
         assert(inst != NULL);
@@ -739,6 +787,45 @@ repl_print_version(void)
 }
 
 int
+repl_module_subcmd(struct repl_state *state, const char *cmd,
+                   const char *modname, const char *opt)
+{
+        int ret;
+
+        if (!strcmp(cmd, "load") && opt != NULL) {
+                ret = repl_load(state, modname, opt);
+                if (ret != 0) {
+                        goto fail;
+                }
+        } else if (!strcmp(cmd, "load-hex") && opt != NULL) {
+                ret = repl_load_hex(state, modname, opt);
+                if (ret != 0) {
+                        goto fail;
+                }
+        } else if (!strcmp(cmd, "invoke") && opt != NULL) {
+                ret = repl_invoke(state, modname, opt, true);
+                if (ret != 0) {
+                        goto fail;
+                }
+        } else if (!strcmp(cmd, "register") && opt != NULL) {
+                ret = repl_register(state, modname, opt);
+                if (ret != 0) {
+                        goto fail;
+                }
+        } else if (!strcmp(cmd, "save") && opt != NULL) {
+                ret = repl_save(state, modname, opt);
+                if (ret != 0) {
+                        goto fail;
+                }
+        } else {
+                xlog_printf("Error: unknown command %s\n", cmd);
+                ret = 0;
+        }
+fail:
+        return ret;
+}
+
+int
 repl(void)
 {
         struct repl_state *state = g_repl_state;
@@ -762,33 +849,27 @@ repl(void)
                         repl_print_version();
                 } else if (!strcmp(cmd, ":init")) {
                         repl_reset(state);
-                } else if (!strcmp(cmd, ":load") && opt != NULL) {
-                        ret = repl_load(state, opt);
+                } else if (!strcmp(cmd, ":module") && opt != NULL) {
+                        char *modname = strtok(opt, " ");
+                        if (modname == NULL) {
+                                ret = EPROTO;
+                                goto fail;
+                        }
+                        char *subcmd = strtok(NULL, " ");
+                        if (subcmd == NULL) {
+                                ret = EPROTO;
+                                goto fail;
+                        }
+                        opt = strtok(NULL, "");
+                        ret = repl_module_subcmd(state, subcmd, modname, opt);
                         if (ret != 0) {
                                 goto fail;
                         }
-                } else if (!strcmp(cmd, ":load-hex") && opt != NULL) {
-                        ret = repl_load_hex(state, atoi(opt));
+                } else if (*cmd == ':') {
+                        ret = repl_module_subcmd(state, cmd + 1, NULL, opt);
                         if (ret != 0) {
                                 goto fail;
                         }
-                } else if (!strcmp(cmd, ":invoke") && opt != NULL) {
-                        ret = repl_invoke(state, opt, true);
-                        if (ret != 0) {
-                                goto fail;
-                        }
-                } else if (!strcmp(cmd, ":register") && opt != NULL) {
-                        ret = repl_register(state, opt);
-                        if (ret != 0) {
-                                goto fail;
-                        }
-                } else if (!strcmp(cmd, ":save") && opt != NULL) {
-                        ret = repl_save(state, opt);
-                        if (ret != 0) {
-                                goto fail;
-                        }
-                } else {
-                        xlog_printf("Error: unknown command %s\n", cmd);
                 }
                 continue;
 fail:
