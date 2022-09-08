@@ -756,6 +756,57 @@ fail:
         return ret;
 }
 
+int
+repl_global_get(struct repl_state *state, const char *modname,
+                const char *name_cstr)
+{
+        char *name1 = strdup(name_cstr);
+        if (name1 == NULL) {
+                return ENOMEM;
+        }
+        size_t len;
+        int ret;
+        ret = unescape(name1, &len);
+        if (ret != 0) {
+                xlog_error("failed to unescape name");
+                goto fail;
+        }
+        struct name name;
+        name.data = name1;
+        name.nbytes = len;
+        struct repl_module_state *mod;
+        ret = find_mod(state, modname, &mod);
+        if (ret != 0) {
+                goto fail;
+        }
+        struct instance *inst = mod->inst;
+        struct module *module = mod->module;
+        assert(inst != NULL);
+        assert(module != NULL);
+        uint32_t idx;
+        ret = module_find_export(module, &name, EXPORT_GLOBAL, &idx);
+        if (ret != 0) {
+                xlog_error("module_find_export failed for %s", name_cstr);
+                goto fail;
+        }
+        const struct globaltype *gt = module_globaltype(module, idx);
+        enum valtype type = gt->t;
+        const struct resulttype rtype = {
+                .types = &type,
+                .ntypes = 1,
+        };
+        struct val val = VEC_ELEM(inst->globals, idx)->val;
+        ret = repl_print_result(&rtype, &val);
+        if (ret != 0) {
+                xlog_printf("print_result failed\n");
+                goto fail;
+        }
+        ret = 0;
+fail:
+        free(name1);
+        return ret;
+}
+
 void
 repl_print_version(void)
 {
@@ -814,6 +865,11 @@ repl_module_subcmd(struct repl_state *state, const char *cmd,
                 }
         } else if (!strcmp(cmd, "save") && opt != NULL) {
                 ret = repl_save(state, modname, opt);
+                if (ret != 0) {
+                        goto fail;
+                }
+        } else if (!strcmp(cmd, "global-get") && opt != NULL) {
+                ret = repl_global_get(state, modname, opt);
                 if (ret != 0) {
                         goto fail;
                 }

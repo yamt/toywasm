@@ -53,21 +53,28 @@ is_valtype(enum valtype vt)
 }
 
 int
-module_find_export_func(struct module *m, const struct name *name,
-                        uint32_t *funcidxp)
+module_find_export(struct module *m, const struct name *name, uint32_t type,
+                   uint32_t *idxp)
 {
         uint32_t i;
         for (i = 0; i < m->nexports; i++) {
                 const struct export *ex = &m->exports[i];
                 if (!compare_name(&ex->name, name)) {
                         const struct exportdesc *exd = &ex->desc;
-                        if (exd->type == EXPORT_FUNC) {
-                                *funcidxp = exd->idx;
+                        if (exd->type == type) {
+                                *idxp = exd->idx;
                                 return 0;
                         }
                 }
         }
         return ENOENT;
+}
+
+int
+module_find_export_func(struct module *m, const struct name *name,
+                        uint32_t *funcidxp)
+{
+        return module_find_export(m, name, EXPORT_FUNC, funcidxp);
 }
 
 const struct import *
