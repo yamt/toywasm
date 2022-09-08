@@ -331,7 +331,7 @@ struct funcinst {
 
 struct meminst {
         uint8_t *data;
-        uint32_t size_in_pages;
+        uint32_t size_in_pages; /* overrides type->min */
         uint32_t allocated;
         const struct limits *type;
 };
@@ -343,7 +343,7 @@ struct globalinst {
 
 struct tableinst {
         struct val *vals;
-        uint32_t size;
+        uint32_t size; /* overrides type->min */
         const struct tabletype *type;
 };
 

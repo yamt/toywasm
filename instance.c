@@ -87,20 +87,24 @@ find_import_entry(const struct module *m, enum importtype type, uint32_t idx,
 /* return if a (which is an external type) matches b */
 
 bool
-match_limits(const struct limits *a, const struct limits *b)
+match_limits(const struct limits *a, const struct limits *b,
+             uint32_t actual_a_min)
 {
-        if (a->min >= b->min && (b->max == UINT32_MAX ||
-                                 (a->max != UINT32_MAX &&
-                                  b->max != UINT32_MAX && a->max <= b->max))) {
+        assert(a->min <= actual_a_min); /* never shrink */
+        if (actual_a_min >= b->min &&
+            (b->max == UINT32_MAX ||
+             (a->max != UINT32_MAX && b->max != UINT32_MAX &&
+              a->max <= b->max))) {
                 return true;
         }
         return false;
 }
 
 bool
-match_tabletype(const struct tabletype *a, const struct tabletype *b)
+match_tabletype(const struct tabletype *a, const struct tabletype *b,
+                uint32_t a_min)
 {
-        return a->et == b->et && match_limits(&a->lim, &b->lim);
+        return a->et == b->et && match_limits(&a->lim, &b->lim, a_min);
 }
 
 int
@@ -121,8 +125,9 @@ check_tabletype(const struct import_object_entry *e, const void *vp)
 {
         const struct tabletype *tt = vp;
         assert(e->type == IMPORT_TABLE);
-        const struct tabletype *tt_imported = e->u.table->type;
-        if (!match_tabletype(tt_imported, tt)) {
+        const struct tableinst *ti = e->u.table;
+        const struct tabletype *tt_imported = ti->type;
+        if (!match_tabletype(tt_imported, tt, ti->size)) {
                 return EINVAL;
         }
         return 0;
@@ -133,8 +138,9 @@ check_memtype(const struct import_object_entry *e, const void *vp)
 {
         const struct limits *mt = vp;
         assert(e->type == IMPORT_MEMORY);
-        const struct limits *mt_imported = e->u.mem->type;
-        if (!match_limits(mt_imported, mt)) {
+        const struct meminst *mi = e->u.mem;
+        const struct limits *mt_imported = mi->type;
+        if (!match_limits(mt_imported, mt, mi->size_in_pages)) {
                 return EINVAL;
         }
         return 0;
