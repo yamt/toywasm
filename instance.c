@@ -165,8 +165,34 @@ int
 instance_create(struct module *m, struct instance **instp,
                 const struct import_object *imports, struct report *report)
 {
+        struct instance *inst;
+        int ret;
+
+        ret = instance_create_no_init(m, &inst, imports, report);
+        if (ret != 0) {
+                return ret;
+        }
+
         struct exec_context ctx0;
         struct exec_context *ctx = NULL;
+        ctx = &ctx0;
+        exec_context_init(ctx, inst);
+        ctx->report = report;
+        ret = instance_create_execute_init(inst, ctx);
+        exec_context_clear(ctx);
+        if (ret != 0) {
+                instance_destroy(inst);
+        } else {
+                *instp = inst;
+        }
+        return ret;
+}
+
+int
+instance_create_no_init(struct module *m, struct instance **instp,
+                        const struct import_object *imports,
+                        struct report *report)
+{
         struct instance *inst;
         uint32_t i;
         int ret;
@@ -315,9 +341,22 @@ instance_create(struct module *m, struct instance **instp,
         if (ret != 0) {
                 goto fail;
         }
-        ctx = &ctx0;
-        exec_context_init(ctx, inst);
-        ctx->report = report;
+        *instp = inst;
+        return 0;
+fail:
+        if (inst != NULL) {
+                instance_destroy(inst);
+        }
+        return ret;
+}
+
+int
+instance_create_execute_init(struct instance *inst, struct exec_context *ctx)
+{
+        const struct module *m = inst->module;
+        uint32_t i;
+        int ret;
+
         for (i = 0; i < m->nglobals; i++) {
                 struct globalinst *ginst =
                         VEC_ELEM(inst->globals, m->nimportedglobals + i);
@@ -375,16 +414,8 @@ instance_create(struct module *m, struct instance **instp,
                         goto fail;
                 }
         }
-        exec_context_clear(ctx);
-        *instp = inst;
         return 0;
 fail:
-        if (ctx != NULL) {
-                exec_context_clear(ctx);
-        }
-        if (inst != NULL) {
-                instance_destroy(inst);
-        }
         return ret;
 }
 

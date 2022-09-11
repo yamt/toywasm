@@ -16,6 +16,20 @@ struct name;
 int instance_create(struct module *m, struct instance **instp,
                     const struct import_object *imports,
                     struct report *report);
+
+/*
+ * Instead of instance_create, you can use instance_create_no_init and
+ * then instance_create_execute_init. That way you might be able to handle
+ * some kind of errors more flexibly. These functions are introduced
+ * to deal with some of corner cases you can see in opam-2.0.0 linking.wast.
+ * cf. https://github.com/WebAssembly/spec/issues/1530
+ */
+int instance_create_no_init(struct module *m, struct instance **instp,
+                            const struct import_object *imports,
+                            struct report *report);
+int instance_create_execute_init(struct instance *inst,
+                                 struct exec_context *ctx);
+
 /*
  * Note: If you have multiple instances linked together
  * with import/export, usually the only safe way to destroy those
