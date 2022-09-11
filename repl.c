@@ -267,9 +267,77 @@ find_mod(struct repl_state *state, const char *modname,
         return ENOENT;
 }
 
+void
+print_trap(const struct exec_context *ctx)
+{
+        /* the messages here are aimed to match assert_trap in wast */
+        enum trapid id = ctx->trapid;
+        const char *msg = "unknown";
+        const char *trapmsg = ctx->report->msg;
+        switch (id) {
+        case TRAP_DIV_BY_ZERO:
+                msg = "integer divide by zero";
+                break;
+        case TRAP_INTEGER_OVERFLOW:
+                msg = "integer overflow";
+                break;
+        case TRAP_OUT_OF_BOUNDS_MEMORY_ACCESS:
+        case TRAP_OUT_OF_BOUNDS_DATA_ACCESS:
+                msg = "out of bounds memory access";
+                break;
+        case TRAP_OUT_OF_BOUNDS_TABLE_ACCESS:
+        case TRAP_OUT_OF_BOUNDS_ELEMENT_ACCESS:
+                msg = "out of bounds table access";
+                break;
+        case TRAP_CALL_INDIRECT_NULL_FUNCREF:
+                msg = "uninitialized element";
+                break;
+        case TRAP_TOO_MANY_FRAMES:
+        case TRAP_TOO_MANY_STACKVALS:
+                msg = "stack overflow";
+                break;
+        case TRAP_CALL_INDIRECT_OUT_OF_BOUNDS_TABLE_ACCESS:
+                msg = "undefined element";
+                break;
+        case TRAP_CALL_INDIRECT_FUNCTYPE_MISMATCH:
+                msg = "indirect call type mismatch";
+                break;
+        case TRAP_UNREACHABLE:
+                msg = "unreachable executed";
+                break;
+        case TRAP_INVALID_CONVERSION_TO_INTEGER:
+                msg = "invalid conversion to integer";
+                break;
+        default:
+                break;
+        }
+        if (trapmsg == NULL) {
+                trapmsg = "no message";
+        }
+        printf("Error: [trap] %s (%u): %s\n", msg, id, trapmsg);
+}
+
+int
+repl_exec_init(struct repl_module_state *mod, bool trap_ok)
+{
+        struct exec_context ctx0;
+        struct exec_context *ctx = &ctx0;
+        int ret;
+        exec_context_init(ctx, mod->inst);
+        ret = instance_create_execute_init(mod->inst, ctx);
+        if (ret == EFAULT && ctx->trapped) {
+                print_trap(ctx);
+                if (trap_ok) {
+                        ret = 0;
+                }
+        }
+        exec_context_clear(ctx);
+        return ret;
+}
+
 int
 repl_load_from_buf(struct repl_state *state, const char *modname,
-                   struct repl_module_state *mod)
+                   struct repl_module_state *mod, bool trap_ok)
 {
         int ret;
         ret = module_create(&mod->module);
@@ -295,8 +363,8 @@ repl_load_from_buf(struct repl_state *state, const char *modname,
         }
         struct report report;
         report_init(&report);
-        ret = instance_create(mod->module, &mod->inst, state->imports,
-                              &report);
+        ret = instance_create_no_init(mod->module, &mod->inst, state->imports,
+                                      &report);
         if (report.msg != NULL) {
                 xlog_error("instance_create: %s", report.msg);
                 printf("instantiation error: %s\n", report.msg);
@@ -305,7 +373,12 @@ repl_load_from_buf(struct repl_state *state, const char *modname,
         }
         report_clear(&report);
         if (ret != 0) {
-                xlog_printf("instance_create failed\n");
+                xlog_printf("instance_create_no_init failed\n");
+                goto fail;
+        }
+        ret = repl_exec_init(mod, trap_ok);
+        if (ret != 0) {
+                xlog_printf("repl_exec_init failed\n");
                 goto fail;
         }
         if (modname != NULL) {
@@ -315,6 +388,7 @@ repl_load_from_buf(struct repl_state *state, const char *modname,
                         goto fail;
                 }
         }
+        ret = 0;
 fail:
         return ret;
 }
@@ -333,7 +407,7 @@ repl_load(struct repl_state *state, const char *modname, const char *filename)
                 goto fail;
         }
         mod->buf_mapped = true;
-        ret = repl_load_from_buf(state, modname, mod);
+        ret = repl_load_from_buf(state, modname, mod, true);
         if (ret != 0) {
                 goto fail;
         }
@@ -366,7 +440,7 @@ repl_load_hex(struct repl_state *state, const char *modname, const char *opt)
                 xlog_printf("failed to read module from stdin\n");
                 goto fail;
         }
-        ret = repl_load_from_buf(state, modname, mod);
+        ret = repl_load_from_buf(state, modname, mod, true);
         if (ret != 0) {
                 goto fail;
         }
@@ -539,56 +613,6 @@ repl_print_result(const struct resulttype *rt, const struct val *vals)
         }
         printf("\n");
         return ret;
-}
-
-void
-print_trap(const struct exec_context *ctx)
-{
-        /* the messages here are aimed to match assert_trap in wast */
-        enum trapid id = ctx->trapid;
-        const char *msg = "unknown";
-        const char *trapmsg = ctx->report->msg;
-        switch (id) {
-        case TRAP_DIV_BY_ZERO:
-                msg = "integer divide by zero";
-                break;
-        case TRAP_INTEGER_OVERFLOW:
-                msg = "integer overflow";
-                break;
-        case TRAP_OUT_OF_BOUNDS_MEMORY_ACCESS:
-        case TRAP_OUT_OF_BOUNDS_DATA_ACCESS:
-                msg = "out of bounds memory access";
-                break;
-        case TRAP_OUT_OF_BOUNDS_TABLE_ACCESS:
-        case TRAP_OUT_OF_BOUNDS_ELEMENT_ACCESS:
-                msg = "out of bounds table access";
-                break;
-        case TRAP_CALL_INDIRECT_NULL_FUNCREF:
-                msg = "uninitialized element";
-                break;
-        case TRAP_TOO_MANY_FRAMES:
-        case TRAP_TOO_MANY_STACKVALS:
-                msg = "stack overflow";
-                break;
-        case TRAP_CALL_INDIRECT_OUT_OF_BOUNDS_TABLE_ACCESS:
-                msg = "undefined element";
-                break;
-        case TRAP_CALL_INDIRECT_FUNCTYPE_MISMATCH:
-                msg = "indirect call type mismatch";
-                break;
-        case TRAP_UNREACHABLE:
-                msg = "unreachable executed";
-                break;
-        case TRAP_INVALID_CONVERSION_TO_INTEGER:
-                msg = "invalid conversion to integer";
-                break;
-        default:
-                break;
-        }
-        if (trapmsg == NULL) {
-                trapmsg = "no message";
-        }
-        printf("Error: [trap] %s (%u): %s\n", msg, id, trapmsg);
 }
 
 int
