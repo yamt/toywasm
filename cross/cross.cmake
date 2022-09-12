@@ -1,0 +1,52 @@
+# usage:
+#
+# mkdir b
+# cd b
+# cmake -DCMAKE_TOOLCHAIN_FILE=../cross/cross.cmake ..
+
+# https://cmake.org/cmake/help/book/mastering-cmake/chapter/Cross%20Compiling%20With%20CMake.html#toolchain-files
+
+# Note for ubuntu
+#
+# crossbuild-essential-arm64 populate files under
+# /usr/aarch64-linux-gnu.
+# On the other hand, -dev packages seem to share /usr/include among archs.
+# eg. libcmocka-dev:arm64 on amd64 looks like:
+#
+# 9bff2fafd65e# dpkg -L libcmocka-dev:arm64
+# /.
+# /usr
+# /usr/include
+# /usr/include/cmocka.h
+# /usr/include/cmocka_pbc.h
+# /usr/include/cmockery
+# /usr/include/cmockery/cmockery.h
+# /usr/include/cmockery/pbc.h
+# /usr/lib
+# /usr/lib/aarch64-linux-gnu
+# /usr/lib/aarch64-linux-gnu/cmake
+# /usr/lib/aarch64-linux-gnu/cmake/cmocka
+# /usr/lib/aarch64-linux-gnu/cmake/cmocka/cmocka-config-version.cmake
+# /usr/lib/aarch64-linux-gnu/cmake/cmocka/cmocka-config.cmake
+# /usr/lib/aarch64-linux-gnu/pkgconfig
+# /usr/lib/aarch64-linux-gnu/pkgconfig/cmocka.pc
+# /usr/share
+# /usr/share/doc
+# /usr/share/doc/libcmocka-dev
+# /usr/share/doc/libcmocka-dev/copyright
+# /usr/lib/aarch64-linux-gnu/libcmocka.so
+# /usr/lib/aarch64-linux-gnu/libcmockery.so
+# /usr/share/doc/libcmocka-dev/changelog.Debian.gz
+# 9bff2fafd65e# 
+#
+# https://wiki.ubuntu.com/MultiarchCross
+
+set(TRIPLET aarch64-linux-gnu)
+set(CMAKE_SYSTEM_NAME Linux)
+set(CMAKE_C_COMPILER_TARGET ${TRIPLET})
+set(CMAKE_C_COMPILER clang-11)
+set(CMAKE_C_FLAGS_INIT "-isystem /usr/${TRIPLET}/include")
+set(CMAKE_FIND_ROOT_PATH ${SYSROOT})
+set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
