@@ -1,5 +1,8 @@
 # usage:
 #
+# dpkg --add-architecture arm64
+# apt update
+# apt install -y crossbuild-essential-arm64 libcmocka-dev:arm64 wabt
 # mkdir b
 # cd b
 # cmake -DCMAKE_TOOLCHAIN_FILE=../cross/cross.cmake ..
@@ -40,13 +43,21 @@
 # 9bff2fafd65e# 
 #
 # https://wiki.ubuntu.com/MultiarchCross
+#
+# REVISIT: is it expected to use PKG_CONFIG_LIBDIR?
+# eg. PKG_CONFIG_LIBDIR=/usr/lib/aarch64-linux-gnu/pkgconfig/
 
 set(TRIPLET aarch64-linux-gnu)
 set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_C_COMPILER_TARGET ${TRIPLET})
 set(CMAKE_C_COMPILER clang-11)
+set(CMAKE_CXX_COMPILER clang++-11)
 set(CMAKE_C_FLAGS_INIT "-isystem /usr/${TRIPLET}/include")
-set(CMAKE_FIND_ROOT_PATH ${SYSROOT})
+set(CMAKE_CXX_FLAGS_INIT "-isystem /usr/${TRIPLET}/include")
+set(CMAKE_FIND_ROOT_PATH /usr/${TRIPLET})
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+
+# REVISIT: The following doesn't seem to work well for some of
+# libraries on ubuntu. eg. libxml2
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
