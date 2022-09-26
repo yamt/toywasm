@@ -16,4 +16,4 @@ fetch_wasm3()
 
 test -d "${WASM3_DIR}" || fetch_wasm3
 cd "${WASM3_DIR}/test"
-exec python3 ./run-spec-test.py "$@"
+exec python3 ./run-wasi-test.py "$@"
