@@ -210,6 +210,10 @@ read_limits(const uint8_t **pp, const uint8_t *ep, struct limits *lim)
                 has_max = false;
                 break;
         default:
+                /*
+                 * 0x2: shared (threads proposal)
+                 * 0x4: 64-bit (memory64 proposal)
+                 */
                 ret = EINVAL;
                 goto fail;
         }
