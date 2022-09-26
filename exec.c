@@ -178,7 +178,10 @@ set_current_frame(struct exec_context *ctx, const struct funcframe *frame,
 
 /*
  * Note: the parameters of this function is redundant.
- * localtype, paramtype, nresults can be obtained from instance+funcidx.
+ * - for functions, localtype, paramtype, nresults can be obtained
+ *   from instance+funcidx.
+ * - const exprs, where funcidx is FUNCIDX_INVALID, do never have
+ *   locals or parameters.
  */
 int
 frame_enter(struct exec_context *ctx, struct instance *inst, uint32_t funcidx,
@@ -186,6 +189,9 @@ frame_enter(struct exec_context *ctx, struct instance *inst, uint32_t funcidx,
             const struct resulttype *paramtype, uint32_t nresults,
             const struct cell *params)
 {
+        assert(funcidx != FUNCIDX_INVALID ||
+               (localtype->nlocals == 0 && paramtype->ntypes == 0));
+
         /*
          * Note: params can be in ctx->stack.
          * Be careful when resizing the later.
