@@ -838,6 +838,10 @@ repl_print_version(void)
 #if defined(__clang_version__)
         printf("__clang_version__ = %s\n", __clang_version__);
 #endif
+#if defined(__BYTE_ORDER__)
+        printf("__BYTE_ORDER__ is %u (__ORDER_LITTLE_ENDIAN__ is %u)\n",
+               __BYTE_ORDER__, __ORDER_LITTLE_ENDIAN__);
+#endif
 #if defined(__wasi__)
         printf("__wasi__ defined\n");
 #endif
