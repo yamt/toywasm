@@ -83,7 +83,12 @@ endif()
 
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
 if (CMAKE_C_COMPILER_ID MATCHES "Clang")
+# lld doesn't seem to support s390
+# ld.lld: error: unknown emulation: elf64_s390
+# https://github.com/llvm/llvm-project/blob/93b7bdcda7072581ef3f5ceaae8c4f0d549a0845/lld/ELF/Driver.cpp#L142-L166
+if(NOT TRIPLET MATCHES "s390")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=lld")
+endif()
 endif()
 endif()
 
