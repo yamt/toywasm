@@ -16,7 +16,7 @@
 #include "util.h"
 #include "xlog.h"
 
-int
+static int
 read_op(const uint8_t **pp, const uint8_t *ep,
         const struct instruction_desc **descp)
 {

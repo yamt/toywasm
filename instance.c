@@ -13,7 +13,7 @@
 #include "util.h"
 #include "xlog.h"
 
-int
+static int
 find_entry_for_import(
         const struct import_object *imports, const struct import *im,
         int (*check)(const struct import_object_entry *e, const void *arg),
@@ -64,7 +64,7 @@ find_entry_for_import(
         return ENOENT;
 }
 
-int
+static int
 find_import_entry(const struct module *m, enum importtype type, uint32_t idx,
                   const struct import_object *imports,
                   int (*check)(const struct import_object_entry *e,
@@ -86,7 +86,7 @@ find_import_entry(const struct module *m, enum importtype type, uint32_t idx,
 
 /* return if a (which is an external type) matches b */
 
-bool
+static bool
 match_limits(const struct limits *a, const struct limits *b,
              uint32_t actual_a_min)
 {
@@ -100,14 +100,14 @@ match_limits(const struct limits *a, const struct limits *b,
         return false;
 }
 
-bool
+static bool
 match_tabletype(const struct tabletype *a, const struct tabletype *b,
                 uint32_t a_min)
 {
         return a->et == b->et && match_limits(&a->lim, &b->lim, a_min);
 }
 
-int
+static int
 check_functype(const struct import_object_entry *e, const void *vp)
 {
         const struct functype *ft = vp;
@@ -120,7 +120,7 @@ check_functype(const struct import_object_entry *e, const void *vp)
         return 0;
 }
 
-int
+static int
 check_tabletype(const struct import_object_entry *e, const void *vp)
 {
         const struct tabletype *tt = vp;
@@ -133,7 +133,7 @@ check_tabletype(const struct import_object_entry *e, const void *vp)
         return 0;
 }
 
-int
+static int
 check_memtype(const struct import_object_entry *e, const void *vp)
 {
         const struct limits *mt = vp;
@@ -146,7 +146,7 @@ check_memtype(const struct import_object_entry *e, const void *vp)
         return 0;
 }
 
-int
+static int
 check_globaltype(const struct import_object_entry *e, const void *vp)
 {
         const struct globaltype *gt = vp;

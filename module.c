@@ -29,7 +29,7 @@ struct section {
         const uint8_t *data;
 };
 
-int
+static int
 section_load(struct section *s, const uint8_t **pp, const uint8_t *ep)
 {
         const uint8_t *p = *pp;
@@ -62,7 +62,8 @@ fail:
         return ret;
 }
 
-const char *
+#if defined(ENABLE_TRACING)
+static const char *
 valtype_str(enum valtype vt)
 {
         static const char *types[] = {
@@ -75,9 +76,10 @@ valtype_str(enum valtype vt)
                 [TYPE_EXTERNREF] = "externref",
         };
         return types[vt];
-};
+}
+#endif
 
-int
+static int
 read_valtype(const uint8_t **pp, const uint8_t *ep, enum valtype *vt)
 {
         const uint8_t *p = *pp;
@@ -99,7 +101,7 @@ fail:
         return ret;
 }
 
-int
+static int
 read_resulttype(const uint8_t **pp, const uint8_t *ep, struct resulttype *rt)
 {
         const uint8_t *p = *pp;
@@ -125,7 +127,7 @@ clear_resulttype(struct resulttype *rt)
         free(rt->types);
 }
 
-int
+static int
 read_functype(const uint8_t **pp, const uint8_t *ep, struct functype *ft)
 {
         const uint8_t *p = *pp;
@@ -164,7 +166,8 @@ clear_functype(struct functype *ft)
         clear_resulttype(&ft->result);
 }
 
-void
+#if 0
+static void
 print_resulttype(const struct resulttype *rt)
 {
         const char *sep = "";
@@ -177,8 +180,9 @@ print_resulttype(const struct resulttype *rt)
         }
         xlog_printf_raw("]");
 }
+#endif
 
-void
+static void
 print_functype(uint32_t i, const struct functype *ft)
 {
 #if 0
@@ -190,7 +194,7 @@ print_functype(uint32_t i, const struct functype *ft)
 #endif
 }
 
-int
+static int
 read_limits(const uint8_t **pp, const uint8_t *ep, struct limits *lim)
 {
         const uint8_t *p = *pp;
@@ -245,7 +249,7 @@ fail:
         return ret;
 }
 
-int
+static int
 read_memtype(const uint8_t **pp, const uint8_t *ep, struct limits *lim)
 {
         int ret = read_limits(pp, ep, lim);
@@ -262,7 +266,7 @@ read_memtype(const uint8_t **pp, const uint8_t *ep, struct limits *lim)
         return ret;
 }
 
-int
+static int
 read_globaltype(const uint8_t **pp, const uint8_t *ep, struct globaltype *g)
 {
         const uint8_t *p = *pp;
@@ -295,7 +299,7 @@ fail:
         return ret;
 }
 
-int
+static int
 check_utf8(const uint8_t *p, const uint8_t *ep)
 {
         int ret;
@@ -364,7 +368,7 @@ fail:
         return ret;
 }
 
-int
+static int
 read_name(const uint8_t **pp, const uint8_t *ep, struct name *namep)
 {
         const uint8_t *p = *pp;
@@ -409,7 +413,7 @@ clear_name(struct name *name)
 {
 }
 
-int
+static int
 read_tabletype(const uint8_t **pp, const uint8_t *ep, struct tabletype *tt)
 {
         const uint8_t *p = *pp;
@@ -433,7 +437,7 @@ fail:
         return ret;
 }
 
-int
+static int
 read_importdesc(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
                 struct importdesc *desc, struct load_context *ctx)
 {
@@ -491,7 +495,7 @@ fail:
         return ret;
 }
 
-int
+static int
 read_exportdesc(const uint8_t **pp, const uint8_t *ep, struct exportdesc *desc,
                 struct load_context *ctx)
 {
@@ -555,7 +559,7 @@ fail:
         return ret;
 }
 
-int
+static int
 read_import(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
             struct import *im, void *ctx)
 {
@@ -582,14 +586,14 @@ fail:
         return ret;
 }
 
-void
+static void
 clear_import(struct import *im)
 {
         clear_name(&im->module_name);
         clear_name(&im->name);
 }
 
-int
+static int
 read_export(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
             struct export *ex, void *vctx)
 {
@@ -613,27 +617,27 @@ fail:
         return ret;
 }
 
-void
+static void
 clear_export(struct export *ex)
 {
         clear_name(&ex->name);
 }
 
-void
+static void
 print_import(const struct import *im)
 {
         xlog_trace("import module %.*s name %.*s type %u",
                    CSTR(&im->module_name), CSTR(&im->name), im->desc.type);
 }
 
-void
+static void
 print_export(const struct export *ex)
 {
         xlog_trace("export name %.*s type %u idx %" PRIu32, CSTR(&ex->name),
                    ex->desc.type, ex->desc.idx);
 }
 
-int
+static int
 read_type_section(const uint8_t **pp, const uint8_t *ep,
                   struct load_context *ctx)
 {
@@ -658,7 +662,7 @@ fail:
         return ret;
 }
 
-int
+static int
 read_import_section(const uint8_t **pp, const uint8_t *ep,
                     struct load_context *ctx)
 {
@@ -682,7 +686,7 @@ fail:
         return ret;
 }
 
-int
+static int
 read_locals(const uint8_t **pp, const uint8_t *ep, struct func *func)
 {
         const uint8_t *p = *pp;
@@ -735,7 +739,7 @@ fail:
         return ret;
 }
 
-int
+static int
 read_func(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
           struct func *func, void *vp)
 {
@@ -788,7 +792,7 @@ fail:
         return ret;
 }
 
-void
+static void
 clear_expr_exec_info(struct expr_exec_info *ei)
 {
         free(ei->jumps);
@@ -797,13 +801,13 @@ clear_expr_exec_info(struct expr_exec_info *ei)
 #endif
 }
 
-void
+static void
 clear_expr(struct expr *expr)
 {
         clear_expr_exec_info(&expr->ei);
 }
 
-void
+static void
 clear_func(struct func *func)
 {
         struct localtype *lt = &func->localtype;
@@ -811,7 +815,7 @@ clear_func(struct func *func)
         clear_expr(&func->e);
 }
 
-int
+static int
 read_function_section(const uint8_t **pp, const uint8_t *ep,
                       struct load_context *ctx)
 {
@@ -846,7 +850,7 @@ fail:
         return ret;
 }
 
-int
+static int
 read_table_section(const uint8_t **pp, const uint8_t *ep,
                    struct load_context *ctx)
 {
@@ -873,7 +877,7 @@ fail:
         return ret;
 }
 
-int
+static int
 read_memory_section(const uint8_t **pp, const uint8_t *ep,
                     struct load_context *ctx)
 {
@@ -900,7 +904,7 @@ fail:
         return ret;
 }
 
-int
+static int
 read_global(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
             struct global *g, void *vctx)
 {
@@ -923,13 +927,13 @@ fail:
         return ret;
 }
 
-void
+static void
 clear_global(struct global *g)
 {
         clear_expr(&g->init);
 }
 
-int
+static int
 read_global_section(const uint8_t **pp, const uint8_t *ep,
                     struct load_context *ctx)
 {
@@ -956,7 +960,7 @@ fail:
         return ret;
 }
 
-int
+static int
 read_export_section(const uint8_t **pp, const uint8_t *ep,
                     struct load_context *ctx)
 {
@@ -981,7 +985,7 @@ fail:
         return ret;
 }
 
-int
+static int
 read_start_section(const uint8_t **pp, const uint8_t *ep,
                    struct load_context *ctx)
 {
@@ -1017,7 +1021,7 @@ struct read_element_init_expr_context {
         struct element *elem;
 };
 
-int
+static int
 read_element_init_expr(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
                        struct expr *e, void *vctx)
 {
@@ -1034,7 +1038,7 @@ read_element_init_expr(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
  * https://webassembly.github.io/spec/core/binary/modules.html#element-section
  * https://webassembly.github.io/spec/core/valid/modules.html#element-segments
  */
-int
+static int
 read_element(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
              struct element *elem, void *vctx)
 {
@@ -1196,7 +1200,7 @@ fail:
         return ret;
 }
 
-void
+static void
 clear_element(struct element *elem)
 {
         if (elem->init_exprs != NULL) {
@@ -1209,13 +1213,14 @@ clear_element(struct element *elem)
         free(elem->funcs);
         clear_expr(&elem->offset);
 }
-void
+
+static void
 print_element(uint32_t idx, const struct element *elem)
 {
         xlog_trace("element [%" PRIu32 "] %s", idx, valtype_str(elem->type));
 }
 
-int
+static int
 read_element_section(const uint8_t **pp, const uint8_t *ep,
                      struct load_context *ctx)
 {
@@ -1240,7 +1245,7 @@ fail:
         return ret;
 }
 
-int
+static int
 read_code_section(const uint8_t **pp, const uint8_t *ep,
                   struct load_context *ctx)
 {
@@ -1279,7 +1284,7 @@ fail:
         return ret;
 }
 
-int
+static int
 read_data(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
           struct data *data, void *vctx)
 {
@@ -1342,20 +1347,20 @@ fail:
         return ret;
 }
 
-void
+static void
 clear_data(struct data *data)
 {
         clear_expr(&data->offset);
 }
 
-void
+static void
 print_data(uint32_t idx, const struct data *data)
 {
         xlog_trace("data [%" PRIu32 "] %" PRIu32 " bytes", idx,
                    data->init_size);
 }
 
-int
+static int
 read_data_section(const uint8_t **pp, const uint8_t *ep,
                   struct load_context *ctx)
 {
@@ -1380,7 +1385,7 @@ fail:
         return ret;
 }
 
-int
+static int
 read_datacount_section(const uint8_t **pp, const uint8_t *ep,
                        struct load_context *ctx)
 {
@@ -1399,7 +1404,7 @@ fail:
         return ret;
 }
 
-int
+static int
 read_custom_section(const uint8_t **pp, const uint8_t *ep,
                     struct load_context *ctx)
 {
@@ -1437,7 +1442,7 @@ struct section_type {
 #define SECTION(n, o)                                                         \
         [SECTION_ID_##n] = {.name = #n, .read = read_##n##_section, .order = o}
 
-const struct section_type section_types[] = {
+static const struct section_type section_types[] = {
         SECTION(custom, 0),     SECTION(type, 1),   SECTION(import, 2),
         SECTION(function, 3),   SECTION(table, 4),  SECTION(memory, 5),
         SECTION(global, 6),     SECTION(export, 7), SECTION(start, 8),
@@ -1445,7 +1450,7 @@ const struct section_type section_types[] = {
         SECTION(datacount, 10),
 };
 
-const struct section_type *
+static const struct section_type *
 get_section_type(uint8_t id)
 {
         if (id >= ARRAYCOUNT(section_types)) {
