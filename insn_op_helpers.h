@@ -59,17 +59,17 @@
 #define FCOPYSIGN64(N, a, b) copysign(a, b)
 
 #define TRUNC_SAT_S_32_32(R, A)                                               \
-        TRUNC_SAT(R, float, INT32_MIN, INT32_MAX, truncf, A)
+        TRUNC_SAT(R, float, INT32_MIN, INT32_MAX, (int32_t)truncf, A)
 #define TRUNC_SAT_U_32_32(R, A) TRUNC_SAT(R, float, 0, UINT32_MAX, truncf, A)
 #define TRUNC_SAT_S_64_32(R, A)                                               \
-        TRUNC_SAT(R, double, INT32_MIN, INT32_MAX, trunc, A)
+        TRUNC_SAT(R, double, INT32_MIN, INT32_MAX, (int32_t)trunc, A)
 #define TRUNC_SAT_U_64_32(R, A) TRUNC_SAT(R, double, 0, UINT32_MAX, trunc, A)
 
 #define TRUNC_SAT_S_32_64(R, A)                                               \
-        TRUNC_SAT(R, float, INT64_MIN, INT64_MAX, truncf, A)
+        TRUNC_SAT(R, float, INT64_MIN, INT64_MAX, (int64_t)truncf, A)
 #define TRUNC_SAT_U_32_64(R, A) TRUNC_SAT(R, float, 0, UINT64_MAX, truncf, A)
 #define TRUNC_SAT_S_64_64(R, A)                                               \
-        TRUNC_SAT(R, double, INT64_MIN, INT64_MAX, trunc, A)
+        TRUNC_SAT(R, double, INT64_MIN, INT64_MAX, (int64_t)trunc, A)
 #define TRUNC_SAT_U_64_64(R, A) TRUNC_SAT(R, double, 0, UINT64_MAX, trunc, A)
 
 /*
@@ -86,21 +86,23 @@
  *    0x7fffffp+8 < INT32_MAX == 0x7fffffff < 0x800000p+8
  */
 #define TRUNC_S_32_32(R, A)                                                   \
-        TRUNC(R, -0x800001p+8, 0x800000p+8, INT32_MIN, INT32_MAX, truncf, A)
+        TRUNC(R, -0x800001p+8, 0x800000p+8, INT32_MIN, INT32_MAX,             \
+              (int32_t)truncf, A)
 #define TRUNC_U_32_32(R, A)                                                   \
         TRUNC(R, -1.0, 0x800000p+9, 0, UINT32_MAX, truncf, A)
 #define TRUNC_S_64_32(R, A)                                                   \
         TRUNC(R, INT32_MIN - 1.0, INT32_MAX + 1.0, INT32_MIN, INT32_MAX,      \
-              trunc, A)
+              (int32_t)trunc, A)
 #define TRUNC_U_64_32(R, A)                                                   \
         TRUNC(R, -1.0, UINT32_MAX + 1.0, 0, UINT32_MAX, trunc, A)
 
 #define TRUNC_S_32_64(R, A)                                                   \
-        TRUNC(R, -0x800001p+40, 0x800000p+40, INT64_MIN, INT64_MAX, truncf, A)
+        TRUNC(R, -0x800001p+40, 0x800000p+40, INT64_MIN, INT64_MAX,           \
+              (int64_t)truncf, A)
 #define TRUNC_U_32_64(R, A)                                                   \
         TRUNC(R, -1.0f, 0x800000p+41, 0, UINT64_MAX, truncf, A)
 #define TRUNC_S_64_64(R, A)                                                   \
         TRUNC(R, -0x10000000000001p+11, 0x10000000000000p+11, INT64_MIN,      \
-              INT64_MAX, trunc, A)
+              INT64_MAX, (int64_t)trunc, A)
 #define TRUNC_U_64_64(R, A)                                                   \
         TRUNC(R, -1.0, 0x10000000000000p+12, 0, UINT64_MAX, trunc, A)
