@@ -35,6 +35,7 @@ stack_push_val(const struct exec_context *ctx, const struct val *val,
 {
         assert(ctx->stack.p <= *stackp);
         assert(*stackp + csz <= ctx->stack.p + ctx->stack.psize);
+        xlog_trace("stack push %016" PRIx64, val->u.i64);
         val_to_cells(val, *stackp, csz);
         *stackp += csz;
 }
@@ -47,6 +48,7 @@ stack_pop_val(const struct exec_context *ctx, struct val *val,
         assert(*stackp <= ctx->stack.p + ctx->stack.psize);
         *stackp -= csz;
         val_from_cells(val, *stackp, csz);
+        xlog_trace("stack pop  %016" PRIx64, val->u.i64);
 }
 #endif
 
