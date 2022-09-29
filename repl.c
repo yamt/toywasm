@@ -844,6 +844,33 @@ repl_print_version(void)
 #if defined(__x86_64__)
         printf("__x86_64__ defined\n");
 #endif
+#if defined(__aarch64__)
+        printf("__aarch64__ defined\n");
+#endif
+#if defined(__arm__)
+        printf("__arm__ defined\n");
+#endif
+#if defined(__ppc__)
+        printf("__ppc__ defined\n");
+#endif
+#if defined(__riscv)
+        printf("__riscv defined\n");
+#endif
+#if defined(__s390x__)
+        printf("__s390x__ defined\n");
+#endif
+#if defined(__s390__)
+        printf("__s390__ defined\n");
+#endif
+#if defined(__wasm__)
+        printf("__wasm__ defined\n");
+#endif
+#if defined(__wasm32__)
+        printf("__wasm32__ defined\n");
+#endif
+#if defined(__wasm64__)
+        printf("__wasm64__ defined\n");
+#endif
 #if defined(__APPLE__)
         printf("__APPLE__ defined\n");
 #endif
