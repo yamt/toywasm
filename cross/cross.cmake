@@ -47,7 +47,7 @@
 # REVISIT: is it expected to use PKG_CONFIG_LIBDIR?
 # eg. PKG_CONFIG_LIBDIR=/usr/lib/aarch64-linux-gnu/pkgconfig/
 
-set(TRIPLET aarch64-linux-gnu)
+set(TRIPLET ${TRIPLET} CACHE STRING "aarch64-linux-gnu" FORCE)
 set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_C_COMPILER_TARGET ${TRIPLET})
 set(CMAKE_C_COMPILER clang-11)
