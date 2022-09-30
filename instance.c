@@ -329,7 +329,7 @@ instance_create_no_init(struct module *m, struct instance **instp,
                                 goto fail;
                         }
                         memset(tinst->vals, 0,
-                               tinst->size * sizeof(tinst->vals));
+                               tinst->size * sizeof(*tinst->vals));
                 }
                 VEC_ELEM(inst->tables, i) = tinst;
         }
