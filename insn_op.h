@@ -56,7 +56,7 @@ fail:                                                                         \
                 POP_VAL(TYPE_##I_OR_F##BITS, a);                              \
                 struct val val_b;                                             \
                 if (EXECUTING) {                                              \
-                        val_b.u.I_OR_F##BITS = OP(val_a.u.I_OR_F##BITS);      \
+                        val_b.u.i32 = OP(val_a.u.I_OR_F##BITS);               \
                 }                                                             \
                 PUSH_VAL(TYPE_i32, b);                                        \
                 INSN_SUCCESS;                                                 \
@@ -74,9 +74,8 @@ fail:                                                                         \
                 POP_VAL(TYPE_##I_OR_F##BITS, a);                              \
                 struct val val_c;                                             \
                 if (EXECUTING) {                                              \
-                        val_c.u.i##BITS =                                     \
-                                CAST val_a.u.I_OR_F##BITS OP CAST             \
-                                        val_b.u.I_OR_F##BITS;                 \
+                        val_c.u.i32 = CAST val_a.u.I_OR_F##BITS OP CAST       \
+                                              val_b.u.I_OR_F##BITS;           \
                 }                                                             \
                 PUSH_VAL(TYPE_i32, c);                                        \
                 INSN_SUCCESS;                                                 \
