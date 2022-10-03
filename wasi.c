@@ -374,6 +374,52 @@ fail:
 }
 
 static int
+wasi_fd_allocate(struct exec_context *ctx, struct host_instance *hi,
+                 const struct functype *ft, const struct cell *params,
+                 struct cell *results)
+{
+        struct wasi_instance *wasi = (void *)hi;
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
+        uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
+        xlog_trace("%s called for fd %" PRIu32, __func__, wasifd);
+        uint64_t offset = HOST_FUNC_PARAM(ft, params, 1, i64);
+        uint64_t len = HOST_FUNC_PARAM(ft, params, 2, i64);
+        int ret;
+        int hostfd;
+        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd);
+        if (ret != 0) {
+                goto fail;
+        }
+        /* macOS doesn't have posix_fallocate */
+        ret = ENOSYS;
+fail:
+        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
+        return 0;
+}
+
+static int
+wasi_fd_filestat_set_size(struct exec_context *ctx, struct host_instance *hi,
+                          const struct functype *ft, const struct cell *params,
+                          struct cell *results)
+{
+        struct wasi_instance *wasi = (void *)hi;
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
+        uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
+        xlog_trace("%s called for fd %" PRIu32, __func__, wasifd);
+        uint64_t size = HOST_FUNC_PARAM(ft, params, 1, i64);
+        int ret;
+        int hostfd;
+        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd);
+        if (ret != 0) {
+                goto fail;
+        }
+        ret = ftruncate(hostfd, size);
+fail:
+        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
+        return 0;
+}
+
+static int
 wasi_fd_close(struct exec_context *ctx, struct host_instance *hi,
               const struct functype *ft, const struct cell *params,
               struct cell *results)
@@ -1119,6 +1165,8 @@ wasi_sched_yield(struct exec_context *ctx, struct host_instance *hi,
 const struct host_func wasi_funcs[] = {
         WASI_HOST_FUNC(proc_exit, "(i)"),
         WASI_HOST_FUNC(fd_advise, "(iIIi)i"),
+        WASI_HOST_FUNC(fd_allocate, "(iII)i"),
+        WASI_HOST_FUNC(fd_filestat_set_size, "(iI)i"),
         WASI_HOST_FUNC(fd_close, "(i)i"),
         WASI_HOST_FUNC(fd_write, "(iiii)i"),
         WASI_HOST_FUNC(fd_read, "(iiii)i"),
