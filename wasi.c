@@ -29,6 +29,19 @@
 #include "xlog.h"
 
 struct wasi_fdinfo {
+        /*
+         * - directories added by wasi_instance_prestat_add
+         *   prestat_path != NULL
+         *   hostfd == -1 (for now)
+         *
+         * - files opened by user
+         *   prestat_path == NULL
+         *   hostfd != -1
+         *
+         * - closed descriptors (EBADF)
+         *   prestat_path == NULL
+         *   hostfd == -1
+         */
         char *prestat_path;
         int hostfd;
 };
