@@ -201,7 +201,8 @@ wasi_fd_alloc(struct wasi_instance *wasi, uint32_t *wasifdp)
 }
 
 static int
-wasi_fd_add(struct wasi_instance *wasi, int hostfd, uint32_t *wasifdp)
+wasi_fd_add(struct wasi_instance *wasi, int hostfd, char *path,
+            uint32_t *wasifdp)
 {
         uint32_t wasifd;
         int ret;
@@ -211,6 +212,7 @@ wasi_fd_add(struct wasi_instance *wasi, int hostfd, uint32_t *wasifdp)
         }
         struct wasi_fdinfo *fdinfo = &VEC_ELEM(wasi->fdtable, wasifd);
         fdinfo->hostfd = hostfd;
+        fdinfo->prestat_path = path;
         *wasifdp = wasifd;
         return 0;
 }
@@ -428,6 +430,10 @@ wasi_fd_filestat_set_size(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         ret = ftruncate(hostfd, size);
+        if (ret == -1) {
+                ret = errno;
+                assert(ret > 0);
+        }
 fail:
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         return 0;
@@ -1041,18 +1047,23 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
         int oflags = 0;
         if ((wasmoflags & 1) != 0) {
                 oflags |= O_CREAT;
+                xlog_trace("oflag O_CREAT");
         }
         if ((wasmoflags & 2) != 0) {
                 oflags |= O_DIRECTORY;
+                xlog_trace("oflag O_DIRECTORY");
         }
         if ((wasmoflags & 4) != 0) {
                 oflags |= O_EXCL;
+                xlog_trace("oflag O_EXCL");
         }
         if ((wasmoflags & 8) != 0) {
                 oflags |= O_TRUNC;
+                xlog_trace("oflag O_TRUNC");
         }
         if ((fdflags & WASI_FDFLAG_APPEND) != 0) {
                 oflags |= O_APPEND;
+                xlog_trace("oflag O_APPEND");
         }
         switch (rights_base & (WASI_RIGHT_FD_READ | WASI_RIGHT_FD_WRITE)) {
         case WASI_RIGHT_FD_READ:
@@ -1071,17 +1082,21 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        hostfd = open(hostpath, oflags);
+        xlog_trace("open %s oflags %x", hostpath, oflags);
+        hostfd = open(hostpath, oflags, 0777);
         if (hostfd == -1) {
                 ret = errno;
+                xlog_trace("open %s oflags %x failed with %d", hostpath,
+                           oflags, errno);
                 assert(ret != 0);
                 goto fail;
         }
         uint32_t wasifd;
-        ret = wasi_fd_add(wasi, hostfd, &wasifd);
+        ret = wasi_fd_add(wasi, hostfd, hostpath, &wasifd);
         if (ret != 0) {
                 goto fail;
         }
+        hostpath = NULL; /* consumed by wasi_fd_add */
         hostfd = -1;
         uint32_t r = host_to_le32(wasifd);
         ret = wasi_copyout(ctx, &r, retp, sizeof(r));
