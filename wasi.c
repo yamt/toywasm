@@ -392,9 +392,11 @@ wasi_fd_advise(struct exec_context *ctx, struct host_instance *hi,
         struct wasi_instance *wasi = (void *)hi;
         HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
+#if 0
         uint64_t offset = HOST_FUNC_PARAM(ft, params, 1, i64);
         uint64_t len = HOST_FUNC_PARAM(ft, params, 2, i64);
         uint32_t adv = HOST_FUNC_PARAM(ft, params, 3, i32);
+#endif
         int ret;
         int hostfd;
         ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd);
@@ -1211,7 +1213,6 @@ wasi_sched_yield(struct exec_context *ctx, struct host_instance *hi,
                  struct cell *results)
 {
         WASI_TRACE;
-        struct wasi_instance *wasi = (void *)hi;
         int ret = 0;
         /* no-op */
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
