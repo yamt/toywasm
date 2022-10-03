@@ -64,6 +64,28 @@ struct wasi_instance {
         } while (0)
 #endif
 
+#if defined(__APPLE__)
+static int
+racy_fallocate(int fd, off_t offset, off_t size)
+{
+        struct stat sb;
+        int ret;
+
+        off_t newsize = offset + size;
+        if (newsize < offset) {
+                return EOVERFLOW;
+        }
+        ret = fstat(fd, &sb);
+        if (ret != 0) {
+                return ret;
+        }
+        if (sb.st_size >= newsize) {
+                return 0;
+        }
+        return ftruncate(fd, newsize);
+}
+#endif
+
 static int
 wasi_copyin(struct exec_context *ctx, void *hostaddr, uint32_t wasmaddr,
             size_t len)
@@ -407,7 +429,11 @@ wasi_fd_allocate(struct exec_context *ctx, struct host_instance *hi,
          * macOS doesn't have posix_fallocate
          * cf. https://github.com/WebAssembly/wasi-filesystem/issues/19
          */
-        ret = ENOSYS;
+#if defined(__APPLE__)
+        ret = racy_fallocate(hostfd, offset, len);
+#else
+        ret = posix_fallocate(hostfd, offset, len);
+#endif
 fail:
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         return 0;
@@ -429,6 +455,8 @@ wasi_fd_filestat_set_size(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
+        xlog_trace("ftruncate wasifd %" PRIu32 " hostfd %d size %" PRIu64,
+                   wasifd, hostfd, size);
         ret = ftruncate(hostfd, size);
         if (ret == -1) {
                 ret = errno;
@@ -1045,6 +1073,8 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
         int hostfd = -1;
         int ret;
         int oflags = 0;
+        xlog_trace("wasm oflags %" PRIx32 " rights_base %" PRIx64, wasmoflags,
+                   rights_base);
         if ((wasmoflags & 1) != 0) {
                 oflags |= O_CREAT;
                 xlog_trace("oflag O_CREAT");
@@ -1098,6 +1128,8 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
         }
         hostpath = NULL; /* consumed by wasi_fd_add */
         hostfd = -1;
+        xlog_trace("-> new wasi fd %" PRIu32, wasifd);
+        hostfd = open(hostpath, oflags, 0777);
         uint32_t r = host_to_le32(wasifd);
         ret = wasi_copyout(ctx, &r, retp, sizeof(r));
         if (ret != 0) {
