@@ -390,7 +390,10 @@ wasi_fd_allocate(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        /* macOS doesn't have posix_fallocate */
+        /*
+         * macOS doesn't have posix_fallocate
+         * cf. https://github.com/WebAssembly/wasi-filesystem/issues/19
+         */
         ret = ENOSYS;
 fail:
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
