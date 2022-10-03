@@ -150,6 +150,26 @@ wasi_hostfd_lookup(struct wasi_instance *wasi, uint32_t wasifd, int *hostfdp)
 }
 
 static int
+wasi_fd_expand_table(struct wasi_instance *wasi, uint32_t maxfd)
+{
+        uint32_t osize = wasi->fdtable.lsize;
+        if (maxfd < osize) {
+                return 0;
+        }
+        int ret = VEC_RESIZE(wasi->fdtable, maxfd + 1);
+        if (ret != 0) {
+                return ret;
+        }
+        uint32_t i;
+        for (i = osize; i <= maxfd; i++) {
+                struct wasi_fdinfo *fdinfo = &VEC_ELEM(wasi->fdtable, i);
+                fdinfo->hostfd = -1;
+                fdinfo->prestat_path = NULL;
+        }
+        return 0;
+}
+
+static int
 wasi_fd_alloc(struct wasi_instance *wasi, uint32_t *wasifdp)
 {
         struct wasi_fdinfo *fdinfo;
@@ -161,13 +181,10 @@ wasi_fd_alloc(struct wasi_instance *wasi, uint32_t *wasifdp)
                 }
         }
         wasifd = wasi->fdtable.lsize;
-        int ret = VEC_RESIZE(wasi->fdtable, wasifd + 1);
+        int ret = wasi_fd_expand_table(wasi, wasifd);
         if (ret != 0) {
                 return ret;
         }
-        fdinfo = &VEC_ELEM(wasi->fdtable, wasifd);
-        fdinfo->hostfd = -1;
-        fdinfo->prestat_path = NULL;
         *wasifdp = wasifd;
         return 0;
 }
@@ -329,6 +346,31 @@ wasi_proc_exit(struct exec_context *ctx, struct host_instance *hi,
         ctx->exit_code = code;
         return trap_with_id(ctx, TRAP_VOLUNTARY_EXIT,
                             "proc_exit with %" PRIu32, code);
+}
+
+static int
+wasi_fd_advise(struct exec_context *ctx, struct host_instance *hi,
+               const struct functype *ft, const struct cell *params,
+               struct cell *results)
+{
+        struct wasi_instance *wasi = (void *)hi;
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
+        uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
+        xlog_trace("%s called for fd %" PRIu32, __func__, wasifd);
+        uint64_t offset = HOST_FUNC_PARAM(ft, params, 1, i64);
+        uint64_t len = HOST_FUNC_PARAM(ft, params, 2, i64);
+        uint32_t adv = HOST_FUNC_PARAM(ft, params, 3, i32);
+        int ret;
+        int hostfd;
+        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd);
+        if (ret != 0) {
+                goto fail;
+        }
+        ret = 0;
+        /* no-op */
+fail:
+        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
+        return 0;
 }
 
 static int
@@ -552,6 +594,44 @@ wasi_fd_seek(struct exec_context *ctx, struct host_instance *hi,
         }
         uint64_t result = host_to_le64(ret1);
         ret = wasi_copyout(ctx, &result, retp, sizeof(result));
+fail:
+        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
+        return 0;
+}
+
+static int
+wasi_fd_renumber(struct exec_context *ctx, struct host_instance *hi,
+                 const struct functype *ft, const struct cell *params,
+                 struct cell *results)
+{
+        struct wasi_instance *wasi = (void *)hi;
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
+        uint32_t wasifd_from = HOST_FUNC_PARAM(ft, params, 0, i32);
+        uint32_t wasifd_to = HOST_FUNC_PARAM(ft, params, 1, i32);
+        int hostfd;
+        int ret;
+        ret = wasi_hostfd_lookup(wasi, wasifd_from, &hostfd);
+        if (ret != 0) {
+                goto fail;
+        }
+        ret = wasi_fd_expand_table(wasi, wasifd_to);
+        if (ret != 0) {
+                goto fail;
+        }
+        struct wasi_fdinfo *fdinfo_from =
+                &VEC_ELEM(wasi->fdtable, wasifd_from);
+        struct wasi_fdinfo *fdinfo_to = &VEC_ELEM(wasi->fdtable, wasifd_to);
+        assert(fdinfo_from->hostfd == hostfd);
+        if (fdinfo_from->prestat_path != NULL) {
+                ret = ENOTSUP;
+                goto fail;
+        }
+        if (fdinfo_to->prestat_path != NULL || fdinfo_to->hostfd != -1) {
+                ret = ENOTSUP;
+                goto fail;
+        }
+        fdinfo_to->hostfd = fdinfo_from->hostfd;
+        fdinfo_from->hostfd = -1;
 fail:
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         return 0;
@@ -1018,6 +1098,18 @@ fail:
         return 0;
 }
 
+static int
+wasi_sched_yield(struct exec_context *ctx, struct host_instance *hi,
+                 const struct functype *ft, const struct cell *params,
+                 struct cell *results)
+{
+        struct wasi_instance *wasi = (void *)hi;
+        int ret = 0;
+        /* no-op */
+        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
+        return 0;
+}
+
 #define WASI_HOST_FUNC(NAME, TYPE)                                            \
         {                                                                     \
                 .name = NAME_FROM_CSTR_LITERAL(#NAME), .type = TYPE,          \
@@ -1026,12 +1118,14 @@ fail:
 
 const struct host_func wasi_funcs[] = {
         WASI_HOST_FUNC(proc_exit, "(i)"),
+        WASI_HOST_FUNC(fd_advise, "(iIIi)i"),
         WASI_HOST_FUNC(fd_close, "(i)i"),
         WASI_HOST_FUNC(fd_write, "(iiii)i"),
         WASI_HOST_FUNC(fd_read, "(iiii)i"),
         WASI_HOST_FUNC(fd_fdstat_get, "(ii)i"),
         WASI_HOST_FUNC(fd_fdstat_set_flags, "(ii)i"),
         WASI_HOST_FUNC(fd_seek, "(iIii)i"),
+        WASI_HOST_FUNC(fd_renumber, "(ii)i"),
         WASI_HOST_FUNC(fd_filestat_get, "(ii)i"),
         WASI_HOST_FUNC(fd_prestat_get, "(ii)i"),
         WASI_HOST_FUNC(fd_prestat_dir_name, "(iii)i"),
@@ -1045,6 +1139,7 @@ const struct host_func wasi_funcs[] = {
         WASI_HOST_FUNC(path_open, "(iiiiiIIii)i"),
         WASI_HOST_FUNC(path_unlink_file, "(iii)i"),
         WASI_HOST_FUNC(path_remove_directory, "(iii)i"),
+        WASI_HOST_FUNC(sched_yield, "()i"),
         /* TODO implement the rest of the api */
 };
 
