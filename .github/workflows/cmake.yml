@@ -19,6 +19,8 @@ jobs:
         TOYWASM_USE_SEPARATE_EXECUTE: [ON, OFF]
         TOYWASM_USE_TAILCALL: [ON, OFF]
         TOYWASM_ENABLE_TRACING: [ON, OFF]
+        TOYWASM_USE_SMALL_CELLS: [ON, OFF]
+        TOYWASM_USE_SEPARATE_LOCALS: [ON, OFF]
         exclude:
           - TOYWASM_USE_SEPARATE_EXECUTE: OFF
             TOYWASM_USE_TAILCALL: ON
@@ -51,7 +53,9 @@ jobs:
           -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}} \
           -DTOYWASM_USE_SEPARATE_EXECUTE=${{matrix.TOYWASM_USE_SEPARATE_EXECUTE}} \
           -DTOYWASM_USE_TAILCALL=${{matrix.TOYWASM_USE_TAILCALL}} \
-          -DTOYWASM_ENABLE_TRACING=${{matrix.TOYWASM_ENABLE_TRACING}}
+          -DTOYWASM_ENABLE_TRACING=${{matrix.TOYWASM_ENABLE_TRACING}} \
+          -DTOYWASM_USE_SMALL_CELLS=${{matrix.TOYWASM_USE_SMALL_CELLS}} \
+          -DTOYWASM_USE_SEPARATE_LOCALS=${{matrix.TOYWASM_USE_SEPARATE_LOCALS}}
 
     - name: Build
       # Build your program with the given configuration
