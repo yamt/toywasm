@@ -383,8 +383,16 @@ fail:
 #define push_val(v, csz, ctx) stack_push_val(ctx, v, &stack, csz)
 #define pop_val(v, csz, ctx) stack_pop_val(ctx, v, &stack, csz)
 #else
-#define push_val(v, csz, ctx) (stack++)->x = (v)->u.i64
-#define pop_val(v, csz, ctx) (v)->u.i64 = (--stack)->x
+#define push_val(v, csz, ctx)                                                 \
+        do {                                                                  \
+                assert(csz == 1);                                             \
+                (stack++)->x = (v)->u.i64;                                    \
+        } while (0)
+#define pop_val(v, csz, ctx)                                                  \
+        do {                                                                  \
+                assert(csz == 1);                                             \
+                (v)->u.i64 = (--stack)->x;                                    \
+        } while (0)
 #endif
 
 #include "insn_impl.h"
