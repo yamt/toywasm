@@ -351,8 +351,14 @@ wasi_convert_errno(int host_errno)
         case 0:
                 wasmerrno = 0;
                 break;
+        case EAGAIN:
+                wasmerrno = 6;
+                break;
         case EBADF:
                 wasmerrno = 8;
+                break;
+        case EINTR:
+                wasmerrno = 27;
                 break;
         case EINVAL:
                 wasmerrno = 28;
