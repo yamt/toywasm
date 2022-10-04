@@ -85,3 +85,51 @@ struct wasi_filestat {
         uint64_t ctim;
 };
 _Static_assert(sizeof(struct wasi_filestat) == 64, "wasi_filestat");
+
+#define WASI_CLOCK_ID_REALTIME 0
+#define WASI_CLOCK_ID_MONOTONIC 1
+#define WASI_CLOCK_ID_PROCESS_CPUTIME_ID 2
+#define WASI_CLOCK_ID_THREAD_CPUTIME_ID 3
+
+#define WASI_SUBCLOCKFLAG_ABSTIME 1
+
+struct wasi_subscription_clock {
+        uint32_t clock_id; /* WASI_CLOCK_ID_ */
+        uint64_t timeout;
+        uint64_t precision;
+        uint16_t flags; /* WASI_SUBCLOCKFLAG_ */
+};
+_Static_assert(sizeof(struct wasi_subscription_clock) == 32,
+               "wasi_subscription_clock");
+
+struct wasi_subscription_fd_readwrite {
+        uint32_t fd;
+};
+_Static_assert(sizeof(struct wasi_subscription_fd_readwrite) == 4,
+               "wasi_subscription_fd_readwrite");
+
+struct wasi_subscription {
+        uint64_t userdata;
+        uint8_t type; /* WASI_EVENTTYPE_ */
+        union {
+                struct wasi_subscription_clock clock;
+                struct wasi_subscription_fd_readwrite fd_read;
+                struct wasi_subscription_fd_readwrite fd_write;
+        } u;
+};
+_Static_assert(sizeof(struct wasi_subscription) == 48, "wasi_subscription");
+
+#define WASI_EVENTTYPE_CLOCK 0
+#define WASI_EVENTTYPE_FD_READ 1
+#define WASI_EVENTTYPE_FD_WRITE 2
+
+#define WASI_EVENTRWFLAG_HANGUP 1
+
+struct wasi_event {
+        uint64_t userdata;
+        uint16_t error;
+        uint8_t type; /* WASI_EVENTTYPE_ */
+        uint64_t availbytes;
+        uint16_t rwflags; /* WASI_EVENTRWFLAG_ */
+};
+_Static_assert(sizeof(struct wasi_event) == 32, "wasi_event");

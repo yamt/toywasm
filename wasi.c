@@ -11,6 +11,7 @@
 #include <fcntl.h>
 #include <inttypes.h>
 #include <limits.h>
+#include <poll.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -881,6 +882,175 @@ fail:
 }
 
 static int
+wasi_poll_oneoff(struct exec_context *ctx, struct host_instance *hi,
+                 const struct functype *ft, const struct cell *params,
+                 struct cell *results)
+{
+        WASI_TRACE;
+        struct wasi_instance *wasi = (void *)hi;
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
+        uint32_t in = HOST_FUNC_PARAM(ft, params, 0, i32);
+        uint32_t out = HOST_FUNC_PARAM(ft, params, 1, i32);
+        uint32_t nsubscriptions = HOST_FUNC_PARAM(ft, params, 2, i32);
+        uint32_t retp = HOST_FUNC_PARAM(ft, params, 3, i32);
+        struct pollfd *pollfds = NULL;
+        const struct wasi_subscription *subscriptions;
+        struct wasi_event *events;
+        int ret;
+        if (nsubscriptions == 0) {
+                /*
+                 * I couldn't find any authoritive document about this.
+                 * EINVAL is what some of wasmtime wasi tests expect.
+                 * https://github.com/bytecodealliance/wasmtime/blob/c9ff14e00bb0a90905a4f1cc2968c1e3e0417ce5/crates/test-programs/wasi-tests/src/bin/poll_oneoff_files.rs#L45-L54
+                 */
+                xlog_trace("poll_oneoff: no subscriptions");
+                ret = EINVAL;
+                goto fail;
+        }
+        void *p;
+        size_t insize = nsubscriptions * sizeof(struct wasi_subscription);
+retry:
+        ret = memory_getptr(ctx, 0, in, 0, insize, &p);
+        if (ret != 0) {
+                goto fail;
+        }
+        subscriptions = p;
+        bool moved = false;
+        size_t outsize = nsubscriptions * sizeof(struct wasi_event);
+        ret = memory_getptr2(ctx, 0, out, 0, outsize, &p, &moved);
+        if (ret != 0) {
+                goto fail;
+        }
+        if (moved) {
+                goto retry;
+        }
+        events = p;
+        pollfds = calloc(nsubscriptions, sizeof(*pollfds));
+        if (pollfds == NULL) {
+                ret = ENOMEM;
+                goto fail;
+        }
+        uint32_t i;
+        int timeout_ms = -1;
+        uint64_t timeout_ns;
+        for (i = 0; i < nsubscriptions; i++) {
+                const struct wasi_subscription *s = &subscriptions[i];
+                struct pollfd *pfd = &pollfds[i];
+                switch (s->type) {
+                case WASI_EVENTTYPE_CLOCK:
+                        switch (le32_to_host(s->u.clock.clock_id)) {
+                        case WASI_CLOCK_ID_REALTIME:
+                                break;
+                        case WASI_CLOCK_ID_MONOTONIC:
+                                /* TODO: this is of course wrong */
+                                xlog_trace("poll_oneoff: treating MONOTONIC "
+                                           "as REALTIME");
+                                break;
+                        default:
+                                xlog_trace("poll_oneoff: unsupported clock id "
+                                           "%" PRIu32,
+                                           le32_to_host(s->u.clock.clock_id));
+                                ret = ENOTSUP;
+                                goto fail;
+                        }
+                        if ((s->u.clock.flags &
+                             host_to_le16(WASI_SUBCLOCKFLAG_ABSTIME)) != 0) {
+                                xlog_trace("poll_oneoff: unsupported flag "
+                                           "%" PRIx32,
+                                           le16_to_host(s->u.clock.flags));
+                                ret = ENOTSUP;
+                                goto fail;
+                        }
+                        if (timeout_ms != -1) {
+                                xlog_trace("poll_oneoff: multiple clock "
+                                           "subscriptions");
+                                ret = ENOTSUP;
+                                goto fail;
+                        }
+                        timeout_ns = le64_to_host(s->u.clock.timeout);
+                        if (timeout_ns > (uint64_t)INT_MAX * 1000000) {
+                                timeout_ms = INT_MAX; /* early timeout is ok */
+                        } else {
+                                timeout_ms = timeout_ns / 1000000;
+                        }
+                        pfd->fd = -1;
+                        xlog_trace("poll_oneoff: pfd[%" PRIu32 "] timer %d ms",
+                                   i, timeout_ms);
+                        break;
+                case WASI_EVENTTYPE_FD_READ:
+                case WASI_EVENTTYPE_FD_WRITE:
+                        assert(s->u.fd_read.fd == s->u.fd_write.fd);
+                        ret = wasi_hostfd_lookup(
+                                wasi, le32_to_host(s->u.fd_read.fd), &pfd->fd);
+                        if (ret != 0) {
+                                goto fail;
+                        }
+                        if (s->type == WASI_EVENTTYPE_FD_READ) {
+                                pfd->events = POLLIN;
+                        } else {
+                                pfd->events = POLLOUT;
+                        }
+                        xlog_trace("poll_oneoff: pfd[%" PRIu32 "] hostfd %d",
+                                   i, pfd->fd);
+                        break;
+                default:
+                        xlog_trace("poll_oneoff: pfd[%" PRIu32
+                                   "] invalid type %u",
+                                   i, s->type);
+                        ret = EINVAL;
+                        goto fail;
+                }
+        }
+        xlog_trace("poll_oneoff: start polling");
+        ret = poll(pollfds, nsubscriptions, timeout_ms);
+        if (ret < 0) {
+                ret = errno;
+                assert(ret > 0);
+                xlog_trace("poll_oneoff: poll failed with %d", ret);
+                goto fail;
+        }
+        xlog_trace("poll_oneoff: poll returned %d", ret);
+        uint32_t nevents;
+        if (ret == 0) {
+                nevents = 1; /* timeout is an event */
+        } else {
+                nevents = ret;
+        }
+        struct wasi_event *ev = events;
+        for (i = 0; i < nsubscriptions; i++) {
+                const struct wasi_subscription *s = &subscriptions[i];
+                const struct pollfd *pfd = &pollfds[i];
+                ev->userdata = s->userdata;
+                ev->error = 0;
+                ev->type = s->type;
+                ev->availbytes = 0; /* TODO should use FIONREAD? */
+                ev->rwflags = 0;
+                switch (s->type) {
+                case WASI_EVENTTYPE_CLOCK:
+                        if (ret == 0) {
+                                ev++;
+                        }
+                        break;
+                case WASI_EVENTTYPE_FD_READ:
+                case WASI_EVENTTYPE_FD_WRITE:
+                        if (pfd->revents != 0) {
+                                ev++;
+                        }
+                        break;
+                default:
+                        assert(false);
+                }
+        }
+        assert(events + nevents == ev);
+        uint32_t result = host_to_le32(nevents);
+        ret = wasi_copyout(ctx, &result, retp, sizeof(result));
+fail:
+        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
+        free(pollfds);
+        return 0;
+}
+
+static int
 wasi_clock_res_get(struct exec_context *ctx, struct host_instance *hi,
                    const struct functype *ft, const struct cell *params,
                    struct cell *results)
@@ -1275,6 +1445,7 @@ const struct host_func wasi_funcs[] = {
         WASI_HOST_FUNC(fd_filestat_get, "(ii)i"),
         WASI_HOST_FUNC(fd_prestat_get, "(ii)i"),
         WASI_HOST_FUNC(fd_prestat_dir_name, "(iii)i"),
+        WASI_HOST_FUNC(poll_oneoff, "(iiii)i"),
         WASI_HOST_FUNC(clock_time_get, "(iIi)i"),
         WASI_HOST_FUNC(clock_res_get, "(ii)i"),
         WASI_HOST_FUNC(args_sizes_get, "(ii)i"),
