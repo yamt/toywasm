@@ -319,17 +319,17 @@ wasi_convert_clockid(uint32_t clockid, clockid_t *hostidp)
         clockid_t hostclockid;
         int ret = 0;
         switch (clockid) {
-        case 0:
+        case WASI_CLOCK_ID_REALTIME:
                 hostclockid = CLOCK_REALTIME;
                 break;
-        case 1:
+        case WASI_CLOCK_ID_MONOTONIC:
                 hostclockid = CLOCK_MONOTONIC;
                 break;
-        case 2:
+        case WASI_CLOCK_ID_PROCESS_CPUTIME_ID:
                 /* REVISIT what does this really mean for wasm? */
                 hostclockid = CLOCK_PROCESS_CPUTIME_ID;
                 break;
-        case 3:
+        case WASI_CLOCK_ID_THREAD_CPUTIME_ID:
                 /* REVISIT what does this really mean for wasm? */
                 hostclockid = CLOCK_THREAD_CPUTIME_ID;
                 break;
