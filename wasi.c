@@ -702,6 +702,34 @@ fail:
 }
 
 static int
+wasi_fd_tell(struct exec_context *ctx, struct host_instance *hi,
+             const struct functype *ft, const struct cell *params,
+             struct cell *results)
+{
+        WASI_TRACE;
+        struct wasi_instance *wasi = (void *)hi;
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
+        uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
+        uint32_t retp = HOST_FUNC_PARAM(ft, params, 1, i32);
+        int hostfd;
+        int ret;
+        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd);
+        if (ret != 0) {
+                goto fail;
+        }
+        off_t ret1 = lseek(hostfd, 0, SEEK_CUR);
+        if (ret1 == -1) {
+                ret = errno;
+                goto fail;
+        }
+        uint64_t result = host_to_le64(ret1);
+        ret = wasi_copyout(ctx, &result, retp, sizeof(result));
+fail:
+        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
+        return 0;
+}
+
+static int
 wasi_fd_renumber(struct exec_context *ctx, struct host_instance *hi,
                  const struct functype *ft, const struct cell *params,
                  struct cell *results)
@@ -1242,6 +1270,7 @@ const struct host_func wasi_funcs[] = {
         WASI_HOST_FUNC(fd_fdstat_get, "(ii)i"),
         WASI_HOST_FUNC(fd_fdstat_set_flags, "(ii)i"),
         WASI_HOST_FUNC(fd_seek, "(iIii)i"),
+        WASI_HOST_FUNC(fd_tell, "(ii)i"),
         WASI_HOST_FUNC(fd_renumber, "(ii)i"),
         WASI_HOST_FUNC(fd_filestat_get, "(ii)i"),
         WASI_HOST_FUNC(fd_prestat_get, "(ii)i"),
