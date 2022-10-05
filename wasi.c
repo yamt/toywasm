@@ -301,6 +301,10 @@ wasi_copyin_and_convert_path(struct exec_context *ctx,
                              uint32_t path, uint32_t pathlen, char **wasmpathp,
                              char **hostpathp)
 {
+        /*
+         * TODO: somehow prevent it from escaping the dirwasifd directory.
+         * eg. reject too many ".."s, check symlinks, etc
+         */
         char *hostpath = NULL;
         char *wasmpath = NULL;
         int ret;
