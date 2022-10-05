@@ -1925,7 +1925,23 @@ wasi_path_filestat_set_times(struct exec_context *ctx,
         if ((lookupflags & WASI_LOOKUPFLAG_SYMLINK_FOLLOW) != 0) {
                 ret = utimes(hostpath, tvp);
         } else {
+#if defined(__wasi__)
+                /* wasi-libc doesn't have lutimes enabled */
+                struct timespec ts[2];
+                const struct timespec *tsp;
+                if (tvp != NULL) {
+                        ts[0].tv_sec = tvp[0].tv_sec;
+                        ts[0].tv_nsec = tvp[0].tv_usec * 1000;
+                        ts[1].tv_sec = tvp[1].tv_sec;
+                        ts[1].tv_nsec = tvp[1].tv_usec * 1000;
+                        tsp = ts;
+                } else {
+                        tsp = NULL;
+                }
+                ret = utimensat(AT_FDCWD, hostpath, tsp, AT_SYMLINK_NOFOLLOW);
+#else
                 ret = lutimes(hostpath, tvp);
+#endif
         }
         if (ret == -1) {
                 ret = errno;
