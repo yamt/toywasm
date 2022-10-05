@@ -1,3 +1,17 @@
+/*
+ * WASI implementation for toywasm
+ *
+ * This is a bit relaxed implementation of WASI preview1.
+ *
+ * - The "rights" stuff is not implemented. mendokusai.
+ *
+ * - The "openat" family API is intentionally not used in favor
+ *   of portability.
+ *   Note: It makes this implementation considerably complex/incomplete
+ *   in some places because WASI is basically a copy of the openat API
+ *   family.
+ */
+
 #define _POSIX_C_SOURCE 199309 /* clock_gettime */
 #define _DARWIN_C_SOURCE       /* arc4random_buf */
 #define _GNU_SOURCE            /* asprintf, realpath, O_DIRECTORY */
