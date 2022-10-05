@@ -314,6 +314,11 @@ wasi_copyin_and_convert_path(struct exec_context *ctx,
                 goto fail;
         }
         wasmpath[pathlen] = 0;
+        if (strlen(wasmpath) != pathlen) {
+                /* Note: wasmtime returns EINVAL for embedded NULs */
+                ret = EINVAL;
+                goto fail;
+        }
         if (wasmpath[0] == '/') {
                 ret = EPERM;
                 goto fail;
