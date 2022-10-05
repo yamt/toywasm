@@ -4,6 +4,7 @@
 
 #include <sys/random.h> /* getrandom */
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <sys/uio.h>
 
 #include <assert.h>
@@ -251,6 +252,13 @@ static uint64_t
 timespec_to_ns(const struct timespec *ts)
 {
         return (uint64_t)ts->tv_sec * 1000000000 + ts->tv_nsec;
+}
+
+static void
+timeval_from_ns(struct timeval *tv, uint64_t ns)
+{
+        tv->tv_sec = ns / 1000000000;
+        tv->tv_usec = (ns % 1000000000) / 1000;
 }
 
 static uint8_t
@@ -1727,6 +1735,58 @@ fail:
 }
 
 static int
+wasi_path_filestat_set_times(struct exec_context *ctx,
+                             struct host_instance *hi,
+                             const struct functype *ft,
+                             const struct cell *params, struct cell *results)
+{
+        WASI_TRACE;
+        struct wasi_instance *wasi = (void *)hi;
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
+        uint32_t dirwasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
+        uint32_t lookupflags = HOST_FUNC_PARAM(ft, params, 1, i32);
+        uint32_t path = HOST_FUNC_PARAM(ft, params, 2, i32);
+        uint32_t pathlen = HOST_FUNC_PARAM(ft, params, 3, i32);
+        uint64_t atim = HOST_FUNC_PARAM(ft, params, 4, i64);
+        uint64_t mtim = HOST_FUNC_PARAM(ft, params, 5, i64);
+        uint32_t fstflags = HOST_FUNC_PARAM(ft, params, 7, i32);
+        char *hostpath = NULL;
+        char *wasmpath = NULL;
+        int ret;
+        ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd, path, pathlen,
+                                           &wasmpath, &hostpath);
+        if (ret != 0) {
+                goto fail;
+        }
+        struct timeval tv[2];
+        const struct timeval *tvp;
+        if (fstflags == (WASI_FSTFLAG_ATIM_NOW | WASI_FSTFLAG_MTIM_NOW)) {
+                tvp = NULL;
+        } else if (fstflags == (WASI_FSTFLAG_ATIM | WASI_FSTFLAG_MTIM)) {
+                timeval_from_ns(&tv[0], atim);
+                timeval_from_ns(&tv[1], mtim);
+                tvp = tv;
+        } else {
+                ret = ENOTSUP;
+                goto fail;
+        }
+        if ((lookupflags & WASI_LOOKUPFLAG_SYMLINK_FOLLOW) != 0) {
+                ret = utimes(hostpath, tvp);
+        } else {
+                ret = lutimes(hostpath, tvp);
+        }
+        if (ret == -1) {
+                ret = errno;
+                assert(ret > 0);
+        }
+fail:
+        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
+        free(hostpath);
+        free(wasmpath);
+        return 0;
+}
+
+static int
 wasi_sched_yield(struct exec_context *ctx, struct host_instance *hi,
                  const struct functype *ft, const struct cell *params,
                  struct cell *results)
@@ -1777,6 +1837,7 @@ const struct host_func wasi_funcs[] = {
         WASI_HOST_FUNC(path_symlink, "(iiiii)i"),
         WASI_HOST_FUNC(path_readlink, "(iiiiii)i"),
         WASI_HOST_FUNC(path_filestat_get, "(iiiii)i"),
+        WASI_HOST_FUNC(path_filestat_set_times, "(iiiiIIi)i"),
         WASI_HOST_FUNC(sched_yield, "()i"),
         /* TODO implement the rest of the api */
 };
