@@ -403,6 +403,9 @@ wasi_convert_errno(int host_errno)
         case EPERM:
                 wasmerrno = 63;
                 break;
+        case ERANGE:
+                wasmerrno = 68;
+                break;
 #if defined(ENOTCAPABLE)
         case ENOTCAPABLE:
                 wasmerrno = 76;
@@ -1647,6 +1650,7 @@ wasi_path_readlink(struct exec_context *ctx, struct host_instance *hi,
         uint32_t buf = HOST_FUNC_PARAM(ft, params, 3, i32);
         uint32_t buflen = HOST_FUNC_PARAM(ft, params, 4, i32);
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 5, i32);
+        void *tmpbuf = NULL;
         char *hostpath = NULL;
         char *wasmpath = NULL;
         int ret;
@@ -1655,15 +1659,41 @@ wasi_path_readlink(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        void *p;
-        ret = memory_getptr(ctx, 0, buf, 0, buflen, &p);
-        if (ret != 0) {
-                return ret;
+        /*
+         * Traditionaly, readlink with an insufficiant buffer size
+         * silently truncates the contents.
+         * It's also what POSIX requires:
+         * > If the buf argument is not large enough to contain
+         * > the link content, the first bufsize bytes shall be
+         * > placed in buf.
+         *
+         * However, for some reasons, wasmtime changed it to
+         * return ERANGE.
+         * https://github.com/bytecodealliance/wasmtime/commit/222a57868e9c01baa838aa81e92a80451e2d920a
+         *
+         * I couldn't find any authoritative text about this in
+         * the WASI spec.
+         *
+         * Here we tries to detect the case using a bit larger
+         * buffer than requested and mimick the wasmtime behavior.
+         */
+        tmpbuf = malloc(buflen + 1);
+        if (tmpbuf == NULL) {
+                ret = ENOMEM;
+                goto fail;
         }
-        ssize_t ret1 = readlink(hostpath, p, buflen);
+        ssize_t ret1 = readlink(hostpath, tmpbuf, buflen + 1);
         if (ret1 == -1) {
                 ret = errno;
                 assert(ret > 0);
+                goto fail;
+        }
+        if (ret1 >= buflen + 1) {
+                ret = ERANGE;
+                goto fail;
+        }
+        ret = wasi_copyout(ctx, tmpbuf, buf, ret1);
+        if (ret != 0) {
                 goto fail;
         }
         uint32_t result = le32_to_host(ret1);
@@ -1672,6 +1702,7 @@ wasi_path_readlink(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
 fail:
+        free(tmpbuf);
         free(hostpath);
         free(wasmpath);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
