@@ -1778,6 +1778,50 @@ fail:
 }
 
 static int
+wasi_path_rename(struct exec_context *ctx, struct host_instance *hi,
+                 const struct functype *ft, const struct cell *params,
+                 struct cell *results)
+{
+        WASI_TRACE;
+        struct wasi_instance *wasi = (void *)hi;
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
+        uint32_t dirwasifd1 = HOST_FUNC_PARAM(ft, params, 0, i32);
+        uint32_t path1 = HOST_FUNC_PARAM(ft, params, 1, i32);
+        uint32_t pathlen1 = HOST_FUNC_PARAM(ft, params, 2, i32);
+        uint32_t dirwasifd2 = HOST_FUNC_PARAM(ft, params, 3, i32);
+        uint32_t path2 = HOST_FUNC_PARAM(ft, params, 4, i32);
+        uint32_t pathlen2 = HOST_FUNC_PARAM(ft, params, 5, i32);
+        char *hostpath1 = NULL;
+        char *wasmpath1 = NULL;
+        char *hostpath2 = NULL;
+        char *wasmpath2 = NULL;
+        int ret;
+        ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd1, path1,
+                                           pathlen1, &wasmpath1, &hostpath1);
+        if (ret != 0) {
+                goto fail;
+        }
+        ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd2, path2,
+                                           pathlen2, &wasmpath2, &hostpath2);
+        if (ret != 0) {
+                goto fail;
+        }
+        ret = rename(hostpath1, hostpath2);
+        if (ret == -1) {
+                ret = errno;
+                assert(ret > 0);
+                goto fail;
+        }
+fail:
+        free(hostpath1);
+        free(wasmpath1);
+        free(hostpath2);
+        free(wasmpath2);
+        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
+        return 0;
+}
+
+static int
 wasi_path_filestat_get(struct exec_context *ctx, struct host_instance *hi,
                        const struct functype *ft, const struct cell *params,
                        struct cell *results)
@@ -1936,6 +1980,7 @@ const struct host_func wasi_funcs[] = {
         WASI_HOST_FUNC(path_symlink, "(iiiii)i"),
         WASI_HOST_FUNC(path_readlink, "(iiiiii)i"),
         WASI_HOST_FUNC(path_link, "(iiiiiii)i"),
+        WASI_HOST_FUNC(path_rename, "(iiiiii)i"),
         WASI_HOST_FUNC(path_filestat_get, "(iiiii)i"),
         WASI_HOST_FUNC(path_filestat_set_times, "(iiiiIIi)i"),
         WASI_HOST_FUNC(sched_yield, "()i"),
