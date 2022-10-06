@@ -140,3 +140,13 @@ struct wasi_event {
         uint16_t rwflags; /* WASI_EVENTRWFLAG_ */
 };
 _Static_assert(sizeof(struct wasi_event) == 32, "wasi_event");
+
+#define WASI_DIRCOOKIE_START 0
+
+struct wasi_dirent {
+        uint64_t d_next;
+        uint64_t d_ino;
+        uint32_t d_namlen;
+        uint8_t d_type;
+};
+_Static_assert(sizeof(struct wasi_dirent) == 24, "wasi_dirent");

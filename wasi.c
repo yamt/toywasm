@@ -26,6 +26,7 @@
 #include <sys/uio.h>
 
 #include <assert.h>
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <inttypes.h>
@@ -64,6 +65,7 @@ struct wasi_fdinfo {
          */
         char *prestat_path;
         int hostfd;
+        DIR *dir;
 };
 
 struct wasi_instance {
@@ -224,6 +226,7 @@ wasi_fd_expand_table(struct wasi_instance *wasi, uint32_t maxfd)
         for (i = osize; i <= maxfd; i++) {
                 struct wasi_fdinfo *fdinfo = &VEC_ELEM(wasi->fdtable, i);
                 fdinfo->hostfd = -1;
+                fdinfo->dir = NULL;
                 fdinfo->prestat_path = NULL;
         }
         return 0;
@@ -261,6 +264,7 @@ wasi_fd_add(struct wasi_instance *wasi, int hostfd, char *path,
         }
         struct wasi_fdinfo *fdinfo = &VEC_ELEM(wasi->fdtable, wasifd);
         fdinfo->hostfd = hostfd;
+        fdinfo->dir = NULL;
         fdinfo->prestat_path = path;
         *wasifdp = wasifd;
         return 0;
@@ -297,6 +301,34 @@ wasi_convert_filetype(mode_t mode)
                 type = WASI_FILETYPE_UNKNOWN;
         }
         return type;
+}
+
+static uint8_t
+wasi_convert_dirent_filetype(uint8_t hosttype)
+{
+        uint8_t t;
+        switch (hosttype) {
+        case DT_REG:
+                t = WASI_FILETYPE_REGULAR_FILE;
+                break;
+        case DT_DIR:
+                t = WASI_FILETYPE_DIRECTORY;
+                break;
+        case DT_CHR:
+                t = WASI_FILETYPE_CHARACTER_DEVICE;
+                break;
+        case DT_BLK:
+                t = WASI_FILETYPE_BLOCK_DEVICE;
+                break;
+        case DT_LNK:
+                t = WASI_FILETYPE_SYMBOLIC_LINK;
+                break;
+        case DT_UNKNOWN:
+        default:
+                t = WASI_FILETYPE_UNKNOWN;
+                break;
+        }
+        return t;
 }
 
 static int
@@ -566,6 +598,10 @@ wasi_fd_close(struct exec_context *ctx, struct host_instance *hi,
         }
         ret = close(fdinfo->hostfd);
         fdinfo->hostfd = -1;
+        if (fdinfo->dir != NULL) {
+                closedir(fdinfo->dir);
+        }
+        fdinfo->dir = NULL;
         if (ret != 0) {
                 ret = errno;
                 assert(ret > 0);
@@ -760,6 +796,86 @@ fail:
 }
 
 static int
+wasi_fd_readdir(struct exec_context *ctx, struct host_instance *hi,
+                const struct functype *ft, const struct cell *params,
+                struct cell *results)
+{
+        WASI_TRACE;
+        struct wasi_instance *wasi = (void *)hi;
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
+        uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
+        uint32_t buf = HOST_FUNC_PARAM(ft, params, 1, i32);
+        uint32_t buflen = HOST_FUNC_PARAM(ft, params, 2, i32);
+        uint64_t cookie = HOST_FUNC_PARAM(ft, params, 3, i64);
+        uint32_t retp = HOST_FUNC_PARAM(ft, params, 4, i32);
+        int ret;
+        int hostfd;
+        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd);
+        if (ret != 0) {
+                goto fail;
+        }
+        struct wasi_fdinfo *fdinfo = &VEC_ELEM(wasi->fdtable, wasifd);
+        DIR *dir = fdinfo->dir;
+        if (dir == NULL) {
+                dir = fdopendir(hostfd);
+                if (dir == NULL) {
+                        ret = errno;
+                        assert(ret > 0);
+                        goto fail;
+                }
+                fdinfo->dir = dir;
+        }
+        if (cookie == WASI_DIRCOOKIE_START) {
+                /*
+                 * Note: rewinddir invalidates cookies.
+                 * is it what WASI expects?
+                 */
+                rewinddir(dir);
+        } else if (cookie > LONG_MAX) {
+                ret = EINVAL;
+                goto fail;
+        } else {
+                seekdir(dir, cookie);
+        }
+        uint32_t n = 0;
+        while (true) {
+                struct dirent *d;
+                d = readdir(dir);
+                if (d == NULL) {
+                        break;
+                }
+                long nextloc = telldir(dir);
+                struct wasi_dirent wde;
+                memset(&wde, 0, sizeof(wde));
+                le64_encode(&wde.d_next, nextloc);
+                le64_encode(&wde.d_ino, d->d_ino);
+                le32_encode(&wde.d_namlen, d->d_namlen);
+                wde.d_type = wasi_convert_dirent_filetype(d->d_type);
+                uint32_t entsize = sizeof(wde) + d->d_namlen;
+                if (buflen - n < entsize) {
+                        n = buflen; /* signal buffer full */
+                        break;
+                }
+                ret = wasi_copyout(ctx, &wde, buf, sizeof(wde));
+                if (ret != 0) {
+                        goto fail;
+                }
+                buf += sizeof(wde);
+                ret = wasi_copyout(ctx, d->d_name, buf, d->d_namlen);
+                if (ret != 0) {
+                        goto fail;
+                }
+                buf += d->d_namlen;
+                n += entsize;
+        }
+        uint32_t r = host_to_le32(n);
+        ret = wasi_copyout(ctx, &r, retp, sizeof(r));
+fail:
+        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
+        return 0;
+}
+
+static int
 wasi_fd_fdstat_get(struct exec_context *ctx, struct host_instance *hi,
                    const struct functype *ft, const struct cell *params,
                    struct cell *results)
@@ -925,10 +1041,15 @@ wasi_fd_renumber(struct exec_context *ctx, struct host_instance *hi,
         if (fdinfo_to->hostfd != -1) {
                 close(fdinfo_to->hostfd);
         }
+        if (fdinfo_to->dir != NULL) {
+                closedir(fdinfo_to->dir);
+        }
         free(fdinfo_to->prestat_path);
         fdinfo_to->hostfd = fdinfo_from->hostfd;
+        fdinfo_to->dir = fdinfo_from->dir;
         fdinfo_to->prestat_path = fdinfo_from->prestat_path;
         fdinfo_from->hostfd = -1;
+        fdinfo_from->dir = NULL;
         fdinfo_from->prestat_path = NULL;
 fail:
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
@@ -1986,6 +2107,7 @@ const struct host_func wasi_funcs[] = {
         WASI_HOST_FUNC(fd_pwrite, "(iiiIi)i"),
         WASI_HOST_FUNC(fd_read, "(iiii)i"),
         WASI_HOST_FUNC(fd_pread, "(iiiIi)i"),
+        WASI_HOST_FUNC(fd_readdir, "(iiiIi)i"),
         WASI_HOST_FUNC(fd_fdstat_get, "(ii)i"),
         WASI_HOST_FUNC(fd_fdstat_set_flags, "(ii)i"),
         WASI_HOST_FUNC(fd_seek, "(iIii)i"),
