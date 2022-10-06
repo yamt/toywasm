@@ -10,6 +10,10 @@
  *   Note: It makes this implementation considerably complex/incomplete
  *   in some places because WASI is basically a copy of the openat API
  *   family.
+ *
+ * References:
+ * https://github.com/WebAssembly/WASI/tree/main/phases/snapshot/witx
+ * https://github.com/WebAssembly/wasi-libc/blob/main/libc-bottom-half/headers/public/wasi/api.h
  */
 
 #define _POSIX_C_SOURCE 199309 /* clock_gettime */
