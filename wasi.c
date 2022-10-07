@@ -368,6 +368,26 @@ wasi_convert_filetype(mode_t mode)
         return type;
 }
 
+static void
+wasi_convert_filestat(const struct stat *hst, struct wasi_filestat *wst)
+{
+        memset(wst, 0, sizeof(*wst));
+        wst->dev = host_to_le64(hst->st_dev);
+        wst->ino = host_to_le64(hst->st_ino);
+        wst->type = wasi_convert_filetype(hst->st_mode);
+        wst->linkcount = host_to_le64(hst->st_nlink);
+        wst->size = host_to_le64(hst->st_size);
+#if defined(__APPLE__)
+        wst->atim = host_to_le64(timespec_to_ns(&hst->st_atimespec));
+        wst->mtim = host_to_le64(timespec_to_ns(&hst->st_mtimespec));
+        wst->ctim = host_to_le64(timespec_to_ns(&hst->st_ctimespec));
+#else
+        wst->atim = host_to_le64(timespec_to_ns(&hst->st_atim));
+        wst->mtim = host_to_le64(timespec_to_ns(&hst->st_mtim));
+        wst->ctim = host_to_le64(timespec_to_ns(&hst->st_ctim));
+#endif
+}
+
 static uint8_t
 wasi_convert_dirent_filetype(uint8_t hosttype)
 {
@@ -1211,21 +1231,7 @@ wasi_fd_filestat_get(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         struct wasi_filestat wst;
-        memset(&wst, 0, sizeof(wst));
-        wst.dev = host_to_le64(hst.st_dev);
-        wst.ino = host_to_le64(hst.st_ino);
-        wst.type = wasi_convert_filetype(hst.st_mode);
-        wst.linkcount = host_to_le64(hst.st_nlink);
-        wst.size = host_to_le64(hst.st_size);
-#if defined(__APPLE__)
-        wst.atim = host_to_le64(timespec_to_ns(&hst.st_atimespec));
-        wst.mtim = host_to_le64(timespec_to_ns(&hst.st_mtimespec));
-        wst.ctim = host_to_le64(timespec_to_ns(&hst.st_ctimespec));
-#else
-        wst.atim = host_to_le64(timespec_to_ns(&hst.st_atim));
-        wst.mtim = host_to_le64(timespec_to_ns(&hst.st_mtim));
-        wst.ctim = host_to_le64(timespec_to_ns(&hst.st_ctim));
-#endif
+        wasi_convert_filestat(&hst, &wst);
         ret = wasi_copyout(ctx, &wst, retp, sizeof(wst));
 fail:
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
@@ -2153,21 +2159,7 @@ wasi_path_filestat_get(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         struct wasi_filestat wst;
-        memset(&wst, 0, sizeof(wst));
-        wst.dev = host_to_le64(hst.st_dev);
-        wst.ino = host_to_le64(hst.st_ino);
-        wst.type = wasi_convert_filetype(hst.st_mode);
-        wst.linkcount = host_to_le64(hst.st_nlink);
-        wst.size = host_to_le64(hst.st_size);
-#if defined(__APPLE__)
-        wst.atim = host_to_le64(timespec_to_ns(&hst.st_atimespec));
-        wst.mtim = host_to_le64(timespec_to_ns(&hst.st_mtimespec));
-        wst.ctim = host_to_le64(timespec_to_ns(&hst.st_ctimespec));
-#else
-        wst.atim = host_to_le64(timespec_to_ns(&hst.st_atim));
-        wst.mtim = host_to_le64(timespec_to_ns(&hst.st_mtim));
-        wst.ctim = host_to_le64(timespec_to_ns(&hst.st_ctim));
-#endif
+        wasi_convert_filestat(&hst, &wst);
         ret = wasi_copyout(ctx, &wst, retp, sizeof(wst));
 fail:
         free(hostpath);
