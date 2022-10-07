@@ -849,7 +849,8 @@ wasi_fd_readdir(struct exec_context *ctx, struct host_instance *hi,
                 memset(&wde, 0, sizeof(wde));
                 le64_encode(&wde.d_next, nextloc);
                 le64_encode(&wde.d_ino, d->d_ino);
-                le32_encode(&wde.d_namlen, d->d_namlen);
+                uint32_t namlen = strlen(d->d_name);
+                le32_encode(&wde.d_namlen, namlen);
                 wde.d_type = wasi_convert_dirent_filetype(d->d_type);
                 if (buflen - n < sizeof(wde)) {
                         n = buflen; /* signal buffer full */
@@ -861,16 +862,16 @@ wasi_fd_readdir(struct exec_context *ctx, struct host_instance *hi,
                 }
                 buf += sizeof(wde);
                 n += sizeof(wde);
-                if (buflen - n < d->d_namlen) {
+                if (buflen - n < namlen) {
                         n = buflen; /* signal buffer full */
                         break;
                 }
-                ret = wasi_copyout(ctx, d->d_name, buf, d->d_namlen);
+                ret = wasi_copyout(ctx, d->d_name, buf, namlen);
                 if (ret != 0) {
                         goto fail;
                 }
-                buf += d->d_namlen;
-                n += d->d_namlen;
+                buf += namlen;
+                n += namlen;
         }
         uint32_t r = host_to_le32(n);
         ret = wasi_copyout(ctx, &r, retp, sizeof(r));
