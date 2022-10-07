@@ -156,6 +156,12 @@ racy_fallocate(int fd, off_t offset, off_t size)
 }
 #endif
 
+static bool
+fdinfo_is_prestat(const struct wasi_fdinfo *fdinfo)
+{
+        return fdinfo->hostfd == -1 && fdinfo->prestat_path != NULL;
+}
+
 static int
 wasi_copyin(struct exec_context *ctx, void *hostaddr, uint32_t wasmaddr,
             size_t len)
@@ -518,6 +524,9 @@ wasi_convert_errno(int host_errno)
         case ENOTEMPTY:
                 wasmerrno = 55;
                 break;
+        case ENOTSUP:
+                wasmerrno = 58;
+                break;
         case EPERM:
                 wasmerrno = 63;
                 break;
@@ -649,6 +658,10 @@ wasi_fd_close(struct exec_context *ctx, struct host_instance *hi,
         int ret;
         ret = wasi_fd_lookup(wasi, wasifd, &fdinfo);
         if (ret != 0) {
+                goto fail;
+        }
+        if (fdinfo_is_prestat(fdinfo)) {
+                ret = ENOTSUP;
                 goto fail;
         }
         if (fdinfo->hostfd == -1) {
@@ -1113,20 +1126,29 @@ wasi_fd_renumber(struct exec_context *ctx, struct host_instance *hi,
         HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t wasifd_from = HOST_FUNC_PARAM(ft, params, 0, i32);
         uint32_t wasifd_to = HOST_FUNC_PARAM(ft, params, 1, i32);
-        int hostfd;
+        struct wasi_fdinfo *fdinfo_from;
         int ret;
-        ret = wasi_hostfd_lookup(wasi, wasifd_from, &hostfd);
+        ret = wasi_fd_lookup(wasi, wasifd_from, &fdinfo_from);
         if (ret != 0) {
+                goto fail;
+        }
+        if (fdinfo_is_prestat(fdinfo_from)) {
+                ret = ENOTSUP;
+                goto fail;
+        }
+        if (fdinfo_from->hostfd == -1) {
+                ret = EBADF;
                 goto fail;
         }
         ret = wasi_fd_expand_table(wasi, wasifd_to);
         if (ret != 0) {
                 goto fail;
         }
-        struct wasi_fdinfo *fdinfo_from =
-                &VEC_ELEM(wasi->fdtable, wasifd_from);
         struct wasi_fdinfo *fdinfo_to = &VEC_ELEM(wasi->fdtable, wasifd_to);
-        assert(fdinfo_from->hostfd == hostfd);
+        if (fdinfo_is_prestat(fdinfo_to)) {
+                ret = ENOTSUP;
+                goto fail;
+        }
         if (fdinfo_to->hostfd != -1) {
                 close(fdinfo_to->hostfd);
         }
