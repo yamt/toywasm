@@ -1159,6 +1159,11 @@ wasi_fd_renumber(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
+        /*
+         * Note: re-lookup fdinfo_from as wasi_fd_expand_table above
+         * might have realloc()'ed fdtable.
+         */
+        fdinfo_from = &VEC_ELEM(wasi->fdtable, wasifd_from);
         struct wasi_fdinfo *fdinfo_to = &VEC_ELEM(wasi->fdtable, wasifd_to);
         if (fdinfo_is_prestat(fdinfo_to)) {
                 ret = ENOTSUP;
