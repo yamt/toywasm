@@ -191,7 +191,7 @@ ctz(uint32_t v)
 }
 
 static uint32_t
-popcount(uint32_t v)
+wasm_popcount(uint32_t v)
 {
         return __builtin_popcount(v);
 }
@@ -223,9 +223,9 @@ ctz64(uint64_t v)
 }
 
 static uint64_t
-popcount64(uint64_t v)
+wasm_popcount64(uint64_t v)
 {
-        return popcount(v) + popcount(v >> 32);
+        return wasm_popcount(v) + wasm_popcount(v >> 32);
 }
 
 static int
