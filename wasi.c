@@ -1074,6 +1074,21 @@ wasi_fd_seek(struct exec_context *ctx, struct host_instance *hi,
                 ret = EINVAL;
                 goto fail;
         }
+        struct stat st;
+        ret = fstat(hostfd, &st);
+        if (ret == -1) {
+                ret = errno;
+                assert(ret > 0);
+                goto fail;
+        }
+        if (S_ISDIR(st.st_mode)) {
+                /*
+                 * Note: wasmtime directory_seek.rs test expects EBADF.
+                 * Why not EISDIR?
+                 */
+                ret = EBADF;
+                goto fail;
+        }
         off_t ret1 = lseek(hostfd, offset, hostwhence);
         if (ret1 == -1) {
                 ret = errno;
