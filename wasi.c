@@ -2294,7 +2294,7 @@ wasi_instance_create(struct wasi_instance **instp)
         uint32_t i;
         for (i = 0; i < nfds; i++) {
                 int hostfd;
-#if defined(__wasi__)
+#if defined(__wasi__) /* wasi has no dup */
                 hostfd = i;
 #else
                 hostfd = dup(i);
@@ -2353,7 +2353,7 @@ wasi_instance_destroy(struct wasi_instance *inst)
         uint32_t i;
         VEC_FOREACH_IDX(i, it, inst->fdtable) {
                 int hostfd = it->hostfd;
-#if defined(__wasi__)
+#if defined(__wasi__) /* wasi has no dup */
                 if (hostfd != -1 && hostfd >= 3) {
 #else
                 if (hostfd != -1) {
