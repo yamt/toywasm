@@ -283,6 +283,24 @@ timeval_from_ns(struct timeval *tv, uint64_t ns)
         tv->tv_usec = (ns % 1000000000) / 1000;
 }
 
+static int
+prepare_utimes_tv(uint32_t fstflags, uint64_t atim, uint64_t mtim,
+                  struct timeval tvstore[2], const struct timeval **resultp)
+{
+        const struct timeval *tvp;
+        if (fstflags == (WASI_FSTFLAG_ATIM_NOW | WASI_FSTFLAG_MTIM_NOW)) {
+                tvp = NULL;
+        } else if (fstflags == (WASI_FSTFLAG_ATIM | WASI_FSTFLAG_MTIM)) {
+                timeval_from_ns(&tvstore[0], atim);
+                timeval_from_ns(&tvstore[1], mtim);
+                tvp = tvstore;
+        } else {
+                return ENOTSUP;
+        }
+        *resultp = tvp;
+        return 0;
+}
+
 static uint8_t
 wasi_convert_filetype(mode_t mode)
 {
@@ -2042,14 +2060,8 @@ wasi_path_filestat_set_times(struct exec_context *ctx,
         }
         struct timeval tv[2];
         const struct timeval *tvp;
-        if (fstflags == (WASI_FSTFLAG_ATIM_NOW | WASI_FSTFLAG_MTIM_NOW)) {
-                tvp = NULL;
-        } else if (fstflags == (WASI_FSTFLAG_ATIM | WASI_FSTFLAG_MTIM)) {
-                timeval_from_ns(&tv[0], atim);
-                timeval_from_ns(&tv[1], mtim);
-                tvp = tv;
-        } else {
-                ret = ENOTSUP;
+        ret = prepare_utimes_tv(fstflags, atim, mtim, tv, &tvp);
+        if (ret != 0) {
                 goto fail;
         }
         if ((lookupflags & WASI_LOOKUPFLAG_SYMLINK_FOLLOW) != 0) {
