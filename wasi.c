@@ -963,6 +963,31 @@ fail:
 }
 
 static int
+wasi_fd_fdstat_set_rights(struct exec_context *ctx, struct host_instance *hi,
+                          const struct functype *ft, const struct cell *params,
+                          struct cell *results)
+{
+        WASI_TRACE;
+        struct wasi_instance *wasi = (void *)hi;
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
+        uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
+#if 0
+        uint64_t base = HOST_FUNC_PARAM(ft, params, 1, i64);
+        uint64_t inheriting = HOST_FUNC_PARAM(ft, params, 2, i64);
+#endif
+        struct wasi_fdinfo *fdinfo;
+        int ret;
+        ret = wasi_fd_lookup(wasi, wasifd, &fdinfo);
+        if (ret != 0) {
+                goto fail;
+        }
+        /* TODO implement */
+fail:
+        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
+        return 0;
+}
+
+static int
 wasi_fd_seek(struct exec_context *ctx, struct host_instance *hi,
              const struct functype *ft, const struct cell *params,
              struct cell *results)
@@ -1125,10 +1150,9 @@ fail:
 }
 
 static int
-wasi_fd_filestat_set_times(struct exec_context *ctx,
-                             struct host_instance *hi,
-                             const struct functype *ft,
-                             const struct cell *params, struct cell *results)
+wasi_fd_filestat_set_times(struct exec_context *ctx, struct host_instance *hi,
+                           const struct functype *ft,
+                           const struct cell *params, struct cell *results)
 {
         WASI_TRACE;
         struct wasi_instance *wasi = (void *)hi;
@@ -2162,6 +2186,7 @@ const struct host_func wasi_funcs[] = {
         WASI_HOST_FUNC(fd_readdir, "(iiiIi)i"),
         WASI_HOST_FUNC(fd_fdstat_get, "(ii)i"),
         WASI_HOST_FUNC(fd_fdstat_set_flags, "(ii)i"),
+        WASI_HOST_FUNC(fd_fdstat_set_rights, "(iII)i"),
         WASI_HOST_FUNC(fd_seek, "(iIii)i"),
         WASI_HOST_FUNC(fd_tell, "(ii)i"),
         WASI_HOST_FUNC(fd_renumber, "(ii)i"),
