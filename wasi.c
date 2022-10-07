@@ -1006,6 +1006,10 @@ wasi_fd_fdstat_get(struct exec_context *ctx, struct host_instance *hi,
         /* TODO fs_flags */
         /* TODO fs_rights_base */
         /* TODO fs_rights_inheriting */
+
+        /* hack to make wasm-on-wasm happier */
+        st.fs_rights_inheriting = ~UINT64_C(0);
+
         ret = wasi_copyout(ctx, &st, stat_addr, sizeof(st));
 fail:
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
