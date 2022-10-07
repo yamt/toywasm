@@ -1125,6 +1125,41 @@ fail:
 }
 
 static int
+wasi_fd_filestat_set_times(struct exec_context *ctx,
+                             struct host_instance *hi,
+                             const struct functype *ft,
+                             const struct cell *params, struct cell *results)
+{
+        WASI_TRACE;
+        struct wasi_instance *wasi = (void *)hi;
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
+        uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
+        uint64_t atim = HOST_FUNC_PARAM(ft, params, 1, i64);
+        uint64_t mtim = HOST_FUNC_PARAM(ft, params, 2, i64);
+        uint32_t fstflags = HOST_FUNC_PARAM(ft, params, 3, i32);
+        int hostfd;
+        int ret;
+        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd);
+        if (ret != 0) {
+                goto fail;
+        }
+        struct timeval tv[2];
+        const struct timeval *tvp;
+        ret = prepare_utimes_tv(fstflags, atim, mtim, tv, &tvp);
+        if (ret != 0) {
+                goto fail;
+        }
+        ret = futimes(hostfd, tvp);
+        if (ret == -1) {
+                ret = errno;
+                assert(ret > 0);
+        }
+fail:
+        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
+        return 0;
+}
+
+static int
 wasi_fd_prestat_get(struct exec_context *ctx, struct host_instance *hi,
                     const struct functype *ft, const struct cell *params,
                     struct cell *results)
@@ -2131,6 +2166,7 @@ const struct host_func wasi_funcs[] = {
         WASI_HOST_FUNC(fd_tell, "(ii)i"),
         WASI_HOST_FUNC(fd_renumber, "(ii)i"),
         WASI_HOST_FUNC(fd_filestat_get, "(ii)i"),
+        WASI_HOST_FUNC(fd_filestat_set_times, "(iIIi)i"),
         WASI_HOST_FUNC(fd_prestat_get, "(ii)i"),
         WASI_HOST_FUNC(fd_prestat_dir_name, "(iii)i"),
         WASI_HOST_FUNC(poll_oneoff, "(iiii)i"),
