@@ -28,6 +28,12 @@ jobs:
             compiler: gcc
           - os: ubuntu-latest
             compiler: clang
+          - TOYWASM_USE_SEPARATE_EXECUTE: ON
+            TOYWASM_USE_TAILCALL: OFF
+          - TOYWASM_USE_SMALL_CELLS: ON
+            TOYWASM_USE_SEPARATE_LOCALS: ON
+          - os: ubuntu-latest
+            BUILD_TYPE: Release
 
     # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
     # You can convert this to a matrix build if you need cross-platform coverage.
