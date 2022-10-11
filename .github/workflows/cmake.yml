@@ -113,8 +113,8 @@ jobs:
       env:
         ARCH: ${{matrix.arch}}
       run: |
-        ./cross/cross.sh
-        cd build.cross.${ARCH}
+        sudo ./cross/cross-setup.sh
+        ./cross/cross-build.sh
 
     - name: Install QEMU
       run: sudo apt-get update && sudo apt-get install -y qemu-user-static
