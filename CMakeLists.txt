@@ -88,6 +88,8 @@ if (CMAKE_C_COMPILER_ID MATCHES "Clang")
 # https://github.com/llvm/llvm-project/blob/93b7bdcda7072581ef3f5ceaae8c4f0d549a0845/lld/ELF/Driver.cpp#L142-L166
 if(NOT TRIPLET MATCHES "s390")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=lld")
+else()
+set(USE_IPO OFF)
 endif()
 endif()
 endif()
