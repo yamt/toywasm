@@ -109,6 +109,11 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
+    - name: Fix sources.list
+      run: |
+        curl -L -O https://raw.githubusercontent.com/yamt/garbage/master/myubuntu/apt/sources.list
+        sudo cp sources.list /etc/apt/
+
     - name: Cross build
       env:
         ARCH: ${{matrix.arch}}
@@ -117,7 +122,8 @@ jobs:
         ./cross/cross-build.sh
 
     - name: Install QEMU
-      run: sudo apt-get update && sudo apt-get install -y qemu-user-static
+      run: |
+        sudo apt-get update && sudo apt-get install -y qemu-user-static
 
     - name: Run
       env:
