@@ -17,9 +17,6 @@ armhf)
     ;;
 esac
 
-dpkg --add-architecture ${ARCH}
-apt update
-apt install -y crossbuild-essential-${ARCH} libcmocka-dev:${ARCH} wabt
 mkdir build.cross.${ARCH}
 cd build.cross.${ARCH}
 cmake \
