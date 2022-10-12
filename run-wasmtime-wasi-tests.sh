@@ -9,9 +9,9 @@ EXE=${1:-${THIS_DIR}/build/toywasm --wasi}
 WASM_DIR="${THIS_DIR}/.wasmtime-wasi-tests-bin"
 fetch_test_bin()
 {
-	URL=https://github.com/yamt/wasmtime/releases/download/wasi-tests-bin-20221012/wasmtime-wasi-tests-bin.tgz
+    URL=https://github.com/yamt/wasmtime/releases/download/wasi-tests-bin-20221012/wasmtime-wasi-tests-bin.tgz
     mkdir -p "${WASM_DIR}"
-	curl -L ${URL} | (cd "${WASM_DIR}" && pax -rz)
+    curl -L ${URL} | (cd "${WASM_DIR}" && pax -rz)
 }
 
 test -d "${WASM_DIR}" || fetch_test_bin
@@ -23,7 +23,7 @@ EXPECTED_FAIL=0
 UNEXPECTED_SUCCESS=0
 cd "${WASM_DIR}"
 for w in *.wasm; do
-	echo "=== ${w}"
+    echo "=== ${w}"
     TMP=$(mktemp -d)
     if ${EXE} --wasi-dir ${TMP} ${w} ${TMP}; then
         if grep "^${w%%.wasm}$" "${BLACKLIST}"; then
