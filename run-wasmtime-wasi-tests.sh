@@ -32,6 +32,10 @@ else
     }
 fi
 
+# suppress useless messages on macOS
+# toywasm(46834,0x11068c600) malloc: nano zone abandoned due to inability to preallocate reserved vm space.
+export MallocNanoZone=0
+
 BLACKLIST="${THIS_DIR}/wasmtime-wasi-tests-blacklist.txt"
 TOTAL=0
 FAIL=0
