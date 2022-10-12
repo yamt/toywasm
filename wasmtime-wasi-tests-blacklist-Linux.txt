@@ -9,10 +9,11 @@ symlink_filestat
 fd_filestat_set
 path_link
 
-# this implementation doesn't give any special meanings to
-# the trailing slashes in pathnames.
-# XXX does WASI require either ways?
-path_rename_file_trailing_slashes
-
 # loose implementation of path_open.
 interesting_paths
+
+# this implementation doesn't give any special meanings to
+# the trailing slashes in pathnames.
+# (just leave it to the underlying OS)
+# XXX does WASI require either ways?
+path_symlink_trailing_slashes

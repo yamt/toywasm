@@ -36,7 +36,7 @@ fi
 # toywasm(46834,0x11068c600) malloc: nano zone abandoned due to inability to preallocate reserved vm space.
 export MallocNanoZone=0
 
-BLACKLIST="${THIS_DIR}/wasmtime-wasi-tests-blacklist.txt"
+BLACKLIST="${THIS_DIR}/wasmtime-wasi-tests-blacklist-$(uname -s).txt"
 TOTAL=0
 FAIL=0
 EXPECTED_FAIL=0
