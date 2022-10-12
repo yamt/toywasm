@@ -16,6 +16,22 @@ fetch_test_bin()
 
 test -d "${WASM_DIR}" || fetch_test_bin
 
+if [ "${WASM_ON_WASM}" -ne 0 ]; then
+    run_wasi_test()
+    {
+        ../build.native/toywasm ${EXTRA_OPTIONS} --wasi \
+        --wasi-dir . --wasi-dir ../build.wasm --wasi-dir ${TMP} -- \
+        ../build.wasm/toywasm ${EXTRA_OPTIONS} --wasi \
+        --wasi-dir . --wasi-dir ${TMP} -- \
+        ${w} ${TMP}
+    }
+else
+    run_wasi_test()
+    {
+        ${EXE} --wasi-dir ${TMP} ${w} ${TMP};
+    }
+fi
+
 BLACKLIST="${THIS_DIR}/wasmtime-wasi-tests-blacklist.txt"
 TOTAL=0
 FAIL=0
@@ -25,7 +41,7 @@ cd "${WASM_DIR}"
 for w in *.wasm; do
     echo "=== ${w}"
     TMP=$(mktemp -d)
-    if ${EXE} --wasi-dir ${TMP} ${w} ${TMP}; then
+    if run_wasi_test; then
         if grep "^${w%%.wasm}$" "${BLACKLIST}"; then
             echo "=== ${w} succeeded (unexpected)"
             UNEXPECTED_SUCCESS=$((UNEXPECTED_SUCCESS + 1))
