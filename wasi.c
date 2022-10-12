@@ -2375,6 +2375,9 @@ wasi_instance_destroy(struct wasi_instance *inst)
                         }
                 }
                 free(it->prestat_path);
+                if (it->dir != NULL) {
+                        closedir(it->dir);
+                }
         }
         VEC_FREE(inst->fdtable);
         free(inst);
