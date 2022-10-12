@@ -1007,7 +1007,12 @@ wasi_fd_fdstat_get(struct exec_context *ctx, struct host_instance *hi,
         /* TODO fs_rights_base */
         /* TODO fs_rights_inheriting */
 
-        /* hack to make wasm-on-wasm happier */
+        /*
+         * A hack to make wasm-on-wasm happier.
+         *
+         * wasi-libc clamps the request by itself using rights_inheriting.
+         * https://github.com/WebAssembly/wasi-libc/blob/9d2f5a8242667ac659793b19163cbeec1e077e01/libc-bottom-half/cloudlibc/src/libc/fcntl/openat.c#L53-L69
+         */
         st.fs_rights_inheriting = ~UINT64_C(0);
 
         ret = wasi_copyout(ctx, &st, stat_addr, sizeof(st));
