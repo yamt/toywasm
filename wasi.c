@@ -1748,19 +1748,19 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
                 oflags |= O_NOFOLLOW;
                 xlog_trace("oflag O_NOFOLLOW");
         }
-        if ((wasmoflags & 1) != 0) {
+        if ((wasmoflags & WASI_OFLAG_CREAT) != 0) {
                 oflags |= O_CREAT;
                 xlog_trace("oflag O_CREAT");
         }
-        if ((wasmoflags & 2) != 0) {
+        if ((wasmoflags & WASI_OFLAG_DIRECTORY) != 0) {
                 oflags |= O_DIRECTORY;
                 xlog_trace("oflag O_DIRECTORY");
         }
-        if ((wasmoflags & 4) != 0) {
+        if ((wasmoflags & WASI_OFLAG_EXCL) != 0) {
                 oflags |= O_EXCL;
                 xlog_trace("oflag O_EXCL");
         }
-        if ((wasmoflags & 8) != 0) {
+        if ((wasmoflags & WASI_OFLAG_TRUNC) != 0) {
                 oflags |= O_TRUNC;
                 xlog_trace("oflag O_TRUNC");
         }
