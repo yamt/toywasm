@@ -16,7 +16,7 @@ fetch_test_bin()
 
 test -d "${WASM_DIR}" || fetch_test_bin
 
-if [ "${WASM_ON_WASM}" -ne 0 ]; then
+if [ "${WASM_ON_WASM:-0}" -ne 0 ]; then
     run_wasi_test()
     {
         ../build.native/toywasm ${EXTRA_OPTIONS} --wasi \
