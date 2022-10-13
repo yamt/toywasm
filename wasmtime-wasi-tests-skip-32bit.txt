@@ -1,0 +1,3 @@
+# qemu issue: https://gitlab.com/qemu-project/qemu/-/issues/263
+# XXX assumption: we are running 32-bit tests on qemu on 64-bit host
+fd_readdir

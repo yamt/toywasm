@@ -1,17 +1,3 @@
-# rights system not implemented.
-fd_flags_set
-path_open_read_without_rights
-path_filestat
-symlink_filestat
-
-# intentional limitations due to the use of legacy
-# (non openat family) functions.
-fd_filestat_set
-path_link
-
-# loose implementation of path_open.
-interesting_paths
-
 # this implementation doesn't give any special meanings to
 # the trailing slashes in pathnames.
 # (just leave it to the underlying OS)
