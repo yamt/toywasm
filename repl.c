@@ -838,10 +838,22 @@ repl_print_version(void)
 #if defined(__clang_version__)
         printf("__clang_version__ = %s\n", __clang_version__);
 #endif
+#if !defined(__clang__)
+#if defined(__GNUC__)
+        printf("__GNUC__ = %u\n", __GNUC__);
+#endif
+#if defined(__GNUC_MINOR__)
+        printf("__GNUC_MINOR__ = %u\n", __GNUC_MINOR__);
+#endif
+#if defined(__GNUC_PATCHLEVEL__)
+        printf("__GNUC_PATCHLEVEL__ = %u\n", __GNUC_PATCHLEVEL__);
+#endif
+#endif /* !defined(__clang__) */
 #if defined(__BYTE_ORDER__)
         printf("__BYTE_ORDER__ is %u (__ORDER_LITTLE_ENDIAN__ is %u)\n",
                __BYTE_ORDER__, __ORDER_LITTLE_ENDIAN__);
 #endif
+        printf("sizeof(void *) = %zu\n", sizeof(void *));
 #if defined(__wasi__)
         printf("__wasi__ defined\n");
 #endif
