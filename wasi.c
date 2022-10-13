@@ -909,6 +909,7 @@ wasi_fd_readdir(struct exec_context *ctx, struct host_instance *hi,
         struct wasi_fdinfo *fdinfo = &VEC_ELEM(wasi->fdtable, wasifd);
         DIR *dir = fdinfo->dir;
         if (dir == NULL) {
+                xlog_trace("fd_readdir: fdopendir");
                 dir = fdopendir(hostfd);
                 if (dir == NULL) {
                         ret = errno;
@@ -922,18 +923,29 @@ wasi_fd_readdir(struct exec_context *ctx, struct host_instance *hi,
                  * Note: rewinddir invalidates cookies.
                  * is it what WASI expects?
                  */
+                xlog_trace("fd_readdir: rewinddir");
                 rewinddir(dir);
         } else if (cookie > LONG_MAX) {
                 ret = EINVAL;
                 goto fail;
         } else {
+                xlog_trace("fd_readdir: seekdir %" PRIu64, cookie);
                 seekdir(dir, cookie);
         }
         uint32_t n = 0;
         while (true) {
                 struct dirent *d;
+                errno = 0;
                 d = readdir(dir);
                 if (d == NULL) {
+                        if (errno != 0) {
+                                ret = errno;
+                                xlog_trace(
+                                        "fd_readdir: readdir failed with %d",
+                                        ret);
+                                goto fail;
+                        }
+                        xlog_trace("fd_readdir: EOD");
                         break;
                 }
                 long nextloc = telldir(dir);
@@ -944,7 +956,10 @@ wasi_fd_readdir(struct exec_context *ctx, struct host_instance *hi,
                 uint32_t namlen = strlen(d->d_name);
                 le32_encode(&wde.d_namlen, namlen);
                 wde.d_type = wasi_convert_dirent_filetype(d->d_type);
+                xlog_trace("fd_readdir: ino %" PRIu64 " nam %.*s",
+                           (uint64_t)d->d_ino, (int)namlen, d->d_name);
                 if (buflen - n < sizeof(wde)) {
+                        xlog_trace("fd_readdir: buffer full");
                         n = buflen; /* signal buffer full */
                         break;
                 }
@@ -955,6 +970,7 @@ wasi_fd_readdir(struct exec_context *ctx, struct host_instance *hi,
                 buf += sizeof(wde);
                 n += sizeof(wde);
                 if (buflen - n < namlen) {
+                        xlog_trace("fd_readdir: buffer full");
                         n = buflen; /* signal buffer full */
                         break;
                 }
