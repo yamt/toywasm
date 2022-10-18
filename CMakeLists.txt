@@ -221,6 +221,12 @@ add_test(NAME toywasm-cli-wasmtime-wasi-tests
 )
 set_tests_properties(toywasm-cli-wasmtime-wasi-tests PROPERTIES ENVIRONMENT "${TEST_ENV}")
 
+add_test(NAME toywasm-cli-spidermonkey
+	COMMAND ./run-spidermonkey.sh ${CMAKE_BINARY_DIR}/toywasm --wasi
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+set_tests_properties(toywasm-cli-spidermonkey PROPERTIES ENVIRONMENT "${TEST_ENV}")
+
 add_test(NAME toywasm-cli-wasm3-spec-test-disable-jump-table
 	COMMAND ./run-wasm3-spec-test-opam-2.0.0.sh --exec "${CMAKE_BINARY_DIR}/toywasm --disable-jump-table --repl --repl-prompt wasm3" --timeout 60 --spectest ${CMAKE_BINARY_DIR}/spectest.wasm
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
