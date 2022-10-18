@@ -62,7 +62,7 @@ fail:
         return ret;
 }
 
-#if defined(ENABLE_TRACING)
+#if defined(TOYWASM_ENABLE_TRACING)
 static const char *
 valtype_str(enum valtype vt)
 {
@@ -796,7 +796,7 @@ static void
 clear_expr_exec_info(struct expr_exec_info *ei)
 {
         free(ei->jumps);
-#if defined(USE_SMALL_CELLS)
+#if defined(TOYWASM_USE_SMALL_CELLS)
         free(ei->type_annotations.types);
 #endif
 }

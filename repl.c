@@ -454,7 +454,7 @@ fail:
 int
 repl_save(struct repl_state *state, const char *modname, const char *filename)
 {
-#if defined(ENABLE_WRITER)
+#if defined(TOYWASM_ENABLE_WRITER)
         if (state->nmodules == 0) {
                 return EPROTO;
         }
@@ -893,14 +893,14 @@ repl_print_version(void)
 #if defined(__linux__)
         printf("__linux__ defined\n");
 #endif
-#if defined(USE_SEPARATE_EXECUTE)
-        printf("USE_SEPARATE_EXECUTE defined\n");
+#if defined(TOYWASM_USE_SEPARATE_EXECUTE)
+        printf("TOYWASM_USE_SEPARATE_EXECUTE defined\n");
 #endif
-#if defined(USE_TAILCALL)
-        printf("USE_TAILCALL defined\n");
+#if defined(TOYWASM_USE_TAILCALL)
+        printf("TOYWASM_USE_TAILCALL defined\n");
 #endif
-#if defined(ENABLE_TRACING)
-        printf("ENABLE_TRACING defined\n");
+#if defined(TOYWASM_ENABLE_TRACING)
+        printf("TOYWASM_ENABLE_TRACING defined\n");
 #endif
 }
 

@@ -28,7 +28,7 @@
  * https://webassembly.github.io/spec/core/appendix/algorithm.html
  */
 
-#if defined(USE_SEPARATE_EXECUTE) && defined(USE_SMALL_CELLS)
+#if defined(TOYWASM_USE_SEPARATE_EXECUTE) && defined(TOYWASM_USE_SMALL_CELLS)
 static void
 stack_push_val(const struct exec_context *ctx, const struct val *val,
                struct cell **stackp, uint32_t csz)
@@ -82,7 +82,7 @@ static struct cell *
 local_getptr(struct exec_context *ectx, uint32_t localidx, uint32_t *cszp)
 {
         uint32_t cidx = frame_locals_cellidx(ectx, localidx, cszp);
-#if defined(USE_LOCALS_CACHE)
+#if defined(TOYWASM_USE_LOCALS_CACHE)
         return &ectx->current_locals[cidx];
 #else
         const struct funcframe *frame = &VEC_LASTELEM(ectx->frames);
@@ -353,7 +353,7 @@ fail:
 #undef STACK
 #undef STACK_ADJ
 
-#if defined(USE_SEPARATE_EXECUTE)
+#if defined(TOYWASM_USE_SEPARATE_EXECUTE)
 #define EXECUTING true
 #define VALIDATING false
 #define ECTX ctx
@@ -367,7 +367,7 @@ fail:
 #define SAVE_STACK_PTR ctx->stack.lsize = stack - ctx->stack.p
 #define LOAD_STACK_PTR stack = &VEC_NEXTELEM(ctx->stack)
 #define ORIG_PC p0
-#if defined(USE_TAILCALL)
+#if defined(TOYWASM_USE_TAILCALL)
 #define INSN_SUCCESS __musttail return exec_next_insn(p, stack, ctx)
 #else
 #define INSN_SUCCESS INSN_SUCCESS_RETURN
@@ -379,7 +379,7 @@ fail:
 #define ep NULL
 #define STACK stack
 #define STACK_ADJ(n) stack += (n)
-#if defined(USE_SMALL_CELLS)
+#if defined(TOYWASM_USE_SMALL_CELLS)
 #define push_val(v, csz, ctx) stack_push_val(ctx, v, &stack, csz)
 #define pop_val(v, csz, ctx) stack_pop_val(ctx, v, &stack, csz)
 #else
@@ -413,28 +413,28 @@ fail:
 #undef ep
 #undef STACK
 #undef STACK_ADJ
-#endif /* defined(USE_SEPARATE_EXECUTE) */
+#endif /* defined(TOYWASM_USE_SEPARATE_EXECUTE) */
 
-#if defined(USE_SEPARATE_EXECUTE)
+#if defined(TOYWASM_USE_SEPARATE_EXECUTE)
 const static struct exec_instruction_desc exec_instructions_fc[];
 
 static int
 exec_next_insn_fc(const uint8_t *p, struct cell *stack,
                   struct exec_context *ctx)
 {
-#if !(defined(USE_SEPARATE_EXECUTE) && defined(USE_TAILCALL))
+#if !(defined(TOYWASM_USE_SEPARATE_EXECUTE) && defined(TOYWASM_USE_TAILCALL))
         assert(ctx->p + 1 == p);
 #endif
         assert(ctx->event == EXEC_EVENT_NONE);
         assert(ctx->frames.lsize > 0);
-#if defined(ENABLE_TRACING)
+#if defined(TOYWASM_ENABLE_TRACING)
         uint32_t pc = ptr2pc(ctx->instance->module, p);
 #endif
         uint32_t op = *p++;
         const struct exec_instruction_desc *desc = &exec_instructions_fc[op];
         xlog_trace("exec %06" PRIx32 ": %s (2nd byte %02" PRIx32 ")", pc,
                    instructions[op].name, op);
-#if defined(USE_TAILCALL)
+#if defined(TOYWASM_USE_TAILCALL)
         __musttail
 #endif
                 return desc->execute(p, stack, ctx);
@@ -461,7 +461,7 @@ const struct exec_instruction_desc exec_instructions[] = {
 #undef INSTRUCTION
 #undef INSTRUCTION_INDIRECT
 
-#endif /* defined(USE_SEPARATE_EXECUTE) */
+#endif /* defined(TOYWASM_USE_SEPARATE_EXECUTE) */
 
 #define INSTRUCTION(b, n, f, FLAGS)                                           \
         [b] = {                                                               \

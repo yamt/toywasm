@@ -324,7 +324,7 @@ int
 record_type_annotation(struct validation_context *vctx, const uint8_t *p,
                        enum valtype t)
 {
-#if defined(USE_SMALL_CELLS)
+#if defined(TOYWASM_USE_SMALL_CELLS)
         const struct ctrlframe *cframe = &vctx->cframes[vctx->ncframes - 1];
         if (cframe->unreachable) {
                 assert(is_valtype(t) || t == TYPE_UNKNOWN);

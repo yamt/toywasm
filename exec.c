@@ -116,7 +116,7 @@ frame_clear(struct funcframe *frame)
 struct cell *
 frame_locals(struct exec_context *ctx, const struct funcframe *frame)
 {
-#if defined(USE_SEPARATE_LOCALS)
+#if defined(TOYWASM_USE_SEPARATE_LOCALS)
         return &VEC_ELEM(ctx->locals, frame->localidx);
 #else
         return &VEC_ELEM(ctx->stack, frame->height);
@@ -166,7 +166,7 @@ set_current_frame(struct exec_context *ctx, const struct funcframe *frame,
                 assert(ei == NULL || ei == &func->e.ei);
                 ctx->ei = &func->e.ei;
         }
-#if defined(USE_LOCALS_CACHE)
+#if defined(TOYWASM_USE_LOCALS_CACHE)
         ctx->current_locals = frame_locals(ctx, frame);
 #endif
 }
@@ -215,7 +215,7 @@ frame_enter(struct exec_context *ctx, struct instance *inst, uint32_t funcidx,
         frame->funcidx = funcidx;
         frame->nresults = nresults;
         frame->labelidx = ctx->labels.lsize;
-#if defined(USE_SEPARATE_LOCALS)
+#if defined(TOYWASM_USE_SEPARATE_LOCALS)
         frame->localidx = ctx->locals.lsize;
         ret = VEC_PREALLOC(ctx->locals, nlocals);
         if (ret != 0) {
@@ -238,7 +238,7 @@ frame_enter(struct exec_context *ctx, struct instance *inst, uint32_t funcidx,
                 frame->callerpc = ptr2pc(ctx->instance->module, ctx->p);
         }
         frame->height = ctx->stack.lsize;
-#if defined(USE_SEPARATE_LOCALS)
+#if defined(TOYWASM_USE_SEPARATE_LOCALS)
         struct cell *locals = &VEC_ELEM(ctx->locals, frame->localidx);
         cells_copy(locals, params, nparams);
 
@@ -275,7 +275,7 @@ frame_enter(struct exec_context *ctx, struct instance *inst, uint32_t funcidx,
                 if (i == nparams) {
                         xlog_trace("-- ^-params v-locals");
                 }
-#if defined(USE_SMALL_CELLS)
+#if defined(TOYWASM_USE_SMALL_CELLS)
                 xlog_trace("local [%" PRIu32 "] %08" PRIx32, i,
                            frame_locals(ctx, frame)[i].x);
 #else
@@ -288,7 +288,7 @@ frame_enter(struct exec_context *ctx, struct instance *inst, uint32_t funcidx,
          * commit changes.
          */
         ctx->frames.lsize++;
-#if defined(USE_SEPARATE_LOCALS)
+#if defined(TOYWASM_USE_SEPARATE_LOCALS)
         assert(ctx->locals.lsize + nlocals <= ctx->locals.psize);
         ctx->locals.lsize += nlocals;
 #else
@@ -313,7 +313,7 @@ frame_exit(struct exec_context *ctx)
         assert(ctx->frames.lsize > 0);
         frame = VEC_POP(ctx->frames);
         assert(ctx->instance == frame->instance);
-#if defined(USE_LOCALS_CACHE)
+#if defined(TOYWASM_USE_LOCALS_CACHE)
         assert(ctx->current_locals == frame_locals(ctx, frame));
 #endif
         if (ctx->frames.lsize > 0) {
@@ -323,7 +323,7 @@ frame_exit(struct exec_context *ctx)
         }
         assert(frame->labelidx <= ctx->labels.lsize);
         ctx->labels.lsize = frame->labelidx;
-#if defined(USE_SEPARATE_LOCALS)
+#if defined(TOYWASM_USE_SEPARATE_LOCALS)
         assert(frame->localidx <= ctx->locals.lsize);
         ctx->locals.lsize = frame->localidx;
 #endif
@@ -335,7 +335,7 @@ jump_table_lookup(const struct expr_exec_info *ei, uint32_t blockpc)
 {
         uint32_t left = 0;
         uint32_t right = ei->njumps;
-#if defined(USE_JUMP_BINARY_SEARCH)
+#if defined(TOYWASM_USE_JUMP_BINARY_SEARCH)
         /*
          * REVISIT: is it worth to switch to linear search for
          * small tables/range?
@@ -353,7 +353,7 @@ jump_table_lookup(const struct expr_exec_info *ei, uint32_t blockpc)
                         right = mid;
                 }
         }
-#else  /* defined(USE_JUMP_BINARY_SEARCH) */
+#else  /* defined(TOYWASM_USE_JUMP_BINARY_SEARCH) */
         uint32_t i;
         for (i = left; i < right; i++) {
                 const struct jump *jump = &ei->jumps[i];
@@ -361,7 +361,7 @@ jump_table_lookup(const struct expr_exec_info *ei, uint32_t blockpc)
                         return jump;
                 }
         }
-#endif /* defined(USE_JUMP_BINARY_SEARCH) */
+#endif /* defined(TOYWASM_USE_JUMP_BINARY_SEARCH) */
         assert(false);
 }
 
@@ -370,7 +370,7 @@ jump_lookup(struct exec_context *ctx, const struct expr_exec_info *ei,
             uint32_t blockpc)
 {
         const struct jump *jump;
-#if defined(USE_JUMP_CACHE)
+#if defined(TOYWASM_USE_JUMP_CACHE)
         jump = ctx->jump_cache;
         if (jump != NULL && jump->pc == blockpc) {
                 STAT_INC(ctx->stats.jump_cache_hit);
@@ -379,7 +379,7 @@ jump_lookup(struct exec_context *ctx, const struct expr_exec_info *ei,
 #endif
         STAT_INC(ctx->stats.jump_table_search);
         jump = jump_table_lookup(ei, blockpc);
-#if defined(USE_JUMP_CACHE)
+#if defined(TOYWASM_USE_JUMP_CACHE)
         ctx->jump_cache = jump;
 #endif
         return jump;
@@ -520,7 +520,7 @@ rewind_stack(struct exec_context *ctx, uint32_t height, uint32_t arity)
         ctx->stack.lsize = height + arity;
 }
 
-#if JUMP_CACHE2_SIZE > 0
+#if TOYWASM_JUMP_CACHE2_SIZE > 0
 static const struct jump_cache *
 jump_cache2_lookup(struct exec_context *ctx, uint32_t blockpc, bool goto_else)
 {
@@ -574,7 +574,7 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
                         ctx->labels, ctx->labels.lsize - labelidx - 1);
                 uint32_t blockpc = l->pc;
                 uint32_t param_arity;
-#if JUMP_CACHE2_SIZE > 0
+#if TOYWASM_JUMP_CACHE2_SIZE > 0
                 const struct jump_cache *cache;
                 if ((cache = jump_cache2_lookup(ctx, blockpc, goto_else)) !=
                     NULL) {
@@ -613,7 +613,7 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
                                 ctx->p = pc2ptr(ctx->instance->module,
                                                 jump->targetpc);
                                 if (stay_in_block) {
-#if JUMP_CACHE2_SIZE > 0
+#if TOYWASM_JUMP_CACHE2_SIZE > 0
                                         jump_cache2_store(ctx, blockpc,
                                                           goto_else, true, 0,
                                                           0, ctx->p);
@@ -658,7 +658,7 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
                                                 skip_expr(&p, goto_else);
                                         ctx->p = p;
                                         if (stay_in_block) {
-#if JUMP_CACHE2_SIZE > 0
+#if TOYWASM_JUMP_CACHE2_SIZE > 0
                                                 jump_cache2_store(ctx, blockpc,
                                                                   goto_else,
                                                                   true, 0, 0,
@@ -674,7 +674,7 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
                                 arity = param_arity;
                         }
 
-#if JUMP_CACHE2_SIZE > 0
+#if TOYWASM_JUMP_CACHE2_SIZE > 0
                         jump_cache2_store(ctx, blockpc, goto_else, false,
                                           param_arity, arity, ctx->p);
 #endif
@@ -695,20 +695,20 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
 int
 exec_next_insn(const uint8_t *p, struct cell *stack, struct exec_context *ctx)
 {
-#if !(defined(USE_SEPARATE_EXECUTE) && defined(USE_TAILCALL))
+#if !(defined(TOYWASM_USE_SEPARATE_EXECUTE) && defined(TOYWASM_USE_TAILCALL))
         assert(ctx->p == p);
 #endif
         assert(ctx->event == EXEC_EVENT_NONE);
         assert(ctx->frames.lsize > 0);
-#if defined(ENABLE_TRACING)
+#if defined(TOYWASM_ENABLE_TRACING)
         uint32_t pc = ptr2pc(ctx->instance->module, p);
 #endif
         uint32_t op = *p++;
-#if defined(USE_SEPARATE_EXECUTE)
+#if defined(TOYWASM_USE_SEPARATE_EXECUTE)
         xlog_trace("exec %06" PRIx32 ": %s (%02" PRIx32 ")", pc,
                    instructions[op].name, op);
         const struct exec_instruction_desc *desc = &exec_instructions[op];
-#if defined(USE_TAILCALL)
+#if defined(TOYWASM_USE_TAILCALL)
         __musttail
 #endif
                 return desc->execute(p, stack, ctx);
@@ -975,7 +975,7 @@ exec_context_clear(struct exec_context *ctx)
         VEC_FREE(ctx->frames);
         VEC_FREE(ctx->stack);
         VEC_FREE(ctx->labels);
-#if defined(USE_SEPARATE_LOCALS)
+#if defined(TOYWASM_USE_SEPARATE_LOCALS)
         VEC_FREE(ctx->locals);
 #endif
         report_clear(&ctx->report0);
@@ -994,7 +994,7 @@ exec_context_print_stats(struct exec_context *ctx)
 {
         printf("=== execution statistics ===\n");
         VEC_PRINT_USAGE("operand stack", &ctx->stack);
-#if defined(USE_SEPARATE_LOCALS)
+#if defined(TOYWASM_USE_SEPARATE_LOCALS)
         VEC_PRINT_USAGE("locals", &ctx->locals);
 #endif
         VEC_PRINT_USAGE("labels", &ctx->labels);
@@ -1014,7 +1014,7 @@ exec_context_print_stats(struct exec_context *ctx)
 uint32_t
 find_type_annotation(struct exec_context *ctx, const uint8_t *p)
 {
-#if defined(USE_SMALL_CELLS)
+#if defined(TOYWASM_USE_SMALL_CELLS)
         const struct expr_exec_info *ei = ctx->ei;
         const struct type_annotations *an = &ei->type_annotations;
         assert(an->default_size > 0);

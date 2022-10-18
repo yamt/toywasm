@@ -11,7 +11,7 @@ void xlog_error(const char *, ...)
 
 extern int xlog_tracing;
 
-#if defined(ENABLE_TRACING)
+#if defined(TOYWASM_ENABLE_TRACING)
 #define xlog_trace(...)                                                       \
         do {                                                                  \
                 if (xlog_tracing) {                                           \

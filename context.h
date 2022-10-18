@@ -45,7 +45,7 @@ struct funcframe {
         /* this doesn't include the implicit label */
         uint32_t labelidx;
 
-#if defined(USE_SEPARATE_LOCALS)
+#if defined(TOYWASM_USE_SEPARATE_LOCALS)
         uint32_t localidx;
 #endif
 
@@ -138,20 +138,20 @@ struct exec_context {
         const struct expr_exec_info *ei;
 
         const uint8_t *p;
-#if defined(USE_LOCALS_CACHE)
+#if defined(TOYWASM_USE_LOCALS_CACHE)
         struct cell *current_locals;
 #endif
-#if defined(USE_JUMP_CACHE)
+#if defined(TOYWASM_USE_JUMP_CACHE)
         const struct jump *jump_cache;
 #endif
-#if JUMP_CACHE2_SIZE > 0
-        struct jump_cache cache[JUMP_CACHE2_SIZE];
+#if TOYWASM_JUMP_CACHE2_SIZE > 0
+        struct jump_cache cache[TOYWASM_JUMP_CACHE2_SIZE];
 #endif
 
         VEC(, struct funcframe) frames;
         VEC(, struct cell) stack; /* operand stack */
         VEC(, struct label) labels;
-#if defined(USE_SEPARATE_LOCALS)
+#if defined(TOYWASM_USE_SEPARATE_LOCALS)
         VEC(, struct cell) locals;
 #endif
 

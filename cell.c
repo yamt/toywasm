@@ -9,7 +9,7 @@
 uint32_t
 valtype_cellsize(enum valtype t)
 {
-#if defined(USE_SMALL_CELLS)
+#if defined(TOYWASM_USE_SMALL_CELLS)
         uint32_t sz;
         switch (t) {
         case TYPE_i32:
@@ -39,7 +39,7 @@ valtype_cellsize(enum valtype t)
 uint32_t
 resulttype_cellidx(const struct resulttype *rt, uint32_t idx, uint32_t *cszp)
 {
-#if defined(USE_SMALL_CELLS)
+#if defined(TOYWASM_USE_SMALL_CELLS)
         /* REVISIT: very inefficient */
         assert(idx < rt->ntypes || (idx == rt->ntypes && cszp == NULL));
         uint32_t sz = 0;
@@ -71,7 +71,7 @@ static uint32_t
 localchunk_cellidx(const struct localchunk *localchunks, uint32_t localidx,
                    uint32_t *cszp)
 {
-#if defined(USE_SMALL_CELLS)
+#if defined(TOYWASM_USE_SMALL_CELLS)
         /* REVISIT: very inefficient */
         const struct localchunk *chunk = localchunks;
         uint32_t cellidx = 0;
@@ -119,7 +119,7 @@ uint32_t
 frame_locals_cellidx(struct exec_context *ctx, uint32_t localidx,
                      uint32_t *cszp)
 {
-#if defined(USE_SMALL_CELLS)
+#if defined(TOYWASM_USE_SMALL_CELLS)
         /* REVISIT: very inefficient */
         uint32_t cidx;
         uint32_t nparams = ctx->paramtype->ntypes;

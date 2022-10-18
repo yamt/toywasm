@@ -11,7 +11,7 @@ struct exec_context;
 struct val;
 
 struct cell {
-#if defined(USE_SMALL_CELLS)
+#if defined(TOYWASM_USE_SMALL_CELLS)
         uint32_t x;
 #else
         uint64_t x;

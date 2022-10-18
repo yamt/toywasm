@@ -62,7 +62,7 @@ struct expr_exec_info {
         uint32_t maxlabels; /* max labels (including the implicit one) */
         uint32_t maxvals;   /* max vals on stack */
 
-#if defined(USE_SMALL_CELLS)
+#if defined(TOYWASM_USE_SMALL_CELLS)
         /*
          * annotations for value-polymorphic instructions
          */
