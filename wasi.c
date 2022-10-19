@@ -1774,8 +1774,13 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
         xlog_trace("wasm oflags %" PRIx32 " rights_base %" PRIx64, wasmoflags,
                    rights_base);
         if ((lookupflags & WASI_LOOKUPFLAG_SYMLINK_FOLLOW) == 0) {
+#if defined(O_NOFOLLOW)
                 oflags |= O_NOFOLLOW;
                 xlog_trace("oflag O_NOFOLLOW");
+#else
+                ret = ENOTSUP;
+                goto fail;
+#endif
         }
         if ((wasmoflags & WASI_OFLAG_CREAT) != 0) {
                 oflags |= O_CREAT;
