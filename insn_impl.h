@@ -443,6 +443,11 @@ INSN_IMPL(call_indirect)
         CHECK(typeidx < m->ntypes);
         const struct tabletype *tab;
         const struct functype *ft;
+#if defined(__GNUC__) && !defined(__clang__)
+        /* suppress warnings */
+        tab = NULL;
+        ft = NULL;
+#endif
         if (EXECUTING || VALIDATING) {
                 tab = module_tabletype(m, tableidx);
                 ft = &m->types[typeidx];
@@ -689,6 +694,10 @@ INSN_IMPL(global_set)
         READ_LEB_U32(globalidx);
         CHECK(globalidx < m->nimportedglobals + m->nglobals);
         const struct globaltype *gt;
+#if defined(__GNUC__) && !defined(__clang__)
+        /* suppress warnings */
+        gt = NULL;
+#endif
         if (EXECUTING || VALIDATING) {
                 gt = module_globaltype(m, globalidx);
                 CHECK(gt->mut != GLOBAL_CONST);

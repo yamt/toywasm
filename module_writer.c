@@ -255,6 +255,10 @@ static void
 write_element(struct writer *w, const struct element *e)
 {
         uint32_t type;
+#if defined(__GNUC__) && !defined(__clang__)
+        /* suppress warnings */
+        type = 0;
+#endif
         if (e->funcs != NULL) {
                 switch (e->mode) {
                 case ELEM_MODE_ACTIVE: /* 0, 2 */
