@@ -58,7 +58,4 @@ set(CMAKE_CXX_FLAGS_INIT "-isystem /usr/${TRIPLET}/include")
 set(CMAKE_FIND_ROOT_PATH /usr/${TRIPLET})
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 
-# REVISIT: The following doesn't seem to work well for some of
-# libraries on ubuntu. eg. libxml2
-set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
-set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${ARCH})

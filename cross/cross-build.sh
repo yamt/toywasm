@@ -22,5 +22,6 @@ cd build.cross.${ARCH}
 cmake \
 -DCMAKE_TOOLCHAIN_FILE=../cross/cross.cmake \
 -DTRIPLET=${TRIPLET} \
+-DARCH=${ARCH} \
 ..
 make
