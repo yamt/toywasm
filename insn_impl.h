@@ -1213,13 +1213,13 @@ INSN_IMPL(memory_fill)
         POP_VAL(TYPE_i32, d);
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
-                void *p;
+                void *vp;
                 uint32_t n = val_n.u.i32;
-                ret = memory_getptr(ectx, memidx, val_d.u.i32, 0, n, &p);
+                ret = memory_getptr(ectx, memidx, val_d.u.i32, 0, n, &vp);
                 if (ret != 0) {
                         goto fail;
                 }
-                memset(p, (uint8_t)val_val.u.i32, n);
+                memset(vp, (uint8_t)val_val.u.i32, n);
         }
         SAVE_PC;
         INSN_SUCCESS;
