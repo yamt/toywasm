@@ -20,6 +20,10 @@
 #define _DARWIN_C_SOURCE       /* arc4random_buf */
 #define _GNU_SOURCE            /* asprintf, realpath, O_DIRECTORY */
 
+#if defined(__NuttX__)
+#include <nuttx/config.h>
+#endif
+
 #include <sys/random.h> /* getrandom */
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -153,6 +157,22 @@ racy_fallocate(int fd, off_t offset, off_t size)
                 assert(ret > 0);
         }
         return ret;
+}
+#endif
+
+#if defined(__NuttX__) && !defined(CONFIG_PSEUDOFS_SOFTLINKS)
+int
+symlink(const char *path1, const char *path2)
+{
+        errno = ENOSYS;
+        return -1;
+}
+
+ssize_t
+readlink(const char *path, char *buf, size_t buflen)
+{
+        errno = ENOSYS;
+        return -1;
 }
 #endif
 
