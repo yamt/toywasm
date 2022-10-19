@@ -952,7 +952,12 @@ wasi_fd_readdir(struct exec_context *ctx, struct host_instance *hi,
                 struct wasi_dirent wde;
                 memset(&wde, 0, sizeof(wde));
                 le64_encode(&wde.d_next, nextloc);
+#if defined(__NuttX__)
+                /* NuttX doesn't have d_ino */
+                wde.d_ino = 0;
+#else
                 le64_encode(&wde.d_ino, d->d_ino);
+#endif
                 uint32_t namlen = strlen(d->d_name);
                 le32_encode(&wde.d_namlen, namlen);
                 wde.d_type = wasi_convert_dirent_filetype(d->d_type);
