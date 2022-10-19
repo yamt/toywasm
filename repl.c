@@ -890,6 +890,9 @@ repl_print_version(void)
 #if defined(__APPLE__)
         printf("__APPLE__ defined\n");
 #endif
+#if defined(__NuttX__)
+        printf("__NuttX__ defined\n");
+#endif
 #if defined(__linux__)
         printf("__linux__ defined\n");
 #endif
