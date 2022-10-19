@@ -9,7 +9,8 @@
 
 int xlog_tracing = 0;
 
-#if defined(__wasi__)
+/* NuttX: https://github.com/apache/incubator-nuttx/pull/6152 */
+#if defined(__wasi__) || defined(__NuttX__)
 #define flockfile(f)
 #define funlockfile(f)
 #endif
