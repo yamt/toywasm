@@ -1717,10 +1717,13 @@ wasi_random_get(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-#if defined(__GLIBC__)
+#if defined(__GLIBC__) || defined(__NuttX__)
         /*
          * glibc doesn't have arc4random
          * https://sourceware.org/bugzilla/show_bug.cgi?id=4417
+         *
+         * NuttX has both of getrandom and arc4random_buf.
+         * The latter is available only if CONFIG_CRYPTO_RANDOM_POOL=y.
          */
         while (buflen > 0) {
                 ssize_t ssz = getrandom(p, buflen, 0);
