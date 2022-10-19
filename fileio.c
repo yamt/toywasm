@@ -8,7 +8,11 @@
 #include "fileio.h"
 #include "xlog.h"
 
-#if defined(__wasi__)
+/*
+ * WASI doesn't have mmap.
+ * NuttX doesn't have working mmap.
+ */
+#if defined(__wasi__) || defined(__NuttX__)
 
 #include <stdlib.h>
 
