@@ -48,7 +48,7 @@ import_object_create_for_host_funcs(const struct name *module_name,
                 struct functype *ft;
                 ret = functype_from_string(funcs[i].type, &ft);
                 if (ret != 0) {
-                        xlog_error("failed to pare functype: %s",
+                        xlog_error("failed to parse functype: %s",
                                    funcs[i].type);
                         goto fail;
                 }
