@@ -484,14 +484,18 @@ wasi_convert_clockid(uint32_t clockid, clockid_t *hostidp)
         case WASI_CLOCK_ID_MONOTONIC:
                 hostclockid = CLOCK_MONOTONIC;
                 break;
+#if defined(CLOCK_PROCESS_CPUTIME_ID)
         case WASI_CLOCK_ID_PROCESS_CPUTIME_ID:
                 /* REVISIT what does this really mean for wasm? */
                 hostclockid = CLOCK_PROCESS_CPUTIME_ID;
                 break;
+#endif
+#if defined(CLOCK_THREAD_CPUTIME_ID)
         case WASI_CLOCK_ID_THREAD_CPUTIME_ID:
                 /* REVISIT what does this really mean for wasm? */
                 hostclockid = CLOCK_THREAD_CPUTIME_ID;
                 break;
+#endif
         default:
                 ret = EINVAL;
                 goto fail;
