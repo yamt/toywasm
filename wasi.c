@@ -194,9 +194,14 @@ static int
 wasi_copyin_iovec(struct exec_context *ctx, uint32_t iov_uaddr,
                   uint32_t iov_count, struct iovec **resultp)
 {
-        struct iovec *hostiov = calloc(iov_count, sizeof(*hostiov));
+        struct iovec *hostiov = NULL;
         void *p;
         int ret;
+        if (iov_count == 0) {
+                ret = EINVAL;
+                goto fail;
+        }
+        hostiov = calloc(iov_count, sizeof(*hostiov));
         if (hostiov == NULL) {
                 ret = ENOMEM;
                 goto fail;
@@ -1648,10 +1653,13 @@ wasi_args_get(struct exec_context *ctx, struct host_instance *hi,
         char *const *argv = wasi->argv;
         int ret;
         uint32_t i;
-        uint32_t *wasm_argv = malloc(argc * sizeof(*wasm_argv));
-        if (wasm_argv == NULL) {
-                ret = ENOMEM;
-                goto fail;
+        uint32_t *wasm_argv = NULL;
+        if (argc > 0) {
+                wasm_argv = malloc(argc * sizeof(*wasm_argv));
+                if (wasm_argv == NULL) {
+                        ret = ENOMEM;
+                        goto fail;
+                }
         }
         uint32_t wasmp = argv_buf;
         for (i = 0; i < argc; i++) {

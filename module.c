@@ -701,7 +701,9 @@ read_locals(const uint8_t **pp, const uint8_t *ep, struct func *func)
         }
         struct localtype *lt = &func->localtype;
         lt->nlocalchunks = vec_count;
-        chunks = calloc(vec_count, sizeof(*chunks));
+        if (vec_count > 0) {
+                chunks = calloc(vec_count, sizeof(*chunks));
+        }
 
         uint32_t i;
         for (i = 0; i < vec_count; i++) {

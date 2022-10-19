@@ -7,10 +7,14 @@
 int
 bitmap_alloc(struct bitmap *b, uint32_t n)
 {
-        b->data = calloc(HOWMANY(n, 32), sizeof(uint32_t));
-        if (b->data == NULL) {
-                return ENOMEM;
+        void *p = NULL;
+        if (n > 0) {
+                p = calloc(HOWMANY(n, 32), sizeof(uint32_t));
+                if (p == NULL) {
+                        return ENOMEM;
+                }
         }
+        b->data = p;
         return 0;
 }
 

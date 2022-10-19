@@ -476,13 +476,22 @@ instance_execute_func(struct exec_context *ctx, uint32_t funcidx,
         struct funcinst *finst = VEC_ELEM(ctx->instance->funcs, funcidx);
         uint32_t param_ncells = resulttype_cellsize(paramtype);
         uint32_t result_ncells = resulttype_cellsize(resulttype);
-        struct cell *param_cells = calloc(param_ncells, sizeof(*param_cells));
-        struct cell *result_cells =
-                calloc(result_ncells, sizeof(*result_cells));
+        struct cell *param_cells = NULL;
+        struct cell *result_cells = NULL;
         int ret;
-        if (param_cells == NULL || result_cells == NULL) {
-                ret = ENOMEM;
-                goto fail;
+        if (param_ncells > 0) {
+                param_cells = calloc(param_ncells, sizeof(*param_cells));
+                if (param_cells == NULL) {
+                        ret = ENOMEM;
+                        goto fail;
+                }
+        }
+        if (result_ncells > 0) {
+                result_cells = calloc(result_ncells, sizeof(*result_cells));
+                if (result_cells == NULL) {
+                        ret = ENOMEM;
+                        goto fail;
+                }
         }
         vals_to_cells(params, param_cells, paramtype);
         ret = invoke(finst, paramtype, resulttype, param_cells, result_cells,

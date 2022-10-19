@@ -65,7 +65,12 @@ map_file(const char *path, void **pp, size_t *sizep)
         }
 #endif
         xlog_trace("file size %zu", size);
-        p = malloc(size);
+        if (size > 0) {
+                p = malloc(size);
+        } else {
+                /* Avoid a confusing error */
+                p = malloc(1);
+        }
         if (p == NULL) {
                 close(fd);
                 return ENOMEM;

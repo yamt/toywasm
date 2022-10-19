@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
 
@@ -32,6 +33,7 @@ import_object_create_for_host_funcs(const struct name *module_name,
         struct import_object *im;
         struct funcinst *fis = NULL;
         int ret;
+        assert(nfuncs > 0);
         ret = import_object_alloc(nfuncs, &im);
         if (ret != 0) {
                 goto fail;

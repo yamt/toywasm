@@ -33,6 +33,7 @@ resize_array(void **p, size_t elem_size, uint32_t new_elem_count)
 void *
 zalloc(size_t sz)
 {
+        assert(sz > 0);
         void *p = malloc(sz);
         if (p != NULL) {
                 memset(p, 0, sz);

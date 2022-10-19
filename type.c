@@ -204,9 +204,13 @@ resulttype_from_string(const char *p, const char *ep, struct resulttype *t)
                 return EOVERFLOW;
         }
         t->ntypes = ntypes;
-        t->types = malloc(ntypes * sizeof(*t->types));
-        if (t->types == NULL) {
-                return ENOMEM;
+        if (ntypes > 0) {
+                t->types = malloc(ntypes * sizeof(*t->types));
+                if (t->types == NULL) {
+                        return ENOMEM;
+                }
+        } else {
+                t->types = NULL;
         }
         size_t i;
         for (i = 0; i < ntypes; i++) {

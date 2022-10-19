@@ -11,6 +11,7 @@ import_object_alloc(uint32_t nentries, struct import_object **resultp)
 {
         struct import_object *im;
 
+        assert(nentries > 0);
         im = zalloc(sizeof(*im));
         if (im == NULL) {
                 return ENOMEM;
