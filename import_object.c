@@ -11,16 +11,19 @@ import_object_alloc(uint32_t nentries, struct import_object **resultp)
 {
         struct import_object *im;
 
-        assert(nentries > 0);
         im = zalloc(sizeof(*im));
         if (im == NULL) {
                 return ENOMEM;
         }
         im->nentries = nentries;
-        im->entries = zalloc(nentries * sizeof(*im->entries));
-        if (im->entries == NULL) {
-                free(im);
-                return ENOMEM;
+        if (nentries > 0) {
+                im->entries = zalloc(nentries * sizeof(*im->entries));
+                if (im->entries == NULL) {
+                        free(im);
+                        return ENOMEM;
+                }
+        } else {
+                im->entries = NULL;
         }
         *resultp = im;
         return 0;
