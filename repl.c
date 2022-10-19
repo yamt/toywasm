@@ -540,15 +540,25 @@ arg_conv(enum valtype type, const char *s, struct val *result)
                 break;
         case TYPE_FUNCREF:
                 ret = str_to_ptr(s, 0, &u);
-                if (ret == 0) {
-                        result->u.funcref.func = (void *)u;
+                if (ret != 0) {
+                        break;
                 }
+                if (u > UINTPTR_MAX) {
+                        ret = EINVAL;
+                        break;
+                }
+                result->u.funcref.func = (void *)(uintptr_t)u;
                 break;
         case TYPE_EXTERNREF:
                 ret = str_to_ptr(s, 0, &u);
-                if (ret == 0) {
-                        result->u.externref = (void *)u;
+                if (ret != 0) {
+                        break;
                 }
+                if (u > UINTPTR_MAX) {
+                        ret = EINVAL;
+                        break;
+                }
+                result->u.externref = (void *)(uintptr_t)u;
                 break;
         default:
                 xlog_printf("arg_conv: unimplementd type %02x\n", type);
