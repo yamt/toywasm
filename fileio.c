@@ -10,6 +10,9 @@
 
 /*
  * WASI doesn't have mmap.
+ * Note: wasi-libc has _WASI_EMULATED_MMAN, which is probably enough
+ * for our purpose. But we use our own version here.
+ *
  * NuttX doesn't have working mmap.
  */
 #if defined(__wasi__) || defined(__NuttX__)
