@@ -77,7 +77,7 @@ set(CMAKE_C_COMPILER ${BREW_CLANG})
 else()
 set(USE_LSAN OFF)
 endif()
-list(APPEND TEST_ENV "LSAN_OPTIONS=suppressions=${CMAKE_CURRENT_SOURCE_DIR}/lsan.supp:print_suppressions=0")
+list(APPEND TEST_ENV "LSAN_OPTIONS=suppressions=${CMAKE_CURRENT_SOURCE_DIR}/test/lsan.supp:print_suppressions=0")
 list(APPEND TEST_ENV "MallocNanoZone=0")
 endif()
 
