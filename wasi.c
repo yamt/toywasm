@@ -91,6 +91,11 @@ struct wasi_instance {
 #endif
 
 #if defined(__wasi__)
+#if !defined(AT_FDCWD)
+/* a workaroud for wasi-sdk-8.0 which we use for wapm */
+#define TOYWASM_OLD_WASI_LIBC
+#endif
+
 /*
  * For some reasons, wasi-libc doesn't have legacy stuff enabled.
  * It includes lutimes and futimes.
@@ -99,6 +104,10 @@ struct wasi_instance {
 static int
 lutimes(const char *path, const struct timeval *tvp)
 {
+#if defined(TOYWASM_OLD_WASI_LIBC)
+        errno = ENOSYS;
+        return -1;
+#else
         struct timespec ts[2];
         const struct timespec *tsp;
         if (tvp != NULL) {
@@ -111,6 +120,7 @@ lutimes(const char *path, const struct timeval *tvp)
                 tsp = NULL;
         }
         return utimensat(AT_FDCWD, path, tsp, AT_SYMLINK_NOFOLLOW);
+#endif
 }
 
 static int
@@ -2275,7 +2285,12 @@ wasi_path_filestat_set_times(struct exec_context *ctx,
                 goto fail;
         }
         if ((lookupflags & WASI_LOOKUPFLAG_SYMLINK_FOLLOW) != 0) {
+#if defined(TOYWASM_OLD_WASI_LIBC)
+                errno = ENOSYS;
+                ret = -1;
+#else
                 ret = utimes(hostpath, tvp);
+#endif
         } else {
                 ret = lutimes(hostpath, tvp);
         }
