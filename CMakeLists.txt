@@ -153,33 +153,32 @@ message(STATUS "TOYWASM_USE_SMALL_CELLS: ${TOYWASM_USE_SMALL_CELLS}")
 # lib
 
 set(lib_sources
-	"bitmap.c"
-	"cell.c"
-	"context.c"
-	"decode.c"
-	"endian.c"
-	"exec.c"
-	"expr.c"
-	"fileio.c"
-	"host_instance.c"
-	"import_object.c"
-	"insn.c"
-	"instance.c"
-	"leb128.c"
-	"module.c"
-	"report.c"
-	"repl.c"
-	"type.c"
-	"util.c"
-	"validation.c"
-	"vec.c"
-	"wasi.c"
-	"xlog.c"
+	"lib/bitmap.c"
+	"lib/cell.c"
+	"lib/context.c"
+	"lib/decode.c"
+	"lib/endian.c"
+	"lib/exec.c"
+	"lib/expr.c"
+	"lib/fileio.c"
+	"lib/host_instance.c"
+	"lib/import_object.c"
+	"lib/insn.c"
+	"lib/instance.c"
+	"lib/leb128.c"
+	"lib/module.c"
+	"lib/report.c"
+	"lib/type.c"
+	"lib/util.c"
+	"lib/validation.c"
+	"lib/vec.c"
+	"lib/wasi.c"
+	"lib/xlog.c"
 )
 
 if(TOYWASM_ENABLE_WRITER)
 set(lib_sources_writer
-	"module_writer.c"
+	"lib/module_writer.c"
 )
 endif()
 
@@ -196,11 +195,12 @@ endif()
 # cli
 
 set(cli_sources
-	"main.c"
-	"repl.c"
+	"cli/main.c"
+	"cli/repl.c"
 )
 
 add_executable(toywasm-cli ${cli_sources})
+target_include_directories(toywasm-cli PRIVATE lib)
 target_link_libraries(toywasm-cli toywasm-lib m)
 set_target_properties(toywasm-cli PROPERTIES OUTPUT_NAME toywasm)
 
@@ -244,7 +244,7 @@ set_tests_properties(toywasm-cli-wasm3-wasi-test PROPERTIES ENVIRONMENT "${TEST_
 
 if(BUILD_TESTING)
 set(wat_files
-	spectest.wat
+	test/spectest.wat
 )
 
 find_program(WAT2WASM wat2wasm REQUIRED)
@@ -266,10 +266,11 @@ find_package(cmocka CONFIG REQUIRED)
 include_directories(${CMOCKA_INCLUDE_DIR})
 
 set(test_sources
-	"test.c"
+	"test/test.c"
 )
 
 add_executable(toywasm-test ${test_sources})
+target_include_directories(toywasm-test PRIVATE lib)
 target_link_libraries(toywasm-test toywasm-lib m ${CMOCKA_LIBRARY})
 
 add_test(NAME toywasm-test COMMAND toywasm-test)
