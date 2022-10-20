@@ -2,7 +2,23 @@
 
 A WebAssembly interpreter.
 
-You can try it out on [webassembly.sh](https://webassembly.sh/?run-command=toywasm%20--version).
+## On-browser demo
+
+You can try it out on [webassembly.sh](https://webassembly.sh/?run-command=toywasm%20--version):
+
+```shell
+$ curl -o cowsay.wasm https://registry-cdn.wapm.io/contents/liftm/cowsay/0.2.2/target/wasm32-wasi/release/cowsay.wasm
+$ toywasm --wasi cowsay.wasm hello
+ _______
+< hello >
+ -------
+        \   ^__^
+         \  (oo)\_______
+            (__)\       )\/\
+               ||----w |
+                ||     ||
+$
+```
 
 Note: the binary published to wapm.io is built with an ancient
 wasi-sdk to workaround [an webassembly.sh issue](https://github.com/wasmerio/webassembly.sh/issues/105).
