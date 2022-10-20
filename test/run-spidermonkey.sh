@@ -7,4 +7,4 @@ if [ ! -f ${BIN} ]; then
 	mkdir -p .spidermonkey
     curl -L -o ${BIN} ${URL}
 fi
-tr -d '\n' < pi.js | "$@" ${BIN} | grep -F 3.1415
+tr -d '\n' < test/pi.js | "$@" ${BIN} | grep -F 3.1415

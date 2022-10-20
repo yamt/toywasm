@@ -12,4 +12,4 @@ fetch_spec_json()
 }
 test -d "${TEST_DIR}" || fetch_spec_json
 
-exec ./run-wasm3-spec-test.sh --spec-dir $(pwd -P)/${TEST_DIR}/test "$@"
+exec ./test/run-wasm3-spec-test.sh --spec-dir $(pwd -P)/${TEST_DIR}/test "$@"
