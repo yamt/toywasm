@@ -51,10 +51,18 @@ set(TRIPLET ${TRIPLET} CACHE STRING "aarch64-linux-gnu" FORCE)
 set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_C_COMPILER_TARGET ${TRIPLET})
 set(CMAKE_C_COMPILER clang-11)
-set(CMAKE_C_FLAGS_INIT "-isystem /usr/${TRIPLET}/include")
 set(CMAKE_CXX_COMPILER_TARGET ${TRIPLET})
 set(CMAKE_CXX_COMPILER clang++-11)
-set(CMAKE_CXX_FLAGS_INIT "-isystem /usr/${TRIPLET}/include")
+
+# # dpkg -L libstdc++-9-dev-arm64-cross|grep -F c++config
+# /usr/aarch64-linux-gnu/include/c++/9/aarch64-linux-gnu/bits/c++config.h
+# #
+# REVISIT: is there a nicer ways to make clang find them?
+string(APPEND CMAKE_C_FLAGS_INIT " -isystem /usr/${TRIPLET}/include")
+string(APPEND CMAKE_C_FLAGS_INIT " -isystem /usr/${TRIPLET}/include/c++/9/${TRIPLET}")
+string(APPEND CMAKE_CXX_FLAGS_INIT " -isystem /usr/${TRIPLET}/include")
+string(APPEND CMAKE_CXX_FLAGS_INIT " -isystem /usr/${TRIPLET}/include/c++/9/${TRIPLET}")
+
 set(CMAKE_FIND_ROOT_PATH /usr/${TRIPLET})
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 
