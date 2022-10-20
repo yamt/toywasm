@@ -1806,7 +1806,13 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
         xlog_trace("wasm oflags %" PRIx32 " rights_base %" PRIx64, wasmoflags,
                    rights_base);
         if ((lookupflags & WASI_LOOKUPFLAG_SYMLINK_FOLLOW) == 0) {
-#if defined(O_NOFOLLOW)
+#if defined(__NuttX__) && !defined(CONFIG_PSEUDOFS_SOFTLINKS)
+                /*
+                 * Ignore O_NOFOLLOW where the system doesn't
+                 * support symlink at all.
+                 */
+                xlog_trace("Ignoring O_NOFOLLOW");
+#elif defined(O_NOFOLLOW)
                 oflags |= O_NOFOLLOW;
                 xlog_trace("oflag O_NOFOLLOW");
 #else
