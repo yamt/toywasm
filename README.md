@@ -20,8 +20,9 @@ $ toywasm --wasi cowsay.wasm hello
 $
 ```
 
-Note: the binary published to wapm.io is built with an ancient
-wasi-sdk to workaround [an webassembly.sh issue](https://github.com/wasmerio/webassembly.sh/issues/105).
+Note: [the binary published to wapm.io](https://wapm.io/yamt/toywasm)
+is built with an ancient wasi-sdk to workaround
+[an webassembly.sh issue](https://github.com/wasmerio/webassembly.sh/issues/105).
 
 ## Goals
 
