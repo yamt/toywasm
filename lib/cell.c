@@ -38,7 +38,7 @@ valtype_cellsize(enum valtype t)
 
 #if defined(TOYWASM_USE_RESULTTYPE_CELLIDX) ||                                \
         defined(TOYWASM_USE_LOCALTYPE_CELLIDX)
-uint32_t
+static uint32_t
 localcellidx_lookup(const struct localcellidx *lci, uint32_t idx,
                     uint32_t *cszp)
 {
