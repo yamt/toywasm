@@ -742,10 +742,17 @@ populate_localtype_cellidx(struct localtype *lt)
         }
         uint32_t i;
         uint32_t off = 0;
-        const struct localchunk *chunk = lt->localchunks;
-        uint32_t csz = valtype_cellsize(chunk->type);
-        uint32_t n = chunk->n;
+        const struct localchunk *chunk = lt->localchunks - 1;
+        uint32_t csz;
+        uint32_t n = 0;
         for (i = 0; i < lt->nlocals; i++) {
+                if (n == 0) {
+                        chunk++;
+                        csz = valtype_cellsize(chunk->type);
+                        n = chunk->n;
+                        assert(csz > 0);
+                        assert(n > 0);
+                }
                 assert(chunk >= lt->localchunks);
                 assert(chunk < lt->localchunks + lt->nlocalchunks);
                 if (UINT16_MAX - off < csz) {
@@ -755,11 +762,6 @@ populate_localtype_cellidx(struct localtype *lt)
                 off += csz;
                 idxes[i] = off;
                 n--;
-                if (n == 0) {
-                        chunk++;
-                        csz = valtype_cellsize(chunk->type);
-                        n = chunk->n;
-                }
         }
         lt->cellidx.cellidxes = idxes;
         return 0;
