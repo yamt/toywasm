@@ -241,6 +241,12 @@ get_functype(struct module *m, uint32_t typeidx, struct functype **ftp)
 static const struct resulttype rt_empty = {
         .ntypes = 0,
         .is_static = true,
+#if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
+        .cellidx =
+                {
+                        NULL,
+                },
+#endif
 };
 
 #define BYTE_AS_S33(b) ((int)(signed char)((b) + 0x80))

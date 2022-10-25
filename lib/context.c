@@ -28,6 +28,9 @@ resulttype_alloc0(uint32_t ntypes, struct resulttype **resultp)
         p->ntypes = ntypes;
         p->types = (void *)p + sizeof(*p);
         p->is_static = false;
+#if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
+        p->cellidx.cellidxes = NULL;
+#endif
         *resultp = p;
         return 0;
 }
@@ -49,7 +52,6 @@ resulttype_alloc(uint32_t ntypes, const enum valtype *types,
         for (i = 0; i < ntypes; i++) {
                 p->types[i] = types[i];
         }
-        p->is_static = false;
         *resultp = p;
         return 0;
 }
@@ -63,6 +65,9 @@ resulttype_free(struct resulttype *p)
         if (p->is_static) {
                 return;
         }
+#if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
+        assert(p->cellidx.cellidxes == NULL);
+#endif
         free(p);
 }
 

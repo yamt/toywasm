@@ -77,10 +77,37 @@ struct expr {
         struct expr_exec_info ei;
 };
 
+struct localcellidx {
+        /*
+         * This structure is used by TOYWASM_USE_RESULTTYPE_CELLIDX and
+         * TOYWASM_USE_LOCALTYPE_CELLIDX to provide O(1) access to locals.
+         *
+         * Note: 16-bit offsets are used to save memory consumption.
+         * If we use 32-bit here, it can spoil TOYWASM_USE_SMALL_CELLS
+         * too badly.
+         *
+         * The use of 16-bit offsets here imposes an implementation limit
+         * on the number of locals.
+         * While there seems to be no such a limit in the spec itself,
+         * it seems that it's common to have similar limits to ease
+         * implementations. For examples,
+         *
+         * wasm-micro-runtime: UINT16_MAX cells
+         * https://github.com/bytecodealliance/wasm-micro-runtime/blob/b5eea934cfaef5208a7bb4c9813699697d352fe1/core/iwasm/interpreter/wasm_loader.c#L1990
+         *
+         * wasmparser: MAX_WASM_FUNCTION_LOCALS = 50000
+         * https://github.com/bytecodealliance/wasm-tools/blob/5e8639a37260cdc1aab196f5ae5c7ae6427c214f/crates/wasmparser/src/limits.rs#L28
+         */
+        uint16_t *cellidxes;
+};
+
 struct resulttype {
         uint32_t ntypes;
         enum valtype *types;
         bool is_static;
+#if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
+        struct localcellidx cellidx;
+#endif
 };
 
 struct functype {
@@ -118,6 +145,9 @@ struct localtype {
         uint32_t nlocals;
         uint32_t nlocalchunks;
         struct localchunk *localchunks;
+#if defined(TOYWASM_USE_LOCALTYPE_CELLIDX)
+        struct localcellidx cellidx;
+#endif
 };
 
 struct func {

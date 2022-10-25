@@ -190,11 +190,23 @@ read_const_expr(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
         static struct resulttype empty = {
                 .ntypes = 0,
                 .is_static = true,
+#if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
+                .cellidx =
+                        {
+                                NULL,
+                        },
+#endif
         };
         struct resulttype resulttype = {
                 .ntypes = 1,
                 .types = &type,
                 .is_static = true,
+#if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
+                .cellidx =
+                        {
+                                NULL,
+                        },
+#endif
         };
 
         return read_expr_common(pp, ep, expr, 0, NULL, &empty, &resulttype,

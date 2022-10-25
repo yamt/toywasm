@@ -36,12 +36,35 @@ valtype_cellsize(enum valtype t)
 #endif
 }
 
+#if defined(TOYWASM_USE_RESULTTYPE_CELLIDX) ||                                \
+        defined(TOYWASM_USE_LOCALTYPE_CELLIDX)
+uint32_t
+localcellidx_lookup(const struct localcellidx *lci, uint32_t idx,
+                    uint32_t *cszp)
+{
+        uint16_t cidx = 0;
+        uint16_t next_cidx = lci->cellidxes[idx];
+        if (idx > 0) {
+                cidx = lci->cellidxes[idx - 1];
+        }
+        if (cszp != NULL) {
+                *cszp = next_cidx - cidx;
+        }
+        return cidx;
+}
+#endif
+
 uint32_t
 resulttype_cellidx(const struct resulttype *rt, uint32_t idx, uint32_t *cszp)
 {
 #if defined(TOYWASM_USE_SMALL_CELLS)
-        /* REVISIT: very inefficient */
         assert(idx < rt->ntypes || (idx == rt->ntypes && cszp == NULL));
+#if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
+        if (rt->cellidx.cellidxes != NULL) {
+                return localcellidx_lookup(&rt->cellidx, idx, cszp);
+        }
+#endif
+        /* REVISIT: very inefficient */
         uint32_t sz = 0;
         uint32_t i;
         for (i = 0; i < idx; i++) {
@@ -106,6 +129,11 @@ uint32_t
 localtype_cellidx(const struct localtype *lt, uint32_t idx, uint32_t *cszp)
 {
         assert(idx < lt->nlocals || (idx == lt->nlocals && cszp == NULL));
+#if defined(TOYWASM_USE_LOCALTYPE_CELLIDX)
+        if (lt->cellidx.cellidxes != NULL) {
+                return localcellidx_lookup(&lt->cellidx, idx, cszp);
+        }
+#endif
         return localchunk_cellidx(lt->localchunks, idx, cszp);
 }
 

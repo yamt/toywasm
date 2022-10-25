@@ -834,11 +834,23 @@ exec_const_expr(const struct expr *expr, enum valtype type, struct val *result,
         static struct resulttype empty = {
                 .ntypes = 0,
                 .is_static = true,
+#if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
+                .cellidx =
+                        {
+                                NULL,
+                        },
+#endif
         };
         static const struct localtype no_locals = {
                 .nlocals = 0,
                 .nlocalchunks = 0,
                 .localchunks = NULL,
+#if defined(TOYWASM_USE_LOCALTYPE_CELLIDX)
+                .cellidx =
+                        {
+                                NULL,
+                        },
+#endif
         };
         int ret;
         uint32_t csz = valtype_cellsize(type);

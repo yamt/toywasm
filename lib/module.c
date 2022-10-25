@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "cell.h"
 #include "decode.h"
 #include "expr.h"
 #include "leb128.h"
@@ -101,6 +102,35 @@ fail:
         return ret;
 }
 
+#if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
+static int
+populate_resulttype_cellidx(struct resulttype *rt)
+{
+        uint16_t *idxes = calloc(rt->ntypes, sizeof(*idxes));
+        int ret;
+        if (idxes == NULL) {
+                ret = ENOMEM;
+                goto fail;
+        }
+        uint32_t i;
+        uint32_t off = 0;
+        for (i = 0; i < rt->ntypes; i++) {
+                uint32_t csz = valtype_cellsize(rt->types[i]);
+                if (UINT16_MAX - off < csz) {
+                        ret = EOVERFLOW; /* implementation limit */
+                        goto fail;
+                }
+                off += csz;
+                idxes[i] = off;
+        }
+        rt->cellidx.cellidxes = idxes;
+        return 0;
+fail:
+        free(idxes);
+        return ret;
+}
+#endif
+
 static int
 read_resulttype(const uint8_t **pp, const uint8_t *ep, struct resulttype *rt)
 {
@@ -109,12 +139,23 @@ read_resulttype(const uint8_t **pp, const uint8_t *ep, struct resulttype *rt)
 
         rt->ntypes = 0;
         rt->types = NULL;
+#if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
+        rt->cellidx.cellidxes = NULL;
+#endif
         ret = read_vec(&p, ep, sizeof(*rt->types), (void *)read_valtype, NULL,
                        &rt->ntypes, (void *)&rt->types);
         if (ret != 0) {
                 goto fail;
         }
         rt->is_static = true;
+#if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
+        if (rt->ntypes > 0) {
+                ret = populate_resulttype_cellidx(rt);
+                if (ret != 0) {
+                        goto fail;
+                }
+        }
+#endif
         *pp = p;
         return 0;
 fail:
@@ -125,6 +166,9 @@ void
 clear_resulttype(struct resulttype *rt)
 {
         free(rt->types);
+#if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
+        free(rt->cellidx.cellidxes);
+#endif
 }
 
 static int
@@ -686,6 +730,45 @@ fail:
         return ret;
 }
 
+#if defined(TOYWASM_USE_LOCALTYPE_CELLIDX)
+static int
+populate_localtype_cellidx(struct localtype *lt)
+{
+        uint16_t *idxes = calloc(lt->nlocals, sizeof(*idxes));
+        int ret;
+        if (idxes == NULL) {
+                ret = ENOMEM;
+                goto fail;
+        }
+        uint32_t i;
+        uint32_t off = 0;
+        const struct localchunk *chunk = lt->localchunks;
+        uint32_t csz = valtype_cellsize(chunk->type);
+        uint32_t n = chunk->n;
+        for (i = 0; i < lt->nlocals; i++) {
+                assert(chunk >= lt->localchunks);
+                assert(chunk < lt->localchunks + lt->nlocalchunks);
+                if (UINT16_MAX - off < csz) {
+                        ret = EOVERFLOW; /* implementation limit */
+                        goto fail;
+                }
+                off += csz;
+                idxes[i] = off;
+                n--;
+                if (n == 0) {
+                        chunk++;
+                        csz = valtype_cellsize(chunk->type);
+                        n = chunk->n;
+                }
+        }
+        lt->cellidx.cellidxes = idxes;
+        return 0;
+fail:
+        free(idxes);
+        return ret;
+}
+#endif
+
 static int
 read_locals(const uint8_t **pp, const uint8_t *ep, struct func *func)
 {
@@ -734,6 +817,15 @@ read_locals(const uint8_t **pp, const uint8_t *ep, struct func *func)
         }
         lt->localchunks = chunks;
         lt->nlocals = nlocals;
+#if defined(TOYWASM_USE_LOCALTYPE_CELLIDX)
+        if (lt->nlocals > 0) {
+                ret = populate_localtype_cellidx(lt);
+                if (ret != 0) {
+                        lt->localchunks = NULL;
+                        goto fail;
+                }
+        }
+#endif
         *pp = p;
         return 0;
 fail:
@@ -753,6 +845,9 @@ read_func(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
         int ret;
 
         lt->localchunks = NULL;
+#if defined(TOYWASM_USE_LOCALTYPE_CELLIDX)
+        lt->cellidx.cellidxes = NULL;
+#endif
         uint32_t funcidx = m->nimportedfuncs + idx;
         if (funcidx >= m->nimportedfuncs + m->nfuncs) {
                 xlog_trace("read_func: funcidx out of range");
