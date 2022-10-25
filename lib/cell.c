@@ -43,11 +43,11 @@ localcellidx_lookup(const struct localcellidx *lci, uint32_t idx,
                     uint32_t *cszp)
 {
         uint16_t cidx = 0;
-        uint16_t next_cidx = lci->cellidxes[idx];
         if (idx > 0) {
                 cidx = lci->cellidxes[idx - 1];
         }
         if (cszp != NULL) {
+                uint16_t next_cidx = lci->cellidxes[idx];
                 *cszp = next_cidx - cidx;
         }
         return cidx;
