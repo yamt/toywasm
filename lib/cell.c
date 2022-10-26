@@ -169,17 +169,13 @@ frame_locals_cellidx(struct exec_context *ctx, uint32_t localidx,
 void
 val_to_cells(const struct val *val, struct cell *cells, uint32_t ncells)
 {
-        size_t sz = ncells * sizeof(*cells);
-        assert(sizeof(*val) >= sz);
-        memcpy(cells, val, sz);
+        cells_copy(cells, (const struct cell *)val, ncells);
 }
 
 void
 val_from_cells(struct val *val, const struct cell *cells, uint32_t ncells)
 {
-        size_t sz = ncells * sizeof(*cells);
-        assert(sizeof(*val) >= sz);
-        memcpy(val, cells, sz);
+        cells_copy((struct cell *)val, cells, ncells);
 }
 
 void
@@ -213,17 +209,33 @@ vals_from_cells(struct val *vals, const struct cell *cells,
 void
 cells_zero(struct cell *cells, uint32_t ncells)
 {
-        memset(cells, 0, ncells * sizeof(*cells));
+        uint32_t i;
+        for (i = 0; i < ncells; i++) {
+                (cells++)->x = 0;
+        }
 }
 
 void
 cells_copy(struct cell *dst, const struct cell *src, uint32_t ncells)
 {
-        memcpy(dst, src, ncells * sizeof(*dst));
+        while (ncells > 0) {
+                *dst++ = *src++;
+                ncells--;
+        }
 }
 
 void
 cells_move(struct cell *dst, const struct cell *src, uint32_t ncells)
 {
-        memmove(dst, src, ncells * sizeof(*dst));
+        assert(ncells > 0);
+        if (dst <= src) {
+                cells_copy(dst, src, ncells);
+        } else {
+                dst += ncells - 1;
+                src += ncells - 1;
+                while (ncells > 0) {
+                        *dst-- = *src--;
+                        ncells--;
+                }
+        }
 }
