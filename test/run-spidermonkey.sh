@@ -7,4 +7,26 @@ if [ ! -f ${BIN} ]; then
 	mkdir -p .spidermonkey
     curl -L -o ${BIN} ${URL}
 fi
-tr -d '\n' < test/pi.js | "$@" ${BIN} | grep -F 3.1415
+OUT=$(mktemp)
+ERROR=$(mktemp)
+set +e
+tr -d '\n' < test/pi.js | "$@" ${BIN} > ${OUT} 2> ${ERROR}
+RESULT=$?
+set -e
+echo "stdout:"
+cat ${OUT}
+echo "stderr:"
+cat ${ERROR}
+
+# spidermonkey.wasm ends up with executing unreachable on EOF
+test ${RESULT} -eq 1
+grep -F "Error: [trap] unreachable executed" ${OUT}
+# The sanitizer preserves the original exit status when it wasn't 0
+# at least where _exit can be intercepted, including macOS.
+# Check the stderr output to see if it complained something.
+grep -E "(LeakSanitizer|AddressSanitizer)" ${ERROR} && false
+
+# Check the result of pi.js
+grep -F 3.1415 ${OUT}
+rm ${OUT}
+rm ${ERROR}
