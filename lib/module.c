@@ -911,6 +911,9 @@ clear_func(struct func *func)
 {
         struct localtype *lt = &func->localtype;
         free(lt->localchunks);
+#if defined(TOYWASM_USE_LOCALTYPE_CELLIDX)
+        free(lt->cellidx.cellidxes);
+#endif
         clear_expr(&func->e);
 }
 
