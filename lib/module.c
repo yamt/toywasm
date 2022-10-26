@@ -1632,7 +1632,7 @@ module_load(struct module *m, const uint8_t *p, const uint8_t *ep,
                         ret = t->read(&sp, sep, ctx);
                         if (ret != 0) {
                                 report_error(&ctx->report,
-                                             "error (%d) while decodingc "
+                                             "error (%d) while decoding "
                                              "section (%s)",
                                              ret, name);
                                 goto fail;
