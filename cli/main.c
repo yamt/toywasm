@@ -115,7 +115,7 @@ main(int argc, char *const *argv)
                         g_repl_use_jump_table = false;
                         break;
                 case opt_invoke:
-                        ret = repl_invoke(state, NULL, optarg, true);
+                        ret = repl_invoke(state, NULL, optarg, NULL, true);
                         if (ret != 0) {
                                 goto fail;
                         }
@@ -184,12 +184,13 @@ main(int argc, char *const *argv)
                 xlog_error("load failed");
                 goto fail;
         }
-        ret = repl_invoke(state, NULL, "_start", false);
+        uint32_t wasi_exit_code = 0;
+        ret = repl_invoke(state, NULL, "_start", &wasi_exit_code, false);
         if (ret != 0) {
                 xlog_error("invoke failed with %d", ret);
                 goto fail;
         }
-        exit_status = 0;
+        exit_status = wasi_exit_code;
 fail:
         repl_reset(state);
         exit(exit_status);

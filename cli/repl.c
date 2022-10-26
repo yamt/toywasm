@@ -684,7 +684,7 @@ unescape(char *p0, size_t *lenp)
  */
 int
 repl_invoke(struct repl_state *state, const char *modname, const char *cmd,
-            bool print_result)
+            uint32_t *exitcodep, bool print_result)
 {
         char *cmd1 = strdup(cmd);
         if (cmd1 == NULL) {
@@ -767,7 +767,13 @@ repl_invoke(struct repl_state *state, const char *modname, const char *cmd,
                 if (ctx->trapid == TRAP_VOLUNTARY_EXIT) {
                         xlog_trace("voluntary exit (%" PRIu32 ")",
                                    ctx->exit_code);
-                        ret = ctx->exit_code;
+                        if (exitcodep != NULL) {
+                                *exitcodep = ctx->exit_code;
+                                ret = 0;
+                        } else {
+                                ret = ctx->exit_code;
+                        }
+                        exec_context_clear(ctx);
                         goto fail;
                 }
                 print_trap(ctx);
@@ -783,6 +789,9 @@ repl_invoke(struct repl_state *state, const char *modname, const char *cmd,
                         xlog_printf("print_result failed\n");
                         goto fail;
                 }
+        }
+        if (exitcodep != NULL) {
+                *exitcodep = 0;
         }
         ret = 0;
 fail:
@@ -955,7 +964,7 @@ repl_module_subcmd(struct repl_state *state, const char *cmd,
                         goto fail;
                 }
         } else if (!strcmp(cmd, "invoke") && opt != NULL) {
-                ret = repl_invoke(state, modname, opt, true);
+                ret = repl_invoke(state, modname, opt, NULL, true);
                 if (ret != 0) {
                         goto fail;
                 }
