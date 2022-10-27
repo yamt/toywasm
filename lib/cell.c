@@ -227,7 +227,6 @@ cells_copy(struct cell *dst, const struct cell *src, uint32_t ncells)
 void
 cells_move(struct cell *dst, const struct cell *src, uint32_t ncells)
 {
-        assert(ncells > 0);
         if (dst <= src) {
                 cells_copy(dst, src, ncells);
         } else {
