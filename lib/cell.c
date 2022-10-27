@@ -220,6 +220,11 @@ cells_zero(struct cell *cells, uint32_t ncells)
 void
 cells_copy(struct cell *dst, const struct cell *src, uint32_t ncells)
 {
+        /*
+         * ncells is usually 1 or 2 here.
+         * too much unrolling hurts.
+         */
+#pragma clang loop unroll_count(2)
         while (ncells > 0) {
                 *dst++ = *src++;
                 ncells--;
