@@ -106,6 +106,9 @@ endif()
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fshort-enums")
+if(CMAKE_C_COMPILER_ID STREQUAL GNU)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-unknown-pragmas")
+endif()
 
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3 -fomit-frame-pointer")
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wno-unknown-warning-option -Wno-unused-but-set-variable -Wno-unused-variable -Wno-return-type")
