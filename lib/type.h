@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "toywasm_config.h"
+
 #include "bitmap.h"
 #include "vec.h"
 

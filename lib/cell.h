@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include "toywasm_config.h"
+
 enum valtype;
 struct localtype;
 struct resulttype;

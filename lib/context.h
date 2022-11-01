@@ -1,6 +1,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "toywasm_config.h"
+
 #include "cell.h"
 #include "report.h"
 #include "vec.h"
