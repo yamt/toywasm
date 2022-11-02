@@ -347,7 +347,7 @@ repl_load_from_buf(struct repl_state *state, const char *modname,
         }
         struct load_context ctx;
         load_context_init(&ctx);
-        ctx.generate_jump_table = g_repl_use_jump_table;
+        ctx.options.generate_jump_table = g_repl_use_jump_table;
         ret = module_load(mod->module, mod->buf, mod->buf + mod->bufsize,
                           &ctx);
         if (ctx.report.msg != NULL) {

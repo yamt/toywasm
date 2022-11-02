@@ -80,10 +80,10 @@ read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
         vctx->report = &lctx->report;
         vctx->refs = &lctx->refs;
         vctx->const_expr = const_expr;
-        vctx->generate_jump_table = lctx->generate_jump_table;
         vctx->module = lctx->module;
         vctx->has_datacount = lctx->has_datacount;
         vctx->ndatas_in_datacount = lctx->ndatas_in_datacount;
+        vctx->options = &lctx->options;
         struct expr_exec_info *ei;
         vctx->ei = ei = &expr->ei;
         memset(ei, 0, sizeof(*ei));

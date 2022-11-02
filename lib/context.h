@@ -95,13 +95,14 @@ struct validation_context {
         enum valtype *locals;
 
         bool const_expr;
-        bool generate_jump_table;
 
         bool has_datacount;
         uint32_t ndatas_in_datacount;
 
         struct report *report;
         struct bitmap *refs; /* C.refs */
+
+        const struct load_options *options;
 };
 
 enum exec_event {

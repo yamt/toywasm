@@ -9,6 +9,7 @@
 #include <string.h>
 
 #include "context.h"
+#include "options.h"
 #include "type.h"
 #include "util.h"
 #include "xlog.h"
@@ -149,7 +150,7 @@ push_ctrlframe(uint32_t pc, enum ctrlframe_op op, uint32_t jumpslot,
          * it will be used by "end".
          */
         assert(op == FRAME_OP_ELSE || jumpslot == 0);
-        if (!ctx->generate_jump_table || op == FRAME_OP_INVOKE ||
+        if (!ctx->options->generate_jump_table || op == FRAME_OP_INVOKE ||
             op == FRAME_OP_ELSE || op == FRAME_OP_EMPTY_ELSE) {
                 nslots = 0;
         } else if (op == FRAME_OP_IF) {
