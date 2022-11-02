@@ -38,6 +38,7 @@ int instance_create_execute_init(struct instance *inst,
  * which are implemented as bare host pointers in this engine, can be
  * freely passed among instances, linked instances can have references
  * each other.
+ * cf. https://github.com/WebAssembly/spec/issues/1513
  */
 void instance_destroy(struct instance *inst);
 
