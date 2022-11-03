@@ -254,7 +254,10 @@ void
 cells_move(struct cell *dst, const struct cell *src, uint32_t ncells)
 {
         if (dst <= src) {
-                cells_copy(dst, src, ncells);
+                while (ncells > 0) {
+                        *dst++ = *src++;
+                        ncells--;
+                }
         } else {
                 dst += ncells - 1;
                 src += ncells - 1;
