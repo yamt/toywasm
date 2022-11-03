@@ -218,8 +218,10 @@ cells_zero(struct cell *cells, uint32_t ncells)
 }
 
 void
-cells_copy(struct cell *dst, const struct cell *src, uint32_t ncells)
+cells_copy(struct cell *restrict dst, const struct cell *restrict src,
+           uint32_t ncells)
 {
+#if 0
         /*
          * ncells is usually 1 or 2 here.
          * too much unrolling hurts.
@@ -229,6 +231,21 @@ cells_copy(struct cell *dst, const struct cell *src, uint32_t ncells)
                 *dst++ = *src++;
                 ncells--;
         }
+#else
+        switch (ncells) {
+#if defined(__has_builtin) && __has_builtin(__builtin_memcpy_inline)
+        case 1:
+                __builtin_memcpy_inline(dst, src, 1 * sizeof(*dst));
+                break;
+        case 2:
+                __builtin_memcpy_inline(dst, src, 2 * sizeof(*dst));
+                break;
+#endif
+        default:
+                memcpy(dst, src, ncells * sizeof(*dst));
+                break;
+        }
+#endif
 }
 
 void
