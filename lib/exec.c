@@ -943,11 +943,13 @@ table_init(struct exec_context *ectx, uint32_t tableidx, uint32_t elemidx,
         }
         struct tableinst *t = VEC_ELEM(inst->tables, tableidx);
         assert(t->type->et == elem->type);
+        uint32_t csz = valtype_cellsize(t->type->et);
         uint32_t i;
         for (i = 0; i < n; i++) {
+                struct val val;
                 if (elem->funcs != NULL) {
-                        struct funcref *ref = &t->vals[d + i].u.funcref;
-                        ref->func = VEC_ELEM(inst->funcs, elem->funcs[s + i]);
+                        val.u.funcref.func =
+                                VEC_ELEM(inst->funcs, elem->funcs[s + i]);
                 } else {
                         struct val val;
                         ret = exec_const_expr(&elem->init_exprs[s + i],
@@ -955,13 +957,11 @@ table_init(struct exec_context *ectx, uint32_t tableidx, uint32_t elemidx,
                         if (ret != 0) {
                                 goto fail;
                         }
-                        t->vals[d + i] = val;
                 }
+                val_to_cells(&val, &t->cells[(d + i) * csz], csz);
                 xlog_trace("table %" PRIu32 " offset %" PRIu32
-                           " initialized to %016" PRIx64
-
-                           ,
-                           tableidx, d + i, t->vals[d + i].u.i64);
+                           " initialized to %016" PRIx64,
+                           tableidx, d + i, val.u.i64);
         }
         ret = 0;
 fail:

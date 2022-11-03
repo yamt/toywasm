@@ -323,13 +323,19 @@ instance_create_no_init(struct module *m, struct instance **instp,
                         }
                         tinst->type = tt;
                         tinst->size = tinst->type->lim.min;
-                        ret = ARRAY_RESIZE(tinst->vals, tinst->size);
+                        uint32_t csz = valtype_cellsize(tt->et);
+                        uint32_t ncells = tinst->size * csz;
+                        if (ncells / csz != tinst->size) {
+                                ret = EOVERFLOW;
+                                goto fail;
+                        }
+                        ret = ARRAY_RESIZE(tinst->cells, ncells);
                         if (ret != 0) {
                                 free(tinst);
                                 goto fail;
                         }
-                        memset(tinst->vals, 0,
-                               tinst->size * sizeof(*tinst->vals));
+                        memset(tinst->cells, 0,
+                               ncells * sizeof(*tinst->cells));
                 }
                 VEC_ELEM(inst->tables, i) = tinst;
         }
@@ -457,7 +463,7 @@ instance_destroy(struct instance *inst)
                         continue;
                 }
                 if (*tp != NULL) {
-                        free((*tp)->vals);
+                        free((*tp)->cells);
                 }
                 free(*tp);
         }

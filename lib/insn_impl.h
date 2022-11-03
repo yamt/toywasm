@@ -458,6 +458,7 @@ INSN_IMPL(call_indirect)
                 struct exec_context *ectx = ECTX;
                 struct instance *inst = ectx->instance;
                 const struct tableinst *t = VEC_ELEM(inst->tables, tableidx);
+                assert(t->type->et == TYPE_FUNCREF);
                 uint32_t i = val_a.u.i32;
                 if (i >= t->size) {
                         ret = trap_with_id(
@@ -468,8 +469,10 @@ INSN_IMPL(call_indirect)
                                 typeidx, tableidx, i);
                         goto fail;
                 }
-                const struct funcref *ref = &t->vals[i].u.funcref;
-                const struct funcinst *func = ref->func;
+                struct val val;
+                uint32_t csz = valtype_cellsize(t->type->et);
+                val_from_cells(&val, &t->cells[i * csz], csz);
+                const struct funcinst *func = val.u.funcref.func;
                 if (func == NULL) {
                         ret = trap_with_id(
                                 ectx, TRAP_CALL_INDIRECT_NULL_FUNCREF,
@@ -487,7 +490,7 @@ INSN_IMPL(call_indirect)
                                 typeidx, tableidx, i);
                         goto fail;
                 }
-                ectx->event_u.call.func = ref->func;
+                ectx->event_u.call.func = func;
                 ectx->event = EXEC_EVENT_CALL;
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
@@ -731,7 +734,8 @@ INSN_IMPL(table_get)
                 }
                 struct instance *inst = ectx->instance;
                 struct tableinst *t = VEC_ELEM(inst->tables, tableidx);
-                val_c = t->vals[offset];
+                uint32_t csz = valtype_cellsize(t->type->et);
+                val_from_cells(&val_c, &t->cells[offset * csz], csz);
         }
         PUSH_VAL(module_tabletype(m, tableidx)->et, c);
         SAVE_PC;
@@ -759,7 +763,8 @@ INSN_IMPL(table_set)
                 }
                 struct instance *inst = ectx->instance;
                 struct tableinst *t = VEC_ELEM(inst->tables, tableidx);
-                t->vals[offset] = val_a;
+                uint32_t csz = valtype_cellsize(t->type->et);
+                val_to_cells(&val_a, &t->cells[offset * csz], csz);
         }
         SAVE_PC;
         INSN_SUCCESS;
@@ -1309,9 +1314,14 @@ INSN_IMPL(table_copy)
                 if (ret != 0) {
                         goto fail;
                 }
-                memmove(&VEC_ELEM(inst->tables, tableidx_dst)->vals[d],
-                        &VEC_ELEM(inst->tables, tableidx_src)->vals[s],
-                        n * sizeof(struct val));
+                const struct tableinst *t_dst =
+                        VEC_ELEM(inst->tables, tableidx_dst);
+                const struct tableinst *t_src =
+                        VEC_ELEM(inst->tables, tableidx_src);
+                assert(t_src->type->et == t_dst->type->et);
+                uint32_t csz = valtype_cellsize(t_src->type->et);
+                cells_move(&t_dst->cells[d * csz], &t_src->cells[s * csz],
+                           n * csz);
         }
         SAVE_PC;
         INSN_SUCCESS;
@@ -1339,13 +1349,20 @@ INSN_IMPL(table_grow)
                         val_result.u.i32 = (uint32_t)-1;
                 } else {
                         uint32_t newsize = t->size + n;
-                        ret = ARRAY_RESIZE(t->vals, newsize);
+                        uint32_t csz = valtype_cellsize(t->type->et);
+                        uint32_t newncells = newsize * csz;
+                        if (newncells / csz != newsize) {
+                                ret = EOVERFLOW;
+                        } else {
+                                ret = ARRAY_RESIZE(t->cells, newncells);
+                        }
                         if (ret != 0) {
                                 val_result.u.i32 = (uint32_t)-1;
                         } else {
                                 uint32_t i;
                                 for (i = t->size; i < newsize; i++) {
-                                        t->vals[i] = val_val;
+                                        val_to_cells(&val_val,
+                                                     &t->cells[i * csz], csz);
                                 }
                                 val_result.u.i32 = t->size;
                                 t->size = newsize;
@@ -1402,8 +1419,9 @@ INSN_IMPL(table_fill)
                 struct tableinst *t = VEC_ELEM(inst->tables, tableidx);
                 uint32_t end = start + n;
                 uint32_t i;
+                uint32_t csz = valtype_cellsize(t->type->et);
                 for (i = start; i < end; i++) {
-                        t->vals[i] = val_val;
+                        val_to_cells(&val_val, &t->cells[i * csz], csz);
                 }
         }
         SAVE_PC;

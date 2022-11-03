@@ -381,7 +381,7 @@ struct globalinst {
 };
 
 struct tableinst {
-        struct val *vals;
+        struct cell *cells;
         uint32_t size; /* overrides type->min */
         const struct tabletype *type;
 };
