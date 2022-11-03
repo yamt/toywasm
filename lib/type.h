@@ -7,6 +7,7 @@
 #include "toywasm_config.h"
 
 #include "bitmap.h"
+#include "cell.h"
 #include "vec.h"
 
 #define WASM_MAGIC 0x6d736100
@@ -135,8 +136,14 @@ struct val {
                 double f64;
                 struct funcref funcref;
                 void *externref;
+#if defined(TOYWASM_USE_SMALL_CELLS)
+                struct cell cells[2];
+#else
+                struct cell cells[1];
+#endif
         } u;
 };
+_Static_assert(sizeof(struct val) == 8, "struct val");
 
 struct localchunk {
         enum valtype type;

@@ -170,14 +170,14 @@ void
 val_to_cells(const struct val *val, struct cell *cells, uint32_t ncells)
 {
         assert(ncells == 1 || ncells == 2 || ncells == 4);
-        cells_copy(cells, (const struct cell *)val, ncells);
+        cells_copy(cells, val->u.cells, ncells);
 }
 
 void
 val_from_cells(struct val *val, const struct cell *cells, uint32_t ncells)
 {
         assert(ncells == 1 || ncells == 2 || ncells == 4);
-        cells_copy((struct cell *)val, cells, ncells);
+        cells_copy(val->u.cells, cells, ncells);
 }
 
 void
