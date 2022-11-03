@@ -233,13 +233,15 @@ cells_copy(struct cell *restrict dst, const struct cell *restrict src,
         }
 #else
         switch (ncells) {
-#if defined(__has_builtin) && __has_builtin(__builtin_memcpy_inline)
+#if defined(__has_builtin)
+#if __has_builtin(__builtin_memcpy_inline)
         case 1:
                 __builtin_memcpy_inline(dst, src, 1 * sizeof(*dst));
                 break;
         case 2:
                 __builtin_memcpy_inline(dst, src, 2 * sizeof(*dst));
                 break;
+#endif
 #endif
         default:
                 memcpy(dst, src, ncells * sizeof(*dst));
