@@ -6,6 +6,14 @@
  * Note: clang is smart enough to make these no-op for amd64.
  */
 
+/*
+ * Note: This kind of use of union is explicitly allowed by GCC.
+ * https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html#Type%2Dpunning
+ *
+ * Also, it seems that the recent C standards aims to allow it.
+ * https://www.open-std.org/jtc1/sc22/wg14/www/docs/dr_257.htm
+ */
+
 uint8_t
 le8_to_host(uint8_t v)
 {
