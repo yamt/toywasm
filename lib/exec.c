@@ -951,7 +951,6 @@ table_init(struct exec_context *ectx, uint32_t tableidx, uint32_t elemidx,
                         val.u.funcref.func =
                                 VEC_ELEM(inst->funcs, elem->funcs[s + i]);
                 } else {
-                        struct val val;
                         ret = exec_const_expr(&elem->init_exprs[s + i],
                                               elem->type, &val, ectx);
                         if (ret != 0) {
