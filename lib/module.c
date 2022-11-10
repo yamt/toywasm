@@ -1250,6 +1250,10 @@ read_element(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
         case 1:
         case 2:
         case 3:
+                /*
+                 * vec(funcidx)
+                 */
+                assert(elem->type == TYPE_FUNCREF);
                 ret = read_vec_u32(&p, ep, &elem->init_size, &elem->funcs);
                 if (ret != 0) {
                         goto fail;
