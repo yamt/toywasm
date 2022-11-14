@@ -100,7 +100,16 @@ struct validation_context {
         uint32_t ndatas_in_datacount;
 
         struct report *report;
-        struct bitmap *refs; /* C.refs */
+
+        /*
+         * C.refs
+         *
+         * https://webassembly.github.io/spec/core/valid/conventions.html#context
+         * > References: the list of function indices that occur in
+         * > the module outside functions and can hence be used to
+         * > form references inside them.
+         */
+        struct bitmap *refs;
 
         const struct load_options *options;
 };

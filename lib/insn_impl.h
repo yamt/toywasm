@@ -1098,6 +1098,9 @@ INSN_IMPL(ref_func)
                 if (vctx->const_expr) {
                         bitmap_set(vctx->refs, funcidx);
                 } else {
+                        /*
+                         * the code section.
+                         */
                         if (!bitmap_test(vctx->refs, funcidx)) {
                                 ret = validation_failure(
                                         vctx, "funcref %" PRIu32, funcidx);

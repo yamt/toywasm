@@ -577,6 +577,7 @@ read_exportdesc(const uint8_t **pp, const uint8_t *ep, struct exportdesc *desc,
                         ret = EINVAL;
                         goto fail;
                 }
+                bitmap_set(&ctx->refs, desc->idx);
                 break;
         case EXPORT_TABLE:
                 if (desc->idx >= m->nimportedtables + m->ntables) {
@@ -718,6 +719,12 @@ read_import_section(const uint8_t **pp, const uint8_t *ep,
                                  clear_import, ctx, &m->nimports, &m->imports);
         if (ret != 0) {
                 goto fail;
+        }
+        if (m->nimportedfuncs > 0) {
+                ret = bitmap_alloc(&ctx->refs, m->nimportedfuncs);
+                if (ret != 0) {
+                        goto fail;
+                }
         }
 
         uint32_t i;
@@ -939,7 +946,14 @@ read_function_section(const uint8_t **pp, const uint8_t *ep,
                 xlog_trace("func [%" PRIu32 "] typeidx %" PRIu32, i,
                            m->functypeidxes[i]);
         }
-        if (m->nimportedfuncs + m->nfuncs > 0) {
+        /*
+         * Note: if nimportedfuncs > 0,
+         * ctx->refs is already allocated by read_import_section.
+         */
+        if (m->nfuncs > 0) {
+                if (m->nimportedfuncs > 0) {
+                        bitmap_free(&ctx->refs);
+                }
                 ret = bitmap_alloc(&ctx->refs, m->nimportedfuncs + m->nfuncs);
                 if (ret != 0) {
                         goto fail;
