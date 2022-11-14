@@ -239,7 +239,8 @@ print_functype(uint32_t i, const struct functype *ft)
 }
 
 static int
-read_limits(const uint8_t **pp, const uint8_t *ep, struct limits *lim)
+read_limits(const uint8_t **pp, const uint8_t *ep, struct limits *lim,
+            uint32_t typemax)
 {
         const uint8_t *p = *pp;
         uint8_t u8;
@@ -275,19 +276,24 @@ read_limits(const uint8_t **pp, const uint8_t *ep, struct limits *lim)
                 if (ret != 0) {
                         goto fail;
                 }
-                /* implementation limit */
-                if (lim->max == UINT32_MAX) {
-                        ret = ENOTSUP;
+                if (typemax < lim->max) {
+                        ret = EOVERFLOW;
                         goto fail;
                 }
         } else {
                 lim->max = UINT32_MAX;
+                if (typemax < lim->max) {
+                        lim->max = typemax;
+                }
+        }
+        if (typemax < lim->min) {
+                ret = EOVERFLOW;
+                goto fail;
         }
         if (lim->min > lim->max) {
                 ret = EINVAL;
                 goto fail;
         }
-
         *pp = p;
 fail:
         return ret;
@@ -296,18 +302,7 @@ fail:
 static int
 read_memtype(const uint8_t **pp, const uint8_t *ep, struct limits *lim)
 {
-        int ret = read_limits(pp, ep, lim);
-        if (ret == 0) {
-                xlog_trace("mem min %" PRIu32 " max %" PRIu32, lim->min,
-                           lim->max);
-                if (WASM_MAX_PAGES < lim->min) {
-                        ret = EOVERFLOW;
-                }
-                if (lim->max != UINT32_MAX && WASM_MAX_PAGES < lim->max) {
-                        ret = EOVERFLOW;
-                }
-        }
-        return ret;
+        return read_limits(pp, ep, lim, WASM_MAX_PAGES);
 }
 
 static int
@@ -471,7 +466,7 @@ read_tabletype(const uint8_t **pp, const uint8_t *ep, struct tabletype *tt)
                 ret = EINVAL;
                 goto fail;
         }
-        ret = read_limits(&p, ep, &tt->lim);
+        ret = read_limits(&p, ep, &tt->lim, UINT32_MAX);
         if (ret != 0) {
                 goto fail;
         }

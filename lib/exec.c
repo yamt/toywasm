@@ -1062,7 +1062,8 @@ memory_grow(struct exec_context *ctx, uint32_t memidx, uint32_t sz)
         uint32_t orig_size = mi->size_in_pages;
         uint64_t new_size = (uint64_t)orig_size + sz;
         const struct limits *lim = mi->type;
-        if (new_size > WASM_MAX_PAGES || new_size > lim->max) {
+        assert(lim->max <= WASM_MAX_PAGES);
+        if (new_size > lim->max) {
                 return (uint32_t)-1; /* fail */
         }
         xlog_trace("memory grow %" PRIu32 " -> %" PRIu32, mi->size_in_pages,
