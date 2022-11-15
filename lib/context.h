@@ -108,6 +108,13 @@ struct validation_context {
          * > References: the list of function indices that occur in
          * > the module outside functions and can hence be used to
          * > form references inside them.
+         *
+         * Functions in this list can have references and thus can be
+         * called with call.indirect. Having this list before looking
+         * at the code section can benefit 1-pass compilation.
+         *
+         * https://github.com/WebAssembly/reference-types/issues/31
+         * https://github.com/WebAssembly/reference-types/issues/76
          */
         struct bitmap *refs;
 
