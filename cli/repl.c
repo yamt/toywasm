@@ -47,36 +47,6 @@
  */
 #define EXTERNREF_0 ((uintptr_t)-1)
 
-const char *g_repl_prompt = "toywasm";
-bool g_repl_use_jump_table = true;
-bool g_repl_print_stats = false;
-
-struct repl_module_state {
-        char *name;
-        uint8_t *buf;
-        size_t bufsize;
-        bool buf_mapped;
-        struct module *module;
-        struct instance *inst;
-};
-
-/* eg. const.wast has 366 modules */
-#define MAX_MODULES 500
-
-struct repl_state {
-        struct repl_module_state modules[MAX_MODULES];
-        unsigned int nmodules;
-        struct import_object *imports;
-        unsigned int nregister;
-        struct name registered_names[MAX_MODULES];
-        struct val *param;
-        struct val *result;
-        struct wasi_instance *wasi;
-};
-
-struct repl_state g_repl_state0;
-struct repl_state *g_repl_state = &g_repl_state0;
-
 int
 str_to_uint(const char *s, int base, uintmax_t *resultp)
 {
@@ -347,7 +317,7 @@ repl_load_from_buf(struct repl_state *state, const char *modname,
         }
         struct load_context ctx;
         load_context_init(&ctx);
-        ctx.options.generate_jump_table = g_repl_use_jump_table;
+        ctx.options = state->opts.load_options;
         ret = module_load(mod->module, mod->buf, mod->buf + mod->bufsize,
                           &ctx);
         if (ctx.report.msg != NULL) {
@@ -760,7 +730,7 @@ repl_invoke(struct repl_state *state, const char *modname, const char *cmd,
         struct exec_context *ctx = &ctx0;
         exec_context_init(ctx, inst);
         ret = instance_execute_func(ctx, funcidx, ptype, rtype, param, result);
-        if (g_repl_print_stats) {
+        if (state->opts.print_stats) {
                 exec_context_print_stats(ctx);
         }
         if (ret == EFAULT && ctx->trapped) {
@@ -991,15 +961,29 @@ fail:
         return ret;
 }
 
-int
-repl(void)
+static void
+repl_options_init(struct repl_options *opts)
 {
-        struct repl_state *state = g_repl_state;
+        opts->prompt = "toywasm";
+        opts->print_stats = false;
+        opts->load_options.generate_jump_table = true;
+}
+
+void
+repl_state_init(struct repl_state *state)
+{
+        memset(state, 0, sizeof(*state));
+        repl_options_init(&state->opts);
+}
+
+int
+repl(struct repl_state *state)
+{
         char *line = NULL;
         size_t linecap = 0;
         int ret;
         while (true) {
-                printf("%s> ", g_repl_prompt);
+                printf("%s> ", state->opts.prompt);
                 fflush(stdout);
                 ret = getline(&line, &linecap, stdin);
                 if (ret == -1) {

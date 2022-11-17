@@ -102,17 +102,20 @@ const struct option longopts[] = {
 int
 main(int argc, char *const *argv)
 {
-        struct repl_state *state = g_repl_state;
+        struct repl_state state0;
+        struct repl_state *state = &state0;
         int ret;
         int longidx;
         bool do_repl = false;
 
         int exit_status = 1;
 
+        repl_state_init(state);
+        struct repl_options *opts = &state->opts;
         while ((ret = getopt_long(argc, argv, "", longopts, &longidx)) != -1) {
                 switch (ret) {
                 case opt_disable_jump_table:
-                        g_repl_use_jump_table = false;
+                        opts->load_options.generate_jump_table = false;
                         break;
                 case opt_invoke:
                         ret = repl_invoke(state, NULL, optarg, NULL, true);
@@ -136,10 +139,10 @@ main(int argc, char *const *argv)
                         do_repl = true;
                         break;
                 case opt_repl_prompt:
-                        g_repl_prompt = optarg;
+                        opts->prompt = optarg;
                         break;
                 case opt_print_stats:
-                        g_repl_print_stats = true;
+                        opts->print_stats = true;
                         break;
                 case opt_trace:
                         xlog_tracing = 1;
@@ -165,7 +168,7 @@ main(int argc, char *const *argv)
         argv += optind;
 
         if (do_repl) {
-                ret = repl();
+                ret = repl(state);
                 if (ret != 0) {
                         exit(1);
                 }

@@ -1,11 +1,42 @@
 #include <stdbool.h>
 
-extern const char *g_repl_prompt;
-extern struct repl_state *g_repl_state;
-extern bool g_repl_use_jump_table;
-extern bool g_repl_print_stats;
+#include "options.h"
+#include "type.h"
 
-int repl(void);
+struct repl_options {
+        const char *prompt;
+        struct repl_state *state;
+        bool print_stats;
+        struct load_options load_options;
+};
+
+struct repl_module_state {
+        char *name;
+        uint8_t *buf;
+        size_t bufsize;
+        bool buf_mapped;
+        struct module *module;
+        struct instance *inst;
+};
+
+/* eg. const.wast has 366 modules */
+#define MAX_MODULES 500
+
+struct repl_state {
+        struct repl_module_state modules[MAX_MODULES];
+        unsigned int nmodules;
+        struct import_object *imports;
+        unsigned int nregister;
+        struct name registered_names[MAX_MODULES];
+        struct val *param;
+        struct val *result;
+        struct wasi_instance *wasi;
+        struct repl_options opts;
+};
+
+void repl_state_init(struct repl_state *state);
+int repl(struct repl_state *state);
+
 void repl_reset(struct repl_state *state);
 int repl_load(struct repl_state *state, const char *modname,
               const char *filename);
