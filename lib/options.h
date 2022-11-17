@@ -5,5 +5,7 @@
 
 struct load_options {
         bool generate_jump_table;
+        bool generate_resulttype_cellidx;
+        bool generate_localtype_cellidx;
 };
 #endif /* !defined(_OPTIONS_H) */

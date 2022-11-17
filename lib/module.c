@@ -132,7 +132,8 @@ fail:
 #endif
 
 static int
-read_resulttype(const uint8_t **pp, const uint8_t *ep, struct resulttype *rt)
+read_resulttype(const uint8_t **pp, const uint8_t *ep, struct resulttype *rt,
+                const struct load_context *ctx)
 {
         const uint8_t *p = *pp;
         int ret;
@@ -149,7 +150,7 @@ read_resulttype(const uint8_t **pp, const uint8_t *ep, struct resulttype *rt)
         }
         rt->is_static = true;
 #if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
-        if (rt->ntypes > 0) {
+        if (rt->ntypes > 0 && ctx->options.generate_resulttype_cellidx) {
                 ret = populate_resulttype_cellidx(rt);
                 if (ret != 0) {
                         goto fail;
@@ -172,8 +173,10 @@ clear_resulttype(struct resulttype *rt)
 }
 
 static int
-read_functype(const uint8_t **pp, const uint8_t *ep, struct functype *ft)
+read_functype(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
+              struct functype *ft, void *vp)
 {
+        struct load_context *ctx = vp;
         const uint8_t *p = *pp;
         uint8_t u8;
         int ret;
@@ -187,12 +190,12 @@ read_functype(const uint8_t **pp, const uint8_t *ep, struct functype *ft)
                 goto fail;
         }
 
-        ret = read_resulttype(&p, ep, &ft->parameter);
+        ret = read_resulttype(&p, ep, &ft->parameter, ctx);
         if (ret != 0) {
                 goto fail;
         }
 
-        ret = read_resulttype(&p, ep, &ft->result);
+        ret = read_resulttype(&p, ep, &ft->result, ctx);
         if (ret != 0) {
                 clear_resulttype(&ft->parameter);
                 goto fail;
@@ -685,8 +688,8 @@ read_type_section(const uint8_t **pp, const uint8_t *ep,
         const uint8_t *p = *pp;
         int ret;
 
-        ret = read_vec(&p, ep, sizeof(*m->types), (void *)read_functype,
-                       (void *)clear_functype, &m->ntypes, (void *)&m->types);
+        ret = read_vec_with_ctx2(&p, ep, sizeof(*m->types), read_functype,
+                                 clear_functype, ctx, &m->ntypes, &m->types);
         if (ret != 0) {
                 goto fail;
         }
@@ -774,7 +777,8 @@ fail:
 #endif
 
 static int
-read_locals(const uint8_t **pp, const uint8_t *ep, struct func *func)
+read_locals(const uint8_t **pp, const uint8_t *ep, struct func *func,
+            const struct load_context *ctx)
 {
         const uint8_t *p = *pp;
         uint32_t vec_count;
@@ -822,7 +826,7 @@ read_locals(const uint8_t **pp, const uint8_t *ep, struct func *func)
         lt->localchunks = chunks;
         lt->nlocals = nlocals;
 #if defined(TOYWASM_USE_LOCALTYPE_CELLIDX)
-        if (lt->nlocals > 0) {
+        if (lt->nlocals > 0 && ctx->options.generate_localtype_cellidx) {
                 ret = populate_localtype_cellidx(lt);
                 if (ret != 0) {
                         lt->localchunks = NULL;
@@ -872,7 +876,7 @@ read_func(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
         }
 
         const uint8_t *cep = p + size;
-        ret = read_locals(&p, cep, func);
+        ret = read_locals(&p, cep, func, ctx);
         if (ret != 0) {
                 goto fail;
         }
