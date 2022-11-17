@@ -12,6 +12,8 @@
 
 enum longopt {
         opt_disable_jump_table = 0x100,
+        opt_disable_localtype_cellidx,
+        opt_disable_resulttype_cellidx,
         opt_invoke,
         opt_load,
         opt_register,
@@ -30,6 +32,18 @@ const struct option longopts[] = {
                 no_argument,
                 NULL,
                 opt_disable_jump_table,
+        },
+        {
+                "disable-localtype-cellidx",
+                no_argument,
+                NULL,
+                opt_disable_localtype_cellidx,
+        },
+        {
+                "disable-resulttype-cellidx",
+                no_argument,
+                NULL,
+                opt_disable_resulttype_cellidx,
         },
         {
                 "invoke",
@@ -116,6 +130,12 @@ main(int argc, char *const *argv)
                 switch (ret) {
                 case opt_disable_jump_table:
                         opts->load_options.generate_jump_table = false;
+                        break;
+                case opt_disable_localtype_cellidx:
+                        opts->load_options.generate_localtype_cellidx = false;
+                        break;
+                case opt_disable_resulttype_cellidx:
+                        opts->load_options.generate_resulttype_cellidx = false;
                         break;
                 case opt_invoke:
                         ret = repl_invoke(state, NULL, optarg, NULL, true);

@@ -967,6 +967,8 @@ repl_options_init(struct repl_options *opts)
         opts->prompt = "toywasm";
         opts->print_stats = false;
         opts->load_options.generate_jump_table = true;
+        opts->load_options.generate_localtype_cellidx = true;
+        opts->load_options.generate_resulttype_cellidx = true;
 }
 
 void
