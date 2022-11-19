@@ -146,4 +146,4 @@ jobs:
       run: |
         cd build.cross.${ARCH}
         ./toywasm --version
-        ctest -V --timeout 2000
+        ctest -V --timeout 3000
