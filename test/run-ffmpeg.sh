@@ -4,11 +4,16 @@
 # ./test/run-ffmpeg.sh ./b/toywasm --wasi --wasi-dir .video --
 # ./test/run-ffmpeg.sh wasm3 --dir .video --
 # ./test/run-ffmpeg.sh iwasm --dir=.video
-# ./test/run-ffmpeg.sh wasmtime --dir .video --
-# ./test/run-ffmpeg.sh wasmer --dir .video --
+# ./test/run-ffmpeg.sh wasmtime run --dir .video --
+# ./test/run-ffmpeg.sh wasmer run --dir .video --
 # ./test/run-ffmpeg.sh wasm-interp --wasi --dir .video --
 #
-# for some reasons, ffmpeg uses color output only for wasm3.
+# ffmpeg uses color output only for wasm3 because, when using uvwasi,
+# wasm3 provides some environment variables by default.
+# cf. https://github.com/wasm3/wasm3/blob/011597ecea739399daa36f1a138b9b5e18672d6d/source/m3_api_uvwasi.c#L1107
+# You can get a similar output with:
+# eg.
+# ./test/run-ffmpeg.sh wasmtime run --env TERM=xterm-256color --dir .video --
 #
 # for some reasons, wasm-interp doesn't work:
 #
