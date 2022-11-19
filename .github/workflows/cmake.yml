@@ -146,4 +146,14 @@ jobs:
       run: |
         cd build.cross.${ARCH}
         ./toywasm --version
-        ctest -V --timeout 3000
+        ctest -V -LE slow
+
+    - name: Run (slow)
+      # skip for s390x as it's slow
+      if: matrix.arch == 's390x'
+      env:
+        ARCH: ${{matrix.arch}}
+      run: |
+        cd build.cross.${ARCH}
+        ./toywasm --version
+        ctest -V -L slow
