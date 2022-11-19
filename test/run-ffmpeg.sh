@@ -35,7 +35,7 @@
 set -e
 
 checkfile() {
-	FILE=$1
+    FILE=$1
     HASH=$2
     test "$(openssl sha256 -r ${FILE} | cut -d' '  -f1)" = ${HASH}
 }
