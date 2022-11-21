@@ -150,7 +150,7 @@ jobs:
 
     - name: Run (slow)
       # skip for s390x as it's slow
-      if: matrix.arch == 's390x'
+      if: matrix.arch != 's390x'
       env:
         ARCH: ${{matrix.arch}}
       run: |
