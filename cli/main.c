@@ -24,6 +24,7 @@ enum longopt {
         opt_version,
         opt_wasi,
         opt_wasi_dir,
+        opt_wasi_env,
 };
 
 const struct option longopts[] = {
@@ -106,6 +107,12 @@ const struct option longopts[] = {
                 opt_wasi_dir,
         },
         {
+                "wasi-env",
+                required_argument,
+                NULL,
+                opt_wasi_env,
+        },
+        {
                 NULL,
                 0,
                 NULL,
@@ -118,6 +125,8 @@ main(int argc, char *const *argv)
 {
         struct repl_state state0;
         struct repl_state *state = &state0;
+        int nenvs = 0;
+        char **envs = NULL;
         int ret;
         int longidx;
         bool do_repl = false;
@@ -182,6 +191,19 @@ main(int argc, char *const *argv)
                                 goto fail;
                         }
                         break;
+                case opt_wasi_env:
+                        nenvs++;
+                        envs = realloc(envs, nenvs * sizeof(*envs));
+                        if (envs == NULL) {
+                                ret = ENOMEM;
+                                goto fail;
+                        }
+                        envs[nenvs - 1] = optarg;
+                        ret = repl_set_wasi_environ(state, nenvs, envs);
+                        if (ret != 0) {
+                                goto fail;
+                        }
+                        break;
                 }
         }
         argc -= optind;
@@ -216,5 +238,6 @@ main(int argc, char *const *argv)
         exit_status = wasi_exit_code;
 fail:
         repl_reset(state);
+        free(envs);
         exit(exit_status);
 }

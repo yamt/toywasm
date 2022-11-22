@@ -48,4 +48,6 @@ void repl_print_version(void);
 
 int repl_load_wasi(struct repl_state *state);
 int repl_set_wasi_args(struct repl_state *state, int argc, char *const *argv);
+int repl_set_wasi_environ(struct repl_state *state, int nenvs,
+                          char *const *envs);
 int repl_set_wasi_prestat(struct repl_state *state, const char *path);

@@ -206,6 +206,16 @@ repl_set_wasi_args(struct repl_state *state, int argc, char *const *argv)
 }
 
 int
+repl_set_wasi_environ(struct repl_state *state, int nenvs, char *const *envs)
+{
+        if (state->wasi == NULL) {
+                return EPROTO;
+        }
+        wasi_instance_set_environ(state->wasi, nenvs, envs);
+        return 0;
+}
+
+int
 repl_set_wasi_prestat(struct repl_state *state, const char *path)
 {
         if (state->wasi == NULL) {
