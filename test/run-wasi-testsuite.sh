@@ -15,7 +15,7 @@ fetch() {
 }
 
 if [ ! -d ${DIR} ]; then
-	fetch
+    fetch
 fi
 
 virtualenv venv
