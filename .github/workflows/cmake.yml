@@ -43,13 +43,14 @@ jobs:
     steps:
     - name: Install dependencies (ubuntu)
       if: matrix.os == 'ubuntu-latest'
-      run: sudo apt-get update && sudo apt-get install -y wabt libcmocka-dev clang lld llvm-dev pax
+      run: sudo apt-get update && sudo apt-get install -y wabt libcmocka-dev clang lld llvm-dev pax virtualenv
 
     - name: Install dependencies (macOS)
       if: matrix.os == 'macos-latest'
       run: |
         brew install wabt
         brew install cmocka
+        brew install virtualenv
 
     - uses: actions/checkout@v3
 
@@ -68,10 +69,6 @@ jobs:
     - name: Build
       # Build your program with the given configuration
       run: cmake --build ${{github.workspace}}/build --config ${{matrix.BUILD_TYPE}}
-
-    - name: Install virtualenv
-      run: |
-        sudo pip3 install virtualenv
 
     - name: Test
       working-directory: ${{github.workspace}}/build
@@ -124,7 +121,7 @@ jobs:
     steps:
     - name: Install dependencies (ubuntu)
       if: matrix.os == 'ubuntu-latest'
-      run: sudo apt-get update && sudo apt-get install -y pax
+      run: sudo apt-get update && sudo apt-get install -y pax virtualenv
 
     - uses: actions/checkout@v3
 
@@ -143,10 +140,6 @@ jobs:
     - name: Install QEMU
       run: |
         sudo apt-get update && sudo apt-get install -y qemu-user-static
-
-    - name: Install virtualenv
-      run: |
-        sudo pip3 install virtualenv
 
     - name: Run
       env:
