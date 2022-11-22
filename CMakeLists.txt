@@ -211,6 +211,13 @@ add_test(NAME toywasm-cli-wasm3-spec-test
 )
 set_tests_properties(toywasm-cli-wasm3-spec-test PROPERTIES ENVIRONMENT "${TEST_ENV}")
 
+add_test(NAME toywasm-cli-wasi-testsuite
+	COMMAND ./test/run-wasi-testsuite.sh
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+set_tests_properties(toywasm-cli-wasi-testsuite PROPERTIES ENVIRONMENT "${TEST_ENV};TOYWASM=${CMAKE_BINARY_DIR}/toywasm")
+set_tests_properties(toywasm-cli-wasi-testsuite PROPERTIES LABELS "wasi-testsuite")
+
 add_test(NAME toywasm-cli-wasmtime-wasi-tests
 	COMMAND ./test/run-wasmtime-wasi-tests.sh "${CMAKE_BINARY_DIR}/toywasm --wasi --wasi-dir ."
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
