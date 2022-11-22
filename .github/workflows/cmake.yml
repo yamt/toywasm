@@ -69,6 +69,10 @@ jobs:
       # Build your program with the given configuration
       run: cmake --build ${{github.workspace}}/build --config ${{matrix.BUILD_TYPE}}
 
+    - name: Install virtualenv
+      run: |
+        sudo pip3 install virtualenv
+
     - name: Test
       working-directory: ${{github.workspace}}/build
       # Execute tests defined by the CMake configuration.
@@ -139,6 +143,10 @@ jobs:
     - name: Install QEMU
       run: |
         sudo apt-get update && sudo apt-get install -y qemu-user-static
+
+    - name: Install virtualenv
+      run: |
+        sudo pip3 install virtualenv
 
     - name: Run
       env:
