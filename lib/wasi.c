@@ -77,6 +77,8 @@ struct wasi_instance {
         VEC(, struct wasi_fdinfo) fdtable; /* indexed by wasm fd */
         int argc;
         char *const *argv;
+        int nenvs;
+        char *const *envs;
 };
 
 #if defined(TOYWASM_ENABLE_TRACING)
@@ -1639,17 +1641,13 @@ fail:
 }
 
 static int
-wasi_args_sizes_get(struct exec_context *ctx, struct host_instance *hi,
-                    const struct functype *ft, const struct cell *params,
-                    struct cell *results)
+args_environ_sizes_get(struct exec_context *ctx, struct wasi_instance *wasi,
+                       const struct functype *ft, const struct cell *params,
+                       struct cell *results, int argc, char *const *argv)
 {
-        WASI_TRACE;
-        struct wasi_instance *wasi = (void *)hi;
         HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t argcp = HOST_FUNC_PARAM(ft, params, 0, i32);
         uint32_t argv_buf_sizep = HOST_FUNC_PARAM(ft, params, 1, i32);
-        int argc = wasi->argc;
-        char *const *argv = wasi->argv;
         int ret;
         uint32_t argc_le32 = host_to_le32(argc);
         ret = wasi_copyout(ctx, &argc_le32, argcp, sizeof(argc_le32));
@@ -1670,17 +1668,13 @@ fail:
 }
 
 static int
-wasi_args_get(struct exec_context *ctx, struct host_instance *hi,
-              const struct functype *ft, const struct cell *params,
-              struct cell *results)
+args_environ_get(struct exec_context *ctx, struct wasi_instance *wasi,
+                 const struct functype *ft, const struct cell *params,
+                 struct cell *results, int argc, char *const *argv)
 {
-        WASI_TRACE;
-        struct wasi_instance *wasi = (void *)hi;
         HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t argvp = HOST_FUNC_PARAM(ft, params, 0, i32);
         uint32_t argv_buf = HOST_FUNC_PARAM(ft, params, 1, i32);
-        int argc = wasi->argc;
-        char *const *argv = wasi->argv;
         int ret;
         uint32_t i;
         uint32_t *wasm_argv = NULL;
@@ -1713,24 +1707,36 @@ fail:
 }
 
 static int
+wasi_args_sizes_get(struct exec_context *ctx, struct host_instance *hi,
+                    const struct functype *ft, const struct cell *params,
+                    struct cell *results)
+{
+        WASI_TRACE;
+        struct wasi_instance *wasi = (void *)hi;
+        return args_environ_sizes_get(ctx, wasi, ft, params, results,
+                                      wasi->argc, wasi->argv);
+}
+
+static int
+wasi_args_get(struct exec_context *ctx, struct host_instance *hi,
+              const struct functype *ft, const struct cell *params,
+              struct cell *results)
+{
+        WASI_TRACE;
+        struct wasi_instance *wasi = (void *)hi;
+        return args_environ_get(ctx, wasi, ft, params, results, wasi->argc,
+                                wasi->argv);
+}
+
+static int
 wasi_environ_sizes_get(struct exec_context *ctx, struct host_instance *hi,
                        const struct functype *ft, const struct cell *params,
                        struct cell *results)
 {
         WASI_TRACE;
-        HOST_FUNC_CONVERT_PARAMS(ft, params);
-        uint32_t environ_count_p = HOST_FUNC_PARAM(ft, params, 0, i32);
-        uint32_t environ_buf_size_p = HOST_FUNC_PARAM(ft, params, 1, i32);
-        uint32_t zero = 0; /* REVISIT */
-        int ret;
-        ret = wasi_copyout(ctx, &zero, environ_count_p, sizeof(zero));
-        if (ret != 0) {
-                goto fail;
-        }
-        ret = wasi_copyout(ctx, &zero, environ_buf_size_p, sizeof(zero));
-fail:
-        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
-        return 0;
+        struct wasi_instance *wasi = (void *)hi;
+        return args_environ_sizes_get(ctx, wasi, ft, params, results,
+                                      wasi->nenvs, wasi->envs);
 }
 
 static int
@@ -1739,9 +1745,9 @@ wasi_environ_get(struct exec_context *ctx, struct host_instance *hi,
                  struct cell *results)
 {
         WASI_TRACE;
-        /* REVISIT */
-        HOST_FUNC_RESULT_SET(ft, results, 0, i32, 0);
-        return 0;
+        struct wasi_instance *wasi = (void *)hi;
+        return args_environ_get(ctx, wasi, ft, params, results, wasi->nenvs,
+                                wasi->envs);
 }
 
 static int
@@ -2411,6 +2417,21 @@ wasi_instance_set_args(struct wasi_instance *inst, int argc, char *const *argv)
         int i;
         for (i = 0; i < argc; i++) {
                 xlog_trace("%s arg[%u] = \"%s\"", __func__, i, argv[i]);
+        }
+#endif
+}
+
+void
+wasi_instance_set_environ(struct wasi_instance *inst, int nenvs,
+                          char *const *envs)
+{
+        inst->nenvs = nenvs;
+        inst->envs = envs;
+#if defined(TOYWASM_ENABLE_TRACING)
+        xlog_trace("%s nenvs = %u", __func__, nenvs);
+        int i;
+        for (i = 0; i < nenvs; i++) {
+                xlog_trace("%s env[%u] = \"%s\"", __func__, i, envs[i]);
         }
 #endif
 }
