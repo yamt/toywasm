@@ -11,6 +11,7 @@ executable = os.getenv("TOYWASM", "toywasm")
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--test-file")
+parser.add_argument("--dir", action="append", default=[])
 parser.add_argument("--env", action="append", default=[])
 parser.add_argument("--arg", action="append", default=[])
 parser.add_argument("--version", action="store_true")
@@ -25,10 +26,12 @@ if args.version:
     print("toywasm 0.0")
     sys.exit(0)
 
-env_options = []
+options = []
 for x in args.env:
-    env_options.extend(["--wasi-env", x])
+    options.extend(["--wasi-env", x])
+for x in args.dir:
+    options.extend(["--wasi-dir", x])
 result = subprocess.run(
-    [executable, "--wasi"] + env_options + ["--", args.test_file] + args.arg
+    [executable, "--wasi"] + options + ["--", args.test_file] + args.arg
 )
 sys.exit(result.returncode)
