@@ -133,7 +133,7 @@ fail:
 
 static int
 read_resulttype(const uint8_t **pp, const uint8_t *ep, struct resulttype *rt,
-                const struct load_context *ctx)
+                const struct load_context *ctx, bool populate_idx)
 {
         const uint8_t *p = *pp;
         int ret;
@@ -150,7 +150,8 @@ read_resulttype(const uint8_t **pp, const uint8_t *ep, struct resulttype *rt,
         }
         rt->is_static = true;
 #if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
-        if (rt->ntypes > 0 && ctx->options.generate_resulttype_cellidx) {
+        if (populate_idx && rt->ntypes > 0 &&
+            ctx->options.generate_resulttype_cellidx) {
                 ret = populate_resulttype_cellidx(rt);
                 if (ret != 0) {
                         goto fail;
@@ -190,12 +191,17 @@ read_functype(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
                 goto fail;
         }
 
-        ret = read_resulttype(&p, ep, &ft->parameter, ctx);
+        ret = read_resulttype(&p, ep, &ft->parameter, ctx, true);
         if (ret != 0) {
                 goto fail;
         }
 
-        ret = read_resulttype(&p, ep, &ft->result, ctx);
+        /*
+         * Note: unlike parameters, results doesn't need fast access
+         * for local.get. while resulttype_cellsize still matters,
+         * functions with many results are rare.
+         */
+        ret = read_resulttype(&p, ep, &ft->result, ctx, false);
         if (ret != 0) {
                 clear_resulttype(&ft->parameter);
                 goto fail;
