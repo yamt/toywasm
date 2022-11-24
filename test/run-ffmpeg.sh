@@ -60,13 +60,13 @@ a703d46c89839d34480e567a2e86b74ada7c1077df8e635c282386d7a6e6b044 \
 https://github.com/SebastiaanYN/FFmpeg-WASI/raw/4218a47f117df5f900bb2b9bda4f100aa98d1bd7/videos/video-1080p-60fps-2s.mp4
 
 OUTDIR=$(mktemp -d .video/out.XXXXXX)
+trap "rm -rf ${OUTDIR}" EXIT
 
 "$@" .ffmpeg/ffmpeg.wasm \
+-loglevel error \
 -i .video/video-1080p-60fps-2s.mp4 \
 -ss 1 -vframes 1 \
 ${OUTDIR}/out-%03d.png
 
 checkfile ${OUTDIR}/out-001.png \
 f53da2af97aa7149809bdc6ee290ea66049650602d0da7cebf09225166de8884
-
-rm -rf ${OUTDIR}
