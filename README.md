@@ -33,3 +33,85 @@ is built with an ancient wasi-sdk to workaround
 
 * Performance
 * Stable API/ABI
+
+## How slow is this?
+
+[benchmark with ffmpeg](./benchmark/ffmpeg.sh)
+```
+===== ./b/toywasm --wasi --wasi-dir .video --
+       89.30 real        89.05 user         0.12 sys
+            85729280  maximum resident set size
+       1004073618737  instructions retired
+            65818624  peak memory footprint
+===== wasm3 --dir .video --
+       18.71 real        18.51 user         0.09 sys
+            85213184  maximum resident set size
+        119289794408  instructions retired
+            84590592  peak memory footprint
+===== iwasm.fast --dir=.video
+       22.54 real        22.40 user         0.08 sys
+           142921728  maximum resident set size
+        144876916114  instructions retired
+           142270464  peak memory footprint
+===== iwasm.classic --dir=.video
+      207.97 real       207.55 user         0.23 sys
+            80572416  maximum resident set size
+        957347283724  instructions retired
+            79970304  peak memory footprint
+===== iwasm.fast-jit --dir=.video --jit-codecache-size=100000000 --stack-size=100000
+        5.99 real         5.85 user         0.11 sys
+           148045824  maximum resident set size
+         55799745721  instructions retired
+           138383360  peak memory footprint
+===== wasmer run --dir .video --
+        2.40 real         1.68 user         0.20 sys
+           407715840  maximum resident set size
+         18364251289  instructions retired
+           385863680  peak memory footprint
+===== wasmtime run --dir .video --
+        1.87 real         1.70 user         0.11 sys
+           259403776  maximum resident set size
+         19213022301  instructions retired
+           168157184  peak memory footprint
+```
+
+## Why is this slow?
+
+* Unlike many of interpreters, toywasm aims to execute wasm bytecode
+  directly where possible. That is, it doesn't "compile" wasm bytecode
+  into intermediate code.
+
+  Unfortunately, wasm is simply not efficient to execute that way.
+  It's basically designed to be somehow "compiled" at the load time.
+
+  Many of interpreters out there translate wasm bytecode to their internal
+  bytecode for performance reasons. Wasm3 and WAMR "fast" interpreter
+  work exactly that way. Even WAMR "classic" interpreter replaces
+  some critical instructions in-place.
+
+  While toywasm maps wasm modules read-only and never modifies the code
+  in-place, it still generates a few types of bytecode annotations to avoid
+  being too slow. While they are smaller than a full translation, you
+  might consider them a kind of translation:
+
+  * Jump table.
+    This is to speed up branching.  Without this, whenever we execute
+    branch instructions, we need to parse every instructions the branch
+    would skip over.
+
+    This is optional and can be disabled by `--disable-jump-table` option.
+
+  * Local offset tables.
+    This is to speed up access to locals. E.g. `local.get`.
+    Without this, an access to a local is O(x*x) where x is the number
+    of locals.
+
+    These are optional and can be disabled by `--disable-localtype-cellidx`
+    and `--disable-resulttype-cellidx` options.
+
+  * Type annotations for value-polymorphic instructions.
+
+    This is not optional.
+
+* I don't like to use huge-switch statements or "labels as values",
+  which are well-known techniques to implement efficient interpreters.
