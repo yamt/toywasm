@@ -28,6 +28,9 @@ is built with an ancient wasi-sdk to workaround
 
 * Learn the spec by implementing it
 * Have a fun
+* Correctness
+* Clean code
+* Small footprint
 
 ## Non-goals
 
