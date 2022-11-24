@@ -795,8 +795,8 @@ skip_expr(const uint8_t **pp, bool goto_else)
                 uint32_t op = *p++;
                 const struct instruction_desc *desc = &instructions[op];
                 if (desc->next_table != NULL) {
-                        op = *p++;
-                        desc = &desc->next_table[op];
+                        uint32_t op2 = *p++;
+                        desc = &desc->next_table[op2];
                 }
                 assert(desc->process != NULL);
                 int ret = desc->process(&p, NULL, &ctx);
