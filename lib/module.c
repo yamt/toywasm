@@ -106,7 +106,7 @@ fail:
 static int
 populate_resulttype_cellidx(struct resulttype *rt)
 {
-        uint16_t *idxes = calloc(rt->ntypes, sizeof(*idxes));
+        uint16_t *idxes = calloc(rt->ntypes + 1, sizeof(*idxes));
         int ret;
         if (idxes == NULL) {
                 ret = ENOMEM;
@@ -121,7 +121,7 @@ populate_resulttype_cellidx(struct resulttype *rt)
                         goto fail;
                 }
                 off += csz;
-                idxes[i] = off;
+                idxes[i + 1] = off;
         }
         rt->cellidx.cellidxes = idxes;
         return 0;
@@ -745,7 +745,7 @@ fail:
 static int
 populate_localtype_cellidx(struct localtype *lt)
 {
-        uint16_t *idxes = calloc(lt->nlocals, sizeof(*idxes));
+        uint16_t *idxes = calloc(lt->nlocals + 1, sizeof(*idxes));
         int ret;
         if (idxes == NULL) {
                 ret = ENOMEM;
@@ -771,7 +771,7 @@ populate_localtype_cellidx(struct localtype *lt)
                         goto fail;
                 }
                 off += csz;
-                idxes[i] = off;
+                idxes[i + 1] = off;
                 n--;
         }
         lt->cellidx.cellidxes = idxes;
