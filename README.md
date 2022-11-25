@@ -98,23 +98,39 @@ is built with an ancient wasi-sdk to workaround
   might consider them a kind of translation:
 
   * Jump table.
-    This is to speed up branching.  Without this, whenever we execute
-    branch instructions, we need to parse every instructions the branch
-    would skip over.
 
-    This is optional and can be disabled by `--disable-jump-table` option.
+    This is to speed up branching. Wasm branch instruction don't have
+    a cheap way to know the destination address to jump to. Without this
+    table, whenever we execute branch instructions, we need to parse
+    every instructions the branch would skip over.
+
+    This is optional and can be disabled by the `--disable-jump-table`
+    runtime option.
 
   * Local offset tables.
+
     This is to speed up access to locals. E.g. `local.get`.
     Without this, an access to a local is O(x*x) where x is the number
     of locals.
 
-    These are optional and can be disabled by `--disable-localtype-cellidx`
-    and `--disable-resulttype-cellidx` options.
+    These tables are generated only when toywasm is built with
+    variable-sized values, which is the default.
+    (`-D TOYWASM_USE_SMALL_CELLS=ON`)
+
+    You can disable them by `--disable-localtype-cellidx`
+    and the `--disable-resulttype-cellidx` runtime options.
 
   * Type annotations for value-polymorphic instructions.
 
-    This is not optional.
+    Some wasm instructions like `drop` works on a value of any types and
+    there is no cheap way to know the type at runtime.
+    While validating the bytecode, toywasm annotates these instructions
+    with the sizes of the values so that the necessary infomation is
+    available when executing it.
+
+    This is unconditionally enabled if toywasm is built with
+    variable-sized values, which is the default.
+    (`-D TOYWASM_USE_SMALL_CELLS=ON`)
 
 * I don't like to use huge-switch statements or "labels as values",
   which are well-known techniques to implement efficient interpreters.
