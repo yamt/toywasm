@@ -803,18 +803,17 @@ read_locals(const uint8_t **pp, const uint8_t *ep, struct func *func,
         }
 
         uint32_t i;
+        struct localchunk *chunk = chunks;
         for (i = 0; i < vec_count; i++) {
                 uint32_t count;
-                uint32_t old_nlocals;
                 uint8_t u8;
 
                 ret = read_leb_u32(&p, ep, &count);
                 if (ret != 0) {
                         goto fail;
                 }
-                old_nlocals = nlocals;
                 nlocals += count;
-                if (old_nlocals >= nlocals) {
+                if (UINT32_MAX - nlocals < count) {
                         ret = E2BIG;
                         goto fail;
                 }
@@ -826,8 +825,16 @@ read_locals(const uint8_t **pp, const uint8_t *ep, struct func *func,
                         ret = EINVAL;
                         goto fail;
                 }
-                chunks[i].n = count;
-                chunks[i].type = u8;
+                if (count == 0) {
+                        /*
+                         * local count can be 0.
+                         * cf. https://github.com/WebAssembly/spec/pull/980
+                         */
+                        continue;
+                }
+                chunk->n = count;
+                chunk->type = u8;
+                chunk++;
         }
         lt->localchunks = chunks;
         lt->nlocals = nlocals;
