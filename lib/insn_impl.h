@@ -673,6 +673,19 @@ INSN_IMPL(global_get)
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
                 if (vctx->const_expr) {
+                        /*
+                         * Note: we are only allowed to refer imported globals.
+                         * Basically to avoid possible complexities from
+                         * cycles.
+                         *
+                         * cf.
+                         * https://github.com/WebAssembly/spec/issues/367
+                         * https://github.com/WebAssembly/spec/issues/1522
+                         */
+                        if (globalidx >= m->nimportedglobals) {
+                                ret = EINVAL;
+                                goto fail;
+                        }
                         const struct globaltype *t =
                                 module_globaltype(m, globalidx);
                         if (t->mut != GLOBAL_CONST) {
