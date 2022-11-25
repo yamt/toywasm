@@ -715,7 +715,7 @@ exec_next_insn(const uint8_t *p, struct cell *stack, struct exec_context *ctx)
 #else
         const struct instruction_desc *desc = &instructions[op];
         if (__predict_false(desc->next_table != NULL)) {
-                op = *p++;
+                op = read_leb_u32_nocheck(&p);
                 desc = &desc->next_table[op];
         }
         xlog_trace("exec %06" PRIx32 ": %s", pc, desc->name);
@@ -795,7 +795,7 @@ skip_expr(const uint8_t **pp, bool goto_else)
                 uint32_t op = *p++;
                 const struct instruction_desc *desc = &instructions[op];
                 if (desc->next_table != NULL) {
-                        uint32_t op2 = *p++;
+                        uint32_t op2 = read_leb_u32_nocheck(&p);
                         desc = &desc->next_table[op2];
                 }
                 assert(desc->process != NULL);

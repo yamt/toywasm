@@ -436,7 +436,7 @@ exec_next_insn_fc(const uint8_t *p, struct cell *stack,
 #if defined(TOYWASM_ENABLE_TRACING)
         uint32_t pc = ptr2pc(ctx->instance->module, p);
 #endif
-        uint32_t op = *p++;
+        uint32_t op = read_leb_u32_nocheck(&p);
         const struct exec_instruction_desc *desc = &exec_instructions_fc[op];
         xlog_trace("exec %06" PRIx32 ": %s (2nd byte %02" PRIx32 ")", pc,
                    instructions[op].name, op);

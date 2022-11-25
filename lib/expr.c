@@ -24,14 +24,16 @@ read_op(const uint8_t **pp, const uint8_t *ep,
         size_t table_size = instructions_size;
         const char *group = "base";
         int ret;
+        uint8_t inst8;
+        uint32_t inst;
 
+        ret = read_u8(pp, ep, &inst8);
+        if (ret != 0) {
+                goto fail;
+        }
+        inst = inst8;
         while (true) {
                 const struct instruction_desc *desc;
-                uint8_t inst;
-                ret = read_u8(pp, ep, &inst);
-                if (ret != 0) {
-                        goto fail;
-                }
                 if (inst >= table_size) {
                         goto invalid_inst;
                 }
@@ -40,13 +42,21 @@ read_op(const uint8_t **pp, const uint8_t *ep,
                         table = desc->next_table;
                         table_size = desc->next_table_size;
                         group = desc->name;
+                        /*
+                         * Note: wasm "sub" opcodes are LEB128.
+                         * cf. https://github.com/WebAssembly/spec/issues/1228
+                         */
+                        ret = read_leb_u32(pp, ep, &inst);
+                        if (ret != 0) {
+                                goto fail;
+                        }
                         continue;
                 }
                 if (desc->name == NULL) {
 invalid_inst:
-                        xlog_error(
-                                "unimplemented instruction %02x in group '%s'",
-                                inst, group);
+                        xlog_error("unimplemented instruction %02" PRIx32
+                                   " in group '%s'",
+                                   inst, group);
                         ret = EINVAL;
                         goto fail;
                 }
