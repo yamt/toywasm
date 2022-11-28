@@ -92,10 +92,10 @@ is built with an ancient wasi-sdk to workaround
   work exactly that way. Even WAMR "classic" interpreter replaces
   some critical instructions in-place.
 
-  While toywasm maps wasm modules read-only and never modifies the code
-  in-place, it still generates a few types of bytecode annotations to avoid
-  being too slow. While they are smaller than a full translation, you
-  might consider them a kind of translation:
+  While toywasm maps wasm modules read-only and never modifies it in-place,
+  it still generates a few types of offline annotations on the bytecode
+  to avoid being too slow. While they are smaller than a full translation,
+  you might consider them a kind of translation:
 
   * Jump table.
 
@@ -109,16 +109,24 @@ is built with an ancient wasi-sdk to workaround
 
   * Local offset tables.
 
-    This is to speed up access to locals. E.g. `local.get`.
-    Without this, an access to a local is O(x*x) where x is the number
-    of locals.
-
-    These tables are generated only when toywasm is built with
-    variable-sized values, which is the default.
+    This is to speed up access to locals (E.g. `local.get`) in case
+    toywasm is built with variable-sized values, which is the default.
     (`-D TOYWASM_USE_SMALL_CELLS=ON`)
+    Without this table, an access to a local is O(x) where x is
+    the number of locals in the function, including function arguments.
 
     You can disable them by `--disable-localtype-cellidx`
     and the `--disable-resulttype-cellidx` runtime options.
+
+    When toywasm is built with fixed-sized values,
+    (`-D TOYWASM_USE_SMALL_CELLS=OFF`) an access to a local is O(1).
+    In that case, this table is not necessary or used, regardless of
+    the above mentioned cli options.
+    An implementation with fixed-sized values is probably more
+    cpu-efficient especially on a 64-bit host. It's probably more
+    memory-efficient as well because it doesn't involve the static
+    overhead. (this table) The situation might change when we implement
+    larger values. (`v128` used by SIMD.)
 
   * Type annotations for value-polymorphic instructions.
 
@@ -126,9 +134,11 @@ is built with an ancient wasi-sdk to workaround
     there is no cheap way to know the type at runtime.
     While validating the bytecode, toywasm annotates these instructions
     with the sizes of the values so that the necessary infomation is
-    available when executing it.
+    available when executing it later. While it's theoretically possible
+    to calculate them at the execution time, it would be something like
+    repeating the validation step.
 
-    This is unconditionally enabled if toywasm is built with
+    This is unconditionally enabled if and only if toywasm is built with
     variable-sized values, which is the default.
     (`-D TOYWASM_USE_SMALL_CELLS=ON`)
 
