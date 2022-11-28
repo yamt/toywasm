@@ -20,6 +20,8 @@
 # [mov,mp4,m4a,3gp,3g2,mj2 @ 0xb7e740] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
 # [mov,mp4,m4a,3gp,3g2,mj2 @ 0xb7e740] moov atom not found
 # .video/video-1080p-60fps-2s.mp4: Invalid data found when processing input
+#
+# https://github.com/WebAssembly/wabt/issues/2074
 
 set -e
 
