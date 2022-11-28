@@ -20,17 +20,6 @@
 # [mov,mp4,m4a,3gp,3g2,mj2 @ 0xb7e740] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
 # [mov,mp4,m4a,3gp,3g2,mj2 @ 0xb7e740] moov atom not found
 # .video/video-1080p-60fps-2s.mp4: Invalid data found when processing input
-#
-# for some reasons, WAMR fast-jit doesn't work:
-#
-# % ./test/run-ffmpeg.sh iwasm --dir=.video
-# fast jit compilation failed: Error: allocate memory failed
-# WASM module load failed: fast jit compilation failed
-# %
-# % ./test/run-ffmpeg.sh iwasm --jit-codecache-size=20000000 --dir=.video
-# 0x1000fast jit compilation failed: unknown error
-# WASM module load failed: fast jit compilation failed
-# %
 
 set -e
 
