@@ -123,8 +123,7 @@ const struct option longopts[] = {
 int
 main(int argc, char *const *argv)
 {
-        struct repl_state state0;
-        struct repl_state *state = &state0;
+        struct repl_state *state;
         int nenvs = 0;
         char **envs = NULL;
         int ret;
@@ -133,6 +132,10 @@ main(int argc, char *const *argv)
 
         int exit_status = 1;
 
+        state = malloc(sizeof(*state));
+        if (state == NULL) {
+                goto fail;
+        }
         toywasm_repl_state_init(state);
         struct repl_options *opts = &state->opts;
         while ((ret = getopt_long(argc, argv, "", longopts, &longidx)) != -1) {
@@ -242,5 +245,6 @@ main(int argc, char *const *argv)
 fail:
         toywasm_repl_reset(state);
         free(envs);
+        free(state);
         exit(exit_status);
 }
