@@ -133,7 +133,7 @@ main(int argc, char *const *argv)
 
         int exit_status = 1;
 
-        repl_state_init(state);
+        toywasm_repl_state_init(state);
         struct repl_options *opts = &state->opts;
         while ((ret = getopt_long(argc, argv, "", longopts, &longidx)) != -1) {
                 switch (ret) {
@@ -147,19 +147,20 @@ main(int argc, char *const *argv)
                         opts->load_options.generate_resulttype_cellidx = false;
                         break;
                 case opt_invoke:
-                        ret = repl_invoke(state, NULL, optarg, NULL, true);
+                        ret = toywasm_repl_invoke(state, NULL, optarg, NULL,
+                                                  true);
                         if (ret != 0) {
                                 goto fail;
                         }
                         break;
                 case opt_load:
-                        ret = repl_load(state, NULL, optarg);
+                        ret = toywasm_repl_load(state, NULL, optarg);
                         if (ret != 0) {
                                 goto fail;
                         }
                         break;
                 case opt_register:
-                        ret = repl_register(state, NULL, optarg);
+                        ret = toywasm_repl_register(state, NULL, optarg);
                         if (ret != 0) {
                                 goto fail;
                         }
@@ -177,16 +178,16 @@ main(int argc, char *const *argv)
                         xlog_tracing = 1;
                         break;
                 case opt_version:
-                        repl_print_version();
+                        toywasm_repl_print_version();
                         break;
                 case opt_wasi:
-                        ret = repl_load_wasi(state);
+                        ret = toywasm_repl_load_wasi(state);
                         if (ret != 0) {
                                 goto fail;
                         }
                         break;
                 case opt_wasi_dir:
-                        ret = repl_set_wasi_prestat(state, optarg);
+                        ret = toywasm_repl_set_wasi_prestat(state, optarg);
                         if (ret != 0) {
                                 goto fail;
                         }
@@ -199,7 +200,8 @@ main(int argc, char *const *argv)
                                 goto fail;
                         }
                         envs[nenvs - 1] = optarg;
-                        ret = repl_set_wasi_environ(state, nenvs, envs);
+                        ret = toywasm_repl_set_wasi_environ(state, nenvs,
+                                                            envs);
                         if (ret != 0) {
                                 goto fail;
                         }
@@ -210,7 +212,7 @@ main(int argc, char *const *argv)
         argv += optind;
 
         if (do_repl) {
-                ret = repl(state);
+                ret = toywasm_repl(state);
                 if (ret != 0) {
                         exit(1);
                 }
@@ -219,25 +221,26 @@ main(int argc, char *const *argv)
         if (argc == 0) {
                 exit(0);
         }
-        ret = repl_set_wasi_args(state, argc, argv);
+        ret = toywasm_repl_set_wasi_args(state, argc, argv);
         if (ret != 0 && ret != EPROTO) {
                 goto fail;
         }
         const char *filename = argv[0];
-        ret = repl_load(state, NULL, filename);
+        ret = toywasm_repl_load(state, NULL, filename);
         if (ret != 0) {
                 xlog_error("load failed");
                 goto fail;
         }
         uint32_t wasi_exit_code = 0;
-        ret = repl_invoke(state, NULL, "_start", &wasi_exit_code, false);
+        ret = toywasm_repl_invoke(state, NULL, "_start", &wasi_exit_code,
+                                  false);
         if (ret != 0) {
                 xlog_error("invoke failed with %d", ret);
                 goto fail;
         }
         exit_status = wasi_exit_code;
 fail:
-        repl_reset(state);
+        toywasm_repl_reset(state);
         free(envs);
         exit(exit_status);
 }

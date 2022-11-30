@@ -115,7 +115,7 @@ read_hex_from_stdin(uint8_t *p, size_t left)
         return 0;
 }
 
-void
+static void
 repl_unload(struct repl_module_state *mod)
 {
         if (mod->inst != NULL) {
@@ -141,7 +141,7 @@ repl_unload(struct repl_module_state *mod)
 }
 
 void
-repl_reset(struct repl_state *state)
+toywasm_repl_reset(struct repl_state *state)
 {
         uint32_t n = 0;
         while (state->imports != NULL) {
@@ -171,7 +171,7 @@ repl_reset(struct repl_state *state)
 }
 
 int
-repl_load_wasi(struct repl_state *state)
+toywasm_repl_load_wasi(struct repl_state *state)
 {
         if (state->wasi != NULL) {
                 xlog_error("wasi is already loaded");
@@ -196,7 +196,8 @@ fail:
 }
 
 int
-repl_set_wasi_args(struct repl_state *state, int argc, char *const *argv)
+toywasm_repl_set_wasi_args(struct repl_state *state, int argc,
+                           char *const *argv)
 {
         if (state->wasi == NULL) {
                 return EPROTO;
@@ -206,7 +207,8 @@ repl_set_wasi_args(struct repl_state *state, int argc, char *const *argv)
 }
 
 int
-repl_set_wasi_environ(struct repl_state *state, int nenvs, char *const *envs)
+toywasm_repl_set_wasi_environ(struct repl_state *state, int nenvs,
+                              char *const *envs)
 {
         if (state->wasi == NULL) {
                 return EPROTO;
@@ -216,7 +218,7 @@ repl_set_wasi_environ(struct repl_state *state, int nenvs, char *const *envs)
 }
 
 int
-repl_set_wasi_prestat(struct repl_state *state, const char *path)
+toywasm_repl_set_wasi_prestat(struct repl_state *state, const char *path)
 {
         if (state->wasi == NULL) {
                 return EPROTO;
@@ -297,7 +299,7 @@ print_trap(const struct exec_context *ctx)
         printf("Error: [trap] %s (%u): %s\n", msg, id, trapmsg);
 }
 
-int
+static int
 repl_exec_init(struct repl_module_state *mod, bool trap_ok)
 {
         struct exec_context ctx0;
@@ -315,7 +317,7 @@ repl_exec_init(struct repl_module_state *mod, bool trap_ok)
         return ret;
 }
 
-int
+static int
 repl_load_from_buf(struct repl_state *state, const char *modname,
                    struct repl_module_state *mod, bool trap_ok)
 {
@@ -374,7 +376,8 @@ fail:
 }
 
 int
-repl_load(struct repl_state *state, const char *modname, const char *filename)
+toywasm_repl_load(struct repl_state *state, const char *modname,
+                  const char *filename)
 {
         if (state->nmodules == MAX_MODULES) {
                 return EOVERFLOW;
@@ -399,7 +402,8 @@ fail:
 }
 
 int
-repl_load_hex(struct repl_state *state, const char *modname, const char *opt)
+toywasm_repl_load_hex(struct repl_state *state, const char *modname,
+                      const char *opt)
 {
         if (state->nmodules == MAX_MODULES) {
                 return EOVERFLOW;
@@ -431,7 +435,7 @@ fail:
         return ret;
 }
 
-int
+static int
 repl_save(struct repl_state *state, const char *modname, const char *filename)
 {
 #if defined(TOYWASM_ENABLE_WRITER)
@@ -459,8 +463,8 @@ fail:
 }
 
 int
-repl_register(struct repl_state *state, const char *modname,
-              const char *register_name)
+toywasm_repl_register(struct repl_state *state, const char *modname,
+                      const char *register_name)
 {
         if (state->nmodules == 0) {
                 return EPROTO;
@@ -548,7 +552,7 @@ arg_conv(enum valtype type, const char *s, struct val *result)
         return ret;
 }
 
-int
+static int
 repl_print_result(const struct resulttype *rt, const struct val *vals)
 {
         const char *sep = "";
@@ -663,8 +667,8 @@ unescape(char *p0, size_t *lenp)
  * "cmd" is like "add 1 2"
  */
 int
-repl_invoke(struct repl_state *state, const char *modname, const char *cmd,
-            uint32_t *exitcodep, bool print_result)
+toywasm_repl_invoke(struct repl_state *state, const char *modname,
+                    const char *cmd, uint32_t *exitcodep, bool print_result)
 {
         char *cmd1 = strdup(cmd);
         if (cmd1 == NULL) {
@@ -779,7 +783,7 @@ fail:
         return ret;
 }
 
-int
+static int
 repl_global_get(struct repl_state *state, const char *modname,
                 const char *name_cstr)
 {
@@ -831,7 +835,7 @@ fail:
 }
 
 void
-repl_print_version(void)
+toywasm_repl_print_version(void)
 {
         printf("toywasm wasm interpreter\n");
 #if defined(__clang_version__)
@@ -927,29 +931,29 @@ repl_print_version(void)
 #endif
 }
 
-int
+static int
 repl_module_subcmd(struct repl_state *state, const char *cmd,
                    const char *modname, const char *opt)
 {
         int ret;
 
         if (!strcmp(cmd, "load") && opt != NULL) {
-                ret = repl_load(state, modname, opt);
+                ret = toywasm_repl_load(state, modname, opt);
                 if (ret != 0) {
                         goto fail;
                 }
         } else if (!strcmp(cmd, "load-hex") && opt != NULL) {
-                ret = repl_load_hex(state, modname, opt);
+                ret = toywasm_repl_load_hex(state, modname, opt);
                 if (ret != 0) {
                         goto fail;
                 }
         } else if (!strcmp(cmd, "invoke") && opt != NULL) {
-                ret = repl_invoke(state, modname, opt, NULL, true);
+                ret = toywasm_repl_invoke(state, modname, opt, NULL, true);
                 if (ret != 0) {
                         goto fail;
                 }
         } else if (!strcmp(cmd, "register") && opt != NULL) {
-                ret = repl_register(state, modname, opt);
+                ret = toywasm_repl_register(state, modname, opt);
                 if (ret != 0) {
                         goto fail;
                 }
@@ -982,14 +986,14 @@ repl_options_init(struct repl_options *opts)
 }
 
 void
-repl_state_init(struct repl_state *state)
+toywasm_repl_state_init(struct repl_state *state)
 {
         memset(state, 0, sizeof(*state));
         repl_options_init(&state->opts);
 }
 
 int
-repl(struct repl_state *state)
+toywasm_repl(struct repl_state *state)
 {
         char *line = NULL;
         size_t linecap = 0;
@@ -1008,9 +1012,9 @@ repl(struct repl_state *state)
                 }
                 char *opt = strtok(NULL, "\n");
                 if (!strcmp(cmd, ":version")) {
-                        repl_print_version();
+                        toywasm_repl_print_version();
                 } else if (!strcmp(cmd, ":init")) {
-                        repl_reset(state);
+                        toywasm_repl_reset(state);
                 } else if (!strcmp(cmd, ":module") && opt != NULL) {
                         char *modname = strtok(opt, " ");
                         if (modname == NULL) {
@@ -1039,6 +1043,6 @@ fail:
                 printf("Error: command '%s' failed with %d\n", cmd, ret);
         }
         free(line);
-        repl_reset(state);
+        toywasm_repl_reset(state);
         return 0;
 }
