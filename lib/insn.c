@@ -365,8 +365,8 @@ fail:
 #define ECTX ctx
 #define VCTX ((struct validation_context *)NULL)
 #define INSN_IMPL(NAME)                                                       \
-        int execute_##NAME(const uint8_t *p, struct cell *stack,              \
-                           struct exec_context *ctx)
+        int fetch_exec_##NAME(const uint8_t *p, struct cell *stack,           \
+                              struct exec_context *ctx)
 #define LOAD_PC const uint8_t *p0 __attribute__((__unused__)) = p
 #define SAVE_PC
 #define RELOAD_PC p = ctx->p
@@ -374,7 +374,7 @@ fail:
 #define LOAD_STACK_PTR stack = &VEC_NEXTELEM(ctx->stack)
 #define ORIG_PC p0
 #if defined(TOYWASM_USE_TAILCALL)
-#define INSN_SUCCESS __musttail return exec_next_insn(p, stack, ctx)
+#define INSN_SUCCESS __musttail return fetch_exec_next_insn(p, stack, ctx)
 #else
 #define INSN_SUCCESS INSN_SUCCESS_RETURN
 #endif
@@ -425,8 +425,8 @@ fail:
 const static struct exec_instruction_desc exec_instructions_fc[];
 
 static int
-exec_next_insn_fc(const uint8_t *p, struct cell *stack,
-                  struct exec_context *ctx)
+fetch_exec_next_insn_fc(const uint8_t *p, struct cell *stack,
+                        struct exec_context *ctx)
 {
 #if !(defined(TOYWASM_USE_SEPARATE_EXECUTE) && defined(TOYWASM_USE_TAILCALL))
         assert(ctx->p + 1 == p);
@@ -443,17 +443,17 @@ exec_next_insn_fc(const uint8_t *p, struct cell *stack,
 #if defined(TOYWASM_USE_TAILCALL)
         __musttail
 #endif
-                return desc->execute(p, stack, ctx);
+                return desc->fetch_exec(p, stack, ctx);
 }
 
 #define INSTRUCTION(b, n, f, FLAGS)                                           \
         [b] = {                                                               \
-                .execute = execute_##f,                                       \
+                .fetch_exec = fetch_exec_##f,                                 \
         },
 
 #define INSTRUCTION_INDIRECT(b, n, t)                                         \
         [b] = {                                                               \
-                .execute = exec_next_insn_fc,                                 \
+                .fetch_exec = fetch_exec_next_insn_fc,                        \
         },
 
 const static struct exec_instruction_desc exec_instructions_fc[] = {

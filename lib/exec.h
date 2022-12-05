@@ -30,8 +30,8 @@ void data_drop(struct exec_context *ectx, uint32_t dataidx);
 void elem_drop(struct exec_context *ectx, uint32_t elemidx);
 
 bool skip_expr(const uint8_t **p, bool goto_else);
-int exec_next_insn(const uint8_t *p, struct cell *stack,
-                   struct exec_context *ctx);
+int fetch_exec_next_insn(const uint8_t *p, struct cell *stack,
+                         struct exec_context *ctx);
 void rewind_stack(struct exec_context *ctx, uint32_t height, uint32_t arity);
 
 int invoke(struct funcinst *finst, const struct resulttype *paramtype,

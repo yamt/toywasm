@@ -693,7 +693,8 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
 }
 
 int
-exec_next_insn(const uint8_t *p, struct cell *stack, struct exec_context *ctx)
+fetch_exec_next_insn(const uint8_t *p, struct cell *stack,
+                     struct exec_context *ctx)
 {
 #if !(defined(TOYWASM_USE_SEPARATE_EXECUTE) && defined(TOYWASM_USE_TAILCALL))
         assert(ctx->p == p);
@@ -711,7 +712,7 @@ exec_next_insn(const uint8_t *p, struct cell *stack, struct exec_context *ctx)
 #if defined(TOYWASM_USE_TAILCALL)
         __musttail
 #endif
-                return desc->execute(p, stack, ctx);
+                return desc->fetch_exec(p, stack, ctx);
 #else
         const struct instruction_desc *desc = &instructions[op];
         if (__predict_false(desc->next_table != NULL)) {
@@ -749,7 +750,7 @@ exec_expr(uint32_t funcidx, const struct expr *expr,
         ctx->p = expr->start;
         while (true) {
                 struct cell *stack = &VEC_NEXTELEM(ctx->stack);
-                ret = exec_next_insn(ctx->p, stack, ctx);
+                ret = fetch_exec_next_insn(ctx->p, stack, ctx);
                 if (ret != 0) {
                         if (ctx->trapped) {
                                 xlog_trace("got a trap");

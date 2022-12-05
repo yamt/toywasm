@@ -6,8 +6,14 @@ struct exec_context;
 struct cell;
 
 struct exec_instruction_desc {
-        int (*execute)(const uint8_t *p, struct cell *stack,
-                       struct exec_context *ctx);
+        /*
+         * fetch_exec is called after fetching the first byte of
+         * the instrution. '*p' points to the second byte.
+         * it fetches and decodes the rest of the instrution,
+         * and then executes it.
+         */
+        int (*fetch_exec)(const uint8_t *p, struct cell *stack,
+                          struct exec_context *ctx);
 };
 
 struct instruction_desc {
