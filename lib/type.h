@@ -8,6 +8,7 @@
 
 #include "bitmap.h"
 #include "cell.h"
+#include "lock.h"
 #include "vec.h"
 
 #define WASM_MAGIC 0x6d736100
@@ -384,6 +385,9 @@ struct meminst {
         uint32_t allocated;
         const struct memtype *type;
         struct waiter_list_table *tab;
+#if defined(TOYWASM_ENABLE_WASM_THREADS)
+        struct toywasm_mutex lock;
+#endif
 };
 
 struct globalinst {

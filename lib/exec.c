@@ -1102,16 +1102,19 @@ memory_grow(struct exec_context *ctx, uint32_t memidx, uint32_t sz)
         struct module *m = inst->module;
         assert(memidx < m->nimportedmems + m->nmems);
         struct meminst *mi = VEC_ELEM(inst->mems, memidx);
+        toywasm_mutex_lock(&mi->lock);
         uint32_t orig_size = mi->size_in_pages;
         uint64_t new_size = (uint64_t)orig_size + sz;
         const struct limits *lim = &mi->type->lim;
         assert(lim->max <= WASM_MAX_PAGES);
         if (new_size > lim->max) {
+                toywasm_mutex_lock(&mi->lock);
                 return (uint32_t)-1; /* fail */
         }
         xlog_trace("memory grow %" PRIu32 " -> %" PRIu32, mi->size_in_pages,
                    (uint32_t)new_size);
         mi->size_in_pages = new_size;
+        toywasm_mutex_unlock(&mi->lock);
         return orig_size; /* success */
 }
 

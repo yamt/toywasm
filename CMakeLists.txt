@@ -174,7 +174,9 @@ set(lib_sources
 )
 
 if(TOYWASM_ENABLE_WASM_THREADS)
-list(APPEND lib_sources "lib/waitlist.c")
+list(APPEND lib_sources
+	"lib/lock.c"
+	"lib/waitlist.c")
 endif()
 
 if(TOYWASM_ENABLE_WRITER)
