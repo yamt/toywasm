@@ -22,6 +22,13 @@ int memory_init(struct exec_context *ctx, uint32_t memidx, uint32_t dataidx,
                 uint32_t d, uint32_t s, uint32_t n);
 uint32_t memory_grow(struct exec_context *ctx, uint32_t memidx,
                      uint32_t newsize);
+
+int memory_notify(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
+                  uint32_t count, uint32_t *nwokenp);
+int memory_wait(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
+                uint64_t expected, uint32_t *resultp, int64_t timeout_ns,
+                bool is64);
+
 int table_init(struct exec_context *ctx, uint32_t tableidx, uint32_t elemidx,
                uint32_t d, uint32_t s, uint32_t n);
 int table_access(struct exec_context *ectx, uint32_t tableidx, uint32_t offset,

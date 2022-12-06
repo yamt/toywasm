@@ -446,19 +446,56 @@ fetch_exec_next_insn_fc(const uint8_t *p, struct cell *stack,
                 return desc->fetch_exec(p, stack, ctx);
 }
 
+#if defined(TOYWASM_ENABLE_WASM_THREADS)
+const static struct exec_instruction_desc exec_instructions_fe[];
+
+/*
+ * XXX duplicate of fetch_exec_next_insn_fc.
+ * it isn't obvious to me how i can clean this up preserving tailcall.
+ * while a macro can do, i'm not sure if i like it.
+ */
+static int
+fetch_exec_next_insn_fe(const uint8_t *p, struct cell *stack,
+                        struct exec_context *ctx)
+{
+#if !(defined(TOYWASM_USE_SEPARATE_EXECUTE) && defined(TOYWASM_USE_TAILCALL))
+        assert(ctx->p + 1 == p);
+#endif
+        assert(ctx->event == EXEC_EVENT_NONE);
+        assert(ctx->frames.lsize > 0);
+#if defined(TOYWASM_ENABLE_TRACING)
+        uint32_t pc = ptr2pc(ctx->instance->module, p);
+#endif
+        uint32_t op = read_leb_u32_nocheck(&p);
+        const struct exec_instruction_desc *desc = &exec_instructions_fe[op];
+        xlog_trace("exec %06" PRIx32 ": %s (2nd byte %02" PRIx32 ")", pc,
+                   instructions[op].name, op);
+#if defined(TOYWASM_USE_TAILCALL)
+        __musttail
+#endif
+                return desc->fetch_exec(p, stack, ctx);
+}
+#endif /* defined(TOYWASM_ENABLE_WASM_THREADS) */
+
 #define INSTRUCTION(b, n, f, FLAGS)                                           \
         [b] = {                                                               \
                 .fetch_exec = fetch_exec_##f,                                 \
         },
 
-#define INSTRUCTION_INDIRECT(b, n, t)                                         \
+#define INSTRUCTION_INDIRECT(b, n)                                            \
         [b] = {                                                               \
-                .fetch_exec = fetch_exec_next_insn_fc,                        \
+                .fetch_exec = fetch_exec_next_insn_##n,                       \
         },
 
 const static struct exec_instruction_desc exec_instructions_fc[] = {
 #include "insn_list_fc.h"
 };
+
+#if defined(TOYWASM_ENABLE_WASM_THREADS)
+const static struct exec_instruction_desc exec_instructions_fe[] = {
+#include "insn_list_threads.h"
+};
+#endif
 
 const struct exec_instruction_desc exec_instructions[] = {
 #include "insn_list_base.h"
@@ -477,16 +514,22 @@ const struct exec_instruction_desc exec_instructions[] = {
                 .next_table = NULL,                                           \
         },
 
-#define INSTRUCTION_INDIRECT(b, n, t)                                         \
+#define INSTRUCTION_INDIRECT(b, n)                                            \
         [b] = {                                                               \
-                .name = n,                                                    \
-                .next_table = t,                                              \
-                .next_table_size = ARRAYCOUNT(t),                             \
+                .name = #n,                                                   \
+                .next_table = instructions_##n,                               \
+                .next_table_size = ARRAYCOUNT(instructions_##n),              \
         },
 
 const static struct instruction_desc instructions_fc[] = {
 #include "insn_list_fc.h"
 };
+
+#if defined(TOYWASM_ENABLE_WASM_THREADS)
+const static struct instruction_desc instructions_fe[] = {
+#include "insn_list_threads.h"
+};
+#endif
 
 const struct instruction_desc instructions[] = {
 #include "insn_list_base.h"

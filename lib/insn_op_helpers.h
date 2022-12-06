@@ -42,6 +42,8 @@
 #define OR(N, a, b) ((a) | (b))
 #define XOR(N, a, b) ((a) ^ (b))
 
+#define XCHG(N, a, b) (b)
+
 #define SHR_S(N, a, b) ((int##N##_t)a >> (b % N))
 #define SHR_U(N, a, b) (a >> (b % N))
 #define SHL(N, a, b) (a << (b % N))

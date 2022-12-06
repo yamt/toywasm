@@ -122,12 +122,12 @@ module_functype(const struct module *m, uint32_t idx)
         return &m->types[functypeidx];
 }
 
-const struct limits *
+const struct memtype *
 module_memtype(const struct module *m, uint32_t idx)
 {
         if (idx < m->nimportedmems) {
                 return &module_find_importdesc(m, IMPORT_MEMORY, idx)
-                                ->u.memtype.lim;
+                                ->u.memtype;
         }
         return &m->mems[idx - m->nimportedmems];
 }

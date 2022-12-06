@@ -203,6 +203,18 @@ struct limits {
         uint32_t max;
 };
 
+/*
+ * 0x02: shared (threads proposal)
+ * 0x04: 64-bit (memory64 proposal)
+ */
+#define MEMTYPE_FLAG_SHARED 0x02
+#define MEMTYPE_FLAG_64 0x04
+
+struct memtype {
+        struct limits lim;
+        uint8_t flags; /* MEMTYPE_FLAGS_xxx */
+};
+
 struct tabletype {
         enum valtype et;
         struct limits lim;
@@ -219,9 +231,7 @@ struct importdesc {
         enum importtype type;
         union {
                 uint32_t typeidx;
-                struct {
-                        struct limits lim;
-                } memtype;
+                struct memtype memtype;
                 struct tabletype tabletype;
                 struct globaltype globaltype;
         } u;
@@ -321,7 +331,7 @@ struct module {
 
         uint32_t nimportedmems;
         uint32_t nmems;
-        struct limits *mems;
+        struct memtype *mems;
 
         uint32_t nimportedglobals;
         uint32_t nglobals;
@@ -372,7 +382,8 @@ struct meminst {
         uint8_t *data;
         uint32_t size_in_pages; /* overrides type->min */
         uint32_t allocated;
-        const struct limits *type;
+        const struct memtype *type;
+        struct waiter_list_table *tab;
 };
 
 struct globalinst {
@@ -439,7 +450,7 @@ int compare_name(const struct name *a, const struct name *b);
 const struct import *module_find_import(const struct module *m,
                                         enum importtype type, uint32_t idx);
 const struct functype *module_functype(const struct module *m, uint32_t idx);
-const struct limits *module_memtype(const struct module *m, uint32_t idx);
+const struct memtype *module_memtype(const struct module *m, uint32_t idx);
 const struct tabletype *module_tabletype(const struct module *m, uint32_t idx);
 const struct globaltype *module_globaltype(const struct module *m,
                                            uint32_t idx);

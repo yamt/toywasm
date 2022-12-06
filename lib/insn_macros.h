@@ -67,6 +67,22 @@
                 }                                                             \
         } while (false)
 
+#define READ_MEMARG8(arg)                                                     \
+        READ_MEMARG(arg);                                                     \
+        CHECK((arg)->align == 0)
+
+#define READ_MEMARG16(arg)                                                    \
+        READ_MEMARG(arg);                                                     \
+        CHECK((arg)->align == 1)
+
+#define READ_MEMARG32(arg)                                                    \
+        READ_MEMARG(arg);                                                     \
+        CHECK((arg)->align == 2)
+
+#define READ_MEMARG64(arg)                                                    \
+        READ_MEMARG(arg);                                                     \
+        CHECK((arg)->align == 3)
+
 #define READ_IMM(TYPE, VAR, READ, READ_NOCHECK)                               \
         TYPE VAR;                                                             \
         do {                                                                  \

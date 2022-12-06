@@ -138,13 +138,13 @@ write_name(struct writer *w, const struct name *name)
 }
 
 static void
-write_limits(struct writer *w, const struct limits *lim)
+write_limits(struct writer *w, const struct limits *lim, uint8_t extra_flags)
 {
         if (lim->max == UINT32_MAX) {
-                WRITE_U8(0x00);
+                WRITE_U8(0x00 | extra_flags);
                 WRITE_LEB_U32(lim->min);
         } else {
-                WRITE_U8(0x01);
+                WRITE_U8(0x01 | extra_flags);
                 WRITE_LEB_U32(lim->min);
                 WRITE_LEB_U32(lim->max);
         }
@@ -154,13 +154,13 @@ static void
 write_tabletype(struct writer *w, const struct tabletype *tt)
 {
         write_valtype(w, tt->et);
-        write_limits(w, &tt->lim);
+        write_limits(w, &tt->lim, 0);
 }
 
 static void
-write_memtype(struct writer *w, const struct limits *lim)
+write_memtype(struct writer *w, const struct memtype *mt)
 {
-        write_limits(w, lim);
+        write_limits(w, &mt->lim, mt->flags);
 }
 
 static void
@@ -191,7 +191,7 @@ write_importdesc(struct writer *w, const struct importdesc *desc)
                 write_tabletype(w, &desc->u.tabletype);
                 break;
         case 0x02:
-                write_memtype(w, &desc->u.memtype.lim);
+                write_memtype(w, &desc->u.memtype);
                 break;
         case 0x03:
                 write_globaltype(w, &desc->u.globaltype);

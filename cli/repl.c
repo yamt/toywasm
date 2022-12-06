@@ -290,6 +290,12 @@ print_trap(const struct exec_context *ctx)
         case TRAP_INVALID_CONVERSION_TO_INTEGER:
                 msg = "invalid conversion to integer";
                 break;
+        case TRAP_ATOMIC_WAIT_ON_NON_SHARED_MEMORY:
+                msg = "expected shared memory";
+                break;
+        case TRAP_UNALIGNED_ATOMIC_OPERATION:
+                msg = "unaligned atomic";
+                break;
         default:
                 break;
         }

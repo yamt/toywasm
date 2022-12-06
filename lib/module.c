@@ -249,7 +249,7 @@ print_functype(uint32_t i, const struct functype *ft)
 
 static int
 read_limits(const uint8_t **pp, const uint8_t *ep, struct limits *lim,
-            uint32_t typemax)
+            uint8_t *extra_memory_flagsp, uint32_t typemax)
 {
         const uint8_t *p = *pp;
         uint8_t u8;
@@ -260,18 +260,22 @@ read_limits(const uint8_t **pp, const uint8_t *ep, struct limits *lim,
                 goto fail;
         }
         bool has_max;
-        switch (u8) {
-        case 0x01:
+        if (u8 & 0x01) {
                 has_max = true;
-                break;
-        case 0x00:
+        } else {
                 has_max = false;
-                break;
-        default:
-                /*
-                 * 0x2: shared (threads proposal)
-                 * 0x4: 64-bit (memory64 proposal)
-                 */
+        }
+        u8 &= ~0x01;
+        if (extra_memory_flagsp != NULL) {
+#if defined(TOYWASM_ENABLE_WASM_THREADS)
+                const uint8_t mask = MEMTYPE_FLAG_SHARED;
+#else
+                const uint8_t mask = 0;
+#endif
+                *extra_memory_flagsp = u8 & mask;
+                u8 &= ~mask;
+        }
+        if (u8 != 0) {
                 ret = EINVAL;
                 goto fail;
         }
@@ -309,9 +313,10 @@ fail:
 }
 
 static int
-read_memtype(const uint8_t **pp, const uint8_t *ep, struct limits *lim)
+read_memtype(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
+             struct memtype *mt, void *vctx)
 {
-        return read_limits(pp, ep, lim, WASM_MAX_PAGES);
+        return read_limits(pp, ep, &mt->lim, &mt->flags, WASM_MAX_PAGES);
 }
 
 static int
@@ -475,7 +480,7 @@ read_tabletype(const uint8_t **pp, const uint8_t *ep, struct tabletype *tt)
                 ret = EINVAL;
                 goto fail;
         }
-        ret = read_limits(&p, ep, &tt->lim, UINT32_MAX);
+        ret = read_limits(&p, ep, &tt->lim, NULL, UINT32_MAX);
         if (ret != 0) {
                 goto fail;
         }
@@ -518,7 +523,7 @@ read_importdesc(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
                 m->nimportedtables++;
                 break;
         case 0x02: /* memtype */
-                ret = read_memtype(&p, ep, &desc->u.memtype.lim);
+                ret = read_memtype(&p, ep, 0, &desc->u.memtype, ctx);
                 if (ret != 0) {
                         goto fail;
                 }
@@ -1013,8 +1018,8 @@ read_memory_section(const uint8_t **pp, const uint8_t *ep,
         const uint8_t *p = *pp;
         int ret;
 
-        ret = read_vec(&p, ep, sizeof(*m->mems), (void *)read_memtype, NULL,
-                       &m->nmems, (void *)&m->mems);
+        ret = read_vec_with_ctx2(&p, ep, sizeof(*m->mems), read_memtype, NULL,
+                                 ctx, &m->nmems, &m->mems);
         if (ret != 0) {
                 xlog_trace("failed to load mems with %d", ret);
                 goto fail;
@@ -1023,7 +1028,7 @@ read_memory_section(const uint8_t **pp, const uint8_t *ep,
         uint32_t i;
         for (i = 0; i < m->nmems; i++) {
                 xlog_trace("mem [%" PRIu32 "] %" PRIu32 " - %" PRIu32, i,
-                           m->mems[i].min, m->mems[i].max);
+                           m->mems[i].lim.min, m->mems[i].lim.max);
         }
 
         ret = 0;

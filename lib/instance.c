@@ -11,6 +11,7 @@
 #include "module.h"
 #include "type.h"
 #include "util.h"
+#include "waitlist.h"
 #include "xlog.h"
 
 static int
@@ -136,11 +137,14 @@ check_tabletype(const struct import_object_entry *e, const void *vp)
 static int
 check_memtype(const struct import_object_entry *e, const void *vp)
 {
-        const struct limits *mt = vp;
+        const struct memtype *mt = vp;
         assert(e->type == IMPORT_MEMORY);
         const struct meminst *mi = e->u.mem;
-        const struct limits *mt_imported = mi->type;
-        if (!match_limits(mt_imported, mt, mi->size_in_pages)) {
+        const struct memtype *mt_imported = mi->type;
+        if (mt_imported->flags != mt->flags) {
+                return EINVAL;
+        }
+        if (!match_limits(&mt_imported->lim, &mt->lim, mi->size_in_pages)) {
                 return EINVAL;
         }
         return 0;
@@ -242,7 +246,7 @@ instance_create_no_init(struct module *m, struct instance **instp,
         }
         for (i = 0; i < nmems; i++) {
                 struct meminst *mp;
-                const struct limits *mt = module_memtype(m, i);
+                const struct memtype *mt = module_memtype(m, i);
                 if (i < m->nimportedmems) {
                         const struct import_object_entry *e;
                         ret = find_import_entry(m, IMPORT_MEMORY, i, imports,
@@ -259,8 +263,19 @@ instance_create_no_init(struct module *m, struct instance **instp,
                                 ret = ENOMEM;
                                 goto fail;
                         }
+#if defined(TOYWASM_ENABLE_WASM_THREADS)
+                        if ((mt->flags & MEMTYPE_FLAG_SHARED) != 0) {
+                                mp->tab = zalloc(sizeof(*mp->tab));
+                                if (mp->tab == NULL) {
+                                    free(mp);
+                                    ret = ENOMEM;
+                                    goto fail;
+                                }
+                                waiter_list_table_init(mp->tab);
+                        }
+#endif
                         mp->type = mt;
-                        mp->size_in_pages = mt->min;
+                        mp->size_in_pages = mt->lim.min;
                 }
                 VEC_ELEM(inst->mems, i) = mp;
         }
@@ -445,6 +460,7 @@ instance_destroy(struct instance *inst)
                 }
                 if (*mp != NULL) {
                         free((*mp)->data);
+                        free((*mp)->tab);
                 }
                 free(*mp);
         }

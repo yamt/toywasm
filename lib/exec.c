@@ -15,6 +15,7 @@
 #include "platform.h"
 #include "type.h"
 #include "util.h"
+#include "waitlist.h"
 #include "xlog.h"
 
 int
@@ -108,6 +109,44 @@ memory_getptr(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
         return memory_getptr2(ctx, memidx, ptr, offset, size, pp, NULL);
 }
 
+#if defined(TOYWASM_ENABLE_WASM_THREADS)
+int
+memory_atomic_getptr(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
+                     uint32_t offset, uint32_t size, void **pp,
+                     struct atomics_mutex **lockp)
+{
+        struct instance *inst = ctx->instance;
+        struct meminst *meminst = VEC_ELEM(inst->mems, memidx);
+        struct waiter_list_table *tab = meminst->tab;
+        struct atomics_mutex *lock = NULL;
+        if (tab != NULL) {
+                lock = atomics_mutex_getptr(tab, ptr + offset);
+                atomics_mutex_lock(lock);
+        }
+        int ret;
+        ret = memory_getptr(ctx, memidx, ptr, offset, size, pp);
+        if (ret != 0) {
+                goto fail;
+        }
+        if (((ptr + offset) % size) != 0) {
+                ret = trap_with_id(ctx, TRAP_UNALIGNED_ATOMIC_OPERATION, "unaligned atomic");
+                goto fail;
+        }
+        *lockp = lock;
+fail:
+        memory_atomic_unlock(lock);
+        return ret;
+}
+
+void
+memory_atomic_unlock(struct atomics_mutex *lock)
+{
+        if (lock != NULL) {
+                atomics_mutex_unlock(lock);
+        }
+}
+#endif
+
 void
 frame_clear(struct funcframe *frame)
 {
@@ -129,9 +168,9 @@ stack_prealloc(struct exec_context *ctx, uint32_t count)
         uint32_t needed = ctx->stack.lsize + count;
         if (needed >= MAX_STACKVALS) {
                 if (needed >= MAX_STACKVALS) {
-                        return trap_with_id(
-                                ctx, TRAP_TOO_MANY_STACKVALS,
-                                "too many values on the operand stack");
+                        return trap_with_id(ctx, TRAP_TOO_MANY_STACKVALS,
+                                            "too many values on the "
+                                            "operand stack");
                 }
         }
         return VEC_PREALLOC(ctx->stack, count);
@@ -243,7 +282,8 @@ frame_enter(struct exec_context *ctx, struct instance *inst, uint32_t funcidx,
         cells_copy(locals, params, nparams);
 
         /*
-         * As we've copied "params" above, now it's safe to resize stack.
+         * As we've copied "params" above, now it's safe to resize
+         * stack.
          */
         ret = stack_prealloc(ctx, ei->maxvals);
         if (ret != 0) {
@@ -646,13 +686,14 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
                                         ctx->p = blockp;
                                 } else {
                                         /*
-                                         * The only way to find out the jump
-                                         * target is to parse every
-                                         * instructions. This is expensive.
+                                         * The only way to find out the
+                                         * jump target is to parse
+                                         * every instructions. This is
+                                         * expensive.
                                          *
-                                         * REVISIT: skipping LEBs can be
-                                         * optimized better than the current
-                                         * code.
+                                         * REVISIT: skipping LEBs can
+                                         * be optimized better than the
+                                         * current code.
                                          */
                                         bool stay_in_block =
                                                 skip_expr(&p, goto_else);
@@ -930,12 +971,12 @@ table_init(struct exec_context *ectx, uint32_t tableidx, uint32_t elemidx,
         struct element *elem = &m->elems[elemidx];
         if ((dropped && !(s == 0 && n == 0)) || s > elem->init_size ||
             n > elem->init_size - s) {
-                ret = trap_with_id(
-                        ectx, TRAP_OUT_OF_BOUNDS_ELEMENT_ACCESS,
-                        "out of bounds element access: dataidx %" PRIu32
-                        ", dropped %u, init_size %" PRIu32 ", s %" PRIu32
-                        ", n %" PRIu32,
-                        elemidx, dropped, elem->init_size, s, n);
+                ret = trap_with_id(ectx, TRAP_OUT_OF_BOUNDS_ELEMENT_ACCESS,
+                                   "out of bounds element access: dataidx "
+                                   "%" PRIu32
+                                   ", dropped %u, init_size %" PRIu32
+                                   ", s %" PRIu32 ", n %" PRIu32,
+                                   elemidx, dropped, elem->init_size, s, n);
                 goto fail;
         }
         ret = table_access(ectx, tableidx, d, n);
@@ -1062,7 +1103,7 @@ memory_grow(struct exec_context *ctx, uint32_t memidx, uint32_t sz)
         struct meminst *mi = VEC_ELEM(inst->mems, memidx);
         uint32_t orig_size = mi->size_in_pages;
         uint64_t new_size = (uint64_t)orig_size + sz;
-        const struct limits *lim = mi->type;
+        const struct limits *lim = &mi->type->lim;
         assert(lim->max <= WASM_MAX_PAGES);
         if (new_size > lim->max) {
                 return (uint32_t)-1; /* fail */
@@ -1072,6 +1113,82 @@ memory_grow(struct exec_context *ctx, uint32_t memidx, uint32_t sz)
         mi->size_in_pages = new_size;
         return orig_size; /* success */
 }
+
+#if defined(TOYWASM_ENABLE_WASM_THREADS)
+int
+memory_notify(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
+              uint32_t count, uint32_t *nwokenp)
+{
+        struct instance *inst = ctx->instance;
+        struct module *m = inst->module;
+        assert(memidx < m->nimportedmems + m->nmems);
+        struct meminst *mi = VEC_ELEM(inst->mems, memidx);
+        struct waiter_list_table *tab = mi->tab;
+        struct atomics_mutex *lock;
+        void *p;
+        int ret;
+        ret = memory_atomic_getptr(ctx, memidx, addr, 0, 4, &p, &lock);
+        if (ret != 0) {
+            return ret;
+        }
+        assert((lock == NULL) == (tab == NULL));
+        uint32_t nwoken;
+        if (tab == NULL) {
+                /* non-shared memory. we never have waiters. */
+                nwoken = 0;
+        } else {
+                nwoken = atomics_notify(tab, addr, count);
+        }
+        memory_atomic_unlock(lock);
+        *nwokenp = nwoken;
+        return 0;
+}
+
+int
+memory_wait(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
+            uint64_t expected, uint32_t *resultp, int64_t timeout_ns,
+            bool is64)
+{
+        struct instance *inst = ctx->instance;
+        struct module *m = inst->module;
+        assert(memidx < m->nimportedmems + m->nmems);
+        struct meminst *mi = VEC_ELEM(inst->mems, memidx);
+        struct waiter_list_table *tab = mi->tab;
+        if (tab == NULL) {
+                /* non-shared memory. */
+                return trap_with_id(ctx, TRAP_ATOMIC_WAIT_ON_NON_SHARED_MEMORY,
+                                    "wait on non-shared memory");
+        }
+        const uint32_t sz = is64 ? 8 : 4;
+        struct atomics_mutex *lock;
+        void *p;
+        int ret;
+        ret = memory_atomic_getptr(ctx, memidx, addr, 0, sz, &p, &lock);
+        if (ret != 0) {
+                return ret;
+        }
+        assert((lock == NULL) == (tab == NULL));
+        uint64_t prev;
+        if (is64) {
+                prev = *(uint64_t *)p;
+        } else {
+                prev = *(uint32_t *)p;
+        }
+        if (prev != expected) {
+                *resultp = 1; /* not equal */
+        } else {
+                ret = atomics_wait(tab, addr, timeout_ns);
+                if (ret == 0) {
+                        *resultp = 0; /* ok */
+                } else if (ret == ETIMEDOUT) {
+                        *resultp = 2; /* timed out */
+                        ret = 0;
+                }
+        }
+        memory_atomic_unlock(lock);
+        return ret;
+}
+#endif
 
 int
 invoke(struct funcinst *finst, const struct resulttype *paramtype,
