@@ -42,7 +42,7 @@ atomics_mutex_getptr(struct waiter_list_table *tab, uint32_t ident)
 void
 atomics_mutex_lock(struct atomics_mutex *lock)
 {
-		assert(lock != NULL);
+        assert(lock != NULL);
         int ret = pthread_mutex_lock(&lock->lock);
         assert(ret == 0);
 }
@@ -50,7 +50,7 @@ atomics_mutex_lock(struct atomics_mutex *lock)
 void
 atomics_mutex_unlock(struct atomics_mutex *lock)
 {
-		assert(lock != NULL);
+        assert(lock != NULL);
         int ret = pthread_mutex_unlock(&lock->lock);
         assert(ret == 0);
 }

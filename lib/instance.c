@@ -267,9 +267,9 @@ instance_create_no_init(struct module *m, struct instance **instp,
                         if ((mt->flags & MEMTYPE_FLAG_SHARED) != 0) {
                                 mp->tab = zalloc(sizeof(*mp->tab));
                                 if (mp->tab == NULL) {
-                                    free(mp);
-                                    ret = ENOMEM;
-                                    goto fail;
+                                        free(mp);
+                                        ret = ENOMEM;
+                                        goto fail;
                                 }
                                 waiter_list_table_init(mp->tab);
                         }

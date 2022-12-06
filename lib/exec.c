@@ -129,7 +129,8 @@ memory_atomic_getptr(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
                 goto fail;
         }
         if (((ptr + offset) % size) != 0) {
-                ret = trap_with_id(ctx, TRAP_UNALIGNED_ATOMIC_OPERATION, "unaligned atomic");
+                ret = trap_with_id(ctx, TRAP_UNALIGNED_ATOMIC_OPERATION,
+                                   "unaligned atomic");
                 goto fail;
         }
         *lockp = lock;
@@ -1129,7 +1130,7 @@ memory_notify(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
         int ret;
         ret = memory_atomic_getptr(ctx, memidx, addr, 0, 4, &p, &lock);
         if (ret != 0) {
-            return ret;
+                return ret;
         }
         assert((lock == NULL) == (tab == NULL));
         uint32_t nwoken;

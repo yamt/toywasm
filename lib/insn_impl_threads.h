@@ -1,36 +1,36 @@
-#define ATOMIC_WAIT(NAME, BITS) \
-INSN_IMPL(NAME) \
-{ \
-        int ret; \
-        LOAD_PC; \
-        uint32_t memidx = 0; \
-        struct memarg memarg; \
-        READ_MEMARG##BITS(&memarg); \
-        struct module *m = MODULE; \
-        CHECK(memidx < m->nimportedmems + m->nmems); \
-        POP_VAL(TYPE_i64, timeout_ns); \
-        POP_VAL(TYPE_i##BITS, expected); \
-        POP_VAL(TYPE_i32, address); \
-        struct val val_result; \
-        if (EXECUTING) { \
-                struct exec_context *ectx = ECTX; \
-                uint32_t address = val_address.u.i32; \
-                uint64_t expected = val_expected.u.i##BITS; \
-                int64_t timeout_ns = val_timeout_ns.u.i64; \
-                uint32_t result; \
-                ret = memory_wait(ectx, memidx, address, expected, &result, \
-                                  timeout_ns, BITS == 64); \
-                if (ret != 0) { \
-                        goto fail; \
-                } \
-                val_result.u.i32 = result; \
-        } \
-        PUSH_VAL(TYPE_i32, result); \
-        SAVE_PC; \
-        INSN_SUCCESS; \
-fail: \
-        return ret; \
-}
+#define ATOMIC_WAIT(NAME, BITS)                                               \
+        INSN_IMPL(NAME)                                                       \
+        {                                                                     \
+                int ret;                                                      \
+                LOAD_PC;                                                      \
+                uint32_t memidx = 0;                                          \
+                struct memarg memarg;                                         \
+                READ_MEMARG##BITS(&memarg);                                   \
+                struct module *m = MODULE;                                    \
+                CHECK(memidx < m->nimportedmems + m->nmems);                  \
+                POP_VAL(TYPE_i64, timeout_ns);                                \
+                POP_VAL(TYPE_i##BITS, expected);                              \
+                POP_VAL(TYPE_i32, address);                                   \
+                struct val val_result;                                        \
+                if (EXECUTING) {                                              \
+                        struct exec_context *ectx = ECTX;                     \
+                        uint32_t address = val_address.u.i32;                 \
+                        uint64_t expected = val_expected.u.i##BITS;           \
+                        int64_t timeout_ns = val_timeout_ns.u.i64;            \
+                        uint32_t result;                                      \
+                        ret = memory_wait(ectx, memidx, address, expected,    \
+                                          &result, timeout_ns, BITS == 64);   \
+                        if (ret != 0) {                                       \
+                                goto fail;                                    \
+                        }                                                     \
+                        val_result.u.i32 = result;                            \
+                }                                                             \
+                PUSH_VAL(TYPE_i32, result);                                   \
+                SAVE_PC;                                                      \
+                INSN_SUCCESS;                                                 \
+fail:                                                                         \
+                return ret;                                                   \
+        }
 
 #define ATOMIC_LOADOP2(NAME, MEM, STACK, CAST, I_OR_F)                        \
         INSN_IMPL(NAME)                                                       \
