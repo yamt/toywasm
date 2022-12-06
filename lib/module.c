@@ -264,6 +264,11 @@ read_limits(const uint8_t **pp, const uint8_t *ep, struct limits *lim,
                 has_max = true;
         } else {
                 has_max = false;
+                if ((u8 & MEMTYPE_FLAG_SHARED) != 0) {
+                        /* shared memory should have max */
+                        ret = EINVAL;
+                        goto fail;
+                }
         }
         u8 &= ~0x01;
         if (extra_memory_flagsp != NULL) {
