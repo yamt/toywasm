@@ -1,4 +1,4 @@
-#define _POSIX_C_SOURCE 199509L /* flockfile */
+#define _POSIX_C_SOURCE 199509L /* flockfile, clock_gettime */
 
 #include <inttypes.h>
 #include <stdarg.h>
