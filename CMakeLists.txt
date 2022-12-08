@@ -73,6 +73,19 @@ endif()
 endif()
 endif()
 
+# TOYWASM_ENABLE_WASM_THREADS requires pthread
+if(TOYWASM_ENABLE_WASM_THREADS)
+# https://cmake.org/cmake/help/latest/module/FindThreads.html
+set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+find_package(Threads REQUIRED)
+if(TRIPLET MATCHES "wasm")
+# https://reviews.llvm.org/D130053
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ftls-model=local-exec")
+endif()
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pthread")
+endif()
+
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fshort-enums")
 if(CMAKE_C_COMPILER_ID STREQUAL GNU)
