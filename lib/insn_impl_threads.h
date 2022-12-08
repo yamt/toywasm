@@ -209,9 +209,10 @@ INSN_IMPL(atomic_fence)
         CHECK(zero == 0);
         if (EXECUTING) {
                 /*
-                 * XXX implement.
+                 * is it better to use stdatomic
                  * atomic_thread_fence(memory_order_seq_cst) ?
                  */
+                __sync_synchronize();
         }
         SAVE_PC;
         INSN_SUCCESS;
