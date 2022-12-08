@@ -80,6 +80,7 @@ set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 find_package(Threads REQUIRED)
 if(TRIPLET MATCHES "wasm")
 # https://reviews.llvm.org/D130053
+# https://llvm.org/docs/LangRef.html#thread-local-storage-models
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ftls-model=local-exec")
 endif()
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
