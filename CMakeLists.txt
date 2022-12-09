@@ -61,6 +61,13 @@ list(APPEND TEST_ENV "LSAN_OPTIONS=suppressions=${CMAKE_CURRENT_SOURCE_DIR}/test
 list(APPEND TEST_ENV "MallocNanoZone=0")
 endif()
 
+# clang-14: error: unsupported option '-fsanitize=leak' for target 'wasm32-unknown-wasi'
+# clang-14: error: unsupported option '-fsanitize=address' for target 'wasm32-unknown-wasi'
+if(CMAKE_C_COMPILER_TARGET MATCHES "wasm")
+set(USE_LSAN OFF)
+set(USE_ASAN OFF)
+endif()
+
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
 if (CMAKE_C_COMPILER_ID MATCHES "Clang")
 # lld doesn't seem to support s390
