@@ -217,17 +217,17 @@ fail:
 static void
 memory_instance_free(struct meminst *mi)
 {
-#if defined(TOYWASM_ENABLE_WASI_THREADS)
-        toywasm_mutex_lock(&mi->lock);
-        assert(mi->refcount > 0);
-        mi->refcount--;
-        if (mi->refcount > 0) {
-                toywasm_mutex_unlock(&mi->lock);
-                return;
-        }
-        toywasm_mutex_unlock(&mi->lock);
-#endif
         if (mi != NULL) {
+#if defined(TOYWASM_ENABLE_WASI_THREADS)
+                toywasm_mutex_lock(&mi->lock);
+                assert(mi->refcount > 0);
+                mi->refcount--;
+                if (mi->refcount > 0) {
+                        toywasm_mutex_unlock(&mi->lock);
+                        return;
+                }
+                toywasm_mutex_unlock(&mi->lock);
+#endif
                 free(mi->data);
                 free(mi->tab);
                 toywasm_mutex_destroy(&mi->lock);
