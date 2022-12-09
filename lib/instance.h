@@ -14,6 +14,7 @@ struct name;
  * https://webassembly.github.io/spec/js-api/index.html#instances
  */
 int instance_create(struct module *m, struct instance **instp,
+                    struct instance *parent,
                     const struct import_object *imports,
                     struct report *report);
 
@@ -25,6 +26,7 @@ int instance_create(struct module *m, struct instance **instp,
  * cf. https://github.com/WebAssembly/spec/issues/1530
  */
 int instance_create_no_init(struct module *m, struct instance **instp,
+                            struct instance *parent,
                             const struct import_object *imports,
                             struct report *report);
 int instance_create_execute_init(struct instance *inst,

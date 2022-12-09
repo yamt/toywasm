@@ -388,8 +388,8 @@ repl_load_from_buf(struct repl_state *state, const char *modname,
         }
         struct report report;
         report_init(&report);
-        ret = instance_create_no_init(mod->module, &mod->inst, state->imports,
-                                      &report);
+        ret = instance_create_no_init(mod->module, &mod->inst, NULL,
+                                      state->imports, &report);
         if (report.msg != NULL) {
                 xlog_error("instance_create: %s", report.msg);
                 printf("instantiation error: %s\n", report.msg);

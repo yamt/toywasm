@@ -205,6 +205,9 @@ memory_instance_create(struct meminst **mip, const struct memtype *mt)
         }
         mp->type = mt;
         toywasm_mutex_init(&mp->lock);
+#if defined(TOYWASM_ENABLE_WASI_THREADS)
+        mp->refcount = 1;
+#endif
         *mip = mp;
         return 0;
 fail:
@@ -214,6 +217,16 @@ fail:
 static void
 memory_instance_free(struct meminst *mi)
 {
+#if defined(TOYWASM_ENABLE_WASI_THREADS)
+        toywasm_mutex_lock(&mi->lock);
+        assert(mi->refcount > 0);
+        mi->refcount--;
+        if (mi->refcount > 0) {
+                toywasm_mutex_unlock(&mi->lock);
+                return;
+        }
+        toywasm_mutex_unlock(&mi->lock);
+#endif
         if (mi != NULL) {
                 free(mi->data);
                 free(mi->tab);
@@ -227,12 +240,13 @@ memory_instance_free(struct meminst *mi)
 
 int
 instance_create(struct module *m, struct instance **instp,
-                const struct import_object *imports, struct report *report)
+                struct instance *parent, const struct import_object *imports,
+                struct report *report)
 {
         struct instance *inst;
         int ret;
 
-        ret = instance_create_no_init(m, &inst, imports, report);
+        ret = instance_create_no_init(m, &inst, parent, imports, report);
         if (ret != 0) {
                 return ret;
         }
@@ -254,6 +268,7 @@ instance_create(struct module *m, struct instance **instp,
 
 int
 instance_create_no_init(struct module *m, struct instance **instp,
+                        struct instance *parent,
                         const struct import_object *imports,
                         struct report *report)
 {
@@ -317,6 +332,17 @@ instance_create_no_init(struct module *m, struct instance **instp,
                         assert(e->type == IMPORT_MEMORY);
                         mp = e->u.mem;
                         assert(mp != NULL);
+#if defined(TOYWASM_ENABLE_WASI_THREADS)
+                } else if ((mt->flags & MEMTYPE_FLAG_SHARED) != 0 &&
+                           parent != NULL) {
+                        /* inherit from the parent instance. */
+                        mp = VEC_ELEM(parent->mems, i);
+                        assert(mp->type == mt);
+                        toywasm_mutex_lock(&mp->lock);
+                        assert(mp->refcount > 0);
+                        mp->refcount++;
+                        toywasm_mutex_unlock(&mp->lock);
+#endif
                 } else {
                         ret = memory_instance_create(&mp, mt);
                         if (ret != 0) {

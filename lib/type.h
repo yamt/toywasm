@@ -391,6 +391,9 @@ struct meminst {
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
         /* to serialize memory.grow etc on a shared memory */
         struct toywasm_mutex lock;
+#if defined(TOYWASM_ENABLE_WASI_THREADS)
+        uint32_t refcount;
+#endif
 #endif
 };
 
