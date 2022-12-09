@@ -141,6 +141,7 @@ runner(void *vp)
                         xlog_trace(
                                 "%s: wasi_thread_start exited with %" PRIu32,
                                 __func__, ctx->exit_code);
+                        ret = ctx->exit_code;
                 } else if (ctx->report->msg != NULL) {
                         xlog_trace("%s: wasi_thread_start trapped %u: %s",
                                    __func__, ctx->trapid, ctx->report->msg);
