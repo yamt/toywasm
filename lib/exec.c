@@ -1236,3 +1236,17 @@ elem_drop(struct exec_context *ectx, uint32_t elemidx)
         assert(elemidx < m->nelems);
         bitmap_set(&inst->elem_dropped, elemidx);
 }
+
+void
+print_trace(const struct exec_context *ctx)
+{
+        const struct funcframe *fp;
+        uint32_t i;
+        VEC_FOREACH_IDX(i, fp, ctx->frames) {
+                if (i == 0) {
+                        continue; /* no callerpc for the first frame */
+                }
+                printf("frame[%3" PRIu32 "] callerpc %06" PRIx32 "\n", i,
+                       fp->callerpc);
+        }
+}

@@ -44,3 +44,6 @@ void rewind_stack(struct exec_context *ctx, uint32_t height, uint32_t arity);
 int invoke(struct funcinst *finst, const struct resulttype *paramtype,
            const struct resulttype *resulttype, const struct cell *params,
            struct cell *results, struct exec_context *ctx);
+
+/* debug */
+void print_trace(const struct exec_context *ctx);
