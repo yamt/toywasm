@@ -384,8 +384,12 @@ struct meminst {
         uint32_t size_in_pages; /* overrides type->min */
         uint32_t allocated;
         const struct memtype *type;
+
+        /* atomic operations, esp. wait/notify */
         struct waiter_list_table *tab;
+
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
+        /* to serialize memory.grow etc on a shared memory */
         struct toywasm_mutex lock;
 #endif
 };
