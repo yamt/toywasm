@@ -150,6 +150,7 @@ waiter_insert_tail(struct waiter_list *l, struct waiter *w)
 {
         assert(*l->waiters_tailnextp == NULL);
         w->prevnextp = l->waiters_tailnextp;
+        *l->waiters_tailnextp = w;
         l->waiters_tailnextp = &w->next;
         w->next = NULL;
         assert(*l->waiters_tailnextp == NULL);
