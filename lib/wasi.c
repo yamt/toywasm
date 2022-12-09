@@ -75,6 +75,9 @@ struct wasi_fdinfo {
 
 struct wasi_instance {
         struct host_instance hi;
+#if defined(TOYWASM_ENABLE_WASM_THREADS)
+        /* XXX fdtable needs some locking */
+#endif
         VEC(, struct wasi_fdinfo) fdtable; /* indexed by wasm fd */
         int argc;
         char *const *argv;
