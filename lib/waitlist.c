@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -10,6 +11,7 @@
 #include <time.h>
 
 #include "waitlist.h"
+#include "xlog.h"
 
 struct atomics_mutex {
         pthread_mutex_t lock;
@@ -191,6 +193,7 @@ waiter_wakeup(struct waiter_list *l, struct atomics_mutex *lock,
 uint32_t
 atomics_notify(struct waiter_list_table *tab, uint32_t ident, uint32_t count)
 {
+        xlog_trace("%s: ident=%" PRIx32, __func__, ident);
         struct atomics_mutex *lock;
         struct waiter_list *l = waiter_list_lookup(tab, ident, &lock, false);
         if (l == NULL) {
@@ -248,6 +251,7 @@ calculate_abstimeout(struct timespec *abstimeout, int64_t timeout_ns)
 int
 atomics_wait(struct waiter_list_table *tab, uint32_t ident, int64_t timeout_ns)
 {
+        xlog_trace("%s: ident=%" PRIx32, __func__, ident);
         struct timespec abstimeout0;
         struct timespec *abstimeout;
         int ret;
