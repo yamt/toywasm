@@ -134,6 +134,7 @@ memory_atomic_getptr(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
                 goto fail;
         }
         *lockp = lock;
+        return 0;
 fail:
         memory_atomic_unlock(lock);
         return ret;
