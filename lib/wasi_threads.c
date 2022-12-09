@@ -219,8 +219,16 @@ wasi_thread_spawn(struct exec_context *ctx, struct host_instance *hi,
         }
         arg = NULL;
 
-        /* XXX join or detach */
-
+        /*
+         * XXX consider a nicer api which can actually manage threads.
+         * for now, just detach and forget.
+         */
+        ret = pthread_detach(t);
+        if (ret != 0) {
+                /* log and ignore */
+                xlog_error("pthread_detach failed with %d", ret);
+                ret = 0;
+        }
 fail:
         free(arg);
         int32_t result;
