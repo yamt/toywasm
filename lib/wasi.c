@@ -51,6 +51,7 @@
 #include "vec.h"
 #include "wasi.h"
 #include "wasi_abi.h"
+#include "wasi_impl.h"
 #include "xlog.h"
 
 struct wasi_fdinfo {
@@ -80,17 +81,6 @@ struct wasi_instance {
         int nenvs;
         char *const *envs;
 };
-
-#if defined(TOYWASM_ENABLE_TRACING)
-#define WASI_TRACE                                                            \
-        do {                                                                  \
-                xlog_trace("WASI: %s called", __func__);                      \
-        } while (0)
-#else
-#define WASI_TRACE                                                            \
-        do {                                                                  \
-        } while (0)
-#endif
 
 #if defined(__wasi__)
 #if !defined(AT_FDCWD)
@@ -2322,12 +2312,6 @@ wasi_sched_yield(struct exec_context *ctx, struct host_instance *hi,
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         return 0;
 }
-
-#define WASI_HOST_FUNC(NAME, TYPE)                                            \
-        {                                                                     \
-                .name = NAME_FROM_CSTR_LITERAL(#NAME), .type = TYPE,          \
-                .func = wasi_##NAME,                                          \
-        }
 
 const struct host_func wasi_funcs[] = {
         WASI_HOST_FUNC(proc_exit, "(i)"),
