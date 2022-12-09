@@ -1108,7 +1108,7 @@ memory_grow(struct exec_context *ctx, uint32_t memidx, uint32_t sz)
         const struct limits *lim = &mi->type->lim;
         assert(lim->max <= WASM_MAX_PAGES);
         if (new_size > lim->max) {
-                toywasm_mutex_lock(&mi->lock);
+                toywasm_mutex_unlock(&mi->lock);
                 return (uint32_t)-1; /* fail */
         }
         xlog_trace("memory grow %" PRIu32 " -> %" PRIu32, mi->size_in_pages,
