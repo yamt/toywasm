@@ -533,7 +533,7 @@ fail:
         return ret;
 }
 
-static uint32_t
+uint32_t
 wasi_convert_errno(int host_errno)
 {
         /* TODO implement */

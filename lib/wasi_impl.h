@@ -14,3 +14,5 @@
         do {                                                                  \
         } while (0)
 #endif
+
+uint32_t wasi_convert_errno(int host_errno);
