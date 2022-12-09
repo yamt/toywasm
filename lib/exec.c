@@ -1122,7 +1122,7 @@ memory_grow(struct exec_context *ctx, uint32_t memidx, uint32_t sz)
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
 int
 memory_notify(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
-              uint32_t count, uint32_t *nwokenp)
+              uint32_t offset, uint32_t count, uint32_t *nwokenp)
 {
         struct instance *inst = ctx->instance;
         struct module *m = inst->module;
@@ -1132,7 +1132,7 @@ memory_notify(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
         struct atomics_mutex *lock;
         void *p;
         int ret;
-        ret = memory_atomic_getptr(ctx, memidx, addr, 0, 4, &p, &lock);
+        ret = memory_atomic_getptr(ctx, memidx, addr, offset, 4, &p, &lock);
         if (ret != 0) {
                 return ret;
         }
@@ -1142,7 +1142,7 @@ memory_notify(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
                 /* non-shared memory. we never have waiters. */
                 nwoken = 0;
         } else {
-                nwoken = atomics_notify(tab, addr, count);
+                nwoken = atomics_notify(tab, addr + offset, count);
         }
         memory_atomic_unlock(lock);
         *nwokenp = nwoken;
@@ -1151,8 +1151,8 @@ memory_notify(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
 
 int
 memory_wait(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
-            uint64_t expected, uint32_t *resultp, int64_t timeout_ns,
-            bool is64)
+            uint32_t offset, uint64_t expected, uint32_t *resultp,
+            int64_t timeout_ns, bool is64)
 {
         struct instance *inst = ctx->instance;
         struct module *m = inst->module;
@@ -1168,7 +1168,7 @@ memory_wait(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
         struct atomics_mutex *lock;
         void *p;
         int ret;
-        ret = memory_atomic_getptr(ctx, memidx, addr, 0, sz, &p, &lock);
+        ret = memory_atomic_getptr(ctx, memidx, addr, offset, sz, &p, &lock);
         if (ret != 0) {
                 return ret;
         }
@@ -1182,7 +1182,7 @@ memory_wait(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
         if (prev != expected) {
                 *resultp = 1; /* not equal */
         } else {
-                ret = atomics_wait(tab, addr, timeout_ns);
+                ret = atomics_wait(tab, addr + offset, timeout_ns);
                 if (ret == 0) {
                         *resultp = 0; /* ok */
                 } else if (ret == ETIMEDOUT) {

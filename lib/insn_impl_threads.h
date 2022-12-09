@@ -18,8 +18,9 @@
                         uint64_t expected = val_expected.u.i##BITS;           \
                         int64_t timeout_ns = val_timeout_ns.u.i64;            \
                         uint32_t result;                                      \
-                        ret = memory_wait(ectx, memidx, address, expected,    \
-                                          &result, timeout_ns, BITS == 64);   \
+                        ret = memory_wait(ectx, memidx, address,              \
+                                          memarg.offset, expected, &result,   \
+                                          timeout_ns, BITS == 64);            \
                         if (ret != 0) {                                       \
                                 goto fail;                                    \
                         }                                                     \
@@ -183,7 +184,8 @@ INSN_IMPL(memory_atomic_notify)
                 uint32_t address = val_address.u.i32;
                 uint32_t count = val_address.u.i32;
                 uint32_t nwoken;
-                ret = memory_notify(ectx, memidx, address, count, &nwoken);
+                ret = memory_notify(ectx, memidx, address, memarg.offset,
+                                    count, &nwoken);
                 if (ret != 0) {
                         goto fail;
                 }
