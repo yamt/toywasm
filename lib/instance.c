@@ -162,6 +162,66 @@ check_globaltype(const struct import_object_entry *e, const void *vp)
         return 0;
 }
 
+static int
+memory_instance_create(struct meminst **mip, const struct memtype *mt)
+{
+        struct meminst *mp;
+        int ret;
+
+        mp = zalloc(sizeof(*mp));
+        if (mp == NULL) {
+                ret = ENOMEM;
+                goto fail;
+        }
+#if defined(TOYWASM_ENABLE_WASM_THREADS)
+        if ((mt->flags & MEMTYPE_FLAG_SHARED) != 0) {
+                uint32_t need_in_pages = mt->lim.max;
+                uint64_t need_in_bytes = need_in_pages * WASM_PAGE_SIZE;
+                if (need_in_bytes > UINT32_MAX) {
+                        free(mp);
+                        ret = EOVERFLOW;
+                        goto fail;
+                }
+                mp->tab = zalloc(sizeof(*mp->tab));
+                if (mp->tab == NULL) {
+                        free(mp);
+                        ret = ENOMEM;
+                        goto fail;
+                }
+                waiter_list_table_init(mp->tab);
+                mp->data = zalloc(need_in_bytes);
+                if (mp->data == NULL) {
+                        free(mp->tab);
+                        free(mp);
+                        ret = ENOMEM;
+                        goto fail;
+                }
+                mp->allocated = need_in_bytes;
+                mp->size_in_pages = need_in_pages;
+        } else
+#endif
+        {
+                mp->size_in_pages = mt->lim.min;
+        }
+        mp->type = mt;
+        toywasm_mutex_init(&mp->lock);
+        *mip = mp;
+        return 0;
+fail:
+        return ret;
+}
+
+static void
+memory_instance_free(struct meminst *mi)
+{
+        if (mi != NULL) {
+                free(mi->data);
+                free(mi->tab);
+                toywasm_mutex_destroy(&mi->lock);
+        }
+        free(mi);
+}
+
 /* https://webassembly.github.io/spec/core/exec/modules.html#exec-instantiation
  */
 
@@ -258,44 +318,10 @@ instance_create_no_init(struct module *m, struct instance **instp,
                         mp = e->u.mem;
                         assert(mp != NULL);
                 } else {
-                        mp = zalloc(sizeof(*mp));
-                        if (mp == NULL) {
-                                ret = ENOMEM;
+                        ret = memory_instance_create(&mp, mt);
+                        if (ret != 0) {
                                 goto fail;
                         }
-#if defined(TOYWASM_ENABLE_WASM_THREADS)
-                        if ((mt->flags & MEMTYPE_FLAG_SHARED) != 0) {
-                                uint32_t need_in_pages = mt->lim.max;
-                                uint64_t need_in_bytes =
-                                        need_in_pages * WASM_PAGE_SIZE;
-                                if (need_in_bytes > UINT32_MAX) {
-                                        free(mp);
-                                        ret = EOVERFLOW;
-                                        goto fail;
-                                }
-                                mp->tab = zalloc(sizeof(*mp->tab));
-                                if (mp->tab == NULL) {
-                                        free(mp);
-                                        ret = ENOMEM;
-                                        goto fail;
-                                }
-                                waiter_list_table_init(mp->tab);
-                                mp->data = zalloc(need_in_bytes);
-                                if (mp->data == NULL) {
-                                        free(mp->tab);
-                                        free(mp);
-                                        ret = ENOMEM;
-                                        goto fail;
-                                }
-                                mp->allocated = need_in_bytes;
-                                mp->size_in_pages = need_in_pages;
-                        } else
-#endif
-                        {
-                                mp->size_in_pages = mt->lim.min;
-                        }
-                        mp->type = mt;
-                        toywasm_mutex_init(&mp->lock);
                 }
                 VEC_ELEM(inst->mems, i) = mp;
         }
@@ -478,12 +504,7 @@ instance_destroy(struct instance *inst)
                 if (i < m->nimportedmems) {
                         continue;
                 }
-                if (*mp != NULL) {
-                        free((*mp)->data);
-                        free((*mp)->tab);
-                        toywasm_mutex_destroy(&(*mp)->lock);
-                }
-                free(*mp);
+                memory_instance_free(*mp);
         }
         VEC_FREE(inst->mems);
         struct globalinst **gp;
