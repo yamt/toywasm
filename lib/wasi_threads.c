@@ -19,6 +19,10 @@
 #include "wasi_threads.h"
 #include "xlog.h"
 
+#if !defined(TOYWASM_ENABLE_WASM_THREADS)
+#error TOYWASM_ENABLE_WASI_THREADS requires TOYWASM_ENABLE_WASM_THREADS
+#endif
+
 struct wasi_threads_instance {
         struct host_instance hi;
 
