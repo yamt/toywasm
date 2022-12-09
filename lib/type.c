@@ -283,3 +283,22 @@ fail:
         functype_free(ft);
         return ret;
 }
+
+int
+check_functype_with_string(struct module *m, uint32_t funcidx, const char *sig)
+{
+        const struct functype *ft = module_functype(m, funcidx);
+        struct functype *sig_ft;
+        int ret;
+
+        ret = functype_from_string(sig, &sig_ft);
+        if (ret != 0) {
+                return ret;
+        }
+        ret = 0;
+        if (compare_functype(ft, sig_ft)) {
+                ret = EINVAL;
+        }
+        functype_free(sig_ft);
+        return ret;
+}

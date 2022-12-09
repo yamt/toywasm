@@ -470,6 +470,8 @@ const struct functype *funcinst_functype(const struct funcinst *fi);
 
 int functype_from_string(const char *p, struct functype **resultp);
 void functype_free(struct functype *ft);
+int check_functype_with_string(struct module *m, uint32_t funcidx,
+                               const char *sig);
 
 void clear_functype(struct functype *ft);
 void clear_resulttype(struct resulttype *ft);
