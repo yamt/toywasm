@@ -14,5 +14,6 @@
 #cmakedefine TOYWASM_USE_LOCALTYPE_CELLIDX
 #cmakedefine TOYWASM_ENABLE_WRITER
 #cmakedefine TOYWASM_ENABLE_WASM_THREADS
+#cmakedefine TOYWASM_ENABLE_WASI_THREADS
 
 #endif /* !defined(_TOYWASM_CONFIG_H) */

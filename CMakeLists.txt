@@ -48,6 +48,7 @@ option(TOYWASM_USE_RESULTTYPE_CELLIDX "Index local lookup for resulttype" ON)
 option(TOYWASM_USE_LOCALTYPE_CELLIDX "Index local lookup for localtype" ON)
 option(TOYWASM_ENABLE_WRITER "Enable module writer" ON)
 option(TOYWASM_ENABLE_WASM_THREADS "Enable WASM threads proposal" OFF)
+option(TOYWASM_ENABLE_WASI_THREADS "Enable wasi-threads proposal" OFF)
 
 if(NOT DEFINED USE_LSAN)
 set(USE_LSAN ON)
@@ -191,6 +192,10 @@ if(TOYWASM_ENABLE_WASM_THREADS)
 list(APPEND lib_sources
 	"lib/lock.c"
 	"lib/waitlist.c")
+if(TOYWASM_ENABLE_WASI_THREADS)
+list(APPEND lib_sources
+	"lib/wasi_threads.c")
+endif()
 endif()
 
 if(TOYWASM_ENABLE_WRITER)

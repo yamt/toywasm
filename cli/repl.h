@@ -31,6 +31,7 @@ struct repl_state {
         struct val *param;
         struct val *result;
         struct wasi_instance *wasi;
+        struct wasi_threads_instance *wasi_threads;
         struct repl_options opts;
 };
 

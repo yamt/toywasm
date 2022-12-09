@@ -28,6 +28,9 @@
 #include "report.h"
 #include "type.h"
 #include "wasi.h"
+#if defined(TOYWASM_ENABLE_WASI_THREADS)
+#include "wasi_threads.h"
+#endif
 #include "xlog.h"
 
 /*
@@ -162,6 +165,13 @@ toywasm_repl_reset(struct repl_state *state)
         free(state->result);
         state->result = NULL;
 
+#if defined(TOYWASM_ENABLE_WASI_THREADS)
+        if (state->wasi_threads != NULL) {
+                wasi_threads_instance_destroy(state->wasi_threads);
+                state->wasi_threads = NULL;
+                n--;
+        }
+#endif
         if (state->wasi != NULL) {
                 wasi_instance_destroy(state->wasi);
                 state->wasi = NULL;
@@ -185,11 +195,38 @@ toywasm_repl_load_wasi(struct repl_state *state)
         struct import_object *im;
         ret = import_object_create_for_wasi(state->wasi, &im);
         if (ret != 0) {
-                goto fail;
+                goto undo_wasi_create;
         }
         im->next = state->imports;
         state->imports = im;
+#if defined(TOYWASM_ENABLE_WASI_THREADS)
+        assert(state->wasi_threads == NULL);
+        ret = wasi_threads_instance_create(&state->wasi_threads);
+        if (ret != 0) {
+                goto undo_wasi;
+        }
+        ret = import_object_create_for_wasi_threads(state->wasi_threads, &im);
+        if (ret != 0) {
+                goto undo_wasi_threads_create;
+        }
+        im->next = state->imports;
+        state->imports = im;
+#endif
         return 0;
+
+#if defined(TOYWASM_ENABLE_WASI_THREADS)
+undo_wasi_threads_create:
+        wasi_threads_instance_destroy(state->wasi_threads);
+        state->wasi_threads = NULL;
+undo_wasi:
+        assert(state->wasi != NULL);
+        im = state->imports;
+        state->imports = im->next;
+        import_object_destroy(im);
+#endif
+undo_wasi_create:
+        wasi_instance_destroy(state->wasi);
+        state->wasi = NULL;
 fail:
         xlog_error("failed to load wasi");
         return ret;

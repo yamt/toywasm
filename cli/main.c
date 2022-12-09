@@ -8,6 +8,10 @@
 #include <string.h>
 
 #include "repl.h"
+#include "toywasm_config.h"
+#if defined(TOYWASM_ENABLE_WASI_THREADS)
+#include "wasi_threads.h"
+#endif
 #include "xlog.h"
 
 enum longopt {
@@ -234,6 +238,20 @@ main(int argc, char *const *argv)
                 xlog_error("load failed");
                 goto fail;
         }
+#if defined(TOYWASM_ENABLE_WASI_THREADS)
+        if (state->wasi_threads != NULL) {
+                ret = wasi_threads_instance_set_thread_spawn_args(
+                        state->wasi_threads,
+                        state->modules[state->nmodules - 1].module,
+                        state->imports);
+                if (ret != 0) {
+                        xlog_error("wasi_threads_instance_set_thread_spawn_"
+                                   "args failed with %d",
+                                   ret);
+                        goto fail;
+                }
+        }
+#endif
         uint32_t wasi_exit_code = 0;
         ret = toywasm_repl_invoke(state, NULL, "_start", &wasi_exit_code,
                                   false);
