@@ -97,7 +97,11 @@ wasi_threads_instance_set_thread_spawn_args(
         inst->thread_start_funcidx = funcidx;
         return 0;
 fail:
-        return ret;
+        /*
+         * Note: this is normal when running non-threaded module.
+         */
+        xlog_trace("%s: ignoring error %d", __func__, ret);
+        return 0;
 }
 
 struct thread_arg {
