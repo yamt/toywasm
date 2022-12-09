@@ -92,18 +92,6 @@ struct thread_arg {
         int32_t tid;
 };
 
-static int
-instance_execute_func_nocheck(struct exec_context *ctx, uint32_t funcidx,
-                              const struct val *params, struct val *results)
-{
-        struct module *m = ctx->instance->module;
-        const struct functype *ft = module_functype(m, funcidx);
-        const struct resulttype *ptype = &ft->parameter;
-        const struct resulttype *rtype = &ft->result;
-        return instance_execute_func(ctx, funcidx, ptype, rtype, params,
-                                     results);
-}
-
 static void *
 runner(void *vp)
 {

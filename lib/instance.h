@@ -49,6 +49,14 @@ int instance_execute_func(struct exec_context *ctx, uint32_t funcidx,
                           const struct resulttype *resulttype,
                           const struct val *params, struct val *results);
 
+/*
+ * instance_execute_func_nocheck is meant to be used where the caller
+ * already knows the function type for sure.
+ */
+int instance_execute_func_nocheck(struct exec_context *ctx, uint32_t funcidx,
+                                  const struct val *params,
+                                  struct val *results);
+
 int import_object_create_for_exports(struct instance *inst,
                                      const struct name *module_name,
                                      struct import_object **resultp);
