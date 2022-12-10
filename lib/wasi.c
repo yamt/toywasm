@@ -268,17 +268,57 @@ fail:
         return ret;
 }
 
+static bool
+wasi_fdinfo_unused(struct wasi_fdinfo *fdinfo)
+{
+        return fdinfo->hostfd == -1 && fdinfo->prestat_path == NULL;
+}
+
+static struct wasi_fdinfo *
+wasi_fdinfo_alloc(void)
+{
+        struct wasi_fdinfo *fdinfo = zalloc(sizeof(*fdinfo));
+        if (fdinfo == NULL) {
+                return NULL;
+        }
+        fdinfo->hostfd = -1;
+        fdinfo->dir = NULL;
+        fdinfo->prestat_path = NULL;
+        fdinfo->refcount = 0;
+        assert(wasi_fdinfo_unused(fdinfo));
+        return fdinfo;
+}
+
+static void
+wasi_fd_affix(struct wasi_instance *wasi, uint32_t wasifd,
+              struct wasi_fdinfo *fdinfo)
+{
+        assert(wasifd < wasi->fdtable.lsize);
+        struct wasi_fdinfo **slot = &VEC_ELEM(wasi->fdtable, wasifd);
+        struct wasi_fdinfo *ofdinfo = *slot;
+        assert(ofdinfo == NULL || wasi_fdinfo_unused(ofdinfo));
+        assert(fdinfo->refcount < UINT32_MAX);
+        fdinfo->refcount++;
+        *slot = fdinfo;
+        free(ofdinfo);
+}
+
 static int
-wasi_fd_lookup(struct wasi_instance *wasi, uint32_t wasifd,
-               struct wasi_fdinfo **infop)
+wasi_fd_lookup_locked(struct wasi_instance *wasi, uint32_t wasifd,
+                      struct wasi_fdinfo **infop)
 {
         struct wasi_fdinfo *fdinfo;
-        toywasm_mutex_lock(&wasi->lock);
         if (wasifd >= wasi->fdtable.lsize) {
-                toywasm_mutex_unlock(&wasi->lock);
                 return EBADF;
         }
-        *infop = fdinfo = VEC_ELEM(wasi->fdtable, wasifd);
+        fdinfo = VEC_ELEM(wasi->fdtable, wasifd);
+        if (fdinfo == NULL) {
+                fdinfo = wasi_fdinfo_alloc();
+                if (fdinfo == NULL) {
+                        return ENOMEM;
+                }
+                wasi_fd_affix(wasi, wasifd, fdinfo);
+        }
         if (fdinfo->ncloser > 0) {
                 /*
                  * XXX reject new non-closing references?
@@ -288,17 +328,27 @@ wasi_fd_lookup(struct wasi_instance *wasi, uint32_t wasifd,
         assert(fdinfo->refcount < UINT32_MAX); /* XXX */
         assert(fdinfo->refcount >= fdinfo->ncloser);
         fdinfo->refcount++;
-        toywasm_mutex_unlock(&wasi->lock);
+        *infop = fdinfo;
         return 0;
 }
 
-static void
-wasi_fd_release(struct wasi_instance *wasi, uint32_t wasifd)
+static int
+wasi_fd_lookup(struct wasi_instance *wasi, uint32_t wasifd,
+               struct wasi_fdinfo **infop)
 {
-        struct wasi_fdinfo *fdinfo;
         toywasm_mutex_lock(&wasi->lock);
-        assert(wasifd < wasi->fdtable.lsize);
-        fdinfo = VEC_ELEM(wasi->fdtable, wasifd);
+        int ret = wasi_fd_lookup_locked(wasi, wasifd, infop);
+        toywasm_mutex_unlock(&wasi->lock);
+        return ret;
+}
+
+static void
+wasi_fdinfo_release(struct wasi_instance *wasi, struct wasi_fdinfo *fdinfo)
+{
+        if (fdinfo == NULL) {
+                return;
+        }
+        toywasm_mutex_lock(&wasi->lock);
         assert(fdinfo->refcount > 0);
         assert(fdinfo->refcount >= fdinfo->ncloser);
         fdinfo->refcount--;
@@ -308,13 +358,12 @@ wasi_fd_release(struct wasi_instance *wasi, uint32_t wasifd)
                 assert(ret == 0);
         }
 #endif
+        if (fdinfo->refcount == 0) {
+                assert(fdinfo->hostfd == -1);
+                free(fdinfo->prestat_path);
+                free(fdinfo);
+        }
         toywasm_mutex_unlock(&wasi->lock);
-}
-
-static bool
-wasi_fdinfo_unused(struct wasi_fdinfo *fdinfo)
-{
-        return fdinfo->hostfd == -1 && fdinfo->prestat_path == NULL;
 }
 
 static void
@@ -344,20 +393,30 @@ wasi_fdinfo_drain(struct wasi_instance *wasi, struct wasi_fdinfo *fdinfo)
 }
 
 static int
-wasi_fdinfo_hostfd_close(struct wasi_fdinfo *fdinfo)
+wasi_fdinfo_close(struct wasi_fdinfo *fdinfo)
 {
-        assert(fdinfo->hostfd != -1);
-        int ret = close(fdinfo->hostfd);
+        int ret = 0;
+        int hostfd = fdinfo->hostfd;
+#if defined(__wasi__) /* wasi has no dup */
+        if (hostfd != -1 && hostfd >= 3) {
+#else
+        if (hostfd != -1) {
+#endif
+                ret = close(fdinfo->hostfd);
+        }
         fdinfo->hostfd = -1;
         if (fdinfo->dir != NULL) {
                 closedir(fdinfo->dir);
         }
         fdinfo->dir = NULL;
+        free(fdinfo->prestat_path);
+        fdinfo->prestat_path = NULL;
         return ret;
 }
 
 static int
-wasi_hostfd_lookup(struct wasi_instance *wasi, uint32_t wasifd, int *hostfdp)
+wasi_hostfd_lookup(struct wasi_instance *wasi, uint32_t wasifd, int *hostfdp,
+                   struct wasi_fdinfo **fdinfop)
 {
         struct wasi_fdinfo *info;
         int ret = wasi_fd_lookup(wasi, wasifd, &info);
@@ -365,9 +424,11 @@ wasi_hostfd_lookup(struct wasi_instance *wasi, uint32_t wasifd, int *hostfdp)
                 return ret;
         }
         if (info->hostfd == -1) {
+                wasi_fdinfo_release(wasi, info);
                 return EBADF;
         }
         *hostfdp = info->hostfd;
+        *fdinfop = info;
         return 0;
 }
 
@@ -385,24 +446,7 @@ wasi_fdtable_expand(struct wasi_instance *wasi, uint32_t maxfd)
         }
         uint32_t i;
         for (i = osize; i <= maxfd; i++) {
-                struct wasi_fdinfo *fdinfo = zalloc(sizeof(*fdinfo));
-                if (fdinfo == NULL) {
-                        uint32_t j;
-                        for (j = osize; j < i; j++) {
-                                struct wasi_fdinfo **fdinfop =
-                                        &VEC_ELEM(wasi->fdtable, j);
-                                assert(*fdinfop != NULL);
-                                free(*fdinfop);
-                                *fdinfop = NULL;
-                        }
-                        VEC_RESIZE(wasi->fdtable, osize);
-                        return ENOMEM;
-                }
-                fdinfo->hostfd = -1;
-                fdinfo->dir = NULL;
-                fdinfo->prestat_path = NULL;
-                fdinfo->refcount = 0;
-                VEC_ELEM(wasi->fdtable, i) = fdinfo;
+                VEC_ELEM(wasi->fdtable, i) = NULL;
         }
         return 0;
 }
@@ -414,24 +458,17 @@ wasi_fdtable_free(struct wasi_instance *wasi)
         uint32_t i;
         VEC_FOREACH_IDX(i, it, wasi->fdtable) {
                 struct wasi_fdinfo *fdinfo = *it;
-                assert(fdinfo != NULL);
-                assert(fdinfo->refcount == 0);
-                int hostfd = fdinfo->hostfd;
-#if defined(__wasi__) /* wasi has no dup */
-                if (hostfd != -1 && hostfd >= 3) {
-#else
-                if (hostfd != -1) {
-#endif
-                        int ret = close(hostfd);
-                        if (ret != 0) {
-                                xlog_trace("failed to close: wasm fd %" PRIu32
-                                           " host fd %u with errno %d",
-                                           i, hostfd, errno);
-                        }
+                if (fdinfo == NULL) {
+                        continue;
                 }
-                free(fdinfo->prestat_path);
-                if (fdinfo->dir != NULL) {
-                        closedir(fdinfo->dir);
+#if defined(TOYWASM_ENABLE_TRACING)
+                int hostfd = fdinfo->hostfd;
+#endif
+                int ret = wasi_fdinfo_close(fdinfo);
+                if (ret != 0) {
+                        xlog_trace("failed to close: wasm fd %" PRIu32
+                                   " host fd %u with errno %d",
+                                   i, hostfd, errno);
                 }
                 free(fdinfo);
         }
@@ -446,8 +483,7 @@ wasi_fd_alloc(struct wasi_instance *wasi, uint32_t *wasifdp)
         uint32_t wasifd;
         VEC_FOREACH_IDX(wasifd, fdinfop, wasi->fdtable) {
                 struct wasi_fdinfo *fdinfo = *fdinfop;
-                assert(fdinfo != NULL);
-                if (wasi_fdinfo_unused(fdinfo)) {
+                if (fdinfo == NULL || wasi_fdinfo_unused(fdinfo)) {
                         *wasifdp = wasifd;
                         return 0;
                 }
@@ -457,6 +493,8 @@ wasi_fd_alloc(struct wasi_instance *wasi, uint32_t *wasifdp)
         if (ret != 0) {
                 return ret;
         }
+        struct wasi_fdinfo *fdinfo = VEC_ELEM(wasi->fdtable, wasifd);
+        assert(fdinfo == NULL);
         *wasifdp = wasifd;
         return 0;
 }
@@ -465,19 +503,26 @@ static int
 wasi_fd_add(struct wasi_instance *wasi, int hostfd, char *path,
             uint32_t *wasifdp)
 {
+        struct wasi_fdinfo *fdinfo;
         uint32_t wasifd;
         int ret;
+        fdinfo = wasi_fdinfo_alloc();
+        if (fdinfo == NULL) {
+                free(path);
+                return ENOMEM;
+        }
+        fdinfo->hostfd = hostfd;
+        fdinfo->dir = NULL;
+        fdinfo->prestat_path = path;
         toywasm_mutex_lock(&wasi->lock);
         ret = wasi_fd_alloc(wasi, &wasifd);
         if (ret != 0) {
                 toywasm_mutex_unlock(&wasi->lock);
+                free(path);
+                free(fdinfo);
                 return ret;
         }
-        struct wasi_fdinfo *fdinfo = VEC_ELEM(wasi->fdtable, wasifd);
-        assert(fdinfo != NULL);
-        fdinfo->hostfd = hostfd;
-        fdinfo->dir = NULL;
-        fdinfo->prestat_path = path;
+        wasi_fd_affix(wasi, wasifd, fdinfo);
         toywasm_mutex_unlock(&wasi->lock);
         *wasifdp = wasifd;
         return 0;
@@ -629,16 +674,12 @@ wasi_copyin_and_convert_path(struct exec_context *ctx,
                 assert(ret > 0);
                 goto fail;
         }
-        if (dirfdinfo != NULL) {
-                wasi_fd_release(wasi, dirwasifd);
-        }
+        wasi_fdinfo_release(wasi, dirfdinfo);
         *hostpathp = hostpath;
         *wasmpathp = wasmpath;
         return 0;
 fail:
-        if (dirfdinfo != NULL) {
-                wasi_fd_release(wasi, dirwasifd);
-        }
+        wasi_fdinfo_release(wasi, dirfdinfo);
         free(hostpath);
         free(wasmpath);
         return ret;
@@ -769,18 +810,17 @@ wasi_fd_advise(struct exec_context *ctx, struct host_instance *hi,
         uint64_t len = HOST_FUNC_PARAM(ft, params, 2, i64);
         uint32_t adv = HOST_FUNC_PARAM(ft, params, 3, i32);
 #endif
+        struct wasi_fdinfo *fdinfo;
+        int hostfd;
         int ret;
-        int hostfd = -1;
-        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd);
+        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
         if (ret != 0) {
                 goto fail;
         }
         ret = 0;
         /* no-op */
 fail:
-        if (hostfd != -1) {
-                wasi_fd_release(wasi, wasifd);
-        }
+        wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         return 0;
 }
@@ -796,9 +836,10 @@ wasi_fd_allocate(struct exec_context *ctx, struct host_instance *hi,
         uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         uint64_t offset = HOST_FUNC_PARAM(ft, params, 1, i64);
         uint64_t len = HOST_FUNC_PARAM(ft, params, 2, i64);
+        struct wasi_fdinfo *fdinfo;
+        int hostfd;
         int ret;
-        int hostfd = -1;
-        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd);
+        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
         if (ret != 0) {
                 goto fail;
         }
@@ -812,9 +853,7 @@ wasi_fd_allocate(struct exec_context *ctx, struct host_instance *hi,
         ret = posix_fallocate(hostfd, offset, len);
 #endif
 fail:
-        if (hostfd != -1) {
-                wasi_fd_release(wasi, wasifd);
-        }
+        wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         return 0;
 }
@@ -829,9 +868,10 @@ wasi_fd_filestat_set_size(struct exec_context *ctx, struct host_instance *hi,
         HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         uint64_t size = HOST_FUNC_PARAM(ft, params, 1, i64);
+        struct wasi_fdinfo *fdinfo;
+        int hostfd;
         int ret;
-        int hostfd = -1;
-        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd);
+        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
         if (ret != 0) {
                 goto fail;
         }
@@ -843,9 +883,7 @@ wasi_fd_filestat_set_size(struct exec_context *ctx, struct host_instance *hi,
                 assert(ret > 0);
         }
 fail:
-        if (hostfd != -1) {
-                wasi_fd_release(wasi, wasifd);
-        }
+        wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         return 0;
 }
@@ -861,18 +899,26 @@ wasi_fd_close(struct exec_context *ctx, struct host_instance *hi,
         uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         struct wasi_fdinfo *fdinfo = NULL;
         int ret;
-        ret = wasi_fd_lookup(wasi, wasifd, &fdinfo);
+        toywasm_mutex_lock(&wasi->lock);
+        ret = wasi_fd_lookup_locked(wasi, wasifd, &fdinfo);
         if (ret != 0) {
-                goto fail;
+                goto fail_locked;
         }
         if (fdinfo_is_prestat(fdinfo)) {
                 ret = ENOTSUP;
-                goto fail;
+                goto fail_locked;
         }
         if (fdinfo->hostfd == -1) {
                 ret = EBADF;
-                goto fail;
+                goto fail_locked;
         }
+
+        assert(fdinfo->refcount >= 2);
+        fdinfo->refcount--;
+        assert(VEC_ELEM(wasi->fdtable, wasifd) == fdinfo);
+        VEC_ELEM(wasi->fdtable, wasifd) = NULL;
+        toywasm_mutex_unlock(&wasi->lock);
+
         /*
          * we simply make fd_close block until other threads finish working
          * on the descriptor.
@@ -891,7 +937,7 @@ wasi_fd_close(struct exec_context *ctx, struct host_instance *hi,
          * behaviors.
          */
         wasi_fdinfo_drain(wasi, fdinfo);
-        ret = wasi_fdinfo_hostfd_close(fdinfo);
+        ret = wasi_fdinfo_close(fdinfo);
         if (ret != 0) {
                 ret = errno;
                 assert(ret > 0);
@@ -899,11 +945,12 @@ wasi_fd_close(struct exec_context *ctx, struct host_instance *hi,
         }
         ret = 0;
 fail:
-        if (fdinfo != NULL) {
-                wasi_fd_release(wasi, wasifd);
-        }
+        wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         return 0;
+fail_locked:
+        toywasm_mutex_unlock(&wasi->lock);
+        goto fail;
 }
 
 static int
@@ -919,13 +966,14 @@ wasi_fd_write(struct exec_context *ctx, struct host_instance *hi,
         uint32_t iov_count = HOST_FUNC_PARAM(ft, params, 2, i32);
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 3, i32);
         struct iovec *hostiov = NULL;
+        struct wasi_fdinfo *fdinfo = NULL;
+        int hostfd;
         int ret;
-        int hostfd = -1;
         if (iov_count > INT_MAX) {
                 ret = EOVERFLOW;
                 goto fail;
         }
-        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd);
+        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
         if (ret != 0) {
                 goto fail;
         }
@@ -946,9 +994,7 @@ wasi_fd_write(struct exec_context *ctx, struct host_instance *hi,
         uint32_t r = host_to_le32(n);
         ret = wasi_copyout(ctx, &r, retp, sizeof(r));
 fail:
-        if (hostfd != -1) {
-                wasi_fd_release(wasi, wasifd);
-        }
+        wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         free(hostiov);
         return 0;
@@ -968,13 +1014,14 @@ wasi_fd_pwrite(struct exec_context *ctx, struct host_instance *hi,
         uint64_t offset = HOST_FUNC_PARAM(ft, params, 3, i64);
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 4, i32);
         struct iovec *hostiov = NULL;
+        struct wasi_fdinfo *fdinfo = NULL;
+        int hostfd;
         int ret;
-        int hostfd = -1;
         if (iov_count > INT_MAX) {
                 ret = EOVERFLOW;
                 goto fail;
         }
-        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd);
+        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
         if (ret != 0) {
                 goto fail;
         }
@@ -995,9 +1042,7 @@ wasi_fd_pwrite(struct exec_context *ctx, struct host_instance *hi,
         uint32_t r = host_to_le32(n);
         ret = wasi_copyout(ctx, &r, retp, sizeof(r));
 fail:
-        if (hostfd != -1) {
-                wasi_fd_release(wasi, wasifd);
-        }
+        wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         free(hostiov);
         return 0;
@@ -1016,13 +1061,14 @@ wasi_fd_read(struct exec_context *ctx, struct host_instance *hi,
         uint32_t iov_count = HOST_FUNC_PARAM(ft, params, 2, i32);
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 3, i32);
         struct iovec *hostiov = NULL;
+        struct wasi_fdinfo *fdinfo = NULL;
+        int hostfd;
         int ret;
-        int hostfd = -1;
         if (iov_count > INT_MAX) {
                 ret = EOVERFLOW;
                 goto fail;
         }
-        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd);
+        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
         if (ret != 0) {
                 goto fail;
         }
@@ -1043,9 +1089,7 @@ wasi_fd_read(struct exec_context *ctx, struct host_instance *hi,
         uint32_t r = host_to_le32(n);
         ret = wasi_copyout(ctx, &r, retp, sizeof(r));
 fail:
-        if (hostfd != -1) {
-                wasi_fd_release(wasi, wasifd);
-        }
+        wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         free(hostiov);
         return 0;
@@ -1065,13 +1109,14 @@ wasi_fd_pread(struct exec_context *ctx, struct host_instance *hi,
         uint64_t offset = HOST_FUNC_PARAM(ft, params, 3, i64);
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 4, i32);
         struct iovec *hostiov = NULL;
+        struct wasi_fdinfo *fdinfo = NULL;
+        int hostfd;
         int ret;
-        int hostfd = -1;
         if (iov_count > INT_MAX) {
                 ret = EOVERFLOW;
                 goto fail;
         }
-        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd);
+        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
         if (ret != 0) {
                 goto fail;
         }
@@ -1092,9 +1137,7 @@ wasi_fd_pread(struct exec_context *ctx, struct host_instance *hi,
         uint32_t r = host_to_le32(n);
         ret = wasi_copyout(ctx, &r, retp, sizeof(r));
 fail:
-        if (hostfd != -1) {
-                wasi_fd_release(wasi, wasifd);
-        }
+        wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         free(hostiov);
         return 0;
@@ -1113,14 +1156,13 @@ wasi_fd_readdir(struct exec_context *ctx, struct host_instance *hi,
         uint32_t buflen = HOST_FUNC_PARAM(ft, params, 2, i32);
         uint64_t cookie = HOST_FUNC_PARAM(ft, params, 3, i64);
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 4, i32);
+        struct wasi_fdinfo *fdinfo = NULL;
+        int hostfd;
         int ret;
-        int hostfd = -1;
-        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd);
+        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
         if (ret != 0) {
                 goto fail;
         }
-        struct wasi_fdinfo *fdinfo = VEC_ELEM(wasi->fdtable, wasifd);
-        assert(fdinfo != NULL);
         DIR *dir = fdinfo->dir;
         if (dir == NULL) {
                 xlog_trace("fd_readdir: fdopendir");
@@ -1203,9 +1245,7 @@ wasi_fd_readdir(struct exec_context *ctx, struct host_instance *hi,
         uint32_t r = host_to_le32(n);
         ret = wasi_copyout(ctx, &r, retp, sizeof(r));
 fail:
-        if (hostfd != -1) {
-                wasi_fd_release(wasi, wasifd);
-        }
+        wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         return 0;
 }
@@ -1255,9 +1295,7 @@ wasi_fd_fdstat_get(struct exec_context *ctx, struct host_instance *hi,
 
         ret = wasi_copyout(ctx, &st, stat_addr, sizeof(st));
 fail:
-        if (fdinfo != NULL) {
-                wasi_fd_release(wasi, wasifd);
-        }
+        wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         return 0;
 }
@@ -1282,9 +1320,7 @@ wasi_fd_fdstat_set_flags(struct exec_context *ctx, struct host_instance *hi,
         }
         /* TODO implement */
 fail:
-        if (fdinfo != NULL) {
-                wasi_fd_release(wasi, wasifd);
-        }
+        wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         return 0;
 }
@@ -1310,9 +1346,7 @@ wasi_fd_fdstat_set_rights(struct exec_context *ctx, struct host_instance *hi,
         }
         /* TODO implement */
 fail:
-        if (fdinfo != NULL) {
-                wasi_fd_release(wasi, wasifd);
-        }
+        wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         return 0;
 }
@@ -1329,9 +1363,10 @@ wasi_fd_seek(struct exec_context *ctx, struct host_instance *hi,
         int64_t offset = HOST_FUNC_PARAM(ft, params, 1, i64);
         uint32_t whence = HOST_FUNC_PARAM(ft, params, 2, i32);
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 3, i32);
-        int hostfd = -1;
+        struct wasi_fdinfo *fdinfo = NULL;
+        int hostfd;
         int ret;
-        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd);
+        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
         if (ret != 0) {
                 goto fail;
         }
@@ -1374,9 +1409,7 @@ wasi_fd_seek(struct exec_context *ctx, struct host_instance *hi,
         uint64_t result = host_to_le64(ret1);
         ret = wasi_copyout(ctx, &result, retp, sizeof(result));
 fail:
-        if (hostfd != -1) {
-                wasi_fd_release(wasi, wasifd);
-        }
+        wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         return 0;
 }
@@ -1391,9 +1424,10 @@ wasi_fd_tell(struct exec_context *ctx, struct host_instance *hi,
         HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 1, i32);
-        int hostfd = -1;
+        struct wasi_fdinfo *fdinfo = NULL;
+        int hostfd;
         int ret;
-        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd);
+        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
         if (ret != 0) {
                 goto fail;
         }
@@ -1406,9 +1440,7 @@ wasi_fd_tell(struct exec_context *ctx, struct host_instance *hi,
         uint64_t result = host_to_le64(ret1);
         ret = wasi_copyout(ctx, &result, retp, sizeof(result));
 fail:
-        if (hostfd != -1) {
-                wasi_fd_release(wasi, wasifd);
-        }
+        wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         return 0;
 }
@@ -1423,53 +1455,72 @@ wasi_fd_renumber(struct exec_context *ctx, struct host_instance *hi,
         HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t wasifd_from = HOST_FUNC_PARAM(ft, params, 0, i32);
         uint32_t wasifd_to = HOST_FUNC_PARAM(ft, params, 1, i32);
-        struct wasi_fdinfo *fdinfo_from;
+        struct wasi_fdinfo *fdinfo_from = NULL;
+        struct wasi_fdinfo *fdinfo_to = NULL;
         int ret;
-        ret = wasi_fd_lookup(wasi, wasifd_from, &fdinfo_from);
+
+        toywasm_mutex_lock(&wasi->lock);
+
+        /* ensure the table size is big enough */
+        ret = wasi_fdtable_expand(wasi, wasifd_to);
         if (ret != 0) {
-                goto fail;
+                goto fail_locked;
+        }
+
+        /* check "from" */
+        ret = wasi_fd_lookup_locked(wasi, wasifd_from, &fdinfo_from);
+        if (ret != 0) {
+                goto fail_locked;
         }
         if (fdinfo_is_prestat(fdinfo_from)) {
                 ret = ENOTSUP;
-                goto fail;
+                goto fail_locked;
         }
         if (fdinfo_from->hostfd == -1) {
                 ret = EBADF;
-                goto fail;
+                goto fail_locked;
         }
-        toywasm_mutex_lock(&wasi->lock);
-        ret = wasi_fdtable_expand(wasi, wasifd_to);
+
+        /* chech "to" */
+        ret = wasi_fd_lookup_locked(wasi, wasifd_to, &fdinfo_to);
         if (ret != 0) {
-                toywasm_mutex_unlock(&wasi->lock);
-                goto fail;
+                goto fail_locked;
         }
-        fdinfo_from = VEC_ELEM(wasi->fdtable, wasifd_from);
-        struct wasi_fdinfo *fdinfo_to = VEC_ELEM(wasi->fdtable, wasifd_to);
-        assert(fdinfo_from != NULL);
-        assert(fdinfo_to != NULL);
         if (fdinfo_is_prestat(fdinfo_to)) {
-                toywasm_mutex_unlock(&wasi->lock);
                 ret = ENOTSUP;
-                goto fail;
+                goto fail_locked;
         }
-        wasi_fdinfo_drain(wasi, fdinfo_to);
-        ret = wasi_fdinfo_hostfd_close(fdinfo_to);
-        if (ret != 0) {
-                /* log and ignore */
-                xlog_error("%s: closing to-fd failed with %d", __func__, ret);
-        }
-        free(fdinfo_to->prestat_path);
-        fdinfo_to->hostfd = fdinfo_from->hostfd;
-        fdinfo_to->dir = fdinfo_from->dir;
-        fdinfo_to->prestat_path = fdinfo_from->prestat_path;
-        wasi_fdinfo_drain(wasi, fdinfo_from);
-        fdinfo_from->hostfd = -1;
-        fdinfo_from->dir = NULL;
-        fdinfo_from->prestat_path = NULL;
+
+        /* renumber */
+        assert(fdinfo_to->refcount >= 2);
+        fdinfo_to->refcount--;
+        VEC_ELEM(wasi->fdtable, wasifd_to) = fdinfo_from;
+        VEC_ELEM(wasi->fdtable, wasifd_from) = NULL;
+
         toywasm_mutex_unlock(&wasi->lock);
+
+        wasi_fdinfo_release(wasi, fdinfo_from);
+        fdinfo_from = NULL;
+
+        /* close the old "to" file */
+        if (!wasi_fdinfo_unused(fdinfo_to)) {
+                wasi_fdinfo_drain(wasi, fdinfo_to);
+                ret = wasi_fdinfo_close(fdinfo_to);
+                if (ret != 0) {
+                        /* log and ignore */
+                        xlog_error("%s: closing to-fd failed with %d",
+                                   __func__, ret);
+                        ret = 0;
+                }
+        }
 fail:
+        wasi_fdinfo_release(wasi, fdinfo_from);
+        wasi_fdinfo_release(wasi, fdinfo_to);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         return 0;
+fail_locked:
+        toywasm_mutex_unlock(&wasi->lock);
+        goto fail;
 }
 
 static int
@@ -1482,9 +1533,10 @@ wasi_fd_filestat_get(struct exec_context *ctx, struct host_instance *hi,
         HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 1, i32);
-        int hostfd = -1;
+        struct wasi_fdinfo *fdinfo = NULL;
+        int hostfd;
         int ret;
-        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd);
+        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
         if (ret != 0) {
                 goto fail;
         }
@@ -1499,9 +1551,7 @@ wasi_fd_filestat_get(struct exec_context *ctx, struct host_instance *hi,
         wasi_convert_filestat(&hst, &wst);
         ret = wasi_copyout(ctx, &wst, retp, sizeof(wst));
 fail:
-        if (hostfd != -1) {
-                wasi_fd_release(wasi, wasifd);
-        }
+        wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         return 0;
 }
@@ -1518,9 +1568,10 @@ wasi_fd_filestat_set_times(struct exec_context *ctx, struct host_instance *hi,
         uint64_t atim = HOST_FUNC_PARAM(ft, params, 1, i64);
         uint64_t mtim = HOST_FUNC_PARAM(ft, params, 2, i64);
         uint32_t fstflags = HOST_FUNC_PARAM(ft, params, 3, i32);
-        int hostfd = -1;
+        struct wasi_fdinfo *fdinfo = NULL;
+        int hostfd;
         int ret;
-        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd);
+        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
         if (ret != 0) {
                 goto fail;
         }
@@ -1536,9 +1587,7 @@ wasi_fd_filestat_set_times(struct exec_context *ctx, struct host_instance *hi,
                 assert(ret > 0);
         }
 fail:
-        if (hostfd != -1) {
-                wasi_fd_release(wasi, wasifd);
-        }
+        wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         return 0;
 }
@@ -1569,9 +1618,7 @@ wasi_fd_prestat_get(struct exec_context *ctx, struct host_instance *hi,
         st.dir_name_len = host_to_le32(strlen(fdinfo->prestat_path));
         ret = wasi_copyout(ctx, &st, retp, sizeof(st));
 fail:
-        if (fdinfo != NULL) {
-                wasi_fd_release(wasi, wasifd);
-        }
+        wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         return 0;
 }
@@ -1609,9 +1656,7 @@ wasi_fd_prestat_dir_name(struct exec_context *ctx, struct host_instance *hi,
         }
         ret = wasi_copyout(ctx, fdinfo->prestat_path, path, len);
 fail:
-        if (fdinfo != NULL) {
-                wasi_fd_release(wasi, wasifd);
-        }
+        wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         return 0;
 }
@@ -1630,6 +1675,8 @@ wasi_poll_oneoff(struct exec_context *ctx, struct host_instance *hi,
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 3, i32);
         struct pollfd *pollfds = NULL;
         const struct wasi_subscription *subscriptions;
+        struct wasi_fdinfo **fdinfos = NULL;
+        uint32_t nfdinfos = 0;
         struct wasi_event *events;
         int ret;
         if (nsubscriptions == 0) {
@@ -1661,7 +1708,8 @@ retry:
         }
         events = p;
         pollfds = calloc(nsubscriptions, sizeof(*pollfds));
-        if (pollfds == NULL) {
+        fdinfos = calloc(nsubscriptions, sizeof(*fdinfos));
+        if (pollfds == NULL || fdinfos == NULL) {
                 ret = ENOMEM;
                 goto fail;
         }
@@ -1715,11 +1763,13 @@ retry:
                 case WASI_EVENTTYPE_FD_READ:
                 case WASI_EVENTTYPE_FD_WRITE:
                         assert(s->u.fd_read.fd == s->u.fd_write.fd);
-                        ret = wasi_hostfd_lookup(
-                                wasi, le32_to_host(s->u.fd_read.fd), &pfd->fd);
+                        ret = wasi_hostfd_lookup(wasi,
+                                                 le32_to_host(s->u.fd_read.fd),
+                                                 &pfd->fd, &fdinfos[nfdinfos]);
                         if (ret != 0) {
                                 goto fail;
                         }
+                        nfdinfos++;
                         if (s->type == WASI_EVENTTYPE_FD_READ) {
                                 pfd->events = POLLIN;
                         } else {
@@ -1738,17 +1788,6 @@ retry:
         }
         xlog_trace("poll_oneoff: start polling");
         ret = poll(pollfds, nsubscriptions, timeout_ms);
-        for (i = 0; i < nsubscriptions; i++) {
-                const struct wasi_subscription *s = &subscriptions[i];
-                switch (s->type) {
-                case WASI_EVENTTYPE_FD_READ:
-                case WASI_EVENTTYPE_FD_WRITE:
-                        wasi_fd_release(wasi, le32_to_host(s->u.fd_read.fd));
-                        break;
-                default:
-                        break;
-                }
-        }
         if (ret < 0) {
                 ret = errno;
                 assert(ret > 0);
@@ -1791,6 +1830,10 @@ retry:
         uint32_t result = host_to_le32(nevents);
         ret = wasi_copyout(ctx, &result, retp, sizeof(result));
 fail:
+        for (i = 0; i < nfdinfos; i++) {
+                wasi_fdinfo_release(wasi, fdinfos[i]);
+        }
+        free(fdinfos);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         free(pollfds);
         return 0;
@@ -2596,22 +2639,25 @@ wasi_instance_create(struct wasi_instance **instp)
         uint32_t nfds = 3;
         int ret = wasi_fdtable_expand(inst, nfds - 1);
         if (ret != 0) {
-                wasi_fdtable_free(inst);
-                free(inst);
-                return ret;
+                goto fail;
         }
         uint32_t i;
         for (i = 0; i < nfds; i++) {
+                struct wasi_fdinfo *fdinfo;
+                fdinfo = wasi_fdinfo_alloc();
+                if (fdinfo == NULL) {
+                        ret = ENOMEM;
+                        goto fail;
+                }
                 int hostfd;
 #if defined(__wasi__) /* wasi has no dup */
                 hostfd = i;
 #else
                 hostfd = dup(i);
 #endif
-                struct wasi_fdinfo *fdinfo = VEC_ELEM(inst->fdtable, i);
-                assert(fdinfo != NULL);
+                assert(fdinfo->hostfd == -1);
                 fdinfo->hostfd = hostfd;
-                fdinfo->refcount = 0;
+                wasi_fd_affix(inst, i, fdinfo);
                 if (hostfd == -1) {
                         xlog_trace("failed to dup: wasm fd %" PRIu32
                                    " host fd %u with errno %d",
@@ -2625,6 +2671,10 @@ wasi_instance_create(struct wasi_instance **instp)
 #endif
         *instp = inst;
         return 0;
+fail:
+        wasi_fdtable_free(inst);
+        free(inst);
+        return ret;
 }
 
 void
@@ -2659,25 +2709,26 @@ wasi_instance_set_environ(struct wasi_instance *inst, int nenvs,
 int
 wasi_instance_prestat_add(struct wasi_instance *wasi, const char *path)
 {
+        struct wasi_fdinfo *fdinfo = NULL;
         uint32_t wasifd;
         int ret;
         xlog_trace("prestat adding %s", path);
+
+        fdinfo = wasi_fdinfo_alloc();
+        if (fdinfo == NULL) {
+                return ENOMEM;
+        }
+        fdinfo->prestat_path = strdup(path);
         toywasm_mutex_lock(&wasi->lock);
         ret = wasi_fd_alloc(wasi, &wasifd);
         if (ret != 0) {
                 toywasm_mutex_unlock(&wasi->lock);
+                free(fdinfo->prestat_path);
+                free(fdinfo);
                 return ret;
         }
-        struct wasi_fdinfo *fdinfo = VEC_ELEM(wasi->fdtable, wasifd);
-        assert(fdinfo != NULL);
-        fdinfo->prestat_path = strdup(path);
+        wasi_fd_affix(wasi, wasifd, fdinfo);
         toywasm_mutex_unlock(&wasi->lock);
-        if (fdinfo->prestat_path == NULL) {
-                ret = errno;
-                assert(ret != 0);
-                xlog_trace("realpath failed with %d", ret);
-                return ret;
-        }
         xlog_trace("prestat added %s (%s)", path, fdinfo->prestat_path);
         return 0;
 }
