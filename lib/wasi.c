@@ -873,6 +873,23 @@ wasi_fd_close(struct exec_context *ctx, struct host_instance *hi,
                 ret = EBADF;
                 goto fail;
         }
+        /*
+         * we simply make fd_close block until other threads finish working
+         * on the descriptor.
+         *
+         * note that we can't assume that the other threads will finish on
+         * the descriptor soon. actually they might keep using the
+         * descriptor very long or even forever. (poll, socket read, ...)
+         *
+         * when i have done some experiments with native pthreads
+         * decades ago, the behavior on concurrent close() was not
+         * very consistent among platforms. (Solaris/BSDs/Linux...)
+         * some of them block close() as we do here.
+         * others "interrupt" and make other non-close users fail.
+         *
+         * i guess portable applications should not rely on either
+         * behaviors.
+         */
         wasi_fdinfo_drain(wasi, fdinfo);
         ret = wasi_fdinfo_hostfd_close(fdinfo);
         if (ret != 0) {
