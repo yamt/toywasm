@@ -205,7 +205,7 @@ memory_instance_create(struct meminst **mip, const struct memtype *mt)
         }
         mp->type = mt;
         toywasm_mutex_init(&mp->lock);
-#if defined(TOYWASM_ENABLE_WASI_THREADS)
+#if defined(TOYWASM_ENABLE_WASM_THREADS)
         mp->refcount = 1;
 #endif
         *mip = mp;
@@ -218,7 +218,7 @@ static void
 memory_instance_free(struct meminst *mi)
 {
         if (mi != NULL) {
-#if defined(TOYWASM_ENABLE_WASI_THREADS)
+#if defined(TOYWASM_ENABLE_WASM_THREADS)
                 toywasm_mutex_lock(&mi->lock);
                 assert(mi->refcount > 0);
                 mi->refcount--;
@@ -332,7 +332,7 @@ instance_create_no_init(struct module *m, struct instance **instp,
                         assert(e->type == IMPORT_MEMORY);
                         mp = e->u.mem;
                         assert(mp != NULL);
-#if defined(TOYWASM_ENABLE_WASI_THREADS)
+#if defined(TOYWASM_ENABLE_WASM_THREADS)
                 } else if ((mt->flags & MEMTYPE_FLAG_SHARED) != 0 &&
                            parent != NULL) {
                         /* inherit from the parent instance. */
