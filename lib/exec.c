@@ -13,9 +13,9 @@
 #include "insn.h"
 #include "leb128.h"
 #include "platform.h"
+#include "shared_memory.h"
 #include "type.h"
 #include "util.h"
-#include "waitlist.h"
 #include "xlog.h"
 
 int
@@ -117,10 +117,10 @@ memory_atomic_getptr(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
 {
         struct instance *inst = ctx->instance;
         struct meminst *meminst = VEC_ELEM(inst->mems, memidx);
-        struct waiter_list_table *tab = meminst->tab;
+        struct shared_meminst *shared = meminst->shared;
         struct atomics_mutex *lock = NULL;
-        if (tab != NULL) {
-                lock = atomics_mutex_getptr(tab, ptr + offset);
+        if (shared != NULL) {
+                lock = atomics_mutex_getptr(&shared->tab, ptr + offset);
                 atomics_mutex_lock(lock);
         }
         int ret;
@@ -1096,6 +1096,28 @@ find_type_annotation(struct exec_context *ctx, const uint8_t *p)
 #endif
 }
 
+static void
+memory_lock(struct meminst *mi)
+{
+#if defined(TOYWASM_ENABLE_WASM_THREADS)
+        struct shared_meminst *shared = mi->shared;
+        if (shared != NULL) {
+                toywasm_mutex_lock(&shared->lock);
+        }
+#endif
+}
+
+static void
+memory_unlock(struct meminst *mi)
+{
+#if defined(TOYWASM_ENABLE_WASM_THREADS)
+        struct shared_meminst *shared = mi->shared;
+        if (shared != NULL) {
+                toywasm_mutex_unlock(&shared->lock);
+        }
+#endif
+}
+
 uint32_t
 memory_grow(struct exec_context *ctx, uint32_t memidx, uint32_t sz)
 {
@@ -1103,19 +1125,19 @@ memory_grow(struct exec_context *ctx, uint32_t memidx, uint32_t sz)
         struct module *m = inst->module;
         assert(memidx < m->nimportedmems + m->nmems);
         struct meminst *mi = VEC_ELEM(inst->mems, memidx);
-        toywasm_mutex_lock(&mi->lock);
+        memory_lock(mi);
         uint32_t orig_size = mi->size_in_pages;
         uint64_t new_size = (uint64_t)orig_size + sz;
         const struct limits *lim = &mi->type->lim;
         assert(lim->max <= WASM_MAX_PAGES);
         if (new_size > lim->max) {
-                toywasm_mutex_unlock(&mi->lock);
+                memory_unlock(mi);
                 return (uint32_t)-1; /* fail */
         }
         xlog_trace("memory grow %" PRIu32 " -> %" PRIu32, mi->size_in_pages,
                    (uint32_t)new_size);
         mi->size_in_pages = new_size;
-        toywasm_mutex_unlock(&mi->lock);
+        memory_unlock(mi);
         return orig_size; /* success */
 }
 
@@ -1128,7 +1150,7 @@ memory_notify(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
         struct module *m = inst->module;
         assert(memidx < m->nimportedmems + m->nmems);
         struct meminst *mi = VEC_ELEM(inst->mems, memidx);
-        struct waiter_list_table *tab = mi->tab;
+        struct shared_meminst *shared = mi->shared;
         struct atomics_mutex *lock;
         void *p;
         int ret;
@@ -1136,13 +1158,13 @@ memory_notify(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
         if (ret != 0) {
                 return ret;
         }
-        assert((lock == NULL) == (tab == NULL));
+        assert((lock == NULL) == (shared == NULL));
         uint32_t nwoken;
-        if (tab == NULL) {
+        if (shared == NULL) {
                 /* non-shared memory. we never have waiters. */
                 nwoken = 0;
         } else {
-                nwoken = atomics_notify(tab, addr + offset, count);
+                nwoken = atomics_notify(&shared->tab, addr + offset, count);
         }
         memory_atomic_unlock(lock);
         *nwokenp = nwoken;
@@ -1158,8 +1180,8 @@ memory_wait(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
         struct module *m = inst->module;
         assert(memidx < m->nimportedmems + m->nmems);
         struct meminst *mi = VEC_ELEM(inst->mems, memidx);
-        struct waiter_list_table *tab = mi->tab;
-        if (tab == NULL) {
+        struct shared_meminst *shared = mi->shared;
+        if (shared == NULL) {
                 /* non-shared memory. */
                 return trap_with_id(ctx, TRAP_ATOMIC_WAIT_ON_NON_SHARED_MEMORY,
                                     "wait on non-shared memory");
@@ -1172,7 +1194,7 @@ memory_wait(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
         if (ret != 0) {
                 return ret;
         }
-        assert((lock == NULL) == (tab == NULL));
+        assert((lock == NULL) == (shared == NULL));
         uint64_t prev;
         if (is64) {
                 prev = *(uint64_t *)p;
@@ -1182,7 +1204,7 @@ memory_wait(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
         if (prev != expected) {
                 *resultp = 1; /* not equal */
         } else {
-                ret = atomics_wait(tab, addr + offset, timeout_ns);
+                ret = atomics_wait(&shared->tab, addr + offset, timeout_ns);
                 if (ret == 0) {
                         *resultp = 0; /* ok */
                 } else if (ret == ETIMEDOUT) {

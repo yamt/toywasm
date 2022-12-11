@@ -385,13 +385,12 @@ struct meminst {
         uint32_t allocated;
         const struct memtype *type;
 
-        /* atomic operations, esp. wait/notify */
-        struct waiter_list_table *tab;
-
-        /* to serialize memory.grow etc on a shared memory */
-        TOYWASM_MUTEX_DEFINE(lock);
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
-        uint32_t refcount;
+        /*
+         * extra info for shared memory instance.
+         * NULL for non-shared memory instance.
+         */
+        struct shared_meminst *shared;
 #endif
 };
 

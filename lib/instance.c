@@ -9,9 +9,9 @@
 #include "exec.h"
 #include "instance.h"
 #include "module.h"
+#include "shared_memory.h"
 #include "type.h"
 #include "util.h"
-#include "waitlist.h"
 #include "xlog.h"
 
 static int
@@ -182,32 +182,30 @@ memory_instance_create(struct meminst **mip, const struct memtype *mt)
                         ret = EOVERFLOW;
                         goto fail;
                 }
-                mp->tab = zalloc(sizeof(*mp->tab));
-                if (mp->tab == NULL) {
+                mp->shared = zalloc(sizeof(*mp->shared));
+                if (mp->shared == NULL) {
                         free(mp);
                         ret = ENOMEM;
                         goto fail;
                 }
-                waiter_list_table_init(mp->tab);
                 mp->data = zalloc(need_in_bytes);
                 if (mp->data == NULL) {
-                        free(mp->tab);
+                        free(mp->shared);
                         free(mp);
                         ret = ENOMEM;
                         goto fail;
                 }
                 mp->allocated = need_in_bytes;
                 mp->size_in_pages = need_in_pages;
+                waiter_list_table_init(&mp->shared->tab);
+                toywasm_mutex_init(&mp->shared->lock);
+                mp->shared->refcount = 1;
         } else
 #endif
         {
                 mp->size_in_pages = mt->lim.min;
         }
         mp->type = mt;
-        toywasm_mutex_init(&mp->lock);
-#if defined(TOYWASM_ENABLE_WASM_THREADS)
-        mp->refcount = 1;
-#endif
         *mip = mp;
         return 0;
 fail:
@@ -219,18 +217,21 @@ memory_instance_free(struct meminst *mi)
 {
         if (mi != NULL) {
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
-                toywasm_mutex_lock(&mi->lock);
-                assert(mi->refcount > 0);
-                mi->refcount--;
-                if (mi->refcount > 0) {
-                        toywasm_mutex_unlock(&mi->lock);
-                        return;
+                struct shared_meminst *shared = mi->shared;
+                if (shared != NULL) {
+                        toywasm_mutex_lock(&shared->lock);
+                        assert(shared->refcount > 0);
+                        shared->refcount--;
+                        if (shared->refcount > 0) {
+                                toywasm_mutex_unlock(&shared->lock);
+                                return;
+                        }
+                        toywasm_mutex_unlock(&shared->lock);
+                        toywasm_mutex_destroy(&shared->lock);
+                        free(shared);
                 }
-                toywasm_mutex_unlock(&mi->lock);
 #endif
                 free(mi->data);
-                free(mi->tab);
-                toywasm_mutex_destroy(&mi->lock);
         }
         free(mi);
 }
@@ -338,10 +339,12 @@ instance_create_no_init(struct module *m, struct instance **instp,
                         /* inherit from the parent instance. */
                         mp = VEC_ELEM(parent->mems, i);
                         assert(mp->type == mt);
-                        toywasm_mutex_lock(&mp->lock);
-                        assert(mp->refcount > 0);
-                        mp->refcount++;
-                        toywasm_mutex_unlock(&mp->lock);
+                        struct shared_meminst *shared = mp->shared;
+                        assert(shared != NULL);
+                        toywasm_mutex_lock(&shared->lock);
+                        assert(shared->refcount > 0);
+                        shared->refcount++;
+                        toywasm_mutex_unlock(&shared->lock);
 #endif
                 } else {
                         ret = memory_instance_create(&mp, mt);
