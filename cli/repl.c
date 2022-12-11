@@ -398,7 +398,7 @@ repl_load_from_buf(struct repl_state *state, const char *modname,
         }
         report_clear(&report);
         if (ret != 0) {
-                xlog_printf("instance_create_no_init failed\n");
+                xlog_printf("instance_create_no_init failed with %d\n", ret);
                 goto fail;
         }
         ret = repl_exec_init(mod, trap_ok);
