@@ -73,7 +73,6 @@ struct wasi_fdinfo {
         int hostfd;
         DIR *dir;
         uint32_t refcount;
-        uint32_t ncloser;
 };
 
 struct wasi_instance {
@@ -319,14 +318,7 @@ wasi_fd_lookup_locked(struct wasi_instance *wasi, uint32_t wasifd,
                 }
                 wasi_fd_affix(wasi, wasifd, fdinfo);
         }
-        if (fdinfo->ncloser > 0) {
-                /*
-                 * XXX reject new non-closing references?
-                 * or at least call drain here?
-                 */
-        }
         assert(fdinfo->refcount < UINT32_MAX); /* XXX */
-        assert(fdinfo->refcount >= fdinfo->ncloser);
         fdinfo->refcount++;
         *infop = fdinfo;
         return 0;
@@ -350,10 +342,10 @@ wasi_fdinfo_release(struct wasi_instance *wasi, struct wasi_fdinfo *fdinfo)
         }
         toywasm_mutex_lock(&wasi->lock);
         assert(fdinfo->refcount > 0);
-        assert(fdinfo->refcount >= fdinfo->ncloser);
         fdinfo->refcount--;
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
-        if (fdinfo->refcount == fdinfo->ncloser) {
+        if (fdinfo->refcount == 1) {
+                /* wake up drain */
                 int ret = pthread_cond_signal(&wasi->cv);
                 assert(ret == 0);
         }
@@ -371,15 +363,9 @@ wasi_fdinfo_drain(struct wasi_instance *wasi, struct wasi_fdinfo *fdinfo)
 {
         /* called with wasi->lock held */
 
-        assert(fdinfo->ncloser < UINT32_MAX);
-        fdinfo->ncloser++;
         while (true) {
-                assert(fdinfo->ncloser > 0);
-                assert(fdinfo->refcount >= fdinfo->ncloser);
-                if (wasi_fdinfo_unused(fdinfo)) {
-                        break;
-                }
-                if (fdinfo->refcount == fdinfo->ncloser) {
+                assert(fdinfo->refcount >= 1);
+                if (fdinfo->refcount == 1) {
                         break;
                 }
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
@@ -389,7 +375,6 @@ wasi_fdinfo_drain(struct wasi_instance *wasi, struct wasi_fdinfo *fdinfo)
                 assert(false);
 #endif
         }
-        fdinfo->ncloser--;
 }
 
 static int
