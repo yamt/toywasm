@@ -37,6 +37,16 @@ is built with an ancient wasi-sdk to workaround
 * Performance
 * Stable API/ABI
 
+## Which specs are implemented?
+
+* [WebAssembly](https://github.com/WebAssembly/spec) except SIMD.
+
+* [threads](https://github.com/WebAssembly/threads)
+
+* [wasi preview1](https://github.com/WebAssembly/wasi)
+
+* [wasi-threads](https://github.com/WebAssembly/wasi-threads)
+
 ## How slow is this?
 
 [benchmark with ffmpeg](./benchmark/ffmpeg.sh)
