@@ -12,7 +12,9 @@
 
 #include "context.h"
 #include "host_instance.h"
+#include "idalloc.h"
 #include "instance.h"
+#include "lock.h"
 #include "module.h"
 #include "type.h"
 #include "wasi_impl.h"
@@ -25,6 +27,9 @@
 
 struct wasi_threads_instance {
         struct host_instance hi;
+
+        TOYWASM_MUTEX_DEFINE(lock);
+        struct idalloc tids;
 
         /* parameters for thread_spawn */
         struct module *module;
@@ -41,6 +46,12 @@ wasi_threads_instance_create(struct wasi_threads_instance **instp)
         if (inst == NULL) {
                 return ENOMEM;
         }
+        /*
+         * Note: wasi:thread_spawn uses negative values to indicate
+         * an error.
+         */
+        idalloc_init(&inst->tids, INT32_MAX);
+        toywasm_mutex_init(&inst->lock);
         *instp = inst;
         return 0;
 }
@@ -48,6 +59,8 @@ wasi_threads_instance_create(struct wasi_threads_instance **instp)
 void
 wasi_threads_instance_destroy(struct wasi_threads_instance *inst)
 {
+        idalloc_destroy(&inst->tids);
+        toywasm_mutex_destroy(&inst->lock);
         free(inst);
 }
 
@@ -96,13 +109,15 @@ static void *
 runner(void *vp)
 {
         const struct thread_arg *arg = vp;
-        const struct wasi_threads_instance *wasi = arg->wasi;
+        struct wasi_threads_instance *wasi = arg->wasi;
         struct instance *inst = arg->inst;
+        uint32_t tid;
         int ret;
 
         struct val param[2];
-        param[0].u.i32 = arg->tid;
+        param[0].u.i32 = tid = arg->tid;
         param[1].u.i32 = arg->user_arg;
+        free(vp);
 
         struct exec_context ctx0;
         struct exec_context *ctx = &ctx0;
@@ -131,8 +146,10 @@ runner(void *vp)
                 goto fail;
         }
 fail:
+        toywasm_mutex_lock(&wasi->lock);
+        idalloc_free(&wasi->tids, tid);
+        toywasm_mutex_unlock(&wasi->lock);
         instance_destroy(inst);
-        free(vp);
         return NULL;
 }
 
@@ -146,7 +163,7 @@ wasi_thread_spawn(struct exec_context *ctx, struct host_instance *hi,
         HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t user_arg = HOST_FUNC_PARAM(ft, params, 0, i32);
         struct thread_arg *arg = NULL;
-        int32_t tid;
+        uint32_t tid;
         int ret;
 
         if (wasi->module != ctx->instance->module) {
@@ -177,7 +194,13 @@ wasi_thread_spawn(struct exec_context *ctx, struct host_instance *hi,
                            ret);
                 goto fail;
         }
-        tid = 1; /* XXX */
+        toywasm_mutex_lock(&wasi->lock);
+        ret = idalloc_alloc(&wasi->tids, &tid);
+        toywasm_mutex_unlock(&wasi->lock);
+        if (ret != 0) {
+                xlog_trace("%s: TID allocation failed with %d", __func__, ret);
+                goto fail;
+        }
 
         arg->wasi = wasi;
         arg->inst = inst;
@@ -187,6 +210,9 @@ wasi_thread_spawn(struct exec_context *ctx, struct host_instance *hi,
         pthread_t t;
         ret = pthread_create(&t, NULL, runner, arg);
         if (ret != 0) {
+                toywasm_mutex_lock(&wasi->lock);
+                idalloc_free(&wasi->tids, tid);
+                toywasm_mutex_unlock(&wasi->lock);
                 xlog_trace("%s: pthread_create failed with %d", __func__, ret);
                 goto fail;
         }
