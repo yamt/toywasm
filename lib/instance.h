@@ -35,11 +35,11 @@ int instance_create_execute_init(struct instance *inst,
 /*
  * Note: If you have multiple instances linked together
  * with import/export, usually the only safe way to destroy those
- * instances is to destroy them together at once. Note that import/export
- * is not necessarily a one-way dependency. Because funcref values,
- * which are implemented as bare host pointers in this engine, can be
- * freely passed among instances, linked instances can have references
- * each other.
+ * instances is to destroy them together at once after ensuring none of
+ * them are running. Note that import/export is not necessarily a one-way
+ * dependency. Because funcref values, which are implemented as bare host
+ * pointers in this engine, can be freely passed among instances, linked
+ * instances can have references each other.
  * cf. https://github.com/WebAssembly/spec/issues/1513
  */
 void instance_destroy(struct instance *inst);
