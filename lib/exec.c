@@ -1097,7 +1097,7 @@ find_type_annotation(struct exec_context *ctx, const uint8_t *p)
 }
 
 static void
-memory_lock(struct meminst *mi)
+memory_lock(struct meminst *mi) NO_THREAD_SAFETY_ANALYSIS
 {
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
         struct shared_meminst *shared = mi->shared;
@@ -1108,7 +1108,7 @@ memory_lock(struct meminst *mi)
 }
 
 static void
-memory_unlock(struct meminst *mi)
+memory_unlock(struct meminst *mi) NO_THREAD_SAFETY_ANALYSIS
 {
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
         struct shared_meminst *shared = mi->shared;

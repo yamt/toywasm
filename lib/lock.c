@@ -18,14 +18,14 @@ toywasm_mutex_destroy(struct toywasm_mutex *lock)
 }
 
 void
-toywasm_mutex_lock(struct toywasm_mutex *lock)
+toywasm_mutex_lock(struct toywasm_mutex *lock) NO_THREAD_SAFETY_ANALYSIS
 {
         int ret = pthread_mutex_lock(&lock->lock);
         assert(ret == 0);
 }
 
 void
-toywasm_mutex_unlock(struct toywasm_mutex *lock)
+toywasm_mutex_unlock(struct toywasm_mutex *lock) NO_THREAD_SAFETY_ANALYSIS
 {
         int ret = pthread_mutex_unlock(&lock->lock);
         assert(ret == 0);

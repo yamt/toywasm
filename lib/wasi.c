@@ -82,7 +82,8 @@ struct wasi_instance {
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
         pthread_cond_t cv;
 #endif
-        VEC(, struct wasi_fdinfo *) fdtable; /* indexed by wasi fd */
+        VEC(, struct wasi_fdinfo *)
+        fdtable GUARDED_VAR(lock); /* indexed by wasi fd */
 
         int argc;
         char *const *argv;
@@ -290,7 +291,7 @@ wasi_fdinfo_alloc(void)
 
 static void
 wasi_fd_affix(struct wasi_instance *wasi, uint32_t wasifd,
-              struct wasi_fdinfo *fdinfo)
+              struct wasi_fdinfo *fdinfo) REQUIRES(wasi->lock)
 {
         assert(wasifd < wasi->fdtable.lsize);
         struct wasi_fdinfo **slot = &VEC_ELEM(wasi->fdtable, wasifd);
@@ -304,7 +305,7 @@ wasi_fd_affix(struct wasi_instance *wasi, uint32_t wasifd,
 
 static int
 wasi_fd_lookup_locked(struct wasi_instance *wasi, uint32_t wasifd,
-                      struct wasi_fdinfo **infop)
+                      struct wasi_fdinfo **infop) REQUIRES(wasi->lock)
 {
         struct wasi_fdinfo *fdinfo;
         if (wasifd >= wasi->fdtable.lsize) {
@@ -360,9 +361,9 @@ wasi_fdinfo_release(struct wasi_instance *wasi, struct wasi_fdinfo *fdinfo)
 
 static void
 wasi_fdinfo_drain(struct wasi_instance *wasi, struct wasi_fdinfo *fdinfo)
+        EXCLUDES(wasi->lock)
 {
-        /* called with wasi->lock held */
-
+        toywasm_mutex_lock(&wasi->lock);
         while (true) {
                 assert(fdinfo->refcount >= 1);
                 if (fdinfo->refcount == 1) {
@@ -375,6 +376,7 @@ wasi_fdinfo_drain(struct wasi_instance *wasi, struct wasi_fdinfo *fdinfo)
                 assert(false);
 #endif
         }
+        toywasm_mutex_unlock(&wasi->lock);
 }
 
 static int
@@ -419,8 +421,8 @@ wasi_hostfd_lookup(struct wasi_instance *wasi, uint32_t wasifd, int *hostfdp,
 
 static int
 wasi_fdtable_expand(struct wasi_instance *wasi, uint32_t maxfd)
+        REQUIRES(wasi->lock)
 {
-        /* called with wasi->lock held */
         uint32_t osize = wasi->fdtable.lsize;
         if (maxfd < osize) {
                 return 0;
@@ -437,7 +439,7 @@ wasi_fdtable_expand(struct wasi_instance *wasi, uint32_t maxfd)
 }
 
 static void
-wasi_fdtable_free(struct wasi_instance *wasi)
+wasi_fdtable_free(struct wasi_instance *wasi) NO_THREAD_SAFETY_ANALYSIS
 {
         struct wasi_fdinfo **it;
         uint32_t i;
@@ -462,8 +464,8 @@ wasi_fdtable_free(struct wasi_instance *wasi)
 
 static int
 wasi_fd_alloc(struct wasi_instance *wasi, uint32_t *wasifdp)
+        REQUIRES(wasi->lock)
 {
-        /* called with wasi->lock held */
         struct wasi_fdinfo **fdinfop;
         uint32_t wasifd;
         VEC_FOREACH_IDX(wasifd, fdinfop, wasi->fdtable) {
@@ -2612,7 +2614,7 @@ const struct host_func wasi_funcs[] = {
 };
 
 int
-wasi_instance_create(struct wasi_instance **instp)
+wasi_instance_create(struct wasi_instance **instp) NO_THREAD_SAFETY_ANALYSIS
 {
         struct wasi_instance *inst;
 

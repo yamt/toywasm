@@ -163,7 +163,8 @@ check_globaltype(const struct import_object_entry *e, const void *vp)
 }
 
 static int
-memory_instance_create(struct meminst **mip, const struct memtype *mt)
+memory_instance_create(struct meminst **mip,
+                       const struct memtype *mt) NO_THREAD_SAFETY_ANALYSIS
 {
         struct meminst *mp;
         int ret;

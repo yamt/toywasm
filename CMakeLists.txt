@@ -111,6 +111,11 @@ if (NOT CMAKE_BUILD_TYPE MATCHES "Debug")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unknown-warning-option -Wno-unused-but-set-variable -Wno-unused-variable -Wno-return-type")
 endif()
 
+if(CMAKE_C_COMPILER_ID MATCHES "Clang")
+# https://clang.llvm.org/docs/ThreadSafetyAnalysis.html
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wthread-safety")
+endif()
+
 if(NOT DEFINED USE_ASAN)
 set(USE_ASAN ON)
 endif()
