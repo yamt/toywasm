@@ -8,6 +8,7 @@
 #include <cmocka.h>
 
 #include "endian.h"
+#include "idalloc.h"
 #include "leb128.h"
 #include "type.h"
 
@@ -431,6 +432,65 @@ test_functype(void **state)
         assert_int_equal(ret, EINVAL);
 }
 
+void
+test_idalloc(void **state)
+{
+        struct idalloc a;
+        uint32_t bm = 0;
+        uint32_t id;
+        int dummy;
+        int ret;
+
+        /* allocater with ids 0..2 */
+        idalloc_init(&a, 2);
+
+        /* allocate all slots */
+        ret = idalloc_alloc(&a, &id);
+        assert_int_equal(ret, 0);
+        assert_in_range(id, 0, 2);
+        bm |= 1 << id;
+        ret = idalloc_alloc(&a, &id);
+        assert_int_equal(ret, 0);
+        assert_in_range(id, 0, 2);
+        bm |= 1 << id;
+        ret = idalloc_alloc(&a, &id);
+        assert_int_equal(ret, 0);
+        assert_in_range(id, 0, 2);
+        bm |= 1 << id;
+        assert_int_equal(bm, 7);
+
+        /* no slots to allocate */
+        ret = idalloc_alloc(&a, &id);
+        assert_int_equal(ret, ERANGE);
+
+        /* check initial user data is NULL */
+        assert_ptr_equal(idalloc_get_user(&a, 0), NULL);
+        assert_ptr_equal(idalloc_get_user(&a, 1), NULL);
+        assert_ptr_equal(idalloc_get_user(&a, 2), NULL);
+
+        /* set some user data */
+        idalloc_set_user(&a, 0, NULL);
+        idalloc_set_user(&a, 2, &dummy);
+
+        /* check user data */
+        assert_ptr_equal(idalloc_get_user(&a, 0), NULL);
+        assert_ptr_equal(idalloc_get_user(&a, 1), NULL);
+        assert_ptr_equal(idalloc_get_user(&a, 2), &dummy);
+
+        /* still no slots to allocate */
+        ret = idalloc_alloc(&a, &id);
+        assert_int_equal(ret, ERANGE);
+
+        /* free one of them and reallocate it */
+        idalloc_free(&a, 1);
+        ret = idalloc_alloc(&a, &id);
+        assert_int_equal(ret, 0);
+        assert_int_equal(id, 1);
+
+        /* done */
+        idalloc_destroy(&a);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -438,6 +498,7 @@ main(int argc, char **argv)
                 cmocka_unit_test(test_leb128),
                 cmocka_unit_test(test_endian),
                 cmocka_unit_test(test_functype),
+                cmocka_unit_test(test_idalloc),
         };
         return cmocka_run_group_tests(tests, NULL, NULL);
 }
