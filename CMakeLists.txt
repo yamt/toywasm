@@ -183,6 +183,7 @@ set(lib_sources
 	"lib/expr.c"
 	"lib/fileio.c"
 	"lib/host_instance.c"
+	"lib/idalloc.c"
 	"lib/import_object.c"
 	"lib/insn.c"
 	"lib/instance.c"
