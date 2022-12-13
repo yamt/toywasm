@@ -9,15 +9,19 @@
 static void **
 idalloc_getptr(struct idalloc *ida, uint32_t id)
 {
+        assert(ida->base <= id);
+        id -= ida->base;
         assert(id < ida->vec.lsize);
         return &VEC_ELEM(ida->vec, id);
 }
 
 void
-idalloc_init(struct idalloc *ida, uint32_t maxid)
+idalloc_init(struct idalloc *ida, uint32_t minid, uint32_t maxid)
 {
+        assert(minid <= maxid);
         memset(ida, 0, sizeof(*ida));
-        ida->maxid = maxid;
+        ida->base = minid;
+        ida->maxid = maxid - minid;
 }
 
 void
@@ -35,7 +39,7 @@ idalloc_alloc(struct idalloc *ida, uint32_t *idp)
         VEC_FOREACH_IDX(id, it, ida->vec) {
                 if (*it == FREE_SLOT) {
                         *it = NULL;
-                        *idp = id;
+                        *idp = ida->base + id;
                         return 0;
                 }
         }
@@ -48,7 +52,7 @@ idalloc_alloc(struct idalloc *ida, uint32_t *idp)
                 return ret;
         }
         VEC_ELEM(ida->vec, id) = NULL;
-        *idp = id;
+        *idp = ida->base + id;
         return 0;
 }
 
@@ -62,7 +66,10 @@ idalloc_free(struct idalloc *ida, uint32_t id)
 bool
 idalloc_test(struct idalloc *ida, uint32_t id)
 {
-        if (id >= ida->vec.lsize) {
+        if (id < ida->base) {
+                return false;
+        }
+        if (id >= ida->base + ida->vec.lsize) {
                 return false;
         }
         return *idalloc_getptr(ida, id) != FREE_SLOT;

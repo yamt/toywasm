@@ -6,10 +6,11 @@
 
 struct idalloc {
         VEC(, void *) vec;
+        uint32_t base;
         uint32_t maxid;
 };
 
-void idalloc_init(struct idalloc *ida, uint32_t maxid);
+void idalloc_init(struct idalloc *ida, uint32_t minid, uint32_t maxid);
 void idalloc_destroy(struct idalloc *ida);
 
 int idalloc_alloc(struct idalloc *ida, uint32_t *idp);
