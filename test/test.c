@@ -441,51 +441,51 @@ test_idalloc(void **state)
         int dummy;
         int ret;
 
-        /* allocater with ids 0..2 */
-        idalloc_init(&a, 2);
+        /* allocater with ids 1..3 */
+        idalloc_init(&a, 1, 3);
 
         /* allocate all slots */
         ret = idalloc_alloc(&a, &id);
         assert_int_equal(ret, 0);
-        assert_in_range(id, 0, 2);
+        assert_in_range(id, 1, 3);
         bm |= 1 << id;
         ret = idalloc_alloc(&a, &id);
         assert_int_equal(ret, 0);
-        assert_in_range(id, 0, 2);
+        assert_in_range(id, 1, 3);
         bm |= 1 << id;
         ret = idalloc_alloc(&a, &id);
         assert_int_equal(ret, 0);
-        assert_in_range(id, 0, 2);
+        assert_in_range(id, 1, 3);
         bm |= 1 << id;
-        assert_int_equal(bm, 7);
+        assert_int_equal(bm, 14);
 
         /* no slots to allocate */
         ret = idalloc_alloc(&a, &id);
         assert_int_equal(ret, ERANGE);
 
         /* check initial user data is NULL */
-        assert_ptr_equal(idalloc_get_user(&a, 0), NULL);
         assert_ptr_equal(idalloc_get_user(&a, 1), NULL);
         assert_ptr_equal(idalloc_get_user(&a, 2), NULL);
+        assert_ptr_equal(idalloc_get_user(&a, 3), NULL);
 
         /* set some user data */
-        idalloc_set_user(&a, 0, NULL);
-        idalloc_set_user(&a, 2, &dummy);
+        idalloc_set_user(&a, 1, NULL);
+        idalloc_set_user(&a, 3, &dummy);
 
         /* check user data */
-        assert_ptr_equal(idalloc_get_user(&a, 0), NULL);
         assert_ptr_equal(idalloc_get_user(&a, 1), NULL);
-        assert_ptr_equal(idalloc_get_user(&a, 2), &dummy);
+        assert_ptr_equal(idalloc_get_user(&a, 2), NULL);
+        assert_ptr_equal(idalloc_get_user(&a, 3), &dummy);
 
         /* still no slots to allocate */
         ret = idalloc_alloc(&a, &id);
         assert_int_equal(ret, ERANGE);
 
         /* free one of them and reallocate it */
-        idalloc_free(&a, 1);
+        idalloc_free(&a, 2);
         ret = idalloc_alloc(&a, &id);
         assert_int_equal(ret, 0);
-        assert_int_equal(id, 1);
+        assert_int_equal(id, 2);
 
         /* done */
         idalloc_destroy(&a);
