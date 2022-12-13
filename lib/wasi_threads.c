@@ -50,7 +50,7 @@ wasi_threads_instance_create(struct wasi_threads_instance **instp)
          * Note: wasi:thread_spawn uses negative values to indicate
          * an error.
          */
-        idalloc_init(&inst->tids, INT32_MAX);
+        idalloc_init(&inst->tids, 1, INT32_MAX);
         toywasm_mutex_init(&inst->lock);
         *instp = inst;
         return 0;
