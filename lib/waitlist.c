@@ -168,7 +168,10 @@ waiter_block(struct waiter_list *l, struct atomics_mutex *lock,
         while (!w->woken) {
                 ret = pthread_cond_timedwait(&w->cv, &lock->lock, abstimeout);
                 if (ret == ETIMEDOUT) {
-                        assert(!w->woken);
+                        if (w->woken) {
+                                xlog_trace("%s: ignoring timeout", __func__);
+                                ret = 0;
+                        }
                         break;
                 }
                 assert(ret == 0);
