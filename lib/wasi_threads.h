@@ -25,5 +25,11 @@ int wasi_threads_instance_set_thread_spawn_args(
         struct wasi_threads_instance *inst, struct module *m,
         const struct import_object *imports);
 
+/*
+ * wasi_threads_instance_join: wait for completion of all threads
+ * spawned by wasi:thread_spawn in the wasi-threads instance.
+ */
+void wasi_threads_instance_join(struct wasi_threads_instance *inst);
+
 int import_object_create_for_wasi_threads(struct wasi_threads_instance *wasi,
                                           struct import_object **impp);

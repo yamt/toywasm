@@ -5,6 +5,7 @@
  * implemented separately from wasi_preview1 for now.
  */
 
+#include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <stdlib.h>
@@ -30,6 +31,8 @@ struct wasi_threads_instance {
 
         TOYWASM_MUTEX_DEFINE(lock);
         struct idalloc tids;
+        pthread_cond_t cv;
+        uint32_t nrunners;
 
         /* parameters for thread_spawn */
         struct module *module;
@@ -52,6 +55,8 @@ wasi_threads_instance_create(struct wasi_threads_instance **instp)
          */
         idalloc_init(&inst->tids, 1, INT32_MAX);
         toywasm_mutex_init(&inst->lock);
+        int ret = pthread_cond_init(&inst->cv, NULL);
+        assert(ret == 0);
         *instp = inst;
         return 0;
 }
@@ -61,6 +66,8 @@ wasi_threads_instance_destroy(struct wasi_threads_instance *inst)
 {
         idalloc_destroy(&inst->tids);
         toywasm_mutex_destroy(&inst->lock);
+        int ret = pthread_cond_destroy(&inst->cv);
+        assert(ret == 0);
         free(inst);
 }
 
@@ -96,6 +103,17 @@ fail:
          */
         xlog_trace("%s: ignoring error %d", __func__, ret);
         return 0;
+}
+
+void
+wasi_threads_instance_join(struct wasi_threads_instance *wasi)
+{
+        toywasm_mutex_lock(&wasi->lock);
+        while (wasi->nrunners > 0) {
+                int ret = pthread_cond_wait(&wasi->cv, &wasi->lock.lock);
+                assert(ret == 0);
+        }
+        toywasm_mutex_unlock(&wasi->lock);
 }
 
 struct thread_arg {
@@ -148,6 +166,12 @@ runner(void *vp)
 fail:
         toywasm_mutex_lock(&wasi->lock);
         idalloc_free(&wasi->tids, tid);
+        assert(wasi->nrunners > 0);
+        wasi->nrunners--;
+        if (wasi->nrunners == 0) {
+                ret = pthread_cond_signal(&wasi->cv);
+                assert(ret == 0);
+        }
         toywasm_mutex_unlock(&wasi->lock);
         instance_destroy(inst);
         return NULL;
@@ -228,14 +252,22 @@ wasi_thread_spawn(struct exec_context *ctx, struct host_instance *hi,
                 xlog_error("pthread_detach failed with %d", ret);
                 ret = 0;
         }
+
+        toywasm_mutex_lock(&wasi->lock);
+        assert(wasi->nrunners < UINT32_MAX);
+        wasi->nrunners++;
+        toywasm_mutex_unlock(&wasi->lock);
+
 fail:
         free(arg);
         int32_t result;
         if (ret != 0) {
                 /* negative errno on error */
                 result = -wasi_convert_errno(ret);
+                xlog_trace("%s failed with %d", __func__, ret);
         } else {
                 result = tid;
+                xlog_trace("%s succeeded tid %u", __func__, tid);
         }
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, result);
         return 0;

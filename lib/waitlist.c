@@ -231,6 +231,7 @@ atomics_notify(struct waiter_list_table *tab, uint32_t ident, uint32_t count)
 static int
 calculate_abstimeout(struct timespec *abstimeout, int64_t timeout_ns)
 {
+        xlog_trace("%s: timeout_ns %" PRId64, __func__, timeout_ns);
         assert(timeout_ns >= 0);
         struct timespec now;
         int ret;
