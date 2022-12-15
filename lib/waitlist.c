@@ -162,7 +162,7 @@ waiter_insert_tail(struct waiter_list *l, struct waiter *w)
 
 static int
 waiter_block(struct waiter_list *l, struct atomics_mutex *lock,
-             struct waiter *w, struct timespec *abstimeout)
+             struct waiter *w, const struct timespec *abstimeout)
 {
         int ret;
         while (!w->woken) {
@@ -228,46 +228,17 @@ atomics_notify(struct waiter_list_table *tab, uint32_t ident, uint32_t count)
         return nwoken;
 }
 
-static int
-calculate_abstimeout(struct timespec *abstimeout, int64_t timeout_ns)
-{
-        xlog_trace("%s: timeout_ns %" PRId64, __func__, timeout_ns);
-        assert(timeout_ns >= 0);
-        struct timespec now;
-        int ret;
-        ret = clock_gettime(CLOCK_REALTIME, &now);
-        if (ret != 0) {
-                assert(errno != 0);
-                return errno;
-        }
-        uint64_t nsec = now.tv_nsec + timeout_ns;
-        memset(abstimeout, 0, sizeof(*abstimeout));
-        abstimeout->tv_sec = now.tv_sec + nsec / 1000000000;
-        abstimeout->tv_nsec = nsec % 1000000000;
-        return 0;
-}
-
 /*
  * modelled after https://tc39.es/ecma262/#sec-atomics.wait
  *
  * typical return values are: 0, ETIMEDOUT, and EOVERFLOW.
  */
 int
-atomics_wait(struct waiter_list_table *tab, uint32_t ident, int64_t timeout_ns)
+atomics_wait(struct waiter_list_table *tab, uint32_t ident,
+             const struct timespec *abstimeout)
 {
         xlog_trace("%s: ident=%" PRIx32, __func__, ident);
-        struct timespec abstimeout0;
-        struct timespec *abstimeout;
         int ret;
-        if (timeout_ns < 0) {
-                abstimeout = NULL;
-        } else {
-                ret = calculate_abstimeout(&abstimeout0, timeout_ns);
-                if (ret != 0) {
-                        return ret;
-                }
-                abstimeout = &abstimeout0;
-        }
         struct atomics_mutex *lock;
         struct waiter_list *l = waiter_list_lookup(tab, ident, &lock, true);
         if (l->nwaiters == UINT32_MAX) {

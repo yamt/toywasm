@@ -14,6 +14,7 @@
 #include "leb128.h"
 #include "platform.h"
 #include "shared_memory.h"
+#include "timeutil.h"
 #include "type.h"
 #include "util.h"
 #include "xlog.h"
@@ -1204,7 +1205,28 @@ memory_wait(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
         if (prev != expected) {
                 *resultp = 1; /* not equal */
         } else {
-                ret = atomics_wait(&shared->tab, addr + offset, timeout_ns);
+                struct timespec abstimeout0;
+                const struct timespec *abstimeout;
+                if (timeout_ns < 0) {
+                        abstimeout = NULL;
+                } else {
+                        struct timespec reltimeout;
+                        ret = timespec_from_ns(&reltimeout, timeout_ns);
+                        if (ret != 0) {
+                                goto fail;
+                        }
+                        ret = timespec_now(&abstimeout0);
+                        if (ret != 0) {
+                                goto fail;
+                        }
+                        ret = timespec_add(&abstimeout0, &reltimeout,
+                                           &abstimeout0);
+                        if (ret != 0) {
+                                goto fail;
+                        }
+                        abstimeout = &abstimeout0;
+                }
+                ret = atomics_wait(&shared->tab, addr + offset, abstimeout);
                 if (ret == 0) {
                         *resultp = 0; /* ok */
                 } else if (ret == ETIMEDOUT) {
@@ -1212,6 +1234,7 @@ memory_wait(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
                         ret = 0;
                 }
         }
+fail:
         memory_atomic_unlock(lock);
         return ret;
 }
