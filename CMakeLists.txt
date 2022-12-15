@@ -200,6 +200,7 @@ set(lib_sources
 	"lib/validation.c"
 	"lib/vec.c"
 	"lib/wasi.c"
+	"lib/timeutil.c"
 	"lib/xlog.c"
 )
 
