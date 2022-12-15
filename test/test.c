@@ -4,12 +4,14 @@
 #include <stdarg.h>
 #include <stddef.h>
 #include <string.h>
+#include <time.h>
 
 #include <cmocka.h>
 
 #include "endian.h"
 #include "idalloc.h"
 #include "leb128.h"
+#include "timeutil.h"
 #include "type.h"
 
 #define TEST_OK(type, encoded_bytes, expected_value)                          \
@@ -491,6 +493,113 @@ test_idalloc(void **state)
         idalloc_destroy(&a);
 }
 
+void
+test_timeutil(void **state)
+{
+        struct timespec a;
+        struct timespec b;
+        struct timespec c;
+        int ret;
+
+        ret = timespec_now(&a);
+        assert_int_equal(ret, 0);
+        ret = timespec_now(&b);
+        assert_int_equal(ret, 0);
+        ret = timespec_cmp(&a, &b);
+        assert_true(ret <= 0);
+
+        a.tv_sec = 1000;
+        a.tv_nsec = 700000000;
+        b.tv_sec = 999;
+        b.tv_nsec = 900000000;
+        ret = timespec_cmp(&a, &a);
+        assert_int_equal(ret, 0);
+        ret = timespec_cmp(&b, &b);
+        assert_int_equal(ret, 0);
+        ret = timespec_cmp(&a, &b);
+        assert_true(ret > 0);
+        a.tv_sec = 1000;
+        a.tv_nsec = 700000000;
+        b.tv_sec = 1000;
+        b.tv_nsec = 900000000;
+        ret = timespec_cmp(&a, &a);
+        assert_int_equal(ret, 0);
+        ret = timespec_cmp(&b, &b);
+        assert_int_equal(ret, 0);
+        ret = timespec_cmp(&a, &b);
+        assert_true(ret < 0);
+
+        a.tv_sec = 1000;
+        a.tv_nsec = 700000000;
+        b.tv_sec = 100;
+        b.tv_nsec = 200000000;
+        ret = timespec_add(&a, &b, &c);
+        assert_int_equal(ret, 0);
+        assert_int_equal(c.tv_sec, 1100);
+        assert_int_equal(c.tv_nsec, 900000000);
+        ret = timespec_add(&c, &b, &c);
+        assert_int_equal(ret, 0);
+        assert_int_equal(c.tv_sec, 1201);
+        assert_int_equal(c.tv_nsec, 100000000);
+
+        a.tv_sec = 1000;
+        a.tv_nsec = 700000000;
+        b.tv_sec = 100;
+        b.tv_nsec = 400000000;
+        ret = timespec_cmp(&a, &b);
+        assert_true(ret > 0);
+        timespec_sub(&a, &b, &c);
+        assert_int_equal(c.tv_sec, 900);
+        assert_int_equal(c.tv_nsec, 300000000);
+        ret = timespec_cmp(&c, &b);
+        assert_true(ret > 0);
+        timespec_sub(&c, &b, &c);
+        assert_int_equal(c.tv_sec, 799);
+        assert_int_equal(c.tv_nsec, 900000000);
+
+        ret = timespec_from_ns(&a, 1000);
+        assert_int_equal(ret, 0);
+        assert_int_equal(a.tv_sec, 0);
+        assert_int_equal(a.tv_nsec, 1000);
+        ret = timespec_from_ns(&a, 999999999);
+        assert_int_equal(ret, 0);
+        assert_int_equal(a.tv_sec, 0);
+        assert_int_equal(a.tv_nsec, 999999999);
+        ret = timespec_from_ns(&a, 1000000000);
+        assert_int_equal(ret, 0);
+        assert_int_equal(a.tv_sec, 1);
+        assert_int_equal(a.tv_nsec, 0);
+        ret = timespec_from_ns(&a, 1000000001);
+        assert_int_equal(ret, 0);
+        assert_int_equal(a.tv_sec, 1);
+        assert_int_equal(a.tv_nsec, 1);
+}
+
+void
+test_timeutil_int64(void **state)
+{
+        struct timespec a;
+        struct timespec b;
+        struct timespec c;
+        int ret;
+
+        /* this function assumes time_t is int64_t. */
+        if (sizeof(time_t) != sizeof(int64_t) || (time_t)-1 > 0) {
+                skip();
+        }
+        a.tv_sec = INT64_MAX;
+        a.tv_nsec = 500000000;
+        b.tv_sec = 0;
+        b.tv_nsec = 500000000;
+        ret = timespec_add(&a, &b, &c);
+        assert_int_equal(ret, EOVERFLOW);
+
+        ret = timespec_from_ns(&a, UINT64_MAX);
+        assert_int_equal(ret, 0);
+        assert_int_equal(a.tv_sec, UINT64_MAX / 1000000000);
+        assert_int_equal(a.tv_nsec, UINT64_MAX % 1000000000);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -499,6 +608,8 @@ main(int argc, char **argv)
                 cmocka_unit_test(test_endian),
                 cmocka_unit_test(test_functype),
                 cmocka_unit_test(test_idalloc),
+                cmocka_unit_test(test_timeutil),
+                cmocka_unit_test(test_timeutil_int64),
         };
         return cmocka_run_group_tests(tests, NULL, NULL);
 }
