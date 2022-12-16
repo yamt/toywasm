@@ -1668,9 +1668,7 @@ wasi_poll_oneoff(struct exec_context *ctx, struct host_instance *hi,
         int ret;
         if (nsubscriptions == 0) {
                 /*
-                 * I couldn't find any authoritive document about this.
-                 * EINVAL is what some of wasmtime wasi tests expect.
-                 * https://github.com/bytecodealliance/wasmtime/blob/c9ff14e00bb0a90905a4f1cc2968c1e3e0417ce5/crates/test-programs/wasi-tests/src/bin/poll_oneoff_files.rs#L45-L54
+                 * https://github.com/WebAssembly/WASI/pull/193
                  */
                 xlog_trace("poll_oneoff: no subscriptions");
                 ret = EINVAL;
