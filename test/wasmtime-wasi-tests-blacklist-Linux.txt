@@ -2,4 +2,7 @@
 # the trailing slashes in pathnames.
 # (just leave it to the underlying OS)
 # XXX does WASI require either ways?
-path_symlink_trailing_slashes
+
+# 4: === path_symlink_trailing_slashes.wasm                                     # 4: thread 'main' panicked at 'expected errno NOTDIR or NOENT; got EXIST', src/bin/path_symlink_trailing_slashes.rs:45:5
+
+#path_symlink_trailing_slashes

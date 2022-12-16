@@ -2,4 +2,8 @@
 # the trailing slashes in pathnames.
 # (just leave it to the underlying OS)
 # XXX does WASI require either ways?
-path_rename_file_trailing_slashes
+
+# 4: === path_rename_file_trailing_slashes.wasm
+# 4: thread 'main' panicked at 'expected errno NOTDIR; got NOENT', src/bin/path_rename_file_trailing_slashes.rs:18:5
+
+#path_rename_file_trailing_slashes
