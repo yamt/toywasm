@@ -5,4 +5,4 @@
 
 # 4: === path_symlink_trailing_slashes.wasm                                     # 4: thread 'main' panicked at 'expected errno NOTDIR or NOENT; got EXIST', src/bin/path_symlink_trailing_slashes.rs:45:5
 
-#path_symlink_trailing_slashes
+path_symlink_trailing_slashes
