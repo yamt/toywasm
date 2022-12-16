@@ -60,7 +60,11 @@ import_object_create_for_host_funcs(const struct name *module_name,
                 fi->u.host.type = ft;
                 fi->u.host.instance = hi;
                 struct import_object_entry *e = &im->entries[i];
-                e->module_name = module_name;
+                if (funcs[i].module_name != NULL) {
+                    e->module_name = funcs[i].module_name;
+                } else {
+                    e->module_name = module_name;
+                }
                 e->name = &funcs[i].name;
                 e->type = IMPORT_FUNC;
                 e->u.func = fi;
