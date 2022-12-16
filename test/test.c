@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE 199309 /* struct timespce */
 
 #include <errno.h>
 #include <setjmp.h>
