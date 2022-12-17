@@ -197,7 +197,8 @@ runner(void *vp)
                                             param, NULL);
         if (ret == EFAULT && ctx->trapped) {
                 wasi_threads_propagate_trap(wasi, &ctx->trap);
-                if (ctx->trap.trapid == TRAP_VOLUNTARY_EXIT) {
+                if (ctx->trap.trapid == TRAP_VOLUNTARY_EXIT ||
+                    ctx->trap.trapid == TRAP_VOLUNTARY_THREAD_EXIT) {
                         xlog_trace(
                                 "%s: wasi_thread_start exited with %" PRIu32,
                                 __func__, ctx->exit_code);
