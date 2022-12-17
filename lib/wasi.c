@@ -773,6 +773,81 @@ wasi_convert_errno(int host_errno)
 }
 
 static int
+wasi_poll(struct exec_context *ctx, struct pollfd *fds, nfds_t nfds,
+          int timeout_ms, int *retp, int *neventsp)
+{
+        const int interval_ms = 300;
+        struct timespec abstimeout0;
+        struct timespec *abstimeout;
+        int host_ret = 0;
+        int ret;
+
+        if (timeout_ms < 0) {
+                abstimeout = NULL;
+        } else {
+                ret = abstime_from_reltime_ms(&abstimeout0, timeout_ms);
+                if (ret != 0) {
+                        goto fail;
+                }
+                abstimeout = &abstimeout0;
+        }
+        while (true) {
+                int next_timeout_ms;
+
+                host_ret = check_interrupt(ctx);
+                if (host_ret != 0) {
+                        goto fail;
+                }
+                if (abstimeout == NULL) {
+                        next_timeout_ms = interval_ms;
+                } else {
+                        struct timespec next;
+                        ret = abstime_from_reltime_ms(&next, interval_ms);
+                        if (ret != 0) {
+                                goto fail;
+                        }
+                        if (timespec_cmp(abstimeout, &next) > 0) {
+                                next_timeout_ms = interval_ms;
+                        } else {
+                                ret = abstime_to_reltime_ms(&next,
+                                                            &next_timeout_ms);
+                                if (ret != 0) {
+                                        goto fail;
+                                }
+                        }
+                }
+                ret = poll(fds, nfds, next_timeout_ms);
+                if (ret < 0) {
+                        ret = errno;
+                        assert(ret > 0);
+                        goto fail;
+                }
+                if (ret > 0) {
+                        *neventsp = ret;
+                        ret = 0;
+                        break;
+                }
+                if (ret == 0 && next_timeout_ms != interval_ms) {
+                        ret = ETIMEDOUT;
+                        break;
+                }
+        }
+fail:
+        *retp = ret;
+        return host_ret;
+}
+
+static int
+wait_fd_ready(struct exec_context *ctx, int hostfd, short event, int *retp)
+{
+        struct pollfd pfd;
+        pfd.fd = hostfd;
+        pfd.events = event;
+        int nev;
+        return wasi_poll(ctx, &pfd, 1, -1, retp, &nev);
+}
+
+static int
 wasi_proc_exit(struct exec_context *ctx, struct host_instance *hi,
                const struct functype *ft, const struct cell *params,
                struct cell *results)
@@ -957,6 +1032,7 @@ wasi_fd_write(struct exec_context *ctx, struct host_instance *hi,
         struct iovec *hostiov = NULL;
         struct wasi_fdinfo *fdinfo = NULL;
         int hostfd;
+        int host_ret = 0;
         int ret;
         if (iov_count > INT_MAX) {
                 ret = EOVERFLOW;
@@ -967,6 +1043,14 @@ wasi_fd_write(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         ret = wasi_copyin_iovec(ctx, iov_addr, iov_count, &hostiov);
+        if (ret != 0) {
+                goto fail;
+        }
+        host_ret = wait_fd_ready(ctx, hostfd, POLLOUT, &ret);
+        if (host_ret != 0) {
+                ret = 0;
+                goto fail;
+        }
         if (ret != 0) {
                 goto fail;
         }
@@ -986,7 +1070,7 @@ fail:
         wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         free(hostiov);
-        return 0;
+        return host_ret;
 }
 
 static int
@@ -1005,6 +1089,7 @@ wasi_fd_pwrite(struct exec_context *ctx, struct host_instance *hi,
         struct iovec *hostiov = NULL;
         struct wasi_fdinfo *fdinfo = NULL;
         int hostfd;
+        int host_ret = 0;
         int ret;
         if (iov_count > INT_MAX) {
                 ret = EOVERFLOW;
@@ -1015,6 +1100,14 @@ wasi_fd_pwrite(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         ret = wasi_copyin_iovec(ctx, iov_addr, iov_count, &hostiov);
+        if (ret != 0) {
+                goto fail;
+        }
+        host_ret = wait_fd_ready(ctx, hostfd, POLLOUT, &ret);
+        if (host_ret != 0) {
+                ret = 0;
+                goto fail;
+        }
         if (ret != 0) {
                 goto fail;
         }
@@ -1034,7 +1127,7 @@ fail:
         wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         free(hostiov);
-        return 0;
+        return host_ret;
 }
 
 static int
@@ -1052,6 +1145,7 @@ wasi_fd_read(struct exec_context *ctx, struct host_instance *hi,
         struct iovec *hostiov = NULL;
         struct wasi_fdinfo *fdinfo = NULL;
         int hostfd;
+        int host_ret = 0;
         int ret;
         if (iov_count > INT_MAX) {
                 ret = EOVERFLOW;
@@ -1062,6 +1156,14 @@ wasi_fd_read(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         ret = wasi_copyin_iovec(ctx, iov_addr, iov_count, &hostiov);
+        if (ret != 0) {
+                goto fail;
+        }
+        host_ret = wait_fd_ready(ctx, hostfd, POLLIN, &ret);
+        if (host_ret != 0) {
+                ret = 0;
+                goto fail;
+        }
         if (ret != 0) {
                 goto fail;
         }
@@ -1081,7 +1183,7 @@ fail:
         wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         free(hostiov);
-        return 0;
+        return host_ret;
 }
 
 static int
@@ -1100,6 +1202,7 @@ wasi_fd_pread(struct exec_context *ctx, struct host_instance *hi,
         struct iovec *hostiov = NULL;
         struct wasi_fdinfo *fdinfo = NULL;
         int hostfd;
+        int host_ret = 0;
         int ret;
         if (iov_count > INT_MAX) {
                 ret = EOVERFLOW;
@@ -1110,6 +1213,14 @@ wasi_fd_pread(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         ret = wasi_copyin_iovec(ctx, iov_addr, iov_count, &hostiov);
+        if (ret != 0) {
+                goto fail;
+        }
+        host_ret = wait_fd_ready(ctx, hostfd, POLLIN, &ret);
+        if (host_ret != 0) {
+                ret = 0;
+                goto fail;
+        }
         if (ret != 0) {
                 goto fail;
         }
@@ -1129,7 +1240,7 @@ fail:
         wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         free(hostiov);
-        return 0;
+        return host_ret;
 }
 
 static int
@@ -1648,71 +1759,6 @@ fail:
         wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         return 0;
-}
-
-static int
-wasi_poll(struct exec_context *ctx, struct pollfd *fds, nfds_t nfds,
-          int timeout_ms, int *poll_ret, int *neventsp)
-{
-        const int interval_ms = 300;
-        struct timespec abstimeout0;
-        struct timespec *abstimeout;
-        int host_ret = 0;
-        int ret;
-
-        if (timeout_ms < 0) {
-                abstimeout = NULL;
-        } else {
-                ret = abstime_from_reltime_ms(&abstimeout0, timeout_ms);
-                if (ret != 0) {
-                        goto fail;
-                }
-                abstimeout = &abstimeout0;
-        }
-        while (true) {
-                int next_timeout_ms;
-
-                host_ret = check_interrupt(ctx);
-                if (host_ret != 0) {
-                        goto fail;
-                }
-                if (abstimeout == NULL) {
-                        next_timeout_ms = interval_ms;
-                } else {
-                        struct timespec next;
-                        ret = abstime_from_reltime_ms(&next, interval_ms);
-                        if (ret != 0) {
-                                goto fail;
-                        }
-                        if (timespec_cmp(abstimeout, &next) > 0) {
-                                next_timeout_ms = interval_ms;
-                        } else {
-                                ret = abstime_to_reltime_ms(&next,
-                                                            &next_timeout_ms);
-                                if (ret != 0) {
-                                        goto fail;
-                                }
-                        }
-                }
-                ret = poll(fds, nfds, next_timeout_ms);
-                if (ret < 0) {
-                        ret = errno;
-                        assert(ret > 0);
-                        goto fail;
-                }
-                if (ret > 0) {
-                        *neventsp = ret;
-                        ret = 0;
-                        break;
-                }
-                if (ret == 0 && next_timeout_ms != interval_ms) {
-                        ret = ETIMEDOUT;
-                        break;
-                }
-        }
-fail:
-        *poll_ret = ret;
-        return host_ret;
 }
 
 static int
