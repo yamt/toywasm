@@ -40,7 +40,7 @@ struct wasi_threads_instance {
         uint32_t thread_start_funcidx;
 
         /*
-         * for proc_exit
+         * for proc_exit and trap
          *
          * all threads poll this "interrupt" variable and terminate
          * themselves when necessary. definitely this is not the most
