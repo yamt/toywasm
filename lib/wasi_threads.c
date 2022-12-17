@@ -65,8 +65,10 @@ wasi_threads_instance_create(struct wasi_threads_instance **instp)
         /*
          * Note: wasi:thread_spawn uses negative values to indicate
          * an error.
+         * Note: 0 is reserved.
+         * Note: the upper-most 3 bits are reserved.
          */
-        idalloc_init(&inst->tids, 1, INT32_MAX);
+        idalloc_init(&inst->tids, 1, 0x1fffffff);
         toywasm_mutex_init(&inst->lock);
         int ret = pthread_cond_init(&inst->cv, NULL);
         assert(ret == 0);
