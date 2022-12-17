@@ -1208,17 +1208,7 @@ memory_wait(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
         if (timeout_ns < 0) {
                 abstimeout = NULL;
         } else {
-                /* abstimeout = now + timeout_ns */
-                struct timespec reltimeout;
-                ret = timespec_from_ns(&reltimeout, timeout_ns);
-                if (ret != 0) {
-                        goto fail;
-                }
-                ret = timespec_now(&abstimeout0);
-                if (ret != 0) {
-                        goto fail;
-                }
-                ret = timespec_add(&abstimeout0, &reltimeout, &abstimeout0);
+                ret = abstime_from_reltime_ns(&abstimeout0, timeout_ns);
                 if (ret != 0) {
                         goto fail;
                 }
@@ -1228,26 +1218,18 @@ retry:
         if (prev != expected) {
                 *resultp = 1; /* not equal */
         } else {
-                static const struct timespec interval = {
-                        .tv_sec = 0,
-                        .tv_nsec = 300000000,
-                };
-                struct timespec tv0;
+                struct timespec next_abstimeout;
+                static const int64_t interval_ns = 300000000;
+                ret = abstime_from_reltime_ns(&next_abstimeout, interval_ns);
+                if (ret != 0) {
+                        goto fail;
+                }
                 const struct timespec *tv;
-                /* tv = min(abstimeout, now + interval) */
-                ret = timespec_now(&tv0);
-                if (ret != 0) {
-                        goto fail;
-                }
-                ret = timespec_add(&tv0, &interval, &tv0);
-                if (ret != 0) {
-                        goto fail;
-                }
                 if (abstimeout != NULL &&
-                    timespec_cmp(&tv0, abstimeout) >= 0) {
+                    timespec_cmp(&next_abstimeout, abstimeout) >= 0) {
                         tv = abstimeout;
                 } else {
-                        tv = &tv0;
+                        tv = &next_abstimeout;
                 }
                 ret = atomics_wait(&shared->tab, addr + offset, tv);
                 if (ret == 0) {
