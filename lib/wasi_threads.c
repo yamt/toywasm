@@ -39,7 +39,16 @@ struct wasi_threads_instance {
         const struct import_object *imports;
         uint32_t thread_start_funcidx;
 
-        /* for proc_exit */
+        /*
+         * for proc_exit
+         *
+         * all threads poll this "interrupt" variable and terminate
+         * themselves when necessary. definitely this is not the most
+         * efficient design.
+         * this design was chosen mainly because this implementation aims
+         * to be portable to wasi-threads itself, which doesn't have any
+         * async inter-thread communitation mechanisms like signals.
+         */
         uint32_t interrupt;
         uint32_t exit_code;
 };
