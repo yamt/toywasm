@@ -45,5 +45,7 @@ int invoke(struct funcinst *finst, const struct resulttype *paramtype,
            const struct resulttype *resulttype, const struct cell *params,
            struct cell *results, struct exec_context *ctx);
 
+int check_interrupt(struct exec_context *ctx);
+
 /* debug */
 void print_trace(const struct exec_context *ctx);

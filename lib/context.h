@@ -176,6 +176,8 @@ struct exec_context {
         VEC(, struct cell) locals;
 #endif
 
+        const uint32_t *intrp;
+
         bool trapped; /* used with a combination with EFAULT */
         enum trapid trapid;
         uint32_t exit_code; /* wasi */

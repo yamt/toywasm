@@ -31,5 +31,9 @@ int wasi_threads_instance_set_thread_spawn_args(
  */
 void wasi_threads_instance_join(struct wasi_threads_instance *inst);
 
+const uint32_t *
+wasi_threads_interrupt_pointer(struct wasi_threads_instance *inst);
+uint32_t wasi_threads_exit_code(struct wasi_threads_instance *inst);
+
 int import_object_create_for_wasi_threads(struct wasi_threads_instance *wasi,
                                           struct import_object **impp);

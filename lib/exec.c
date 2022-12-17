@@ -773,6 +773,18 @@ fetch_exec_next_insn(const uint8_t *p, struct cell *stack,
 #endif
 }
 
+#define CHECK_INTERVAL 1000
+
+int
+check_interrupt(struct exec_context *ctx)
+{
+        if (ctx->intrp != NULL && *ctx->intrp != 0) {
+                xlog_trace("get interrupt");
+                return trap_with_id(ctx, TRAP_VOLUNTARY_EXIT, "interrupt");
+        }
+        return 0;
+}
+
 int
 exec_expr(uint32_t funcidx, const struct expr *expr,
           const struct localtype *localtype,
@@ -781,6 +793,7 @@ exec_expr(uint32_t funcidx, const struct expr *expr,
           struct exec_context *ctx)
 {
         uint32_t nstackused_saved = ctx->stack.lsize;
+        uint32_t n;
         int ret;
 
         assert(ctx->instance != NULL);
@@ -811,6 +824,14 @@ exec_expr(uint32_t funcidx, const struct expr *expr,
                         break;
                 case EXEC_EVENT_BRANCH:
                         assert(ctx->frames.lsize > 0);
+                        n++;
+                        if (n > CHECK_INTERVAL) {
+                                n = 0;
+                                ret = check_interrupt(ctx);
+                                if (ret != 0) {
+                                        return ret;
+                                }
+                        }
                         do_branch(ctx, ctx->event_u.branch.index,
                                   ctx->event_u.branch.goto_else);
                         break;
@@ -1215,6 +1236,10 @@ memory_wait(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
                 abstimeout = &abstimeout0;
         }
 retry:
+        ret = check_interrupt(ctx);
+        if (ret != 0) {
+                goto fail;
+        }
         if (prev != expected) {
                 *resultp = 1; /* not equal */
         } else {

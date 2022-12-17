@@ -786,19 +786,34 @@ toywasm_repl_invoke(struct repl_state *state, const char *modname,
         struct exec_context ctx0;
         struct exec_context *ctx = &ctx0;
         exec_context_init(ctx, inst);
+#if defined(TOYWASM_ENABLE_WASI_THREADS)
+        if (state->wasi_threads != NULL) {
+                ctx->intrp =
+                        wasi_threads_interrupt_pointer(state->wasi_threads);
+        }
+#endif
         ret = instance_execute_func(ctx, funcidx, ptype, rtype, param, result);
         if (state->opts.print_stats) {
                 exec_context_print_stats(ctx);
         }
         if (ret == EFAULT && ctx->trapped) {
                 if (ctx->trapid == TRAP_VOLUNTARY_EXIT) {
-                        xlog_trace("voluntary exit (%" PRIu32 ")",
-                                   ctx->exit_code);
+                        uint32_t exit_code;
+#if defined(TOYWASM_ENABLE_WASI_THREADS)
+                        if (state->wasi_threads != NULL) {
+                                exit_code = wasi_threads_exit_code(
+                                        state->wasi_threads);
+                        } else
+#endif
+                        {
+                                exit_code = ctx->exit_code;
+                        }
+                        xlog_trace("voluntary exit (%" PRIu32 ")", exit_code);
                         if (exitcodep != NULL) {
-                                *exitcodep = ctx->exit_code;
+                                *exitcodep = exit_code;
                                 ret = 0;
                         } else {
-                                ret = ctx->exit_code;
+                                ret = exit_code;
                         }
                         exec_context_clear(ctx);
                         goto fail;
