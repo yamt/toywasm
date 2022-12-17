@@ -23,5 +23,3 @@
 #endif
 
 uint32_t wasi_convert_errno(int host_errno);
-
-extern const struct name wasi_snapshot_preview1;

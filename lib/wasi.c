@@ -2730,7 +2730,7 @@ wasi_instance_destroy(struct wasi_instance *inst)
         free(inst);
 }
 
-const struct name wasi_snapshot_preview1 =
+struct name wasi_snapshot_preview1 =
         NAME_FROM_CSTR_LITERAL("wasi_snapshot_preview1");
 
 int
