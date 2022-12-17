@@ -45,8 +45,10 @@
 
 #include "context.h"
 #include "endian.h"
+#include "exec.h"
 #include "host_instance.h"
 #include "lock.h"
+#include "timeutil.h"
 #include "type.h"
 #include "util.h"
 #include "vec.h"
@@ -1649,6 +1651,69 @@ fail:
 }
 
 static int
+wasi_poll(struct exec_context *ctx, struct pollfd *fds, nfds_t nfds,
+          int timeout_ms, int *neventsp)
+{
+        const int interval_ms = 300;
+        struct timespec abstimeout0;
+        struct timespec *abstimeout;
+        int ret;
+
+        if (timeout_ms < 0) {
+                abstimeout = NULL;
+        } else {
+                ret = abstime_from_reltime_ms(&abstimeout0, timeout_ms);
+                if (ret != 0) {
+                        goto fail;
+                }
+                abstimeout = &abstimeout0;
+        }
+        while (true) {
+                int next_timeout_ms;
+
+                ret = check_interrupt(ctx);
+                if (ret != 0) {
+                        goto fail;
+                }
+                if (abstimeout == NULL) {
+                        next_timeout_ms = interval_ms;
+                } else {
+                        struct timespec next;
+                        ret = abstime_from_reltime_ms(&next, interval_ms);
+                        if (ret != 0) {
+                                goto fail;
+                        }
+                        if (timespec_cmp(abstimeout, &next) > 0) {
+                                next_timeout_ms = interval_ms;
+                        } else {
+                                ret = abstime_to_reltime_ms(&next,
+                                                            &next_timeout_ms);
+                                if (ret != 0) {
+                                        goto fail;
+                                }
+                        }
+                }
+                ret = poll(fds, nfds, next_timeout_ms);
+                if (ret < 0) {
+                        ret = errno;
+                        assert(ret > 0);
+                        goto fail;
+                }
+                if (ret > 0) {
+                        *neventsp = ret;
+                        ret = 0;
+                        break;
+                }
+                if (ret == 0 && next_timeout_ms != interval_ms) {
+                        ret = ETIMEDOUT;
+                        break;
+                }
+        }
+fail:
+        return ret;
+}
+
+static int
 wasi_poll_oneoff(struct exec_context *ctx, struct host_instance *hi,
                  const struct functype *ft, const struct cell *params,
                  struct cell *results)
@@ -1772,19 +1837,14 @@ retry:
                 }
         }
         xlog_trace("poll_oneoff: start polling");
-        ret = poll(pollfds, nsubscriptions, timeout_ms);
-        if (ret < 0) {
-                ret = errno;
-                assert(ret > 0);
-                xlog_trace("poll_oneoff: poll failed with %d", ret);
+        int nevents;
+        ret = wasi_poll(ctx, pollfds, nsubscriptions, timeout_ms, &nevents);
+        if (ret == ETIMEDOUT) {
+                /* timeout is an event */
+                nevents = 1;
+        } else if (ret != 0) {
+                xlog_trace("poll_oneoff: wasi_poll failed with %d", ret);
                 goto fail;
-        }
-        xlog_trace("poll_oneoff: poll returned %d", ret);
-        uint32_t nevents;
-        if (ret == 0) {
-                nevents = 1; /* timeout is an event */
-        } else {
-                nevents = ret;
         }
         struct wasi_event *ev = events;
         for (i = 0; i < nsubscriptions; i++) {

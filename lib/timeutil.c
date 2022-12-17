@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <limits.h>
 #include <stdint.h>
 #include <time.h>
 
@@ -130,6 +131,45 @@ abstime_from_reltime_ns(struct timespec *abstime, uint64_t reltime_ns)
         if (ret != 0) {
                 goto fail;
         }
+fail:
+        return ret;
+}
+int
+abstime_from_reltime_ms(struct timespec *abstime, int reltime_ms)
+{
+        return abstime_from_reltime_ns(abstime,
+                                       (uint64_t)reltime_ms * 1000000);
+}
+
+int
+abstime_to_reltime_ms(const struct timespec *abstime, int *reltime_ms)
+{
+        struct timespec now;
+        struct timespec reltime;
+        int ret;
+        ret = timespec_now(&now);
+        if (ret != 0) {
+                goto fail;
+        }
+        if (timespec_cmp(abstime, &now) > 0) {
+                *reltime_ms = 0;
+                return 0;
+        }
+        timespec_sub(abstime, &now, &reltime);
+        if (ret != 0) {
+                goto fail;
+        }
+        if (reltime.tv_sec > INT_MAX / 1000) {
+                ret = EOVERFLOW;
+                goto fail;
+        }
+        int sec = reltime.tv_sec * 1000;
+        if (INT_MAX - sec < reltime.tv_nsec / 1000000) {
+                ret = EOVERFLOW;
+                goto fail;
+        }
+        *reltime_ms = sec + reltime.tv_nsec / 1000000;
+        return 0;
 fail:
         return ret;
 }
