@@ -588,7 +588,7 @@ test_timeutil_int64(void **state)
         if (sizeof(time_t) != sizeof(int64_t) || (time_t)-1 > 0) {
                 skip();
         }
-        a.tv_sec = INT64_MAX;
+        a.tv_sec = (time_t)INT64_MAX; /* cast to avoid build-time warning */
         a.tv_nsec = 500000000;
         b.tv_sec = 0;
         b.tv_nsec = 500000000;
