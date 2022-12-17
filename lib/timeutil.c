@@ -111,3 +111,25 @@ timespec_now(struct timespec *a)
         assert_normalized(a);
         return 0;
 }
+
+int
+abstime_from_reltime_ns(struct timespec *abstime, uint64_t reltime_ns)
+{
+        struct timespec now;
+        struct timespec reltime;
+        int ret;
+        ret = timespec_from_ns(&reltime, reltime_ns);
+        if (ret != 0) {
+                goto fail;
+        }
+        ret = timespec_now(&now);
+        if (ret != 0) {
+                goto fail;
+        }
+        ret = timespec_add(&now, &reltime, abstime);
+        if (ret != 0) {
+                goto fail;
+        }
+fail:
+        return ret;
+}
