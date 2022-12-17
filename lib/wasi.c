@@ -778,7 +778,7 @@ wasi_proc_exit(struct exec_context *ctx, struct host_instance *hi,
         WASI_TRACE;
         HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t code = HOST_FUNC_PARAM(ft, params, 0, i32);
-        ctx->exit_code = code;
+        ctx->trap.exit_code = code;
         return trap_with_id(ctx, TRAP_VOLUNTARY_EXIT,
                             "proc_exit with %" PRIu32, code);
 }

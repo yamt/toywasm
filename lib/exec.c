@@ -23,7 +23,7 @@ int
 vtrap(struct exec_context *ctx, enum trapid id, const char *fmt, va_list ap)
 {
         ctx->trapped = true;
-        ctx->trapid = id;
+        ctx->trap.trapid = id;
         vreport(ctx->report, fmt, ap);
         xlog_trace("TRAP: %s", ctx->report->msg);
         return EFAULT;

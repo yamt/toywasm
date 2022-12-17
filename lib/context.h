@@ -72,6 +72,7 @@ enum trapid {
         TRAP_CALL_INDIRECT_FUNCTYPE_MISMATCH,
         TRAP_INVALID_CONVERSION_TO_INTEGER,
         TRAP_VOLUNTARY_EXIT,
+        TRAP_VOLUNTARY_THREAD_EXIT,
         TRAP_OUT_OF_BOUNDS_DATA_ACCESS,
         TRAP_OUT_OF_BOUNDS_TABLE_ACCESS,
         TRAP_OUT_OF_BOUNDS_ELEMENT_ACCESS,
@@ -151,6 +152,11 @@ struct jump_cache {
         const uint8_t *target;
 };
 
+struct trap_info {
+        enum trapid trapid;
+        uint32_t exit_code; /* wasi */
+};
+
 struct exec_context {
         /* Some cached info about the current frame. */
         struct instance *instance;
@@ -179,8 +185,7 @@ struct exec_context {
         const uint32_t *intrp;
 
         bool trapped; /* used with a combination with EFAULT */
-        enum trapid trapid;
-        uint32_t exit_code; /* wasi */
+        struct trap_info trap;
         struct report *report;
         struct report report0;
 

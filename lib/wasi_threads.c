@@ -50,7 +50,7 @@ struct wasi_threads_instance {
          * async inter-thread communitation mechanisms like signals.
          */
         uint32_t interrupt;
-        uint32_t exit_code;
+        struct trap_info trap;
 };
 
 int
@@ -135,10 +135,10 @@ wasi_threads_interrupt_pointer(struct wasi_threads_instance *inst)
         return &inst->interrupt;
 }
 
-uint32_t
-wasi_threads_exit_code(struct wasi_threads_instance *inst)
+const struct trap_info *
+wasi_threads_instance_get_trap(struct wasi_threads_instance *wasi)
 {
-        return inst->exit_code;
+        return &wasi->trap;
 }
 
 struct thread_arg {
@@ -147,6 +147,28 @@ struct thread_arg {
         uint32_t user_arg;
         int32_t tid;
 };
+
+static bool
+trap_is_local(const struct trap_info *trap)
+{
+        return trap->trapid == TRAP_VOLUNTARY_THREAD_EXIT;
+}
+
+void
+wasi_threads_propagate_trap(struct wasi_threads_instance *wasi,
+                            const struct trap_info *trap)
+{
+        if (trap_is_local(trap)) {
+                return;
+        }
+        toywasm_mutex_lock(&wasi->lock);
+        /* propagate only the first one */
+        if (!wasi->interrupt) {
+                wasi->interrupt = 1; /* tell all threads to terminate */
+                wasi->trap = *trap;
+        }
+        toywasm_mutex_unlock(&wasi->lock);
+}
 
 static void *
 runner(void *vp)
@@ -169,8 +191,8 @@ runner(void *vp)
         ret = instance_execute_func_nocheck(ctx, wasi->thread_start_funcidx,
                                             param, NULL);
         if (ret == EFAULT && ctx->trapped) {
-                /* XXX propagate trap to the whole "process"? */
-                if (ctx->trapid == TRAP_VOLUNTARY_EXIT) {
+                wasi_threads_propagate_trap(wasi, &ctx->trap);
+                if (ctx->trap.trapid == TRAP_VOLUNTARY_EXIT) {
                         xlog_trace(
                                 "%s: wasi_thread_start exited with %" PRIu32,
                                 __func__, ctx->exit_code);
@@ -307,7 +329,7 @@ wasi_thread_exit(struct exec_context *ctx, struct host_instance *hi,
 {
         WASI_TRACE;
         xlog_trace("wasi_thread_exit");
-        return trap_with_id(ctx, TRAP_VOLUNTARY_EXIT, "thread_exit");
+        return trap_with_id(ctx, TRAP_VOLUNTARY_THREAD_EXIT, "thread_exit");
 }
 
 static int
@@ -316,19 +338,9 @@ wasi_proc_exit(struct exec_context *ctx, struct host_instance *hi,
                struct cell *results)
 {
         WASI_TRACE;
-        struct wasi_threads_instance *wasi = (void *)hi;
         HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t code = HOST_FUNC_PARAM(ft, params, 0, i32);
-        toywasm_mutex_lock(&wasi->lock);
-        if (wasi->interrupt) {
-                toywasm_mutex_unlock(&wasi->lock);
-                xlog_trace("%s: already exiting", __func__);
-                return trap_with_id(ctx, TRAP_VOLUNTARY_EXIT, "thread_exit2");
-        }
-        xlog_trace("%s: starting process teardown", __func__);
-        wasi->interrupt = 1; /* signal all threads to exit */
-        wasi->exit_code = code;
-        toywasm_mutex_unlock(&wasi->lock);
+        ctx->trap.exit_code = code;
         return trap_with_id(ctx, TRAP_VOLUNTARY_EXIT,
                             "proc_exit with %" PRIu32, code);
 }

@@ -287,10 +287,10 @@ find_mod(struct repl_state *state, const char *modname,
 }
 
 void
-print_trap(const struct exec_context *ctx)
+print_trap(const struct exec_context *ctx, const struct trap_info *trap)
 {
         /* the messages here are aimed to match assert_trap in wast */
-        enum trapid id = ctx->trapid;
+        enum trapid id = trap->trapid;
         const char *msg = "unknown";
         const char *trapmsg = ctx->report->msg;
         switch (id) {
@@ -351,7 +351,7 @@ repl_exec_init(struct repl_module_state *mod, bool trap_ok)
         exec_context_init(ctx, mod->inst);
         ret = instance_create_execute_init(mod->inst, ctx);
         if (ret == EFAULT && ctx->trapped) {
-                print_trap(ctx);
+                print_trap(ctx, &ctx->trap);
                 if (trap_ok) {
                         ret = 0;
                 }
@@ -797,17 +797,16 @@ toywasm_repl_invoke(struct repl_state *state, const char *modname,
                 exec_context_print_stats(ctx);
         }
         if (ret == EFAULT && ctx->trapped) {
-                if (ctx->trapid == TRAP_VOLUNTARY_EXIT) {
-                        uint32_t exit_code;
+                const struct trap_info *trap = &ctx->trap;
 #if defined(TOYWASM_ENABLE_WASI_THREADS)
-                        if (state->wasi_threads != NULL) {
-                                exit_code = wasi_threads_exit_code(
-                                        state->wasi_threads);
-                        } else
+                if (state->wasi_threads != NULL) {
+                        wasi_threads_propagate_trap(state->wasi_threads, trap);
+                        trap = wasi_threads_instance_get_trap(
+                                state->wasi_threads);
+                }
 #endif
-                        {
-                                exit_code = ctx->exit_code;
-                        }
+                if (trap->trapid == TRAP_VOLUNTARY_EXIT) {
+                        uint32_t exit_code = trap->exit_code;
                         xlog_trace("voluntary exit (%" PRIu32 ")", exit_code);
                         if (exitcodep != NULL) {
                                 *exitcodep = exit_code;
@@ -818,7 +817,7 @@ toywasm_repl_invoke(struct repl_state *state, const char *modname,
                         exec_context_clear(ctx);
                         goto fail;
                 }
-                print_trap(ctx);
+                print_trap(ctx, trap);
         }
         exec_context_clear(ctx);
         if (ret != 0) {

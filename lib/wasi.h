@@ -9,3 +9,6 @@ void wasi_instance_destroy(struct wasi_instance *inst);
 int wasi_instance_prestat_add(struct wasi_instance *inst, const char *path);
 int import_object_create_for_wasi(struct wasi_instance *wasi,
                                   struct import_object **impp);
+
+struct trap_info;
+const struct trap_info *wasi_instance_get_trap(struct wasi_instance *wasi);

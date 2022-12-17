@@ -33,7 +33,12 @@ void wasi_threads_instance_join(struct wasi_threads_instance *inst);
 
 const uint32_t *
 wasi_threads_interrupt_pointer(struct wasi_threads_instance *inst);
-uint32_t wasi_threads_exit_code(struct wasi_threads_instance *inst);
+
+struct trap_info;
+void wasi_threads_propagate_trap(struct wasi_threads_instance *wasi,
+                                 const struct trap_info *trap);
+const struct trap_info *
+wasi_threads_instance_get_trap(struct wasi_threads_instance *wasi);
 
 int import_object_create_for_wasi_threads(struct wasi_threads_instance *wasi,
                                           struct import_object **impp);
