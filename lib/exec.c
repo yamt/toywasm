@@ -1202,34 +1202,60 @@ memory_wait(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
         } else {
                 prev = *(uint32_t *)p;
         }
+
+        struct timespec abstimeout0;
+        const struct timespec *abstimeout;
+        if (timeout_ns < 0) {
+                abstimeout = NULL;
+        } else {
+                /* abstimeout = now + timeout_ns */
+                struct timespec reltimeout;
+                ret = timespec_from_ns(&reltimeout, timeout_ns);
+                if (ret != 0) {
+                        goto fail;
+                }
+                ret = timespec_now(&abstimeout0);
+                if (ret != 0) {
+                        goto fail;
+                }
+                ret = timespec_add(&abstimeout0, &reltimeout, &abstimeout0);
+                if (ret != 0) {
+                        goto fail;
+                }
+                abstimeout = &abstimeout0;
+        }
+retry:
         if (prev != expected) {
                 *resultp = 1; /* not equal */
         } else {
-                struct timespec abstimeout0;
-                const struct timespec *abstimeout;
-                if (timeout_ns < 0) {
-                        abstimeout = NULL;
-                } else {
-                        struct timespec reltimeout;
-                        ret = timespec_from_ns(&reltimeout, timeout_ns);
-                        if (ret != 0) {
-                                goto fail;
-                        }
-                        ret = timespec_now(&abstimeout0);
-                        if (ret != 0) {
-                                goto fail;
-                        }
-                        ret = timespec_add(&abstimeout0, &reltimeout,
-                                           &abstimeout0);
-                        if (ret != 0) {
-                                goto fail;
-                        }
-                        abstimeout = &abstimeout0;
+                static const struct timespec interval = {
+                        .tv_sec = 0,
+                        .tv_nsec = 300000000,
+                };
+                struct timespec tv0;
+                const struct timespec *tv;
+                /* tv = min(abstimeout, now + interval) */
+                ret = timespec_now(&tv0);
+                if (ret != 0) {
+                        goto fail;
                 }
-                ret = atomics_wait(&shared->tab, addr + offset, abstimeout);
+                ret = timespec_add(&tv0, &interval, &tv0);
+                if (ret != 0) {
+                        goto fail;
+                }
+                if (abstimeout != NULL &&
+                    timespec_cmp(&tv0, abstimeout) >= 0) {
+                        tv = abstimeout;
+                } else {
+                        tv = &tv0;
+                }
+                ret = atomics_wait(&shared->tab, addr + offset, tv);
                 if (ret == 0) {
                         *resultp = 0; /* ok */
                 } else if (ret == ETIMEDOUT) {
+                        if (tv != abstimeout) {
+                                goto retry;
+                        }
                         *resultp = 2; /* timed out */
                         ret = 0;
                 }
