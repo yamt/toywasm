@@ -833,6 +833,9 @@ wasi_poll(struct exec_context *ctx, struct pollfd *fds, nfds_t nfds,
                 }
         }
 fail:
+        assert(host_ret >= 0);
+        assert(ret >= 0);
+        assert(host_ret != 0 || ret != 0 || *neventsp > 0);
         *retp = ret;
         return host_ret;
 }
@@ -1896,7 +1899,6 @@ retry:
         if (ret == ETIMEDOUT) {
                 /* timeout is an event */
                 nevents = 1;
-                ret = 0;
         } else if (ret != 0) {
                 xlog_trace("poll_oneoff: wasi_poll failed with %d", ret);
                 goto fail;
@@ -1912,7 +1914,7 @@ retry:
                 ev->rwflags = 0;
                 switch (s->type) {
                 case WASI_EVENTTYPE_CLOCK:
-                        if (ret == 0) {
+                        if (ret == ETIMEDOUT) {
                                 ev++;
                         }
                         break;
