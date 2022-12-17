@@ -1652,11 +1652,12 @@ fail:
 
 static int
 wasi_poll(struct exec_context *ctx, struct pollfd *fds, nfds_t nfds,
-          int timeout_ms, int *neventsp)
+          int timeout_ms, int *poll_ret, int *neventsp)
 {
         const int interval_ms = 300;
         struct timespec abstimeout0;
         struct timespec *abstimeout;
+        int host_ret = 0;
         int ret;
 
         if (timeout_ms < 0) {
@@ -1671,8 +1672,8 @@ wasi_poll(struct exec_context *ctx, struct pollfd *fds, nfds_t nfds,
         while (true) {
                 int next_timeout_ms;
 
-                ret = check_interrupt(ctx);
-                if (ret != 0) {
+                host_ret = check_interrupt(ctx);
+                if (host_ret != 0) {
                         goto fail;
                 }
                 if (abstimeout == NULL) {
@@ -1710,7 +1711,8 @@ wasi_poll(struct exec_context *ctx, struct pollfd *fds, nfds_t nfds,
                 }
         }
 fail:
-        return ret;
+        *poll_ret = ret;
+        return host_ret;
 }
 
 static int
@@ -1730,6 +1732,7 @@ wasi_poll_oneoff(struct exec_context *ctx, struct host_instance *hi,
         struct wasi_fdinfo **fdinfos = NULL;
         uint32_t nfdinfos = 0;
         struct wasi_event *events;
+        int host_ret = 0;
         int ret;
         if (nsubscriptions == 0) {
                 /*
@@ -1838,10 +1841,16 @@ retry:
         }
         xlog_trace("poll_oneoff: start polling");
         int nevents;
-        ret = wasi_poll(ctx, pollfds, nsubscriptions, timeout_ms, &nevents);
+        host_ret = wasi_poll(ctx, pollfds, nsubscriptions, timeout_ms, &ret,
+                             &nevents);
+        if (host_ret != 0) {
+                ret = 0;
+                goto fail;
+        }
         if (ret == ETIMEDOUT) {
                 /* timeout is an event */
                 nevents = 1;
+                ret = 0;
         } else if (ret != 0) {
                 xlog_trace("poll_oneoff: wasi_poll failed with %d", ret);
                 goto fail;
@@ -1881,7 +1890,7 @@ fail:
         free(fdinfos);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
         free(pollfds);
-        return 0;
+        return host_ret;
 }
 
 static int
