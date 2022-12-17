@@ -3,8 +3,7 @@
 #include "type.h"
 
 struct host_func {
-        const struct name *module_name;
-        const struct name name;
+        struct name name;
         const char *type;
         host_func_t func;
 };
