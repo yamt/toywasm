@@ -163,12 +163,12 @@ abstime_to_reltime_ms(const struct timespec *abstime, int *reltime_ms)
                 ret = EOVERFLOW;
                 goto fail;
         }
-        int sec = reltime.tv_sec * 1000;
-        if (INT_MAX - sec < reltime.tv_nsec / 1000000) {
+        int msec = reltime.tv_sec * 1000;
+        if (INT_MAX - msec < reltime.tv_nsec / 1000000) {
                 ret = EOVERFLOW;
                 goto fail;
         }
-        *reltime_ms = sec + reltime.tv_nsec / 1000000;
+        *reltime_ms = msec + reltime.tv_nsec / 1000000;
         return 0;
 fail:
         return ret;
