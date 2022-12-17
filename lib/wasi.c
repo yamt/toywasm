@@ -809,7 +809,7 @@ wasi_poll(struct exec_context *ctx, struct pollfd *fds, nfds_t nfds,
                         if (timespec_cmp(abstimeout, &next) > 0) {
                                 next_timeout_ms = interval_ms;
                         } else {
-                                ret = abstime_to_reltime_ms(&next,
+                                ret = abstime_to_reltime_ms(abstimeout,
                                                             &next_timeout_ms);
                                 if (ret != 0) {
                                         goto fail;
