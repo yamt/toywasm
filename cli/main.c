@@ -260,11 +260,6 @@ main(int argc, char *const *argv)
                 goto fail;
         }
         exit_status = wasi_exit_code;
-#if defined(TOYWASM_ENABLE_WASI_THREADS)
-        if (state->wasi_threads != NULL) {
-                wasi_threads_instance_join(state->wasi_threads);
-        }
-#endif
 fail:
         toywasm_repl_reset(state);
         free(envs);

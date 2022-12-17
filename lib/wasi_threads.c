@@ -70,6 +70,11 @@ wasi_threads_instance_create(struct wasi_threads_instance **instp)
         toywasm_mutex_init(&inst->lock);
         int ret = pthread_cond_init(&inst->cv, NULL);
         assert(ret == 0);
+        /*
+         * if none of threads explicitly exits or traps,
+         * treat as if exit(0).
+         */
+        inst->trap.trapid = TRAP_VOLUNTARY_EXIT;
         *instp = inst;
         return 0;
 }

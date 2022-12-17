@@ -801,6 +801,7 @@ toywasm_repl_invoke(struct repl_state *state, const char *modname,
 #if defined(TOYWASM_ENABLE_WASI_THREADS)
                 if (state->wasi_threads != NULL) {
                         wasi_threads_propagate_trap(state->wasi_threads, trap);
+                        wasi_threads_instance_join(state->wasi_threads);
                         trap = wasi_threads_instance_get_trap(
                                 state->wasi_threads);
                 }
