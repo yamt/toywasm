@@ -337,26 +337,9 @@ wasi_thread_exit(struct exec_context *ctx, struct host_instance *hi,
         return trap_with_id(ctx, TRAP_VOLUNTARY_THREAD_EXIT, "thread_exit");
 }
 
-static int
-wasi_proc_exit(struct exec_context *ctx, struct host_instance *hi,
-               const struct functype *ft, const struct cell *params,
-               struct cell *results)
-{
-        WASI_TRACE;
-        HOST_FUNC_CONVERT_PARAMS(ft, params);
-        uint32_t code = HOST_FUNC_PARAM(ft, params, 0, i32);
-        ctx->trap.exit_code = code;
-        return trap_with_id(ctx, TRAP_VOLUNTARY_EXIT,
-                            "proc_exit with %" PRIu32, code);
-}
-
 const struct host_func wasi_threads_funcs[] = {
         WASI_HOST_FUNC(thread_spawn, "(i)i"),
         WASI_HOST_FUNC(thread_exit, "()"),
-
-        /* override proc_exit */
-        WASI_HOST_FUNC_WITH_MODULE_NAME(wasi_snapshot_preview1, proc_exit,
-                                        "(i)"),
 };
 
 const struct name wasi_threads_module_name = NAME_FROM_CSTR_LITERAL("wasi");
