@@ -151,7 +151,7 @@ abstime_to_reltime_ms(const struct timespec *abstime, int *reltime_ms)
         if (ret != 0) {
                 goto fail;
         }
-        if (timespec_cmp(abstime, &now) > 0) {
+        if (timespec_cmp(abstime, &now) < 0) {
                 *reltime_ms = 0;
                 return 0;
         }
