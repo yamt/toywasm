@@ -631,7 +631,11 @@ wasi_copyin_and_convert_path(struct exec_context *ctx,
 {
         /*
          * TODO: somehow prevent it from escaping the dirwasifd directory.
+         *
          * eg. reject too many ".."s, check symlinks, etc
+         *
+         * probably non-racy implementation is impossible w/o modern
+         * interfaces like openat, O_DIRECTORY, O_NOFOLLOW.
          */
         char *hostpath = NULL;
         char *wasmpath = NULL;
@@ -2281,6 +2285,9 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         xlog_trace("open %s oflags %x", hostpath, oflags);
+        /*
+         * TODO: avoid blocking on fifos for wasi-threads.
+         */
         hostfd = open(hostpath, oflags, 0777);
         if (hostfd == -1) {
                 ret = errno;
