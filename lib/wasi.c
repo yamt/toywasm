@@ -789,6 +789,44 @@ wasi_poll(struct exec_context *ctx, struct pollfd *fds, nfds_t nfds,
         int host_ret = 0;
         int ret;
 
+        /*
+         * Note about timeout
+         *
+         * In POSIX poll, timeout is the minimum interval:
+         *
+         * > poll() shall wait at least timeout milliseconds for an event
+         * > to occur on any of the selected file descriptors.
+         *
+         * > If the requested timeout interval requires a finer granularity
+         * > than the implementation supports, the actual timeout interval
+         * > shall be rounded up to the next supported value.
+         *
+         * Linux agrees with it:
+         * https://www.man7.org/linux/man-pages/man2/poll.2.html
+         *
+         * > Note that the timeout interval will be rounded up to the
+         * > system clock granularity, and kernel scheduling delays mean
+         * > that the blocking interval may overrun by a small amount.
+         *
+         * While the poll(2) of macOS and other BSDs have the text like
+         * the below, which can be (mis)interpreted as being the opposite of
+         * the POSIX behavior, I guess it isn't the intention of the text.
+         * At least the implementation in NetBSD rounds it up to the
+         * system granularity. (HZ/tick)
+         *
+         * > If timeout is greater than zero, it specifies a maximum
+         * > interval (in milliseconds) to wait for any file descriptor to
+         * > become ready.
+         *
+         * While I couldn't find any authoritative text about this in
+         * the WASI spec, I assume it follows the POSIX semantics.
+         * Thus, round up when converting the timespec to ms.
+         * (abstime_to_reltime_ms_roundup)
+         * It also matches the assumption of wasmtime's poll_oneoff_files
+         * test case.
+         * https://github.com/bytecodealliance/wasmtime/blob/93ae9078c5a2588b5241bd7221ace459d2b04d54/crates/test-programs/wasi-tests/src/bin/poll_oneoff_files.rs#L86-L89
+         */
+
         if (timeout_ms < 0) {
                 abstimeout = NULL;
         } else {
@@ -816,8 +854,8 @@ wasi_poll(struct exec_context *ctx, struct pollfd *fds, nfds_t nfds,
                         if (timespec_cmp(abstimeout, &next) > 0) {
                                 next_timeout_ms = interval_ms;
                         } else {
-                                ret = abstime_to_reltime_ms(abstimeout,
-                                                            &next_timeout_ms);
+                                ret = abstime_to_reltime_ms_roundup(
+                                        abstimeout, &next_timeout_ms);
                                 if (ret != 0) {
                                         goto fail;
                                 }
