@@ -957,36 +957,8 @@ toywasm_repl_print_version(void)
 #if defined(__linux__)
         printf("__linux__ defined\n");
 #endif
-#if defined(TOYWASM_USE_SEPARATE_EXECUTE)
-        printf("TOYWASM_USE_SEPARATE_EXECUTE defined\n");
-#endif
-#if defined(TOYWASM_USE_TAILCALL)
-        printf("TOYWASM_USE_TAILCALL defined\n");
-#endif
-#if defined(TOYWASM_ENABLE_TRACING)
-        printf("TOYWASM_ENABLE_TRACING defined\n");
-#endif
-#if defined(TOYWASM_USE_JUMP_BINARY_SEARCH)
-        printf("TOYWASM_USE_JUMP_BINARY_SEARCH defined\n");
-#endif
-#if defined(TOYWASM_USE_JUMP_CACHE)
-        printf("TOYWASM_USE_JUMP_CACHE defined\n");
-#endif
-#if defined(TOYWASM_JUMP_CACHE2_SIZE)
-        printf("TOYWASM_JUMP_CACHE2_SIZE = %u\n", TOYWASM_JUMP_CACHE2_SIZE);
-#endif
-#if defined(TOYWASM_USE_LOCALS_CACHE)
-        printf("TOYWASM_USE_LOCALS_CACHE defined\n");
-#endif
-#if defined(TOYWASM_USE_SEPARATE_LOCALS)
-        printf("TOYWASM_USE_SEPARATE_LOCALS defined\n");
-#endif
-#if defined(TOYWASM_USE_SMALL_CELLS)
-        printf("TOYWASM_USE_SMALL_CELLS defined\n");
-#endif
-#if defined(TOYWASM_ENABLE_WRITER)
-        printf("TOYWASM_ENABLE_WRITER defined\n");
-#endif
+        extern const char *toywasm_config_string;
+        printf("Build-time options:\n%s", toywasm_config_string);
 }
 
 static int

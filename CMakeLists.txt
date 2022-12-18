@@ -176,6 +176,9 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/lib/toywasm_config.h.in"
 	"${CMAKE_BINARY_DIR}/toywasm_config.h")
 include_directories(${CMAKE_BINARY_DIR})
 
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cli/toywasm_config.c.in"
+	"${CMAKE_BINARY_DIR}/toywasm_config.c")
+
 # lib
 
 set(lib_sources
@@ -235,6 +238,7 @@ endif()
 set(cli_sources
 	"cli/main.c"
 	"cli/repl.c"
+	"${CMAKE_BINARY_DIR}/toywasm_config.c"
 )
 
 add_executable(toywasm-cli ${cli_sources})
