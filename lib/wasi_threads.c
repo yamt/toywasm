@@ -195,6 +195,11 @@ runner(void *vp)
         struct exec_context *ctx = &ctx0;
         exec_context_init(ctx, inst);
         ctx->intrp = wasi_threads_interrupt_pointer(wasi);
+
+        /*
+         * Note: the type of this function has already been confirmed by
+         * wasi_threads_instance_set_thread_spawn_args.
+         */
         ret = instance_execute_func_nocheck(ctx, wasi->thread_start_funcidx,
                                             param, NULL);
         if (ret == EFAULT && ctx->trapped) {
@@ -215,7 +220,7 @@ runner(void *vp)
         }
         exec_context_clear(ctx);
         if (ret != 0) {
-                /* what to do? */
+                /* XXX what to do for errors other than traps? */
                 xlog_error("%s: instance_execute_func failed with %d",
                            __func__, ret);
                 goto fail;
@@ -247,6 +252,12 @@ wasi_thread_spawn(struct exec_context *ctx, struct host_instance *hi,
         uint32_t tid;
         int ret;
 
+        /*
+         * When multiple modules are involved, it isn't too obvious
+         * which module to re-instantiate on thread_spawn.
+         * For now, only allow the simplest case.
+         * cf. https://github.com/WebAssembly/wasi-threads/issues/13
+         */
         if (wasi->module != ctx->instance->module) {
                 xlog_trace("%s: module mismatch: %p != %p", __func__,
                            wasi->module, ctx->instance->module);
@@ -299,10 +310,6 @@ wasi_thread_spawn(struct exec_context *ctx, struct host_instance *hi,
         }
         arg = NULL;
 
-        /*
-         * XXX consider a nicer api which can actually manage threads.
-         * for now, just detach and forget.
-         */
         ret = pthread_detach(t);
         if (ret != 0) {
                 /* log and ignore */
