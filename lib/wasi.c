@@ -872,16 +872,9 @@ wasi_poll(struct exec_context *ctx, struct pollfd *fds, nfds_t nfds,
                         ret = 0;
                         break;
                 }
-                if (ret == 0 && abstimeout != NULL) {
-                        struct timespec now;
-                        ret = timespec_now(&now);
-                        if (ret != 0) {
-                                goto fail;
-                        }
-                        if (timespec_cmp(&now, abstimeout) >= 0) {
-                                ret = ETIMEDOUT;
-                                break;
-                        }
+                if (ret == 0 && next_timeout_ms != interval_ms) {
+                        ret = ETIMEDOUT;
+                        break;
                 }
         }
 fail:
