@@ -148,13 +148,6 @@ wasi_threads_instance_get_trap(struct wasi_threads_instance *wasi)
         return &wasi->trap;
 }
 
-struct thread_arg {
-        struct wasi_threads_instance *wasi;
-        struct instance *inst;
-        uint32_t user_arg;
-        int32_t tid;
-};
-
 static bool
 trap_is_local(const struct trap_info *trap)
 {
@@ -176,6 +169,13 @@ wasi_threads_propagate_trap(struct wasi_threads_instance *wasi,
         }
         toywasm_mutex_unlock(&wasi->lock);
 }
+
+struct thread_arg {
+        struct wasi_threads_instance *wasi;
+        struct instance *inst;
+        uint32_t user_arg;
+        int32_t tid;
+};
 
 static void *
 runner(void *vp)
