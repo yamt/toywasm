@@ -520,6 +520,13 @@ wasi_fd_add(struct wasi_instance *wasi, int hostfd, char *path,
 static uint64_t
 timespec_to_ns(const struct timespec *ts)
 {
+        /*
+         * While this might overflow, we don't care much because
+         * it's the limitation of WASI itself.
+         *
+         * Note: WASI timestamps are uint64_t, which wraps at
+         * the year 2554.
+         */
         return (uint64_t)ts->tv_sec * 1000000000 + ts->tv_nsec;
 }
 
