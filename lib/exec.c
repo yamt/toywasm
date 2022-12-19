@@ -793,7 +793,7 @@ exec_expr(uint32_t funcidx, const struct expr *expr,
           struct exec_context *ctx)
 {
         uint32_t nstackused_saved = ctx->stack.lsize;
-        uint32_t n;
+        uint32_t n = 0;
         int ret;
 
         assert(ctx->instance != NULL);
