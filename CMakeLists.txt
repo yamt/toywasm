@@ -198,12 +198,12 @@ set(lib_sources
 	"lib/leb128.c"
 	"lib/module.c"
 	"lib/report.c"
+	"lib/timeutil.c"
 	"lib/type.c"
 	"lib/util.c"
 	"lib/validation.c"
 	"lib/vec.c"
 	"lib/wasi.c"
-	"lib/timeutil.c"
 	"lib/xlog.c"
 )
 
