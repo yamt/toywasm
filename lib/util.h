@@ -1,13 +1,16 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "platform.h"
+
 #define ARRAYCOUNT(a) (sizeof(a) / sizeof(a[0]))
 
-int resize_array(void **p, size_t elem_size, uint32_t new_elem_count);
+int __must_check resize_array(void **p, size_t elem_size,
+                              uint32_t new_elem_count);
 #if defined(__NuttX__)
 #include <stdlib.h> /* NuttX has zalloc() in stdlib */
 #else
-void *zalloc(size_t sz);
+void *__must_check zalloc(size_t sz) __malloc_like __alloc_size(1);
 #endif
 
 #define ARRAY_RESIZE(a, sz) resize_array((void **)&(a), sizeof(*a), sz)
