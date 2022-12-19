@@ -256,6 +256,16 @@ add_test(NAME toywasm-cli-wasm3-spec-test
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 set_tests_properties(toywasm-cli-wasm3-spec-test PROPERTIES ENVIRONMENT "${TEST_ENV}")
+set_tests_properties(toywasm-cli-wasm3-spec-test PROPERTIES LABELS "spec")
+
+if(TOYWASM_ENABLE_WASM_THREADS)
+add_test(NAME toywasm-cli-wasm3-spec-test-threads
+	COMMAND ./test/run-wasm3-spec-test-threads.sh --exec "${CMAKE_BINARY_DIR}/toywasm --repl --repl-prompt wasm3" --timeout 60 --spectest ${CMAKE_BINARY_DIR}/spectest.wasm
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+set_tests_properties(toywasm-cli-wasm3-spec-test-threads PROPERTIES ENVIRONMENT "${TEST_ENV}")
+set_tests_properties(toywasm-cli-wasm3-spec-test-threads PROPERTIES LABELS "spec")
+endif()
 
 add_test(NAME toywasm-cli-wasi-testsuite
 	COMMAND ./test/run-wasi-testsuite.sh
@@ -289,6 +299,7 @@ add_test(NAME toywasm-cli-wasm3-spec-test-disable-optimizations
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 set_tests_properties(toywasm-cli-wasm3-spec-test-disable-optimizations PROPERTIES ENVIRONMENT "${TEST_ENV}")
+set_tests_properties(toywasm-cli-wasm3-spec-test-disable-optimizations PROPERTIES LABELS "spec")
 
 add_test(NAME toywasm-cli-wasm3-wasi-test
 	COMMAND ./test/run-wasm3-wasi-test.sh --exec "${CMAKE_BINARY_DIR}/toywasm --wasi --wasi-dir ." --separate-args --timeout 360
