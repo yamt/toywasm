@@ -35,7 +35,7 @@ jobs:
           - TOYWASM_USE_SMALL_CELLS: ON
             TOYWASM_USE_SEPARATE_LOCALS: ON
           - TOYWASM_ENABLE_WASM_THREADS: OFF
-            TOYWASM_ENABLE_WASM_THREADS: ON
+            TOYWASM_ENABLE_WASI_THREADS: ON
           - os: ubuntu-latest
             BUILD_TYPE: Release
 
