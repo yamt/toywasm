@@ -21,6 +21,8 @@ jobs:
         TOYWASM_ENABLE_TRACING: [ON, OFF]
         TOYWASM_USE_SMALL_CELLS: [ON, OFF]
         TOYWASM_USE_SEPARATE_LOCALS: [ON, OFF]
+        TOYWASM_ENABLE_WASM_THREADS: [ON, OFF]
+        TOYWASM_ENABLE_WASI_THREADS: [ON, OFF]
         exclude:
           - TOYWASM_USE_SEPARATE_EXECUTE: OFF
             TOYWASM_USE_TAILCALL: ON
@@ -32,6 +34,8 @@ jobs:
             TOYWASM_USE_TAILCALL: OFF
           - TOYWASM_USE_SMALL_CELLS: ON
             TOYWASM_USE_SEPARATE_LOCALS: ON
+          - TOYWASM_ENABLE_WASM_THREADS: OFF
+            TOYWASM_ENABLE_WASM_THREADS: ON
           - os: ubuntu-latest
             BUILD_TYPE: Release
 
