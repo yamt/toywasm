@@ -2,23 +2,37 @@
 
 set -e
 
-SPEC_DIR=.spec
-TEST_DIR=.opam-2.0.0
+WAST2JSON=${WAST2JSON:-wast2json}
 
 fetch_spec()
 {
-    REPO=https://github.com/WebAssembly/spec
-    REF=opam-2.0.0
+    SPEC_DIR=$1
+    REPO=$2
+    REF=$3
+    if test -d ${SPEC_DIR}; then
+        return
+    fi
     mkdir "${SPEC_DIR}"
     git -C "${SPEC_DIR}" init
     git -C "${SPEC_DIR}" fetch --depth 1 ${REPO} ${REF}
     git -C "${SPEC_DIR}" checkout FETCH_HEAD
 }
 
-wast2json --version
-test -d "${SPEC_DIR}" || fetch_spec
-(cd ${SPEC_DIR} && find test -name "*.wast") | while read WAST; do
-	D=${TEST_DIR}/$(dirname ${WAST})
-    mkdir -p ${D}
-    wast2json --enable-all -o ${TEST_DIR}/${WAST%%.wast}.json ${SPEC_DIR}/${WAST}
-done
+compile()
+{
+    TEST_DIR=$1
+    while read WAST; do
+        D=${TEST_DIR}/$(dirname ${WAST})
+        mkdir -p ${D}
+        ${WAST2JSON} --enable-all -o ${TEST_DIR}/${WAST%%.wast}.json ${SPEC_DIR}/${WAST}
+    done
+}
+
+${WAST2JSON} --version
+
+fetch_spec .spec https://github.com/WebAssembly/spec opam-2.0.0
+(cd ${SPEC_DIR} && find test -name "*.wast") | compile .
+
+fetch_spec .spec-threads https://github.com/WebAssembly/threads 8e1a7de753fbe6455c33e670352bdfe43b8cc5bd
+# Note: we don't have the test harness necessary for threads.wast
+(cd .spec-threads && find test -name "atomic.wast") | compile threads
