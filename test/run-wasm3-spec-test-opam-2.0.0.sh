@@ -1,10 +1,10 @@
 #! /bin/sh
 
-TEST_DIR=.opam-2.0.0
+TEST_DIR=.wasm-spec-test
 fetch_spec_json()
 {
     REPO=https://github.com/yamt/wasm-spec-test
-    REF=opam-2.0.0
+    REF=783d5b09e7ba1322b85a53071ed7f7e2c70739a2
     mkdir "${TEST_DIR}"
     git -C "${TEST_DIR}" init
     git -C "${TEST_DIR}" fetch --depth 1 ${REPO} ${REF}
