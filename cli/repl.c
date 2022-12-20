@@ -819,6 +819,12 @@ toywasm_repl_invoke(struct repl_state *state, const char *modname,
                         goto fail;
                 }
                 print_trap(ctx, trap);
+        } else {
+#if defined(TOYWASM_ENABLE_WASI_THREADS)
+                if (state->wasi_threads != NULL) {
+                        wasi_threads_instance_join(state->wasi_threads);
+                }
+#endif
         }
         exec_context_clear(ctx);
         if (ret != 0) {
