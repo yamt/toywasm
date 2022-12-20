@@ -226,6 +226,7 @@ runner(void *vp)
                 goto fail;
         }
 fail:
+        instance_destroy(inst);
         toywasm_mutex_lock(&wasi->lock);
         idalloc_free(&wasi->tids, tid);
         assert(wasi->nrunners > 0);
@@ -235,7 +236,6 @@ fail:
                 assert(ret == 0);
         }
         toywasm_mutex_unlock(&wasi->lock);
-        instance_destroy(inst);
         return NULL;
 }
 
@@ -248,6 +248,7 @@ wasi_thread_spawn(struct exec_context *ctx, struct host_instance *hi,
         struct wasi_threads_instance *wasi = (void *)hi;
         HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t user_arg = HOST_FUNC_PARAM(ft, params, 0, i32);
+        struct instance *inst = NULL;
         struct thread_arg *arg = NULL;
         uint32_t tid;
         int ret;
@@ -272,7 +273,6 @@ wasi_thread_spawn(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
 
-        struct instance *inst;
         struct report report;
         report_init(&report);
         ret = instance_create(wasi->module, &inst, ctx->instance,
@@ -308,6 +308,7 @@ wasi_thread_spawn(struct exec_context *ctx, struct host_instance *hi,
                 xlog_trace("%s: pthread_create failed with %d", __func__, ret);
                 goto fail;
         }
+        inst = NULL;
         arg = NULL;
 
         ret = pthread_detach(t);
@@ -323,6 +324,9 @@ wasi_thread_spawn(struct exec_context *ctx, struct host_instance *hi,
         toywasm_mutex_unlock(&wasi->lock);
 
 fail:
+        if (inst != NULL) {
+                instance_destroy(inst);
+        }
         free(arg);
         int32_t result;
         if (ret != 0) {
