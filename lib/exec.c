@@ -1217,12 +1217,6 @@ memory_wait(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
                 return ret;
         }
         assert((lock == NULL) == (shared == NULL));
-        uint64_t prev;
-        if (is64) {
-                prev = *(uint64_t *)p;
-        } else {
-                prev = *(uint32_t *)p;
-        }
 
         struct timespec abstimeout0;
         const struct timespec *abstimeout;
@@ -1239,6 +1233,12 @@ retry:
         ret = check_interrupt(ctx);
         if (ret != 0) {
                 goto fail;
+        }
+        uint64_t prev;
+        if (is64) {
+                prev = *(uint64_t *)p;
+        } else {
+                prev = *(uint32_t *)p;
         }
         if (prev != expected) {
                 *resultp = 1; /* not equal */
