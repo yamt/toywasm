@@ -780,7 +780,8 @@ check_interrupt(struct exec_context *ctx)
 {
         if (ctx->intrp != NULL && *ctx->intrp != 0) {
                 xlog_trace("get interrupt");
-                return trap_with_id(ctx, TRAP_VOLUNTARY_EXIT, "interrupt");
+                return trap_with_id(ctx, TRAP_VOLUNTARY_THREAD_EXIT,
+                                    "interrupt");
         }
         return 0;
 }
