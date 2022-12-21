@@ -208,14 +208,15 @@ runner(void *vp)
                     ctx->trap.trapid == TRAP_VOLUNTARY_THREAD_EXIT) {
                         xlog_trace(
                                 "%s: wasi_thread_start exited with %" PRIu32,
-                                __func__, ctx->exit_code);
+                                __func__, ctx->trap.exit_code);
                         ret = 0;
                 } else if (ctx->report->msg != NULL) {
                         xlog_trace("%s: wasi_thread_start trapped %u: %s",
-                                   __func__, ctx->trapid, ctx->report->msg);
+                                   __func__, ctx->trap.trapid,
+                                   ctx->report->msg);
                 } else {
                         xlog_trace("%s: wasi_thread_start trapped %u",
-                                   __func__, ctx->trapid);
+                                   __func__, ctx->trap.trapid);
                 }
         }
         exec_context_clear(ctx);
