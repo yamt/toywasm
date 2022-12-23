@@ -1,6 +1,11 @@
 #define _POSIX_C_SOURCE 199509L /* flockfile, clock_gettime */
 
+#include "toywasm_config.h"
+
 #include <inttypes.h>
+#if defined(TOYWASM_ENABLE_WASM_THREADS)
+#include <pthread.h>
+#endif
 #include <stdarg.h>
 #include <stdio.h>
 #include <time.h>
@@ -30,6 +35,10 @@ xlog_vprintf(const char *fmt, va_list ap)
         flockfile(stderr);
         fprintf(stderr, "%s (%ju.%09ld): ", buf, (uintmax_t)ts.tv_sec,
                 ts.tv_nsec);
+#if defined(TOYWASM_ENABLE_WASM_THREADS)
+        pthread_t self = pthread_self();
+        fprintf(stderr, "[%jx] ", (uintmax_t)self);
+#endif
         vfprintf(stderr, fmt, ap);
         funlockfile(stderr);
 }
