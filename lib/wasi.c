@@ -889,6 +889,12 @@ fail:
         return host_ret;
 }
 
+/*
+ * Note: this is of cource racy. even if this function found the fd ready,
+ * other thread might consume it in the meantime.
+ *
+ * a solution: use non-blocking i/o.
+ */
 static int
 wait_fd_ready(struct exec_context *ctx, int hostfd, short event, int *retp)
 {
