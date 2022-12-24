@@ -22,6 +22,7 @@
 int
 vtrap(struct exec_context *ctx, enum trapid id, const char *fmt, va_list ap)
 {
+        assert(!ctx->trapped);
         ctx->trapped = true;
         ctx->trap.trapid = id;
         vreport(ctx->report, fmt, ap);
