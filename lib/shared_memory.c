@@ -16,6 +16,12 @@ _dtor(struct import_object *imo)
         }
 }
 
+/*
+ * create shared memories to satisfy all shared memory imports
+ * in the module.
+ *
+ * used for wasi-threads.
+ */
 int
 create_satisfying_shared_memories(struct module *m,
                                   struct import_object **imop)
