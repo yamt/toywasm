@@ -13,7 +13,7 @@
 #include "insn.h"
 #include "leb128.h"
 #include "platform.h"
-#include "shared_memory.h"
+#include "shared_memory_impl.h"
 #include "timeutil.h"
 #include "type.h"
 #include "util.h"

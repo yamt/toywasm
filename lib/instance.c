@@ -9,7 +9,7 @@
 #include "exec.h"
 #include "instance.h"
 #include "module.h"
-#include "shared_memory.h"
+#include "shared_memory_impl.h"
 #include "type.h"
 #include "util.h"
 #include "xlog.h"
