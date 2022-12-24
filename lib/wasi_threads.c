@@ -276,8 +276,7 @@ wasi_thread_spawn(struct exec_context *ctx, struct host_instance *hi,
 
         struct report report;
         report_init(&report);
-        ret = instance_create(wasi->module, &inst, ctx->instance,
-                              wasi->imports, &report);
+        ret = instance_create(wasi->module, &inst, wasi->imports, &report);
         if (report.msg != NULL) {
                 xlog_trace("%s: instance_create: %s", __func__, report.msg);
         }

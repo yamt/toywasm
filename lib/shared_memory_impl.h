@@ -10,9 +10,7 @@ struct shared_meminst {
 
         /*
          * to serialize memory.grow etc on a shared memory.
-         * this lock also protects the refcount below.
          */
         TOYWASM_MUTEX_DEFINE(lock);
-        uint32_t refcount GUARDED_VAR(lock);
 };
 #endif

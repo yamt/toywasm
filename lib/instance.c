@@ -200,7 +200,6 @@ memory_instance_create(struct meminst **mip,
                 mp->size_in_pages = need_in_pages;
                 waiter_list_table_init(&mp->shared->tab);
                 toywasm_mutex_init(&mp->shared->lock);
-                mp->shared->refcount = 1;
         } else
 #endif
         {
@@ -213,21 +212,13 @@ fail:
         return ret;
 }
 
-static void
-memory_instance_free(struct meminst *mi)
+void
+memory_instance_destroy(struct meminst *mi)
 {
         if (mi != NULL) {
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
                 struct shared_meminst *shared = mi->shared;
                 if (shared != NULL) {
-                        toywasm_mutex_lock(&shared->lock);
-                        assert(shared->refcount > 0);
-                        shared->refcount--;
-                        if (shared->refcount > 0) {
-                                toywasm_mutex_unlock(&shared->lock);
-                                return;
-                        }
-                        toywasm_mutex_unlock(&shared->lock);
                         toywasm_mutex_destroy(&shared->lock);
                         free(shared);
                 }
@@ -237,24 +228,17 @@ memory_instance_free(struct meminst *mi)
         free(mi);
 }
 
-void
-memory_instance_destroy(struct meminst *mi)
-{
-        memory_instance_free(mi);
-}
-
 /* https://webassembly.github.io/spec/core/exec/modules.html#exec-instantiation
  */
 
 int
 instance_create(struct module *m, struct instance **instp,
-                struct instance *parent, const struct import_object *imports,
-                struct report *report)
+                const struct import_object *imports, struct report *report)
 {
         struct instance *inst;
         int ret;
 
-        ret = instance_create_no_init(m, &inst, parent, imports, report);
+        ret = instance_create_no_init(m, &inst, imports, report);
         if (ret != 0) {
                 return ret;
         }
@@ -276,7 +260,6 @@ instance_create(struct module *m, struct instance **instp,
 
 int
 instance_create_no_init(struct module *m, struct instance **instp,
-                        struct instance *parent,
                         const struct import_object *imports,
                         struct report *report)
 {
@@ -340,19 +323,6 @@ instance_create_no_init(struct module *m, struct instance **instp,
                         assert(e->type == IMPORT_MEMORY);
                         mp = e->u.mem;
                         assert(mp != NULL);
-#if defined(TOYWASM_ENABLE_WASM_THREADS)
-                } else if ((mt->flags & MEMTYPE_FLAG_SHARED) != 0 &&
-                           parent != NULL) {
-                        /* inherit from the parent instance. */
-                        mp = VEC_ELEM(parent->mems, i);
-                        assert(mp->type == mt);
-                        struct shared_meminst *shared = mp->shared;
-                        assert(shared != NULL);
-                        toywasm_mutex_lock(&shared->lock);
-                        assert(shared->refcount > 0);
-                        shared->refcount++;
-                        toywasm_mutex_unlock(&shared->lock);
-#endif
                 } else {
                         ret = memory_instance_create(&mp, mt);
                         if (ret != 0) {
@@ -540,7 +510,7 @@ instance_destroy(struct instance *inst)
                 if (i < m->nimportedmems) {
                         continue;
                 }
-                memory_instance_free(*mp);
+                memory_instance_destroy(*mp);
         }
         VEC_FREE(inst->mems);
         struct globalinst **gp;

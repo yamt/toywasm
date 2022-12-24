@@ -408,7 +408,7 @@ repl_load_from_buf(struct repl_state *state, const char *modname,
 
         struct report report;
         report_init(&report);
-        ret = instance_create_no_init(mod->module, &mod->inst, NULL, imports,
+        ret = instance_create_no_init(mod->module, &mod->inst, imports,
                                       &report);
         if (report.msg != NULL) {
                 xlog_error("instance_create: %s", report.msg);
