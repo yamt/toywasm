@@ -240,7 +240,7 @@ memory_instance_free(struct meminst *mi)
 void
 memory_instance_destroy(struct meminst *mi)
 {
-	memory_instance_free(mi);
+        memory_instance_free(mi);
 }
 
 /* https://webassembly.github.io/spec/core/exec/modules.html#exec-instantiation

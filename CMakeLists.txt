@@ -213,6 +213,7 @@ list(APPEND lib_sources
 	"lib/waitlist.c")
 if(TOYWASM_ENABLE_WASI_THREADS)
 list(APPEND lib_sources
+	"lib/shared_memory.c"
 	"lib/wasi_threads.c")
 endif()
 endif()

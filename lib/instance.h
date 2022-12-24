@@ -67,3 +67,6 @@ struct meminst;
 struct memtype;
 int memory_instance_create(struct meminst **mip, const struct memtype *mt);
 void memory_instance_destroy(struct meminst *mi);
+
+int create_satisfying_shared_memories(struct module *module,
+                                      struct import_object **imop);
