@@ -162,7 +162,7 @@ check_globaltype(const struct import_object_entry *e, const void *vp)
         return 0;
 }
 
-static int
+int
 memory_instance_create(struct meminst **mip,
                        const struct memtype *mt) NO_THREAD_SAFETY_ANALYSIS
 {
@@ -235,6 +235,12 @@ memory_instance_free(struct meminst *mi)
                 free(mi->data);
         }
         free(mi);
+}
+
+void
+memory_instance_destroy(struct meminst *mi)
+{
+	memory_instance_free(mi);
 }
 
 /* https://webassembly.github.io/spec/core/exec/modules.html#exec-instantiation

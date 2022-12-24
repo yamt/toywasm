@@ -62,3 +62,8 @@ int import_object_create_for_exports(struct instance *inst,
                                      struct import_object **resultp);
 void import_object_destroy(struct import_object *export);
 int import_object_alloc(uint32_t nentries, struct import_object **resultp);
+
+struct meminst;
+struct memtype;
+int memory_instance_create(struct meminst **mip, const struct memtype *mt);
+void memory_instance_destroy(struct meminst *mi);
