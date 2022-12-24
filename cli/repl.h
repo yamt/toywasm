@@ -17,6 +17,9 @@ struct repl_module_state {
         bool buf_mapped;
         struct module *module;
         struct instance *inst;
+#if defined(TOYWASM_ENABLE_WASI_THREADS)
+        struct import_object *extra_import;
+#endif
 };
 
 /* eg. const.wast has 366 modules */

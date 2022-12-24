@@ -141,6 +141,12 @@ repl_unload(struct repl_module_state *mod)
                 free(mod->name);
                 mod->name = NULL;
         }
+#if defined(TOYWASM_ENABLE_WASI_THREADS)
+        if (mod->extra_import != NULL) {
+                import_object_destroy(mod->extra_import);
+                mod->extra_import = NULL;
+        }
+#endif
 }
 
 void
@@ -386,10 +392,24 @@ repl_load_from_buf(struct repl_state *state, const char *modname,
                 xlog_printf("module_load failed\n");
                 goto fail;
         }
+
+        struct import_object *imports = state->imports;
+#if defined(TOYWASM_ENABLE_WASI_THREADS)
+        /* create matching shared memory automatically */
+        struct import_object *imo;
+        ret = create_satisfying_shared_memories(mod->module, &imo);
+        if (ret != 0) {
+                goto fail;
+        }
+        mod->extra_import = imo;
+        imo->next = imports;
+        imports = imo;
+#endif
+
         struct report report;
         report_init(&report);
-        ret = instance_create_no_init(mod->module, &mod->inst, NULL,
-                                      state->imports, &report);
+        ret = instance_create_no_init(mod->module, &mod->inst, NULL, imports,
+                                      &report);
         if (report.msg != NULL) {
                 xlog_error("instance_create: %s", report.msg);
                 printf("instantiation error: %s\n", report.msg);

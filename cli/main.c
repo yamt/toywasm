@@ -240,10 +240,10 @@ main(int argc, char *const *argv)
         }
 #if defined(TOYWASM_ENABLE_WASI_THREADS)
         if (state->wasi_threads != NULL) {
+                const struct repl_module_state *mod =
+                        &state->modules[state->nmodules - 1];
                 ret = wasi_threads_instance_set_thread_spawn_args(
-                        state->wasi_threads,
-                        state->modules[state->nmodules - 1].module,
-                        state->imports);
+                        state->wasi_threads, mod->module, mod->extra_import);
                 if (ret != 0) {
                         xlog_error("wasi_threads_instance_set_thread_spawn_"
                                    "args failed with %d",
