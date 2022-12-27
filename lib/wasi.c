@@ -25,6 +25,7 @@
 #endif
 
 #include <sys/random.h> /* getrandom */
+#include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/uio.h>
@@ -2336,6 +2337,7 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
         uint32_t r = host_to_le32(wasifd);
         ret = wasi_copyout(ctx, &r, retp, sizeof(r));
         if (ret != 0) {
+                /* XXX close wasifd? */
                 goto fail;
         }
 fail:
@@ -2766,6 +2768,65 @@ wasi_sched_yield(struct exec_context *ctx, struct host_instance *hi,
         return 0;
 }
 
+static int
+wasi_sock_accept(struct exec_context *ctx, struct host_instance *hi,
+                 const struct functype *ft, const struct cell *params,
+                 struct cell *results)
+{
+        WASI_TRACE;
+        struct wasi_instance *wasi = (void *)hi;
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
+        uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
+#if 0 /* TODO: WASI_FDFLAG_NONBLOCK */
+        uint32_t fdflags = HOST_FUNC_PARAM(ft, params, 1, i32);
+#endif
+        uint32_t retp = HOST_FUNC_PARAM(ft, params, 2, i32);
+        struct wasi_fdinfo *fdinfo = NULL;
+        int hostfd;
+        int hostchildfd = -1;
+        int host_ret = 0;
+        int ret;
+        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
+        if (ret != 0) {
+                goto fail;
+        }
+        host_ret = wait_fd_ready(ctx, hostfd, POLLIN, &ret);
+        if (host_ret != 0) {
+                ret = 0;
+                goto fail;
+        }
+        if (ret != 0) {
+                goto fail;
+        }
+        struct sockaddr_storage ss;
+        struct sockaddr *sa = (void *)&ss;
+        socklen_t salen;
+        hostchildfd = accept(hostfd, sa, &salen);
+        if (hostchildfd < 0) {
+                ret = errno;
+                assert(ret > 0);
+                goto fail;
+        }
+        uint32_t wasichildfd;
+        ret = wasi_fd_add(wasi, hostchildfd, NULL, &wasichildfd);
+        if (ret != 0) {
+                goto fail;
+        }
+        hostchildfd = -1;
+        uint32_t r = host_to_le32(wasichildfd);
+        ret = wasi_copyout(ctx, &r, retp, sizeof(r));
+        if (ret != 0) {
+                /* XXX close wasichildfd? */
+                goto fail;
+        }
+fail:
+        if (hostchildfd == -1) {
+                close(hostchildfd);
+        }
+        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
+        return host_ret;
+}
+
 const struct host_func wasi_funcs[] = {
         WASI_HOST_FUNC(proc_exit, "(i)"),
         WASI_HOST_FUNC(fd_advise, "(iIIi)i"),
@@ -2806,6 +2867,12 @@ const struct host_func wasi_funcs[] = {
         WASI_HOST_FUNC(path_filestat_get, "(iiiii)i"),
         WASI_HOST_FUNC(path_filestat_set_times, "(iiiiIIi)i"),
         WASI_HOST_FUNC(sched_yield, "()i"),
+        WASI_HOST_FUNC(sock_accept, "(iii)i"),
+#if 0 /* TODO */
+        WASI_HOST_FUNC(sock_recv, "(iiiiii)i"),
+        WASI_HOST_FUNC(sock_send, "(iiiii)i"),
+        WASI_HOST_FUNC(sock_shutdown, "(ii)i"),
+#endif
         /* TODO implement the rest of the api */
 };
 
