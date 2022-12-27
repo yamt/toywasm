@@ -1471,8 +1471,14 @@ wasi_fd_fdstat_get(struct exec_context *ctx, struct host_instance *hi,
                         goto fail;
                 }
                 st.fs_filetype = wasi_convert_filetype(stat.st_mode);
+                int flags = fcntl(hostfd, F_GETFL, 0);
+                if ((flags & O_NONBLOCK) != 0) {
+                        st.fs_flags |= WASI_FDFLAG_NONBLOCK;
+                }
+                if ((flags & O_APPEND) != 0) {
+                        st.fs_flags |= WASI_FDFLAG_APPEND;
+                }
         }
-        /* TODO fs_flags */
         /* TODO fs_rights_base */
         /* TODO fs_rights_inheriting */
 
