@@ -2810,7 +2810,12 @@ wasi_sock_accept(struct exec_context *ctx, struct host_instance *hi,
         struct sockaddr_storage ss;
         struct sockaddr *sa = (void *)&ss;
         socklen_t salen;
+#if defined(TOYWASM_OLD_WASI_LIBC)
+        errno = ENOSYS;
+        hostchildfd = -1;
+#else
         hostchildfd = accept(hostfd, sa, &salen);
+#endif
         if (hostchildfd < 0) {
                 ret = errno;
                 assert(ret > 0);
