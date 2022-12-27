@@ -74,7 +74,8 @@ struct wasi_fdinfo {
          *   hostfd == -1 (for now)
          *
          * - files opened by user
-         *   prestat_path == NULL
+         *   prestat_path != NULL (DIR)
+         *   prestat_path == NULL (!DIR)
          *   hostfd != -1
          *
          * - closed descriptors (EBADF)
@@ -1459,7 +1460,7 @@ wasi_fd_fdstat_get(struct exec_context *ctx, struct host_instance *hi,
         }
         struct wasi_fdstat st;
         memset(&st, 0, sizeof(st));
-        if (fdinfo->prestat_path != NULL) {
+        if (fdinfo_is_prestat(fdinfo)) {
                 st.fs_filetype = WASI_FILETYPE_DIRECTORY;
         } else {
                 struct stat stat;
@@ -2340,6 +2341,17 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
                 xlog_trace("open %s oflags %x failed with %d", hostpath,
                            oflags, errno);
                 goto fail;
+        }
+        struct stat stat;
+        ret = fstat(hostfd, &stat);
+        if (ret != 0) {
+                ret = errno;
+                assert(ret > 0);
+                goto fail;
+        }
+        if (!S_ISDIR(stat.st_mode)) {
+                free(hostpath);
+                hostpath = NULL;
         }
         uint32_t wasifd;
         ret = wasi_fd_add(wasi, hostfd, hostpath, &wasifd);
