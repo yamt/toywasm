@@ -270,6 +270,25 @@ fail:
         return ret;
 }
 
+int
+set_nonblocking(int fd, bool nonblocking)
+{
+        int flags = fcntl(fd, F_GETFL, 0);
+        int newflags = flags & ~O_NONBLOCK;
+        if (nonblocking) {
+                newflags |= O_NONBLOCK;
+        }
+        int ret = 0;
+        if (flags != newflags) {
+                ret = fcntl(fd, F_SETFL, newflags);
+                if (ret == -1) {
+                        ret = errno;
+                        assert(ret > 0);
+                }
+        }
+        return ret;
+}
+
 static bool
 wasi_fdinfo_unused(struct wasi_fdinfo *fdinfo)
 {
