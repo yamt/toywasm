@@ -20,6 +20,15 @@
 #define _DARWIN_C_SOURCE       /* arc4random_buf */
 #define _GNU_SOURCE            /* asprintf, realpath, O_DIRECTORY */
 
+#if defined(__wasi__)
+/*
+ * wasi-libc bug workaround.
+ * https://github.com/WebAssembly/wasi-libc/pull/375
+ */
+#undef __STDC_VERSION__
+#define __STDC_VERSION__ 201112L
+#endif
+
 #if defined(__NuttX__)
 #include <nuttx/config.h>
 #endif
