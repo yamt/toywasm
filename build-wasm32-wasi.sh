@@ -4,7 +4,7 @@ set -e
 
 MAJOR=${WASI_SDK_MAJOR:-17}
 MINOR=${WASI_SDK_MINOR:-0}
-WASI_SDK_DIR=.wasi-sdk-${MAJOR}.${MINOR}
+WASI_SDK_DIR=${WASI_SDK_DIR:-$(pwd)/.wasi-sdk-${MAJOR}.${MINOR}}
 DIST_DIR=.dist
 
 BUILD_DIR=${BUILD_DIR:-build.wasm}
@@ -41,7 +41,7 @@ test -d "${WASI_SDK_DIR}" || fetch_wasi_sdk
 # see also: https://github.com/WebAssembly/tail-call
 cmake \
 -B ${BUILD_DIR} \
--DWASI_SDK_PREFIX=$(pwd)/${WASI_SDK_DIR} \
+-DWASI_SDK_PREFIX=${WASI_SDK_DIR} \
 -DCMAKE_TOOLCHAIN_FILE=${WASI_SDK_DIR}/share/cmake/wasi-sdk.cmake \
 -DBUILD_TESTING=OFF \
 -DTOYWASM_USE_TAILCALL=OFF \
