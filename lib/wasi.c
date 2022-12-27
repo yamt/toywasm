@@ -795,6 +795,7 @@ wasi_convert_errno(int host_errno)
                 break;
 #endif
         default:
+                xlog_error("Converting unimplemnetd errno: %u", host_errno);
                 wasmerrno = 29; /* EIO */
         }
         xlog_trace("error converted from %u to %" PRIu32, host_errno,
