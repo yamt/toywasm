@@ -756,6 +756,9 @@ wasi_convert_errno(int host_errno)
         case EBADF:
                 wasmerrno = 8;
                 break;
+        case ECONNRESET:
+                wasmerrno = 15;
+                break;
         case EEXIST:
                 wasmerrno = 20;
                 break;
