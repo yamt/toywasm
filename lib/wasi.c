@@ -86,6 +86,7 @@ struct wasi_fdinfo {
         int hostfd;
         DIR *dir;
         uint32_t refcount;
+        uint32_t blocking;
 };
 
 struct wasi_instance {
@@ -300,6 +301,13 @@ set_nonblocking(int fd, bool nonblocking)
         return ret;
 }
 
+int
+is_again(int error)
+{
+        /* handle a BSD vs SYSV historical mess */
+        return (error == EWOULDBLOCK || error == EAGAIN);
+}
+
 static bool
 wasi_fdinfo_unused(struct wasi_fdinfo *fdinfo)
 {
@@ -317,6 +325,7 @@ wasi_fdinfo_alloc(void)
         fdinfo->dir = NULL;
         fdinfo->prestat_path = NULL;
         fdinfo->refcount = 0;
+        fdinfo->blocking = 1;
         assert(wasi_fdinfo_unused(fdinfo));
         return fdinfo;
 }
@@ -761,7 +770,14 @@ wasi_convert_errno(int host_errno)
         case EACCES:
                 wasmerrno = 2;
                 break;
+        /*
+         * Note: in WASI EWOULDBLOCK == EAGAIN.
+         * We don't assume EWOULDBLOCK == EAGAIN for the host.
+         */
         case EAGAIN:
+#if EAGAIN != EWOULDBLOCK
+        case EWOULDBLOCK:
+#endif
                 wasmerrno = 6;
                 break;
         case EBADF:
@@ -1473,7 +1489,7 @@ wasi_fd_fdstat_get(struct exec_context *ctx, struct host_instance *hi,
                 }
                 st.fs_filetype = wasi_convert_filetype(stat.st_mode);
                 int flags = fcntl(hostfd, F_GETFL, 0);
-                if ((flags & O_NONBLOCK) != 0) {
+                if (!fdinfo->blocking) {
                         st.fs_flags |= WASI_FDFLAG_NONBLOCK;
                 }
                 if ((flags & O_APPEND) != 0) {
@@ -1507,16 +1523,15 @@ wasi_fd_fdstat_set_flags(struct exec_context *ctx, struct host_instance *hi,
         struct wasi_instance *wasi = (void *)hi;
         HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
-#if 0
         uint32_t fdflags = HOST_FUNC_PARAM(ft, params, 1, i32);
-#endif
         struct wasi_fdinfo *fdinfo = NULL;
         int ret;
         ret = wasi_fd_lookup(wasi, wasifd, &fdinfo);
         if (ret != 0) {
                 goto fail;
         }
-        /* TODO implement */
+        fdinfo->blocking = ((fdflags & WASI_FDFLAG_NONBLOCK) == 0);
+        /* TODO implement other flags */
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
@@ -2817,13 +2832,20 @@ wasi_sock_accept(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        host_ret = wait_fd_ready(ctx, hostfd, POLLIN, &ret);
-        if (host_ret != 0) {
-                ret = 0;
-                goto fail;
-        }
+        ret = set_nonblocking(hostfd, true); /* XXX shouldn't be here */
         if (ret != 0) {
                 goto fail;
+        }
+retry:
+        if (fdinfo->blocking) {
+                host_ret = wait_fd_ready(ctx, hostfd, POLLIN, &ret);
+                if (host_ret != 0) {
+                        ret = 0;
+                        goto fail;
+                }
+                if (ret != 0) {
+                        goto fail;
+                }
         }
         struct sockaddr_storage ss;
         struct sockaddr *sa = (void *)&ss;
@@ -2837,6 +2859,9 @@ wasi_sock_accept(struct exec_context *ctx, struct host_instance *hi,
         if (hostchildfd < 0) {
                 ret = errno;
                 assert(ret > 0);
+                if (fdinfo->blocking && is_again(ret)) {
+                        goto retry;
+                }
                 goto fail;
         }
         uint32_t wasichildfd;
