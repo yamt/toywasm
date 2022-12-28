@@ -1186,18 +1186,19 @@ wasi_fd_write(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        host_ret = wait_fd_ready(ctx, hostfd, POLLOUT, &ret);
-        if (host_ret != 0) {
-                ret = 0;
-                goto fail;
-        }
-        if (ret != 0) {
-                goto fail;
-        }
-        ssize_t n = writev(hostfd, hostiov, iov_count);
+        ssize_t n;
+retry:
+        n = writev(hostfd, hostiov, iov_count);
         if (n == -1) {
                 ret = errno;
                 assert(ret > 0);
+                if (emulate_blocking(ctx, fdinfo, POLLOUT, ret, &host_ret,
+                                     &ret)) {
+                        goto retry;
+                }
+                if (host_ret != 0 || ret != 0) {
+                        goto fail;
+                }
                 goto fail;
         }
         if (n > UINT32_MAX) {
@@ -1243,18 +1244,19 @@ wasi_fd_pwrite(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        host_ret = wait_fd_ready(ctx, hostfd, POLLOUT, &ret);
-        if (host_ret != 0) {
-                ret = 0;
-                goto fail;
-        }
-        if (ret != 0) {
-                goto fail;
-        }
-        ssize_t n = pwritev(hostfd, hostiov, iov_count, offset);
+        ssize_t n;
+retry:
+        n = pwritev(hostfd, hostiov, iov_count, offset);
         if (n == -1) {
                 ret = errno;
                 assert(ret > 0);
+                if (emulate_blocking(ctx, fdinfo, POLLOUT, ret, &host_ret,
+                                     &ret)) {
+                        goto retry;
+                }
+                if (host_ret != 0 || ret != 0) {
+                        goto fail;
+                }
                 goto fail;
         }
         if (n > UINT32_MAX) {
@@ -1299,18 +1301,19 @@ wasi_fd_read(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        host_ret = wait_fd_ready(ctx, hostfd, POLLIN, &ret);
-        if (host_ret != 0) {
-                ret = 0;
-                goto fail;
-        }
-        if (ret != 0) {
-                goto fail;
-        }
-        ssize_t n = readv(hostfd, hostiov, iov_count);
+        ssize_t n;
+retry:
+        n = readv(hostfd, hostiov, iov_count);
         if (n == -1) {
                 ret = errno;
                 assert(ret > 0);
+                if (emulate_blocking(ctx, fdinfo, POLLIN, ret, &host_ret,
+                                     &ret)) {
+                        goto retry;
+                }
+                if (host_ret != 0 || ret != 0) {
+                        goto fail;
+                }
                 goto fail;
         }
         if (n > UINT32_MAX) {
@@ -1356,18 +1359,19 @@ wasi_fd_pread(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        host_ret = wait_fd_ready(ctx, hostfd, POLLIN, &ret);
-        if (host_ret != 0) {
-                ret = 0;
-                goto fail;
-        }
-        if (ret != 0) {
-                goto fail;
-        }
-        ssize_t n = preadv(hostfd, hostiov, iov_count, offset);
+        ssize_t n;
+retry:
+        n = preadv(hostfd, hostiov, iov_count, offset);
         if (n == -1) {
                 ret = errno;
                 assert(ret > 0);
+                if (emulate_blocking(ctx, fdinfo, POLLIN, ret, &host_ret,
+                                     &ret)) {
+                        goto retry;
+                }
+                if (host_ret != 0 || ret != 0) {
+                        goto fail;
+                }
                 goto fail;
         }
         if (n > UINT32_MAX) {
