@@ -2860,52 +2860,76 @@ fail:
 }
 
 const struct host_func wasi_funcs[] = {
-        WASI_HOST_FUNC(proc_exit, "(i)"),
+        /* args */
+        WASI_HOST_FUNC(args_get, "(ii)i"),
+        WASI_HOST_FUNC(args_sizes_get, "(ii)i"),
+
+        /* clock */
+        WASI_HOST_FUNC(clock_res_get, "(ii)i"),
+        WASI_HOST_FUNC(clock_time_get, "(iIi)i"),
+
+        /* environ */
+        WASI_HOST_FUNC(environ_get, "(ii)i"),
+        WASI_HOST_FUNC(environ_sizes_get, "(ii)i"),
+
+        /* fd */
         WASI_HOST_FUNC(fd_advise, "(iIIi)i"),
         WASI_HOST_FUNC(fd_allocate, "(iII)i"),
-        WASI_HOST_FUNC(fd_filestat_set_size, "(iI)i"),
         WASI_HOST_FUNC(fd_close, "(i)i"),
-        WASI_HOST_FUNC(fd_write, "(iiii)i"),
-        WASI_HOST_FUNC(fd_pwrite, "(iiiIi)i"),
-        WASI_HOST_FUNC(fd_read, "(iiii)i"),
-        WASI_HOST_FUNC(fd_pread, "(iiiIi)i"),
-        WASI_HOST_FUNC(fd_readdir, "(iiiIi)i"),
+#if 0 /* TODO */
+        WASI_HOST_FUNC(fd_datasync, "(i)i"),
+#endif
         WASI_HOST_FUNC(fd_fdstat_get, "(ii)i"),
         WASI_HOST_FUNC(fd_fdstat_set_flags, "(ii)i"),
         WASI_HOST_FUNC(fd_fdstat_set_rights, "(iII)i"),
-        WASI_HOST_FUNC(fd_seek, "(iIii)i"),
-        WASI_HOST_FUNC(fd_tell, "(ii)i"),
-        WASI_HOST_FUNC(fd_renumber, "(ii)i"),
         WASI_HOST_FUNC(fd_filestat_get, "(ii)i"),
+        WASI_HOST_FUNC(fd_filestat_set_size, "(iI)i"),
         WASI_HOST_FUNC(fd_filestat_set_times, "(iIIi)i"),
-        WASI_HOST_FUNC(fd_prestat_get, "(ii)i"),
+        WASI_HOST_FUNC(fd_pread, "(iiiIi)i"),
         WASI_HOST_FUNC(fd_prestat_dir_name, "(iii)i"),
-        WASI_HOST_FUNC(poll_oneoff, "(iiii)i"),
-        WASI_HOST_FUNC(clock_time_get, "(iIi)i"),
-        WASI_HOST_FUNC(clock_res_get, "(ii)i"),
-        WASI_HOST_FUNC(args_sizes_get, "(ii)i"),
-        WASI_HOST_FUNC(args_get, "(ii)i"),
-        WASI_HOST_FUNC(environ_sizes_get, "(ii)i"),
-        WASI_HOST_FUNC(environ_get, "(ii)i"),
-        WASI_HOST_FUNC(random_get, "(ii)i"),
-        WASI_HOST_FUNC(path_open, "(iiiiiIIii)i"),
-        WASI_HOST_FUNC(path_unlink_file, "(iii)i"),
+        WASI_HOST_FUNC(fd_prestat_get, "(ii)i"),
+        WASI_HOST_FUNC(fd_pwrite, "(iiiIi)i"),
+        WASI_HOST_FUNC(fd_read, "(iiii)i"),
+        WASI_HOST_FUNC(fd_readdir, "(iiiIi)i"),
+        WASI_HOST_FUNC(fd_renumber, "(ii)i"),
+        WASI_HOST_FUNC(fd_seek, "(iIii)i"),
+#if 0 /* TODO */
+        WASI_HOST_FUNC(fd_sync, "(i)i"),
+#endif
+        WASI_HOST_FUNC(fd_tell, "(ii)i"),
+        WASI_HOST_FUNC(fd_write, "(iiii)i"),
+
+        /* path */
         WASI_HOST_FUNC(path_create_directory, "(iii)i"),
-        WASI_HOST_FUNC(path_remove_directory, "(iii)i"),
-        WASI_HOST_FUNC(path_symlink, "(iiiii)i"),
-        WASI_HOST_FUNC(path_readlink, "(iiiiii)i"),
-        WASI_HOST_FUNC(path_link, "(iiiiiii)i"),
-        WASI_HOST_FUNC(path_rename, "(iiiiii)i"),
         WASI_HOST_FUNC(path_filestat_get, "(iiiii)i"),
         WASI_HOST_FUNC(path_filestat_set_times, "(iiiiIIi)i"),
+        WASI_HOST_FUNC(path_link, "(iiiiiii)i"),
+        WASI_HOST_FUNC(path_open, "(iiiiiIIii)i"),
+        WASI_HOST_FUNC(path_readlink, "(iiiiii)i"),
+        WASI_HOST_FUNC(path_remove_directory, "(iii)i"),
+        WASI_HOST_FUNC(path_rename, "(iiiiii)i"),
+        WASI_HOST_FUNC(path_symlink, "(iiiii)i"),
+        WASI_HOST_FUNC(path_unlink_file, "(iii)i"),
+
+        /* poll */
+        WASI_HOST_FUNC(poll_oneoff, "(iiii)i"),
+
+        /* proc */
+        WASI_HOST_FUNC(proc_exit, "(i)"),
+
+        /* random */
+        WASI_HOST_FUNC(random_get, "(ii)i"),
+
+        /* sched */
         WASI_HOST_FUNC(sched_yield, "()i"),
+
+        /* sock */
         WASI_HOST_FUNC(sock_accept, "(iii)i"),
 #if 0 /* TODO */
         WASI_HOST_FUNC(sock_recv, "(iiiiii)i"),
         WASI_HOST_FUNC(sock_send, "(iiiii)i"),
         WASI_HOST_FUNC(sock_shutdown, "(ii)i"),
 #endif
-        /* TODO implement the rest of the api */
 };
 
 int
