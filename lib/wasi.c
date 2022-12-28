@@ -503,11 +503,12 @@ wasi_fd_alloc(struct wasi_instance *wasi, uint32_t *wasifdp)
 
 static int
 wasi_fd_add(struct wasi_instance *wasi, int hostfd, char *path,
-            uint32_t *wasifdp)
+            uint16_t fdflags, uint32_t *wasifdp)
 {
         struct wasi_fdinfo *fdinfo;
         uint32_t wasifd;
         int ret;
+        assert((fdflags & ~WASI_FDFLAG_NONBLOCK) == 0);
         fdinfo = wasi_fdinfo_alloc();
         if (fdinfo == NULL) {
                 free(path);
@@ -516,6 +517,7 @@ wasi_fd_add(struct wasi_instance *wasi, int hostfd, char *path,
         fdinfo->hostfd = hostfd;
         fdinfo->dir = NULL;
         fdinfo->prestat_path = path;
+        fdinfo->blocking = (fdflags & WASI_FDFLAG_NONBLOCK) == 0;
         toywasm_mutex_lock(&wasi->lock);
         ret = wasi_fd_alloc(wasi, &wasifd);
         if (ret != 0) {
@@ -2360,11 +2362,6 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
                 oflags |= O_TRUNC;
                 xlog_trace("oflag O_TRUNC");
         }
-        if ((fdflags & WASI_FDFLAG_NONBLOCK) != 0) {
-                xlog_error("path_open WASI_FDFLAG_NONBLOCK");
-                ret = ENOTSUP;
-                goto fail;
-        }
         if ((fdflags & WASI_FDFLAG_APPEND) != 0) {
                 oflags |= O_APPEND;
                 xlog_trace("oflag O_APPEND");
@@ -2410,7 +2407,8 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
                 hostpath = NULL;
         }
         uint32_t wasifd;
-        ret = wasi_fd_add(wasi, hostfd, hostpath, &wasifd);
+        ret = wasi_fd_add(wasi, hostfd, hostpath,
+                          fdflags & WASI_FDFLAG_NONBLOCK, &wasifd);
         if (ret != 0) {
                 goto fail;
         }
@@ -2867,6 +2865,7 @@ wasi_sock_accept(struct exec_context *ctx, struct host_instance *hi,
         int hostchildfd = -1;
         int host_ret = 0;
         int ret;
+
         if ((fdflags & WASI_FDFLAG_NONBLOCK) != 0) {
                 xlog_error("sock_accept WASI_FDFLAG_NONBLOCK");
                 ret = ENOTSUP;
@@ -2903,7 +2902,8 @@ retry:
                 goto fail;
         }
         uint32_t wasichildfd;
-        ret = wasi_fd_add(wasi, hostchildfd, NULL, &wasichildfd);
+        ret = wasi_fd_add(wasi, hostchildfd, NULL,
+                          fdflags & WASI_FDFLAG_NONBLOCK, &wasichildfd);
         if (ret != 0) {
                 goto fail;
         }
