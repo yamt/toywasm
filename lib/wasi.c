@@ -704,7 +704,7 @@ wasi_copyin_and_convert_path(struct exec_context *ctx,
                 goto fail;
         }
         if (dirfdinfo->prestat_path == NULL) {
-                ret = EBADF;
+                ret = ENOTDIR;
                 goto fail;
         }
         ret = asprintf(&hostpath, "%s/%s", dirfdinfo->prestat_path, wasmpath);
