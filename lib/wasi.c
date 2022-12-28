@@ -3012,10 +3012,14 @@ wasi_instance_create(struct wasi_instance **instp) NO_THREAD_SAFETY_ANALYSIS
         }
 
         /*
-         * make hostfds non-blocking.
-         * XXX restore on failure
-         * XXX restore when done
-         * XXX make xlog deal with non-blocking stderr
+         * we make hostfds non-blocking.
+         *
+         * XXX should restore on failure
+         * XXX should restore when we are done
+         *
+         * XXX it's fragile to use STDxx_FILENO fds this way.
+         * - should make xlog deal with non-blocking stderr
+         * - cli uses bare printf as well. what to do?
          */
         uint32_t i;
         for (i = 0; i < nfds; i++) {
