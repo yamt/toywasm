@@ -282,32 +282,6 @@ fail:
         return ret;
 }
 
-int
-set_nonblocking(int fd, bool nonblocking)
-{
-        int flags = fcntl(fd, F_GETFL, 0);
-        int newflags = flags & ~O_NONBLOCK;
-        if (nonblocking) {
-                newflags |= O_NONBLOCK;
-        }
-        int ret = 0;
-        if (flags != newflags) {
-                ret = fcntl(fd, F_SETFL, newflags);
-                if (ret == -1) {
-                        ret = errno;
-                        assert(ret > 0);
-                }
-        }
-        return ret;
-}
-
-int
-is_again(int error)
-{
-        /* handle a BSD vs SYSV historical mess */
-        return (error == EWOULDBLOCK || error == EAGAIN);
-}
-
 static bool
 wasi_fdinfo_unused(struct wasi_fdinfo *fdinfo)
 {
@@ -953,6 +927,64 @@ wait_fd_ready(struct exec_context *ctx, int hostfd, short event, int *retp)
         pfd.events = event;
         int nev;
         return wasi_poll(ctx, &pfd, 1, -1, retp, &nev);
+}
+
+static int
+set_nonblocking(int fd, bool nonblocking)
+{
+        int flags = fcntl(fd, F_GETFL, 0);
+        int newflags = flags & ~O_NONBLOCK;
+        if (nonblocking) {
+                newflags |= O_NONBLOCK;
+        }
+        int ret = 0;
+        if (flags != newflags) {
+                ret = fcntl(fd, F_SETFL, newflags);
+                if (ret == -1) {
+                        ret = errno;
+                        assert(ret > 0);
+                }
+        }
+        return ret;
+}
+
+static int
+is_again(int error)
+{
+        /* handle a BSD vs SYSV historical mess */
+        return (error == EWOULDBLOCK || error == EAGAIN);
+}
+
+static bool
+emulate_blocking(struct exec_context *ctx, struct wasi_fdinfo *fdinfo,
+                 short poll_event, int orig_ret, int *host_retp, int *retp)
+{
+        int hostfd = fdinfo->hostfd;
+        assert(hostfd != -1);
+        assert((fcntl(hostfd, F_GETFL, 0) & O_NONBLOCK) != 0);
+
+        if (!fdinfo->blocking || !is_again(orig_ret)) {
+                *host_retp = 0;
+                *retp = orig_ret;
+                return false;
+        }
+
+        int host_ret;
+        int ret;
+
+        host_ret = wait_fd_ready(ctx, hostfd, poll_event, &ret);
+        if (host_ret != 0) {
+                ret = 0;
+                goto fail;
+        }
+        if (ret != 0) {
+                goto fail;
+        }
+        return true;
+fail:
+        *host_retp = host_ret;
+        *retp = orig_ret;
+        return false;
 }
 
 static int
@@ -2836,20 +2868,10 @@ wasi_sock_accept(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-retry:
-        if (fdinfo->blocking) {
-                host_ret = wait_fd_ready(ctx, hostfd, POLLIN, &ret);
-                if (host_ret != 0) {
-                        ret = 0;
-                        goto fail;
-                }
-                if (ret != 0) {
-                        goto fail;
-                }
-        }
         struct sockaddr_storage ss;
         struct sockaddr *sa = (void *)&ss;
         socklen_t salen;
+retry:
 #if defined(TOYWASM_OLD_WASI_LIBC)
         errno = ENOSYS;
         hostchildfd = -1;
@@ -2859,8 +2881,12 @@ retry:
         if (hostchildfd < 0) {
                 ret = errno;
                 assert(ret > 0);
-                if (fdinfo->blocking && is_again(ret)) {
+                if (emulate_blocking(ctx, fdinfo, POLLIN, ret, &host_ret,
+                                     &ret)) {
                         goto retry;
+                }
+                if (host_ret != 0 || ret != 0) {
+                        goto fail;
                 }
                 goto fail;
         }
