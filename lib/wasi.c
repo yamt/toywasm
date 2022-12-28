@@ -2866,11 +2866,20 @@ wasi_sock_accept(struct exec_context *ctx, struct host_instance *hi,
         int host_ret = 0;
         int ret;
 
-        if ((fdflags & WASI_FDFLAG_NONBLOCK) != 0) {
-                xlog_error("sock_accept WASI_FDFLAG_NONBLOCK");
+        /*
+         * non-zero fdflags is used by accept4.
+         *
+         * only WASI_FDFLAG_NONBLOCK makes sense for a socket.
+         *
+         * as wasi doesn't have close-on-exec, accept4 itself doesn't
+         * have much sense. it merely saves an fcntl.
+         */
+        if ((fdflags & ~WASI_FDFLAG_NONBLOCK) != 0) {
+                xlog_error("%s: unsupported fdflags %x", __func__, fdflags);
                 ret = ENOTSUP;
                 goto fail;
         }
+
         ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
         if (ret != 0) {
                 goto fail;
