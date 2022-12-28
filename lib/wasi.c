@@ -2360,6 +2360,11 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
                 oflags |= O_TRUNC;
                 xlog_trace("oflag O_TRUNC");
         }
+        if ((fdflags & WASI_FDFLAG_NONBLOCK) != 0) {
+                xlog_error("path_open WASI_FDFLAG_NONBLOCK");
+                ret = ENOTSUP;
+                goto fail;
+        }
         if ((fdflags & WASI_FDFLAG_APPEND) != 0) {
                 oflags |= O_APPEND;
                 xlog_trace("oflag O_APPEND");
@@ -2385,7 +2390,7 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
         /*
          * TODO: avoid blocking on fifos for wasi-threads.
          */
-        hostfd = open(hostpath, oflags, 0777);
+        hostfd = open(hostpath, oflags | O_NONBLOCK, 0777);
         if (hostfd == -1) {
                 ret = errno;
                 assert(ret > 0);
@@ -2855,20 +2860,19 @@ wasi_sock_accept(struct exec_context *ctx, struct host_instance *hi,
         struct wasi_instance *wasi = (void *)hi;
         HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
-#if 0 /* TODO: WASI_FDFLAG_NONBLOCK */
         uint32_t fdflags = HOST_FUNC_PARAM(ft, params, 1, i32);
-#endif
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 2, i32);
         struct wasi_fdinfo *fdinfo = NULL;
         int hostfd;
         int hostchildfd = -1;
         int host_ret = 0;
         int ret;
-        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
-        if (ret != 0) {
+        if ((fdflags & WASI_FDFLAG_NONBLOCK) != 0) {
+                xlog_error("sock_accept WASI_FDFLAG_NONBLOCK");
+                ret = ENOTSUP;
                 goto fail;
         }
-        ret = set_nonblocking(hostfd, true); /* XXX shouldn't be here */
+        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
         if (ret != 0) {
                 goto fail;
         }
@@ -2892,6 +2896,10 @@ retry:
                 if (host_ret != 0 || ret != 0) {
                         goto fail;
                 }
+                goto fail;
+        }
+        ret = set_nonblocking(hostchildfd, true);
+        if (ret != 0) {
                 goto fail;
         }
         uint32_t wasichildfd;
@@ -3002,7 +3010,21 @@ wasi_instance_create(struct wasi_instance **instp) NO_THREAD_SAFETY_ANALYSIS
         if (ret != 0) {
                 goto fail;
         }
+
+        /*
+         * make hostfds non-blocking.
+         * XXX restore on failure
+         * XXX restore when done
+         * XXX make xlog deal with non-blocking stderr
+         */
         uint32_t i;
+        for (i = 0; i < nfds; i++) {
+                ret = set_nonblocking(i, true);
+                if (ret != 0) {
+                        goto fail;
+                }
+        }
+
         for (i = 0; i < nfds; i++) {
                 struct wasi_fdinfo *fdinfo;
                 fdinfo = wasi_fdinfo_alloc();
