@@ -2872,7 +2872,12 @@ wasi_sock_accept(struct exec_context *ctx, struct host_instance *hi,
          * only WASI_FDFLAG_NONBLOCK makes sense for a socket.
          *
          * as wasi doesn't have close-on-exec, accept4 itself doesn't
-         * have much sense. it merely saves an fcntl.
+         * make much sense. it merely saves an fcntl.
+         * (for a threaded environment, atomicity of close-on-exec is
+         * important to avoid descriptor leaks when other threads
+         * performs exec. it's why accept4 has been invented in
+         * the first place. other flags are not that important.
+         * cf. https://www.austingroupbugs.net/view.php?id=411)
          */
         if ((fdflags & ~WASI_FDFLAG_NONBLOCK) != 0) {
                 xlog_error("%s: unsupported fdflags %x", __func__, fdflags);
@@ -2906,6 +2911,11 @@ retry:
                 }
                 goto fail;
         }
+        /*
+         * Ensure O_NONBLOCK of the new socket.
+         * Note: O_NONBLOCK behavior is not consistent among platforms.
+         * eg. BSD inherits O_NONBLOCK. Linux doesn't.
+         */
         ret = set_nonblocking(hostchildfd, true);
         if (ret != 0) {
                 goto fail;
