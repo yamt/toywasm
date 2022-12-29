@@ -58,6 +58,7 @@
 #include "exec.h"
 #include "host_instance.h"
 #include "lock.h"
+#include "nbio.h"
 #include "timeutil.h"
 #include "type.h"
 #include "util.h"
@@ -915,12 +916,6 @@ fail:
         return host_ret;
 }
 
-/*
- * Note: this is of cource racy. even if this function found the fd ready,
- * other thread might consume it in the meantime.
- *
- * a solution: use non-blocking i/o.
- */
 static int
 wait_fd_ready(struct exec_context *ctx, int hostfd, short event, int *retp)
 {
@@ -929,32 +924,6 @@ wait_fd_ready(struct exec_context *ctx, int hostfd, short event, int *retp)
         pfd.events = event;
         int nev;
         return wasi_poll(ctx, &pfd, 1, -1, retp, &nev);
-}
-
-static int
-set_nonblocking(int fd, bool nonblocking)
-{
-        int flags = fcntl(fd, F_GETFL, 0);
-        int newflags = flags & ~O_NONBLOCK;
-        if (nonblocking) {
-                newflags |= O_NONBLOCK;
-        }
-        int ret = 0;
-        if (flags != newflags) {
-                ret = fcntl(fd, F_SETFL, newflags);
-                if (ret == -1) {
-                        ret = errno;
-                        assert(ret > 0);
-                }
-        }
-        return ret;
-}
-
-static int
-is_again(int error)
-{
-        /* handle a BSD vs SYSV historical mess */
-        return (error == EWOULDBLOCK || error == EAGAIN);
 }
 
 static bool
@@ -2916,7 +2885,7 @@ retry:
          * Note: O_NONBLOCK behavior is not consistent among platforms.
          * eg. BSD inherits O_NONBLOCK. Linux doesn't.
          */
-        ret = set_nonblocking(hostchildfd, true);
+        ret = set_nonblocking(hostchildfd, true, NULL);
         if (ret != 0) {
                 goto fail;
         }
@@ -3035,14 +3004,10 @@ wasi_instance_create(struct wasi_instance **instp) NO_THREAD_SAFETY_ANALYSIS
          *
          * XXX should restore on failure
          * XXX should restore when we are done
-         *
-         * XXX it's fragile to use STDxx_FILENO fds this way.
-         * - should make xlog deal with non-blocking stderr
-         * - cli uses bare printf as well. what to do?
          */
         uint32_t i;
         for (i = 0; i < nfds; i++) {
-                ret = set_nonblocking(i, true);
+                ret = set_nonblocking(i, true, NULL);
                 if (ret != 0) {
                         goto fail;
                 }

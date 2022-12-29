@@ -24,6 +24,7 @@
 #include "load_context.h"
 #include "module.h"
 #include "module_writer.h"
+#include "nbio.h"
 #include "repl.h"
 #include "report.h"
 #include "type.h"
@@ -345,7 +346,7 @@ print_trap(const struct exec_context *ctx, const struct trap_info *trap)
         if (trapmsg == NULL) {
                 trapmsg = "no message";
         }
-        printf("Error: [trap] %s (%u): %s\n", msg, id, trapmsg);
+        nbio_printf("Error: [trap] %s (%u): %s\n", msg, id, trapmsg);
 }
 
 static int
@@ -383,9 +384,9 @@ repl_load_from_buf(struct repl_state *state, const char *modname,
                           &ctx);
         if (ctx.report.msg != NULL) {
                 xlog_error("load/validation error: %s", ctx.report.msg);
-                printf("load/validation error: %s\n", ctx.report.msg);
+                nbio_printf("load/validation error: %s\n", ctx.report.msg);
         } else if (ret != 0) {
-                printf("load/validation error: no message\n");
+                nbio_printf("load/validation error: no message\n");
         }
         load_context_clear(&ctx);
         if (ret != 0) {
@@ -412,9 +413,9 @@ repl_load_from_buf(struct repl_state *state, const char *modname,
                                       &report);
         if (report.msg != NULL) {
                 xlog_error("instance_create: %s", report.msg);
-                printf("instantiation error: %s\n", report.msg);
+                nbio_printf("instantiation error: %s\n", report.msg);
         } else if (ret != 0) {
-                printf("instantiation error: no message\n");
+                nbio_printf("instantiation error: no message\n");
         }
         report_clear(&report);
         if (ret != 0) {
@@ -622,42 +623,42 @@ repl_print_result(const struct resulttype *rt, const struct val *vals)
         uint32_t i;
         int ret = 0;
         if (rt->ntypes == 0) {
-                printf("Result: <Empty Stack>\n");
+                nbio_printf("Result: <Empty Stack>\n");
                 return 0;
         }
-        printf("Result: ");
+        nbio_printf("Result: ");
         for (i = 0; i < rt->ntypes; i++) {
                 enum valtype type = rt->types[i];
                 const struct val *val = &vals[i];
                 switch (type) {
                 case TYPE_i32:
-                        printf("%s%" PRIu32 ":i32", sep, val->u.i32);
+                        nbio_printf("%s%" PRIu32 ":i32", sep, val->u.i32);
                         break;
                 case TYPE_f32:
-                        printf("%s%" PRIu32 ":f32", sep, val->u.i32);
+                        nbio_printf("%s%" PRIu32 ":f32", sep, val->u.i32);
                         break;
                 case TYPE_i64:
-                        printf("%s%" PRIu64 ":i64", sep, val->u.i64);
+                        nbio_printf("%s%" PRIu64 ":i64", sep, val->u.i64);
                         break;
                 case TYPE_f64:
-                        printf("%s%" PRIu64 ":f64", sep, val->u.i64);
+                        nbio_printf("%s%" PRIu64 ":f64", sep, val->u.i64);
                         break;
                 case TYPE_FUNCREF:
                         if (val->u.funcref.func == NULL) {
-                                printf("%snull:funcref", sep);
+                                nbio_printf("%snull:funcref", sep);
                         } else {
-                                printf("%s%" PRIuPTR ":funcref", sep,
-                                       (uintptr_t)val->u.funcref.func);
+                                nbio_printf("%s%" PRIuPTR ":funcref", sep,
+                                            (uintptr_t)val->u.funcref.func);
                         }
                         break;
                 case TYPE_EXTERNREF:
                         if ((uintptr_t)val->u.externref == EXTERNREF_0) {
-                                printf("%s0:externref", sep);
+                                nbio_printf("%s0:externref", sep);
                         } else if (val->u.externref == NULL) {
-                                printf("%snull:externref", sep);
+                                nbio_printf("%snull:externref", sep);
                         } else {
-                                printf("%s%" PRIuPTR ":externref", sep,
-                                       (uintptr_t)val->u.externref);
+                                nbio_printf("%s%" PRIuPTR ":externref", sep,
+                                            (uintptr_t)val->u.externref);
                         }
                         break;
                 default:
@@ -668,7 +669,7 @@ repl_print_result(const struct resulttype *rt, const struct val *vals)
                 }
                 sep = ", ";
         }
-        printf("\n");
+        nbio_printf("\n");
         return ret;
 }
 
@@ -921,70 +922,70 @@ fail:
 void
 toywasm_repl_print_version(void)
 {
-        printf("toywasm wasm interpreter\n");
+        nbio_printf("toywasm wasm interpreter\n");
 #if defined(__clang_version__)
-        printf("__clang_version__ = %s\n", __clang_version__);
+        nbio_printf("__clang_version__ = %s\n", __clang_version__);
 #endif
 #if !defined(__clang__)
 #if defined(__GNUC__)
-        printf("__GNUC__ = %u\n", __GNUC__);
+        nbio_printf("__GNUC__ = %u\n", __GNUC__);
 #endif
 #if defined(__GNUC_MINOR__)
-        printf("__GNUC_MINOR__ = %u\n", __GNUC_MINOR__);
+        nbio_printf("__GNUC_MINOR__ = %u\n", __GNUC_MINOR__);
 #endif
 #if defined(__GNUC_PATCHLEVEL__)
-        printf("__GNUC_PATCHLEVEL__ = %u\n", __GNUC_PATCHLEVEL__);
+        nbio_printf("__GNUC_PATCHLEVEL__ = %u\n", __GNUC_PATCHLEVEL__);
 #endif
 #endif /* !defined(__clang__) */
 #if defined(__BYTE_ORDER__)
-        printf("__BYTE_ORDER__ is %u (__ORDER_LITTLE_ENDIAN__ is %u)\n",
-               __BYTE_ORDER__, __ORDER_LITTLE_ENDIAN__);
+        nbio_printf("__BYTE_ORDER__ is %u (__ORDER_LITTLE_ENDIAN__ is %u)\n",
+                    __BYTE_ORDER__, __ORDER_LITTLE_ENDIAN__);
 #endif
-        printf("sizeof(void *) = %zu\n", sizeof(void *));
+        nbio_printf("sizeof(void *) = %zu\n", sizeof(void *));
 #if defined(__wasi__)
-        printf("__wasi__ defined\n");
+        nbio_printf("__wasi__ defined\n");
 #endif
 #if defined(__x86_64__)
-        printf("__x86_64__ defined\n");
+        nbio_printf("__x86_64__ defined\n");
 #endif
 #if defined(__aarch64__)
-        printf("__aarch64__ defined\n");
+        nbio_printf("__aarch64__ defined\n");
 #endif
 #if defined(__arm__)
-        printf("__arm__ defined\n");
+        nbio_printf("__arm__ defined\n");
 #endif
 #if defined(__ppc__)
-        printf("__ppc__ defined\n");
+        nbio_printf("__ppc__ defined\n");
 #endif
 #if defined(__riscv)
-        printf("__riscv defined\n");
+        nbio_printf("__riscv defined\n");
 #endif
 #if defined(__s390x__)
-        printf("__s390x__ defined\n");
+        nbio_printf("__s390x__ defined\n");
 #endif
 #if defined(__s390__)
-        printf("__s390__ defined\n");
+        nbio_printf("__s390__ defined\n");
 #endif
 #if defined(__wasm__)
-        printf("__wasm__ defined\n");
+        nbio_printf("__wasm__ defined\n");
 #endif
 #if defined(__wasm32__)
-        printf("__wasm32__ defined\n");
+        nbio_printf("__wasm32__ defined\n");
 #endif
 #if defined(__wasm64__)
-        printf("__wasm64__ defined\n");
+        nbio_printf("__wasm64__ defined\n");
 #endif
 #if defined(__APPLE__)
-        printf("__APPLE__ defined\n");
+        nbio_printf("__APPLE__ defined\n");
 #endif
 #if defined(__NuttX__)
-        printf("__NuttX__ defined\n");
+        nbio_printf("__NuttX__ defined\n");
 #endif
 #if defined(__linux__)
-        printf("__linux__ defined\n");
+        nbio_printf("__linux__ defined\n");
 #endif
         extern const char *toywasm_config_string;
-        printf("Build-time options:\n%s", toywasm_config_string);
+        nbio_printf("Build-time options:\n%s", toywasm_config_string);
 }
 
 static int
@@ -1055,9 +1056,9 @@ toywasm_repl(struct repl_state *state)
         size_t linecap = 0;
         int ret;
         while (true) {
-                printf("%s> ", state->opts.prompt);
+                nbio_printf("%s> ", state->opts.prompt);
                 fflush(stdout);
-                ret = getline(&line, &linecap, stdin);
+                ret = nbio_getline(&line, &linecap, stdin);
                 if (ret == -1) {
                         break;
                 }
@@ -1096,7 +1097,7 @@ toywasm_repl(struct repl_state *state)
                 continue;
 fail:
                 xlog_printf("repl fail with %d\n", ret);
-                printf("Error: command '%s' failed with %d\n", cmd, ret);
+                nbio_printf("Error: command '%s' failed with %d\n", cmd, ret);
         }
         free(line);
         toywasm_repl_reset(state);

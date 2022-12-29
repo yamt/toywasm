@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <time.h>
 
+#include "nbio.h"
 #include "xlog.h"
 
 int xlog_tracing = 0;
@@ -33,13 +34,13 @@ xlog_vprintf(const char *fmt, va_list ap)
         strftime(buf, sizeof(buf), "%F %T", localtime_r(&clock, &tm));
 
         flockfile(stderr);
-        fprintf(stderr, "%s (%ju.%09ld): ", buf, (uintmax_t)ts.tv_sec,
-                ts.tv_nsec);
+        nbio_fprintf(stderr, "%s (%ju.%09ld): ", buf, (uintmax_t)ts.tv_sec,
+                     ts.tv_nsec);
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
         pthread_t self = pthread_self();
-        fprintf(stderr, "[%jx] ", (uintmax_t)self);
+        nbio_fprintf(stderr, "[%jx] ", (uintmax_t)self);
 #endif
-        vfprintf(stderr, fmt, ap);
+        nbio_vfprintf(stderr, fmt, ap);
         funlockfile(stderr);
 }
 
@@ -58,7 +59,7 @@ xlog_printf_raw(const char *fmt, ...)
         va_list ap;
 
         va_start(ap, fmt);
-        vfprintf(stderr, fmt, ap);
+        nbio_vfprintf(stderr, fmt, ap);
         va_end(ap);
 }
 
