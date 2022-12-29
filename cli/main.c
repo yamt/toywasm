@@ -136,6 +136,10 @@ main(int argc, char *const *argv)
 
         int exit_status = 1;
 
+#if defined(__NuttX__)
+        xlog_tracing = 0;
+#endif
+
         state = malloc(sizeof(*state));
         if (state == NULL) {
                 goto fail;
