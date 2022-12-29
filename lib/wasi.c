@@ -1666,6 +1666,67 @@ fail:
 }
 
 static int
+wasi_fd_sync(struct exec_context *ctx, struct host_instance *hi,
+             const struct functype *ft, const struct cell *params,
+             struct cell *results)
+{
+        WASI_TRACE;
+        struct wasi_instance *wasi = (void *)hi;
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
+        uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
+        struct wasi_fdinfo *fdinfo = NULL;
+        int hostfd;
+        int ret;
+        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
+        if (ret != 0) {
+                goto fail;
+        }
+        ret = fsync(hostfd);
+        if (ret == -1) {
+                ret = errno;
+                assert(ret > 0);
+                goto fail;
+        }
+fail:
+        wasi_fdinfo_release(wasi, fdinfo);
+        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
+        return 0;
+}
+
+#if defined(__APPLE__)
+/* macOS doesn't have fdatasync */
+#define wasi_fd_datasync wasi_fd_sync
+#else
+static int
+wasi_fd_datasync(struct exec_context *ctx, struct host_instance *hi,
+                 const struct functype *ft, const struct cell *params,
+                 struct cell *results)
+{
+        WASI_TRACE;
+        struct wasi_instance *wasi = (void *)hi;
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
+        uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
+        struct wasi_fdinfo *fdinfo = NULL;
+        int hostfd;
+        int ret;
+        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
+        if (ret != 0) {
+                goto fail;
+        }
+        ret = fdatasync(hostfd);
+        if (ret == -1) {
+                ret = errno;
+                assert(ret > 0);
+                goto fail;
+        }
+fail:
+        wasi_fdinfo_release(wasi, fdinfo);
+        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
+        return 0;
+}
+#endif
+
+static int
 wasi_fd_renumber(struct exec_context *ctx, struct host_instance *hi,
                  const struct functype *ft, const struct cell *params,
                  struct cell *results)
@@ -2927,9 +2988,7 @@ const struct host_func wasi_funcs[] = {
         WASI_HOST_FUNC(fd_advise, "(iIIi)i"),
         WASI_HOST_FUNC(fd_allocate, "(iII)i"),
         WASI_HOST_FUNC(fd_close, "(i)i"),
-#if 0 /* TODO */
         WASI_HOST_FUNC(fd_datasync, "(i)i"),
-#endif
         WASI_HOST_FUNC(fd_fdstat_get, "(ii)i"),
         WASI_HOST_FUNC(fd_fdstat_set_flags, "(ii)i"),
         WASI_HOST_FUNC(fd_fdstat_set_rights, "(iII)i"),
@@ -2944,9 +3003,7 @@ const struct host_func wasi_funcs[] = {
         WASI_HOST_FUNC(fd_readdir, "(iiiIi)i"),
         WASI_HOST_FUNC(fd_renumber, "(ii)i"),
         WASI_HOST_FUNC(fd_seek, "(iIii)i"),
-#if 0 /* TODO */
         WASI_HOST_FUNC(fd_sync, "(i)i"),
-#endif
         WASI_HOST_FUNC(fd_tell, "(ii)i"),
         WASI_HOST_FUNC(fd_write, "(iiii)i"),
 
