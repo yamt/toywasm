@@ -140,9 +140,9 @@ push_ctrlframe(uint32_t pc, enum ctrlframe_op op, uint32_t jumpslot,
         struct ctrlframe *cframe;
         int ret;
 
-        xlog_trace("push_ctrlframe (op %02x) %u %u", (unsigned int)op,
-                   start_types != NULL ? start_types->ntypes : 0,
-                   end_types->ntypes);
+        xlog_trace_insn("push_ctrlframe (op %02x) %u %u", (unsigned int)op,
+                        start_types != NULL ? start_types->ntypes : 0,
+                        end_types->ntypes);
         struct expr_exec_info *ei = ctx->ei;
         uint32_t nslots = 1;
         /*

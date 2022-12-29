@@ -71,9 +71,10 @@ memory_getptr2(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
                 goto do_trap;
         }
         uint32_t need = ea + size;
-        xlog_trace("memory access: at %04" PRIx32 " %08" PRIx32 " + %08" PRIx32
-                   ", size %" PRIu32 ", meminst size %" PRIu32,
-                   memidx, ptr, offset, size, meminst->size_in_pages);
+        xlog_trace_insn("memory access: at %04" PRIx32 " %08" PRIx32
+                        " + %08" PRIx32 ", size %" PRIu32
+                        ", meminst size %" PRIu32,
+                        memidx, ptr, offset, size, meminst->size_in_pages);
         uint32_t need_in_pages =
                 ((uint64_t)need + WASM_PAGE_SIZE - 1) / WASM_PAGE_SIZE;
         if (need_in_pages > meminst->size_in_pages) {
@@ -313,19 +314,19 @@ frame_enter(struct exec_context *ctx, struct instance *inst, uint32_t funcidx,
 #endif
         cells_zero(locals + nparams, nlocals - nparams);
 
-        xlog_trace("frame enter: maxlabels %u maxvals %u", ei->maxlabels,
-                   ei->maxvals);
+        xlog_trace_insn("frame enter: maxlabels %u maxvals %u", ei->maxlabels,
+                        ei->maxvals);
         uint32_t i;
         for (i = 0; i < nlocals; i++) {
                 if (i == nparams) {
-                        xlog_trace("-- ^-params v-locals");
+                        xlog_trace_insn("-- ^-params v-locals");
                 }
 #if defined(TOYWASM_USE_SMALL_CELLS)
-                xlog_trace("local [%" PRIu32 "] %08" PRIx32, i,
-                           frame_locals(ctx, frame)[i].x);
+                xlog_trace_insn("local [%" PRIu32 "] %08" PRIx32, i,
+                                frame_locals(ctx, frame)[i].x);
 #else
-                xlog_trace("local [%" PRIu32 "] %08" PRIx64, i,
-                           frame_locals(ctx, frame)[i].x);
+                xlog_trace_insn("local [%" PRIu32 "] %08" PRIx64, i,
+                                frame_locals(ctx, frame)[i].x);
 #endif
         }
 
@@ -610,7 +611,7 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
         }
         if (ctx->labels.lsize - labelidx == frame->labelidx) {
                 /* exit the function */
-                xlog_trace("do_branch: exiting function");
+                xlog_trace_insn("do_branch: exiting function");
                 frame_exit(ctx);
                 height = frame->height;
                 arity = frame->nresults;
@@ -640,7 +641,7 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
                          */
                         const struct expr_exec_info *ei = ctx->ei;
                         if (ei->jumps != NULL) {
-                                xlog_trace("jump w/ table");
+                                xlog_trace_insn("jump w/ table");
                                 bool stay_in_block = false;
                                 const struct jump *jump;
                                 jump = jump_lookup(ctx, ei, blockpc);
@@ -663,7 +664,7 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
                                                           goto_else, true, 0,
                                                           0, ctx->p);
 #endif
-                                        xlog_trace("jump inside a block");
+                                        xlog_trace_insn("jump inside a block");
                                         return;
                                 }
                         }
@@ -686,7 +687,7 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
                          * do a jump. (w/o jump table)
                          */
                         if (ei->jumps == NULL) {
-                                xlog_trace("jump w/o table");
+                                xlog_trace_insn("jump w/o table");
                                 if (op == FRAME_OP_LOOP) {
                                         ctx->p = blockp;
                                 } else {
@@ -747,13 +748,13 @@ fetch_exec_next_insn(const uint8_t *p, struct cell *stack,
 #endif
         assert(ctx->event == EXEC_EVENT_NONE);
         assert(ctx->frames.lsize > 0);
-#if defined(TOYWASM_ENABLE_TRACING)
+#if defined(TOYWASM_ENABLE_TRACING_INSN)
         uint32_t pc = ptr2pc(ctx->instance->module, p);
 #endif
         uint32_t op = *p++;
 #if defined(TOYWASM_USE_SEPARATE_EXECUTE)
-        xlog_trace("exec %06" PRIx32 ": %s (%02" PRIx32 ")", pc,
-                   instructions[op].name, op);
+        xlog_trace_insn("exec %06" PRIx32 ": %s (%02" PRIx32 ")", pc,
+                        instructions[op].name, op);
         const struct exec_instruction_desc *desc = &exec_instructions[op];
 #if defined(TOYWASM_USE_TAILCALL)
         __musttail

@@ -126,15 +126,15 @@ read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
         while (true) {
                 const struct instruction_desc *desc;
 
-#if defined(TOYWASM_ENABLE_TRACING)
+#if defined(TOYWASM_ENABLE_TRACING_INSN)
                 uint32_t pc = ptr2pc(vctx->module, p);
 #endif
                 ret = read_op(&p, ep, &desc);
                 if (ret != 0) {
                         goto fail;
                 }
-                xlog_trace("inst %06" PRIx32 " %s", pc, desc->name);
-#if defined(TOYWASM_ENABLE_TRACING)
+                xlog_trace_insn("inst %06" PRIx32 " %s", pc, desc->name);
+#if defined(TOYWASM_ENABLE_TRACING_INSN)
                 uint32_t orig_n = vctx->nvaltypes;
 #endif
                 if (const_expr && (desc->flags & INSN_FLAG_CONST) == 0) {
@@ -153,17 +153,17 @@ read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
                 if (vctx->ncframes == 0) {
                         break;
                 }
-                xlog_trace("inst %s %u %u: %u -> %u", desc->name,
-                           vctx->ncframes,
-                           vctx->cframes[vctx->ncframes - 1].height, orig_n,
-                           vctx->nvaltypes);
+                xlog_trace_insn("inst %s %u %u: %u -> %u", desc->name,
+                                vctx->ncframes,
+                                vctx->cframes[vctx->ncframes - 1].height,
+                                orig_n, vctx->nvaltypes);
         }
-#if defined(TOYWASM_ENABLE_TRACING)
+#if defined(TOYWASM_ENABLE_TRACING_INSN)
         for (i = 0; i < ei->njumps; i++) {
                 const struct jump *j = &ei->jumps[i];
-                xlog_trace("jump table [%" PRIu32 "] %06" PRIx32
-                           " -> %06" PRIx32,
-                           i, j->pc, j->targetpc);
+                xlog_trace_insn("jump table [%" PRIu32 "] %06" PRIx32
+                                " -> %06" PRIx32,
+                                i, j->pc, j->targetpc);
         }
 #endif
         *pp = p;

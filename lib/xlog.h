@@ -13,10 +13,21 @@ void xlog_error(const char *, ...)
 
 extern int xlog_tracing;
 
+#if defined(TOYWASM_ENABLE_TRACING_INSN)
+#define xlog_trace_insn(...)                                                  \
+        do {                                                                  \
+                if (xlog_tracing > 1) {                                       \
+                        xlog__trace(__VA_ARGS__);                             \
+                }                                                             \
+        } while (0)
+#else
+#define xlog_trace_insn(...)
+#endif
+
 #if defined(TOYWASM_ENABLE_TRACING)
 #define xlog_trace(...)                                                       \
         do {                                                                  \
-                if (xlog_tracing) {                                           \
+                if (xlog_tracing > 0) {                                       \
                         xlog__trace(__VA_ARGS__);                             \
                 }                                                             \
         } while (0)

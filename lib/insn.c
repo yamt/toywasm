@@ -35,7 +35,7 @@ stack_push_val(const struct exec_context *ctx, const struct val *val,
 {
         assert(ctx->stack.p <= *stackp);
         assert(*stackp + csz <= ctx->stack.p + ctx->stack.psize);
-        xlog_trace("stack push %016" PRIx64, val->u.i64);
+        xlog_trace_insn("stack push %016" PRIx64, val->u.i64);
         val_to_cells(val, *stackp, csz);
         *stackp += csz;
 }
@@ -48,7 +48,7 @@ stack_pop_val(const struct exec_context *ctx, struct val *val,
         assert(*stackp <= ctx->stack.p + ctx->stack.psize);
         *stackp -= csz;
         val_from_cells(val, *stackp, csz);
-        xlog_trace("stack pop  %016" PRIx64, val->u.i64);
+        xlog_trace_insn("stack pop  %016" PRIx64, val->u.i64);
 }
 #endif
 
@@ -57,7 +57,7 @@ push_val(const struct val *val, uint32_t csz, struct exec_context *ctx)
 {
         val_to_cells(val, &VEC_NEXTELEM(ctx->stack), csz);
         ctx->stack.lsize += csz;
-        xlog_trace("stack push %016" PRIx64, val->u.i64);
+        xlog_trace_insn("stack push %016" PRIx64, val->u.i64);
 }
 
 static void
@@ -66,7 +66,7 @@ pop_val(struct val *val, uint32_t csz, struct exec_context *ctx)
         assert(ctx->stack.lsize >= csz);
         ctx->stack.lsize -= csz;
         val_from_cells(val, &VEC_NEXTELEM(ctx->stack), csz);
-        xlog_trace("stack pop  %016" PRIx64, val->u.i64);
+        xlog_trace_insn("stack pop  %016" PRIx64, val->u.i64);
 }
 
 static void
@@ -433,13 +433,13 @@ fetch_exec_next_insn_fc(const uint8_t *p, struct cell *stack,
 #endif
         assert(ctx->event == EXEC_EVENT_NONE);
         assert(ctx->frames.lsize > 0);
-#if defined(TOYWASM_ENABLE_TRACING)
+#if defined(TOYWASM_ENABLE_TRACING_INSN)
         uint32_t pc = ptr2pc(ctx->instance->module, p);
 #endif
         uint32_t op = read_leb_u32_nocheck(&p);
         const struct exec_instruction_desc *desc = &exec_instructions_fc[op];
-        xlog_trace("exec %06" PRIx32 ": %s (2nd byte %02" PRIx32 ")", pc,
-                   instructions[op].name, op);
+        xlog_trace_insn("exec %06" PRIx32 ": %s (2nd byte %02" PRIx32 ")", pc,
+                        instructions[op].name, op);
 #if defined(TOYWASM_USE_TAILCALL)
         __musttail
 #endif
@@ -463,13 +463,13 @@ fetch_exec_next_insn_fe(const uint8_t *p, struct cell *stack,
 #endif
         assert(ctx->event == EXEC_EVENT_NONE);
         assert(ctx->frames.lsize > 0);
-#if defined(TOYWASM_ENABLE_TRACING)
+#if defined(TOYWASM_ENABLE_TRACING_INSN)
         uint32_t pc = ptr2pc(ctx->instance->module, p);
 #endif
         uint32_t op = read_leb_u32_nocheck(&p);
         const struct exec_instruction_desc *desc = &exec_instructions_fe[op];
-        xlog_trace("exec %06" PRIx32 ": %s (2nd byte %02" PRIx32 ")", pc,
-                   instructions[op].name, op);
+        xlog_trace_insn("exec %06" PRIx32 ": %s (2nd byte %02" PRIx32 ")", pc,
+                        instructions[op].name, op);
 #if defined(TOYWASM_USE_TAILCALL)
         __musttail
 #endif

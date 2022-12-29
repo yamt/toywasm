@@ -88,7 +88,7 @@ const struct option longopts[] = {
         },
         {
                 "trace",
-                no_argument,
+                required_argument,
                 NULL,
                 opt_trace,
         },
@@ -186,7 +186,7 @@ main(int argc, char *const *argv)
                         opts->print_stats = true;
                         break;
                 case opt_trace:
-                        xlog_tracing = 1;
+                        xlog_tracing = atoi(optarg);
                         break;
                 case opt_version:
                         toywasm_repl_print_version();

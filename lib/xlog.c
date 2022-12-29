@@ -66,9 +66,6 @@ xlog_printf_raw(const char *fmt, ...)
 void
 xlog__trace(const char *fmt, ...)
 {
-        if (!xlog_tracing) {
-                return;
-        }
         va_list ap;
         va_start(ap, fmt);
         flockfile(stderr);

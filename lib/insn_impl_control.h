@@ -173,8 +173,8 @@ INSN_IMPL(end)
                 struct exec_context *ectx = ECTX;
                 assert(ectx->frames.lsize > 0);
                 struct funcframe *frame = &VEC_LASTELEM(ectx->frames);
-                xlog_trace("end: nlabels %" PRIu32 " labelidx %" PRIu32,
-                           ectx->labels.lsize, frame->labelidx);
+                xlog_trace_insn("end: nlabels %" PRIu32 " labelidx %" PRIu32,
+                                ectx->labels.lsize, frame->labelidx);
                 if (ectx->labels.lsize > frame->labelidx) {
                         VEC_POP_DROP(ectx->labels);
                 } else {
@@ -197,7 +197,7 @@ INSN_IMPL(end)
                 }
                 if (cframe.op == FRAME_OP_IF) {
                         /* no "else" is same as an empty "else" */
-                        xlog_trace("emulating an empty else");
+                        xlog_trace_insn("emulating an empty else");
                         ret = push_ctrlframe(pc, FRAME_OP_EMPTY_ELSE, 0,
                                              cframe.start_types,
                                              cframe.end_types, vctx);
@@ -382,7 +382,7 @@ INSN_IMPL(return )
                 assert(ectx->frames.lsize > 0);
                 const struct funcframe *frame = &VEC_LASTELEM(ectx->frames);
                 uint32_t nlabels = ectx->labels.lsize - frame->labelidx;
-                xlog_trace("return as tr %" PRIu32, nlabels);
+                xlog_trace_insn("return as tr %" PRIu32, nlabels);
                 ectx->event_u.branch.index = nlabels;
                 ectx->event_u.branch.goto_else = false;
                 ectx->event = EXEC_EVENT_BRANCH;
@@ -494,8 +494,9 @@ INSN_IMPL(call_indirect)
                 ectx->event = EXEC_EVENT_CALL;
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
-                xlog_trace("call_indirect (table %u type %u) %u %u", tableidx,
-                           typeidx, ft->parameter.ntypes, ft->result.ntypes);
+                xlog_trace_insn("call_indirect (table %u type %u) %u %u",
+                                tableidx, typeidx, ft->parameter.ntypes,
+                                ft->result.ntypes);
                 ret = pop_valtypes(&ft->parameter, vctx);
                 if (ret != 0) {
                         goto fail;
