@@ -37,6 +37,33 @@ is built with an ancient wasi-sdk to workaround
 * Performance
 * Stable API/ABI
 
+## Where can this run?
+
+### The most tested
+
+* macOS/amd64
+* wasm32-wasi (on toywasm itself)
+
+### Tested on CI
+
+#### Natively
+
+* macOS/amd64
+* Ubuntu/amd64
+
+#### With qemu (less coverage because of slowness)
+
+* Ubuntu/arm64
+* Ubuntu/armhf (Note: 32-bit)
+* Ubuntu/s390x (Note: big endian)
+
+### Occasionally tested manually
+
+* wasm32-wasi-pthread
+* NuttX/xtensa
+* NuttX/sim on macOS/amd64
+* NetBSD/amd64
+
 ## Which specs are implemented?
 
 * [WebAssembly](https://github.com/WebAssembly/spec) except SIMD.
