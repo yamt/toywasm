@@ -1,0 +1,69 @@
+# this implementation doesn't give any special meanings to
+# the trailing slashes in pathnames.
+# (just leave it to the underlying OS)
+# XXX does WASI require either ways?
+
+# 5: === path_rename_file_trailing_slashes.wasm
+# 5: thread 'main' panicked at 'expected errno NOTDIR; got NOENT', src/bin/path_rename_file_trailing_slashes.rs:18:5
+
+path_rename_file_trailing_slashes
+
+# NetBSD uses EFTYPE instead of ELOOP in some cases.
+#
+# https://man.netbsd.org/open.2
+# > [EFTYPE]           O_NOFOLLOW was specified, but the last path component
+# >                    is a symlink.  Note: IEEE Std 1003.1-2008 ("POSIX.1")
+# >                    specifies returning [ELOOP] for this case.
+# (79 is EFTYPE)
+#
+# 5: === nofollow_errors.wasm
+# 5: 2022-12-30 11:47:47 (1672368467.416859115): [76df8d10f800] Converting unimplemnetd errno: 79
+# 5: thread 'main' panicked at 'expected errno LOOP or NOTDIR; got IO', src/bin/nofollow_errors.rs:13:5
+
+nofollow_errors
+
+# NetBSD FFS doesn't implement VOP_FALLOCATE.
+# (45 is ENOTSUP)
+#
+# 5: === file_allocate.wasm
+# 5: 2022-12-30 11:47:47 (1672368467.311029146): [708781451800] Converting unimplemnetd errno: 45
+# 5: thread 'main' panicked at 'allocating size: Error { code: 29, name: "IO", message: "I/O error." }', src/bin/file_allocate.rs:32:44
+
+file_allocate
+
+# NetBSD FFS doesn't implement VOP_FALLOCATE.
+# (45 is ENOTSUP)
+#
+# 5: === fd_advise.wasm
+# 5: 2022-12-30 11:47:46 (1672368466.795305065): [726a6b4f9800] Converting unimplemnetd errno: 45
+# 5: thread 'main' panicked at 'allocating size: Error { code: 29, name: "IO", message: "I/O error." }', src/bin/fd_advise.rs:47:46
+
+fd_advise
+
+# NetBSD uses EFTYPE instead of ELOOP in some cases.
+#
+# https://man.netbsd.org/open.2
+# > [EFTYPE]           O_NOFOLLOW was specified, but the last path component
+# >                    is a symlink.  Note: IEEE Std 1003.1-2008 ("POSIX.1")
+# >                    specifies returning [ELOOP] for this case.
+# (79 is EFTYPE)
+#
+# 5: === dangling_symlink.wasm
+# 5: 2022-12-30 11:47:46 (1672368466.764401693): [7157573b0800] Converting unimplemnetd errno: 79
+# 5: thread 'main' panicked at 'expected errno NOTDIR or LOOP; got IO', src/bin/dangling_symlink.rs:10:9
+
+dangling_symlink
+
+# NetBSD uses EFTYPE instead of ELOOP in some cases.
+#
+# https://man.netbsd.org/open.2
+# > [EFTYPE]           O_NOFOLLOW was specified, but the last path component
+# >                    is a symlink.  Note: IEEE Std 1003.1-2008 ("POSIX.1")
+# >                    specifies returning [ELOOP] for this case.
+# (79 is EFTYPE)
+#
+# 5: === symlink_loop.wasm
+# 5: 2022-12-30 11:47:47 (1672368467.992673001): [7e962589b800] Converting unimplemnetd errno: 79
+# 5: thread 'main' panicked at 'expected errno LOOP; got IO', src/bin/symlink_loop.rs:10:9
+
+symlink_loop
