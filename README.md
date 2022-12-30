@@ -57,6 +57,10 @@ is built with an ancient wasi-sdk to workaround
 * Ubuntu/armhf (Note: 32-bit)
 * Ubuntu/s390x (Note: big endian)
 
+#### with even less coverage
+
+* wasm32-wasi
+
 ### Occasionally tested manually
 
 * wasm32-wasi-pthread
