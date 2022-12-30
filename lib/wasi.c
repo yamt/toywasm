@@ -3180,10 +3180,20 @@ wasi_instance_destroy(struct wasi_instance *inst)
 const struct name wasi_snapshot_preview1 =
         NAME_FROM_CSTR_LITERAL("wasi_snapshot_preview1");
 
-static const struct host_module module_wasi_snapshot_preview1 = {
-        .module_name = &wasi_snapshot_preview1,
-        .funcs = wasi_funcs,
-        .nfuncs = ARRAYCOUNT(wasi_funcs),
+static const struct name wasi_unstable =
+        NAME_FROM_CSTR_LITERAL("wasi_unstable");
+
+static const struct host_module module_wasi[] = {
+        {
+                .module_name = &wasi_snapshot_preview1,
+                .funcs = wasi_funcs,
+                .nfuncs = ARRAYCOUNT(wasi_funcs),
+        },
+        {
+                .module_name = &wasi_unstable,
+                .funcs = wasi_funcs,
+                .nfuncs = ARRAYCOUNT(wasi_funcs),
+        },
 };
 
 int
@@ -3191,5 +3201,5 @@ import_object_create_for_wasi(struct wasi_instance *wasi,
                               struct import_object **impp)
 {
         return import_object_create_for_host_funcs(
-                &module_wasi_snapshot_preview1, 1, &wasi->hi, impp);
+                module_wasi, ARRAYCOUNT(module_wasi), &wasi->hi, impp);
 }
