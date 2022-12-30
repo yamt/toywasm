@@ -25,14 +25,22 @@ _dtor(struct import_object *im)
 }
 
 int
-import_object_create_for_host_funcs(const struct name *module_name,
-                                    const struct host_func *funcs,
-                                    size_t nfuncs, struct host_instance *hi,
+import_object_create_for_host_funcs(const struct host_module *modules,
+                                    size_t n, struct host_instance *hi,
                                     struct import_object **impp)
 {
         struct import_object *im;
         struct funcinst *fis = NULL;
+        size_t nfuncs;
+        size_t i;
         int ret;
+
+        nfuncs = 0;
+        for (i = 0; i < n; i++) {
+                const struct host_module *hm = &modules[i];
+                nfuncs += hm->nfuncs;
+        }
+
         assert(nfuncs > 0);
         ret = import_object_alloc(nfuncs, &im);
         if (ret != 0) {
@@ -45,26 +53,33 @@ import_object_create_for_host_funcs(const struct name *module_name,
         }
         im->dtor = _dtor;
         im->dtor_arg = fis;
-        size_t i;
-        for (i = 0; i < nfuncs; i++) {
-                struct functype *ft;
-                ret = functype_from_string(funcs[i].type, &ft);
-                if (ret != 0) {
-                        xlog_error("failed to parse functype: %s",
-                                   funcs[i].type);
-                        goto fail;
+        size_t idx = 0;
+        for (i = 0; i < n; i++) {
+                const struct host_module *hm = &modules[i];
+                size_t j;
+                for (j = 0; j < hm->nfuncs; j++) {
+                        const struct host_func *func = &hm->funcs[j];
+                        struct functype *ft;
+                        ret = functype_from_string(func->type, &ft);
+                        if (ret != 0) {
+                                xlog_error("failed to parse functype: %s",
+                                           func->type);
+                                goto fail;
+                        }
+                        struct funcinst *fi = &fis[idx];
+                        fi->is_host = true;
+                        fi->u.host.func = func->func;
+                        fi->u.host.type = ft;
+                        fi->u.host.instance = hi;
+                        struct import_object_entry *e = &im->entries[idx];
+                        e->module_name = hm->module_name;
+                        e->name = &func->name;
+                        e->type = IMPORT_FUNC;
+                        e->u.func = fi;
+                        idx++;
                 }
-                struct funcinst *fi = &fis[i];
-                fi->is_host = true;
-                fi->u.host.func = funcs[i].func;
-                fi->u.host.type = ft;
-                fi->u.host.instance = hi;
-                struct import_object_entry *e = &im->entries[i];
-                e->module_name = module_name;
-                e->name = &funcs[i].name;
-                e->type = IMPORT_FUNC;
-                e->u.func = fi;
         }
+        assert(idx == nfuncs);
         *impp = im;
         return 0;
 fail:

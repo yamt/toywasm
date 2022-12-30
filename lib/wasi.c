@@ -3180,11 +3180,16 @@ wasi_instance_destroy(struct wasi_instance *inst)
 const struct name wasi_snapshot_preview1 =
         NAME_FROM_CSTR_LITERAL("wasi_snapshot_preview1");
 
+static const struct host_module module_wasi_snapshot_preview1 = {
+        .module_name = &wasi_snapshot_preview1,
+        .funcs = wasi_funcs,
+        .nfuncs = ARRAYCOUNT(wasi_funcs),
+};
+
 int
 import_object_create_for_wasi(struct wasi_instance *wasi,
                               struct import_object **impp)
 {
         return import_object_create_for_host_funcs(
-                &wasi_snapshot_preview1, wasi_funcs, ARRAYCOUNT(wasi_funcs),
-                &wasi->hi, impp);
+                &module_wasi_snapshot_preview1, 1, &wasi->hi, impp);
 }

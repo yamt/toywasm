@@ -358,11 +358,16 @@ const struct host_func wasi_threads_funcs[] = {
 
 const struct name wasi_threads_module_name = NAME_FROM_CSTR_LITERAL("wasi");
 
+static const struct host_module module_wasi_threads = {
+        .module_name = &wasi_threads_module_name,
+        .funcs = wasi_threads_funcs,
+        .nfuncs = ARRAYCOUNT(wasi_threads_funcs),
+};
+
 int
 import_object_create_for_wasi_threads(struct wasi_threads_instance *th,
                                       struct import_object **impp)
 {
-        return import_object_create_for_host_funcs(
-                &wasi_threads_module_name, wasi_threads_funcs,
-                ARRAYCOUNT(wasi_threads_funcs), &th->hi, impp);
+        return import_object_create_for_host_funcs(&module_wasi_threads, 1,
+                                                   &th->hi, impp);
 }
