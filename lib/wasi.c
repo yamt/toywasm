@@ -19,6 +19,7 @@
 #define _POSIX_C_SOURCE 199309 /* clock_gettime */
 #define _DARWIN_C_SOURCE       /* arc4random_buf */
 #define _GNU_SOURCE            /* asprintf, realpath, O_DIRECTORY */
+#define _NETBSD_SOURCE         /* asprintf, DT_REG, etc */
 
 #if defined(__wasi__)
 /*
