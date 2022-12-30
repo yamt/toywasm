@@ -20,7 +20,7 @@ SKIPLIST=
 BLACKLIST="${THIS_DIR}/wasmtime-wasi-tests-blacklist.txt"
 
 OS_BLACKLIST="${THIS_DIR}/wasmtime-wasi-tests-blacklist-$(uname -s).txt"
-if [ -f ${PLATFORM_BLACKLIST} ]; then
+if [ -f ${OS_BLACKLIST} ]; then
     BLACKLIST="${BLACKLIST} ${OS_BLACKLIST}"
 fi
 
