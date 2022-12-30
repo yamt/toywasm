@@ -18,7 +18,11 @@ test -d "${WASM_DIR}" || fetch_test_bin
 
 SKIPLIST=
 BLACKLIST="${THIS_DIR}/wasmtime-wasi-tests-blacklist.txt"
-BLACKLIST="${BLACKLIST} ${THIS_DIR}/wasmtime-wasi-tests-blacklist-$(uname -s).txt"
+
+OS_BLACKLIST="${THIS_DIR}/wasmtime-wasi-tests-blacklist-$(uname -s).txt"
+if [ -f ${PLATFORM_BLACKLIST} ]; then
+    BLACKLIST="${BLACKLIST} ${OS_BLACKLIST}"
+fi
 
 if [ "${WASM_ON_WASM:-0}" -ne 0 ]; then
     run_wasi_test()
