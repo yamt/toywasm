@@ -33,7 +33,6 @@
 #include <nuttx/config.h>
 #endif
 
-#include <sys/random.h> /* getrandom */
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -52,6 +51,10 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+
+#if defined(__GLIBC__) || defined(__NuttX__)
+#include <sys/random.h> /* getrandom */
+#endif
 
 #include "context.h"
 #include "endian.h"
