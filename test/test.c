@@ -12,6 +12,7 @@
 #include "endian.h"
 #include "idalloc.h"
 #include "leb128.h"
+#include "list.h"
 #include "timeutil.h"
 #include "type.h"
 
@@ -601,6 +602,66 @@ test_timeutil_int64(void **state)
         assert_int_equal(a.tv_nsec, UINT64_MAX % 1000000000);
 }
 
+void
+test_list(void **state)
+{
+        struct item {
+                int dummy1;
+                LIST_ENTRY(struct item) entry;
+                int dummy2;
+        };
+        LIST_HEAD(struct item) h;
+
+        LIST_HEAD_INIT(&h);
+        assert_true(LIST_EMPTY(&h));
+        assert_null(LIST_FIRST(&h));
+
+        struct item item;
+        LIST_INSERT_TAIL(&h, &item, entry);
+        assert_false(LIST_EMPTY(&h));
+        assert_ptr_equal(LIST_FIRST(&h), &item);
+        LIST_REMOVE(&h, &item, entry);
+        assert_true(LIST_EMPTY(&h));
+        assert_null(LIST_FIRST(&h));
+
+        struct item items[10];
+        int i;
+        for (i = 0; i < 10; i++) {
+                LIST_INSERT_TAIL(&h, &items[i], entry);
+                assert_false(LIST_EMPTY(&h));
+        }
+        assert_ptr_equal(LIST_FIRST(&h), &items[0]);
+
+        struct item *it;
+        i = 0;
+        LIST_FOREACH(it, &h, entry) {
+                assert_int_equal(it - items, i);
+                i++;
+        }
+
+        LIST_REMOVE(&h, &items[0], entry);
+        LIST_REMOVE(&h, &items[2], entry);
+        LIST_REMOVE(&h, &items[4], entry);
+        LIST_REMOVE(&h, &items[8], entry);
+        LIST_REMOVE(&h, &items[6], entry);
+
+        i = 0;
+        LIST_FOREACH(it, &h, entry) {
+                assert_int_equal(it - items, i * 2 + 1);
+                i++;
+        }
+        assert_int_equal(i, 5);
+
+        i = 0;
+        while ((it = LIST_FIRST(&h)) != NULL) {
+                assert_int_equal(it - items, i * 2 + 1);
+                i++;
+                LIST_REMOVE(&h, it, entry);
+        }
+        assert_int_equal(i, 5);
+        assert_true(LIST_EMPTY(&h));
+}
+
 int
 main(int argc, char **argv)
 {
@@ -611,6 +672,7 @@ main(int argc, char **argv)
                 cmocka_unit_test(test_idalloc),
                 cmocka_unit_test(test_timeutil),
                 cmocka_unit_test(test_timeutil_int64),
+                cmocka_unit_test(test_list),
         };
         return cmocka_run_group_tests(tests, NULL, NULL);
 }
