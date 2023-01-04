@@ -8,6 +8,7 @@
 #include <string.h>
 #include <time.h>
 
+#include "list.h"
 #include "waitlist.h"
 #include "xlog.h"
 
@@ -20,16 +21,14 @@ static struct atomics_mutex g_atomics_lock = {
 };
 
 struct waiter {
-        struct waiter *next;
-        struct waiter **prevnextp;
+        LIST_ENTRY(struct waiter) e;
         pthread_cond_t cv;
         bool woken;
 };
 
 struct waiter_list {
         struct waiter_list *next;
-        struct waiter *waiters;
-        struct waiter **waiters_tailnextp;
+        LIST_HEAD(struct waiter) waiters;
         uint32_t ident;
         uint32_t nwaiters;
 };
@@ -73,8 +72,7 @@ waiter_list_lookup(struct waiter_list_table *tab, uint32_t ident,
         if (allocate) {
                 l = malloc(sizeof(*l));
                 if (l != NULL) {
-                        l->waiters = NULL;
-                        l->waiters_tailnextp = &l->waiters;
+                        LIST_HEAD_INIT(&l->waiters);
                         l->ident = ident;
                         l->nwaiters = 0;
                         l->next = *headp;
@@ -99,8 +97,7 @@ waiter_list_free(struct waiter_list_table *tab, struct waiter_list *l1)
         }
         assert(l != NULL);
         assert(l->nwaiters == 0);
-        assert(l->waiters == NULL);
-        assert(l->waiters_tailnextp == &l->waiters);
+        assert(LIST_EMPTY(&l->waiters));
         *pp = l->next;
         free(l);
 }
@@ -130,31 +127,14 @@ static void
 waiter_remove(struct waiter_list *l, struct waiter *w)
 {
         assert(l->nwaiters > 0);
-        assert(l->waiters != NULL);
-        assert(*l->waiters_tailnextp == NULL);
-        assert(*w->prevnextp == w);
-        *w->prevnextp = w->next;
-        if (w->next == NULL) {
-                assert(l->waiters_tailnextp == &w->next);
-                l->waiters_tailnextp = w->prevnextp;
-        } else {
-                assert(w->next->prevnextp == &w->next);
-                w->next->prevnextp = w->prevnextp;
-        }
-        assert(*l->waiters_tailnextp == NULL);
+        LIST_REMOVE(&l->waiters, w, e);
         l->nwaiters--;
 }
 
 static void
 waiter_insert_tail(struct waiter_list *l, struct waiter *w)
 {
-        assert(*l->waiters_tailnextp == NULL);
-        w->prevnextp = l->waiters_tailnextp;
-        *l->waiters_tailnextp = w;
-        l->waiters_tailnextp = &w->next;
-        w->next = NULL;
-        assert(*l->waiters_tailnextp == NULL);
-        assert(*w->prevnextp == w);
+        LIST_INSERT_TAIL(&l->waiters, w, e);
         l->nwaiters++;
 }
 
@@ -200,14 +180,12 @@ atomics_notify(struct waiter_list_table *tab, uint32_t ident, uint32_t count)
         if (l == NULL) {
                 return 0;
         }
-        assert(l->nwaiters > 0);
-        assert(*l->waiters_tailnextp == NULL);
+        assert(!LIST_EMPTY(&l->waiters));
         struct waiter *w;
-        struct waiter *next = l->waiters;
         uint32_t left = count;
-        for (w = next; left > 0 && w != NULL; w = next) {
+        while (left > 0 && (w = LIST_FIRST(&l->waiters)) != NULL) {
                 left--;
-                next = w->next;
+                LIST_REMOVE(&l->waiters, w, e);
                 waiter_wakeup(l, lock, w);
         }
         assert(left <= count);
@@ -215,11 +193,6 @@ atomics_notify(struct waiter_list_table *tab, uint32_t ident, uint32_t count)
         assert(nwoken <= count);
         assert(nwoken <= l->nwaiters);
         l->nwaiters -= nwoken;
-        l->waiters = next;
-        if (next == NULL) {
-                l->waiters_tailnextp = &l->waiters;
-        }
-        assert(*l->waiters_tailnextp == NULL);
         if (l->nwaiters == 0) {
                 waiter_list_free(tab, l);
         }
