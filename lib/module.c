@@ -1731,7 +1731,7 @@ fail:
         return ret;
 }
 
-void
+static void
 module_unload(struct module *m)
 {
         uint32_t i;
