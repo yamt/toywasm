@@ -353,6 +353,11 @@ wasi_thread_exit(struct exec_context *ctx, struct host_instance *hi,
 
 const struct host_func wasi_threads_funcs[] = {
         WASI_HOST_FUNC(thread_spawn, "(i)i"),
+        /*
+         * Note: thread_exit is not a part of the current wasi-threads.
+         * It's implemented here just for my experiments.
+         * cf. https://github.com/WebAssembly/wasi-threads/issues/7
+         */
         WASI_HOST_FUNC(thread_exit, "()"),
 };
 
