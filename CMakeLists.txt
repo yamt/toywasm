@@ -187,6 +187,7 @@ set(lib_sources
 	"lib/insn.c"
 	"lib/instance.c"
 	"lib/leb128.c"
+	"lib/list.c"
 	"lib/module.c"
 	"lib/nbio.c"
 	"lib/report.c"
