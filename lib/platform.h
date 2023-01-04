@@ -1,3 +1,7 @@
+#if !defined(__has_extension)
+#define __has_extension(a) 0
+#endif
+
 #if defined(__clang__) && defined(__has_attribute) && __has_attribute(musttail)
 #define __musttail __attribute__((musttail))
 #else
@@ -44,4 +48,11 @@
 #else
 #define __alloc_size2(a, b)
 #endif
+#endif
+
+/* compile-time assertion */
+#if __STDC_VERSION__ >= 201112L || __has_extension(c_static_assert)
+#define ctassert(e) _Static_assert(e, #e)
+#else
+#define ctassert(e)
 #endif
