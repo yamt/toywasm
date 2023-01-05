@@ -676,8 +676,17 @@ repl_print_result(const struct resulttype *rt, const struct val *vals)
 int
 unescape(char *p0, size_t *lenp)
 {
-        /* unescape string like "\xe1\xba\x9b" in-place */
-
+        /*
+         * unescape string like "\xe1\xba\x9b" in-place.
+         *
+         * Note: quote support here is an incomplete hack to allow
+         * passing an empty name ("") on the repl prompt. (the spec
+         * test has a case to examine zero-length name, which is
+         * spec-wise valid.)
+         * Because repl itself uses simple strtok to parse the input,
+         * things like "a b" don't work on the prompt as you might
+         * expect. "a\x20b" can work better.
+         */
         bool in_quote = false;
         char *p = p0;
         char *wp = p;
