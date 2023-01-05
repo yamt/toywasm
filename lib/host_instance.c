@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <stdlib.h>
 
 #include "host_instance.h"
@@ -85,4 +86,31 @@ import_object_create_for_host_funcs(const struct host_module *modules,
 fail:
         import_object_destroy(im);
         return ret;
+}
+
+void
+host_func_dump_params(const struct functype *ft, const struct cell *params)
+{
+        const struct resulttype *rt = &ft->parameter;
+        uint32_t i;
+        for (i = 0; i < rt->ntypes; i++) {
+                enum valtype type = rt->types[i];
+                uint32_t sz = valtype_cellsize(type);
+                struct val val;
+                val_from_cells(&val, &params[i], sz);
+#if defined(TOYWASM_USE_SMALL_CELLS)
+                switch (sz) {
+                case 1:
+                        xlog_trace("param[%" PRIu32 "] = %08" PRIu32, i,
+                                   val.u.i32);
+                        break;
+                case 2:
+                        xlog_trace("param[%" PRIu32 "] = %016" PRIu64, i,
+                                   val.u.i64);
+                        break;
+                }
+#else
+                xlog_trace("param[%" PRIu32 "] = %016" PRIu64, i, val.u.i64);
+#endif
+        }
 }

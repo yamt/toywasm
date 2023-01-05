@@ -37,3 +37,6 @@ struct import_object;
 int import_object_create_for_host_funcs(const struct host_module *hm, size_t n,
                                         struct host_instance *hi,
                                         struct import_object **impp);
+
+void host_func_dump_params(const struct functype *ft,
+                           const struct cell *params);

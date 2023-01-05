@@ -8,6 +8,7 @@
 #define WASI_TRACE                                                            \
         do {                                                                  \
                 xlog_trace("WASI: %s called", __func__);                      \
+                host_func_dump_params(ft, params);                            \
         } while (0)
 #else
 #define WASI_TRACE                                                            \
