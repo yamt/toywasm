@@ -305,10 +305,10 @@ frame_enter(struct exec_context *ctx, struct instance *inst, uint32_t funcidx,
 
         struct cell *locals = &VEC_NEXTELEM(ctx->stack);
         if (params_on_stack) {
-                xlog_trace("params on stack");
+                xlog_trace_insn("params on stack");
                 /* params are already in place */
         } else {
-                xlog_trace("copying %" PRIu32 " params", nparams);
+                xlog_trace_insn("copying %" PRIu32 " params", nparams);
                 cells_copy(locals, params, nparams);
         }
 #endif
@@ -766,7 +766,7 @@ fetch_exec_next_insn(const uint8_t *p, struct cell *stack,
                 op = read_leb_u32_nocheck(&p);
                 desc = &desc->next_table[op];
         }
-        xlog_trace("exec %06" PRIx32 ": %s", pc, desc->name);
+        xlog_trace_insn("exec %06" PRIx32 ": %s", pc, desc->name);
         assert(desc->process != NULL);
         struct context common_ctx;
         memset(&common_ctx, 0, sizeof(common_ctx));
