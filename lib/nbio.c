@@ -85,19 +85,25 @@ nbio_vfprintf(FILE *fp, const char *fmt, va_list ap)
                                 if (ret == 1) {
                                         continue;
                                 }
+                                assert(ret == -1);
+                                if (errno == EAGAIN || errno == EINTR) {
+                                        continue;
+                                }
                                 /* poll error, fall through */
                         }
-                        if (written == 0) {
-                                /* errno is already set by write or poll */
-                                written = -1;
-                        }
+                        /* errno is already set by write or poll */
+                        written = -1;
+                        assert(errno > 0);
                         break;
                 }
+                assert(0 < ssz && ssz <= len - written);
                 written += ssz;
+                assert(0 < written && written <= len);
         }
         int saved_errno = errno; /* just in case */
         funlockfile(fp);
         free(buf);
+        assert(written == -1 || written == len);
         assert(written <= INT_MAX);
         assert(written >= INT_MIN);
         errno = saved_errno;
