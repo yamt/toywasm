@@ -197,14 +197,11 @@ memory_instance_create(struct meminst **mip,
                         goto fail;
                 }
                 mp->allocated = need_in_bytes;
-                mp->size_in_pages = need_in_pages;
                 waiter_list_table_init(&mp->shared->tab);
                 toywasm_mutex_init(&mp->shared->lock);
-        } else
-#endif
-        {
-                mp->size_in_pages = mt->lim.min;
         }
+#endif
+        mp->size_in_pages = mt->lim.min;
         mp->type = mt;
         *mip = mp;
         return 0;
