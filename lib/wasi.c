@@ -3065,9 +3065,21 @@ wasi_instance_create(struct wasi_instance **instp) NO_THREAD_SAFETY_ANALYSIS
          *
          * XXX should restore on failure
          * XXX should restore when we are done
+         * XXX this affects other programs sharing files.
+         *     (eg. shell pipelines)
          */
         uint32_t i;
         for (i = 0; i < nfds; i++) {
+                if (isatty(i)) {
+                        /*
+                         * a fragile hack:
+                         *
+                         * tty is often shared with other processes.
+                         * making such files non blocking breaks other
+                         * processes.
+                         */
+                        continue;
+                }
                 ret = set_nonblocking(i, true, NULL);
                 if (ret != 0) {
                         goto fail;
