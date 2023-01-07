@@ -129,6 +129,18 @@ void
 wasi_threads_instance_join(struct wasi_threads_instance *wasi)
 {
         toywasm_mutex_lock(&wasi->lock);
+#if 1
+        /*
+         * https://github.com/WebAssembly/wasi-threads/issues/21
+         *
+         * option b.
+         * proc_exit(0) equivalent. terminate all other threads.
+         */
+        if (!wasi->interrupt) {
+                xlog_trace("Emulating proc_exit(0) on a return from _start");
+                wasi->interrupt = 1;
+        }
+#endif
         while (wasi->nrunners > 0) {
                 int ret = pthread_cond_wait(&wasi->cv, &wasi->lock.lock);
                 assert(ret == 0);
