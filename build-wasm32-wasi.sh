@@ -2,8 +2,8 @@
 
 set -e
 
-MAJOR=${WASI_SDK_MAJOR:-17}
-MINOR=${WASI_SDK_MINOR:-0}
+MAJOR=${WASI_SDK_MAJOR:-18}
+MINOR=${WASI_SDK_MINOR:-2g1a6da673a27e}
 WASI_SDK_DIR=${WASI_SDK_DIR:-$(pwd)/.wasi-sdk-${MAJOR}.${MINOR}}
 CMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE:-${WASI_SDK_DIR}/share/cmake/wasi-sdk.cmake}
 DIST_DIR=.dist
@@ -29,8 +29,12 @@ fetch_wasi_sdk()
     esac
     TAR=wasi-sdk-${MAJOR}.${MINOR}-${PLATFORM}.tar.gz
     if [ ! -f ${DIST_DIR}/${TAR} ]; then
-        URL=https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${MAJOR}/${TAR}
-        curl -L -o ${DIST_DIR}/${TAR} ${URL}
+        #URL=https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${MAJOR}/${TAR}
+        #curl -L -o ${DIST_DIR}/${TAR} ${URL}
+
+        curl -L -o a.zip https://github.com/WebAssembly/wasi-sdk/suites/10299860641/artifacts/506520592
+        unzip a.zip
+        mv wasi-sdk-18.2g1a6da673a27e-macos.tar.gz ${DIST_DIR}/${TAR}
     fi
     pax -rz \
     -f ${DIST_DIR}/${TAR} \
