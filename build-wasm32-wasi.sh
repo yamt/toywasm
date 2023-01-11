@@ -29,12 +29,8 @@ fetch_wasi_sdk()
     esac
     TAR=wasi-sdk-${MAJOR}.${MINOR}-${PLATFORM}.tar.gz
     if [ ! -f ${DIST_DIR}/${TAR} ]; then
-        #URL=https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${MAJOR}/${TAR}
-        #curl -L -o ${DIST_DIR}/${TAR} ${URL}
-
-        curl -L -o a.zip https://github.com/WebAssembly/wasi-sdk/suites/10299860641/artifacts/506520592
-        unzip a.zip
-        mv wasi-sdk-18.2g1a6da673a27e-macos.tar.gz ${DIST_DIR}/${TAR}
+        URL=https://github.com/yamt/wasi-sdk/releases/download/test/wasi-sdk-18.2g1a6da673a27e-macos.tar.gz
+        curl -L -o ${DIST_DIR}/${TAR} ${URL}
     fi
     pax -rz \
     -f ${DIST_DIR}/${TAR} \
