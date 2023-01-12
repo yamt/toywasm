@@ -56,3 +56,16 @@
 #else
 #define ctassert(e)
 #endif
+
+/*
+ * https://gcc.gnu.org/onlinedocs/gcc/Typeof.html
+ * clang also has it.
+ *
+ * Note: we don't want to rely on typeof.
+ * any use of it in toywasm should have a fallback implementation.
+ */
+#if defined(__GNUC__)
+#define toywasm_typeof(a) __typeof__(a)
+#else
+#undef toywasm_typeof
+#endif

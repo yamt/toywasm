@@ -31,10 +31,10 @@ void list_insert_tail(struct list_head *h, void *elem, struct list_entry *e);
 #define LIST_FOREACH(VAR, HEAD, NAME)                                         \
         for (VAR = (HEAD)->first; VAR != NULL; VAR = (VAR)->NAME.next)
 
-#if defined(__clang__)
+#if defined(toywasm_typeof)
 #define CHECK_TYPE(a, b)                                                      \
         do {                                                                  \
-                __attribute__((__unused__)) __typeof__(a) __dummy = b;        \
+                __attribute__((__unused__)) toywasm_typeof(a) __dummy = b;    \
         } while (0)
 #else
 #define CHECK_TYPE(a, b)
