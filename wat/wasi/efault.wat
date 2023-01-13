@@ -1,4 +1,7 @@
-;; wasm3, wasm-micro-runtime: trap "out of bounds memory access" trap
+;; implementations disagree what should happens on out of range access
+;; during a wasi call.
+;;
+;; wasm3, wasm-micro-runtime: "out of bounds memory access" trap
 ;; wasmer, wasmtime: exit with 21 (WASI_ERRNO_FAULT)
 
 (module
