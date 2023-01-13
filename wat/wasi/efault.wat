@@ -1,5 +1,5 @@
 ;; wasm3, wasm-micro-runtime: trap "out of bounds memory access" trap
-;; wasmer, wasmtime: exit with 21
+;; wasmer, wasmtime: exit with 21 (WASI_ERRNO_FAULT)
 
 (module
   (func $fd_write (import "wasi_snapshot_preview1" "fd_write") (param i32 i32 i32 i32) (result i32))
