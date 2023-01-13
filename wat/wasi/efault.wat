@@ -1,0 +1,25 @@
+;; wasm3, wasm-micro-runtime: trap "out of bounds memory access" trap
+;; wasmer, wasmtime: exit with 21
+
+(module
+  (func $fd_write (import "wasi_snapshot_preview1" "fd_write") (param i32 i32 i32 i32) (result i32))
+  (func $proc_exit (import "wasi_snapshot_preview1" "proc_exit") (param i32))
+  (func (export "_start")
+     ;; iov->iov_base = 0xffffffff
+     i32.const 0
+     i32.const 0xfffffff0 ;; out of range address
+     i32.store
+     ;; iov->iov_len = 100
+     i32.const 4
+     i32.const 100
+     i32.store
+
+     i32.const 1 ;; fd = STDOUT
+     i32.const 0 ;; iov_addr
+     i32.const 1 ;; iov_count
+     i32.const 8 ;; retp
+     call $fd_write
+     call $proc_exit
+  )
+  (memory (export "memory") 1)
+)
