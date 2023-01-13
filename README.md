@@ -82,41 +82,48 @@ is built with an ancient wasi-sdk to workaround
 
 [benchmark with ffmpeg](./benchmark/ffmpeg.sh)
 ```
-===== ./b/toywasm --wasi --wasi-dir .video --
-       89.30 real        89.05 user         0.12 sys
-            85729280  maximum resident set size
-       1004073618737  instructions retired
-            65818624  peak memory footprint
-===== wasm3 --dir .video --
-       18.71 real        18.51 user         0.09 sys
-            85213184  maximum resident set size
-        119289794408  instructions retired
-            84590592  peak memory footprint
-===== iwasm.fast --dir=.video
-       22.54 real        22.40 user         0.08 sys
-           142921728  maximum resident set size
-        144876916114  instructions retired
-           142270464  peak memory footprint
-===== iwasm.classic --dir=.video
-      207.97 real       207.55 user         0.23 sys
-            80572416  maximum resident set size
-        957347283724  instructions retired
-            79970304  peak memory footprint
-===== iwasm.fast-jit --dir=.video --jit-codecache-size=100000000 --stack-size=100000
-        5.99 real         5.85 user         0.11 sys
-           148045824  maximum resident set size
-         55799745721  instructions retired
-           138383360  peak memory footprint
-===== wasmer run --dir .video --
-        2.40 real         1.68 user         0.20 sys
-           407715840  maximum resident set size
-         18364251289  instructions retired
-           385863680  peak memory footprint
-===== wasmtime run --dir .video --
-        1.87 real         1.70 user         0.11 sys
-           259403776  maximum resident set size
-         19213022301  instructions retired
-           168157184  peak memory footprint
+===== toywasm
+----- ./b/toywasm --wasi --wasi-dir .video --
+       86.19 real        86.11 user         0.05 sys
+            84680704  maximum resident set size
+        993855547391  instructions retired
+            64761856  peak memory footprint
+===== Wasm3 v0.5.0 on x86_64
+----- wasm3 --dir .video --
+       17.82 real        17.78 user         0.03 sys
+            85151744  maximum resident set size
+        119200297605  instructions retired
+            84529152  peak memory footprint
+===== iwasm 1.1.2 (fast interpreter)
+----- iwasm.fast --dir=.video
+       21.81 real        21.75 user         0.05 sys
+           142180352  maximum resident set size
+        145415745718  instructions retired
+           141537280  peak memory footprint
+===== iwasm 1.1.2 (classic interpreter)
+----- iwasm.classic --dir=.video
+      206.28 real       206.13 user         0.09 sys
+            80502784  maximum resident set size
+        972824166542  instructions retired
+            79896576  peak memory footprint
+===== iwasm 1.1.2 (fast jit)
+----- iwasm.fast-jit --dir=.video --jit-codecache-size=100000000
+        3.50 real         6.23 user         0.15 sys
+           149069824  maximum resident set size
+         55918129866  instructions retired
+           138137600  peak memory footprint
+===== wasmer 2.3.0
+----- wasmer run --dir .video --
+        7.57 real        54.74 user         3.00 sys
+           722903040  maximum resident set size
+        215261291705  instructions retired
+           509222912  peak memory footprint
+===== wasmtime-cli 3.0.1
+----- wasmtime run --dir .video --
+        6.88 real        44.45 user         1.70 sys
+           417538048  maximum resident set size
+        179207089461  instructions retired
+           378310656  peak memory footprint
 ```
 
 ## Why is this slow?
