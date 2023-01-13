@@ -80,6 +80,9 @@ is built with an ancient wasi-sdk to workaround
 
 ## How slow is this?
 
+* reasonable performance for an interpreter
+* far slower than jit-based engines (as expected)
+
 [benchmark with ffmpeg](./benchmark/ffmpeg.sh)
 ```
 ===== toywasm
