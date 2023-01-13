@@ -1,3 +1,5 @@
+;; https://github.com/WebAssembly/WASI/issues/505
+;;
 ;; implementations disagree what should happens on out of range access
 ;; during a wasi call.
 ;;
