@@ -393,12 +393,7 @@ wasi_thread_spawn(struct exec_context *ctx, struct host_instance *hi,
                 r.is_error = 0;
                 le32_encode(&r.u.tid, tid);
         }
-        ret = wasi_copyout(ctx, &r, retp, sizeof(r));
-        if (ret != 0) {
-                /* XXX what to do? trap? */
-                xlog_error("%s: copyout failed with %d", __func__, ret);
-        }
-        return 0;
+        return wasi_copyout(ctx, &r, retp, sizeof(r));
 }
 
 static int
