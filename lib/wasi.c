@@ -2270,7 +2270,7 @@ fail:
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
         }
-        return 0;
+        return host_ret;
 }
 
 static int
@@ -2314,7 +2314,7 @@ fail:
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
         }
-        return 0;
+        return host_ret;
 }
 
 static int
@@ -2834,7 +2834,7 @@ fail:
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
         }
-        return 0;
+        return host_ret;
 }
 
 static int
