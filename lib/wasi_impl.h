@@ -23,3 +23,7 @@
 #endif
 
 uint32_t wasi_convert_errno(int host_errno);
+int wasi_copyout(struct exec_context *ctx, const void *hostaddr,
+                 uint32_t wasmaddr, size_t len);
+int wasi_copyin(struct exec_context *ctx, void *hostaddr, uint32_t wasmaddr,
+                size_t len);

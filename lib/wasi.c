@@ -212,7 +212,7 @@ fdinfo_is_prestat(const struct wasi_fdinfo *fdinfo)
         return fdinfo->hostfd == -1 && fdinfo->prestat_path != NULL;
 }
 
-static int
+int
 wasi_copyin(struct exec_context *ctx, void *hostaddr, uint32_t wasmaddr,
             size_t len)
 {
@@ -226,7 +226,7 @@ wasi_copyin(struct exec_context *ctx, void *hostaddr, uint32_t wasmaddr,
         return 0;
 }
 
-static int
+int
 wasi_copyout(struct exec_context *ctx, const void *hostaddr, uint32_t wasmaddr,
              size_t len)
 {
