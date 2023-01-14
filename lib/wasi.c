@@ -2160,6 +2160,7 @@ retry:
         assert(events + nevents == ev);
         uint32_t result = host_to_le32(nevents);
         host_ret = wasi_copyout(ctx, &result, retp, sizeof(result));
+        ret = 0;
 fail:
         for (i = 0; i < nfdinfos; i++) {
                 wasi_fdinfo_release(wasi, fdinfos[i]);
