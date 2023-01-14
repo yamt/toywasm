@@ -4,6 +4,12 @@
                 .func = wasi_##NAME,                                          \
         }
 
+#define WASI_HOST_FUNC2(NAME, FUNC, TYPE)                                     \
+        {                                                                     \
+                .name = NAME_FROM_CSTR_LITERAL(NAME), .type = TYPE,           \
+                .func = FUNC,                                                 \
+        }
+
 #if defined(TOYWASM_ENABLE_TRACING)
 #define WASI_TRACE                                                            \
         do {                                                                  \
