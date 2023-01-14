@@ -20,6 +20,7 @@
 #include "type.h"
 #include "wasi_impl.h"
 #include "wasi_threads.h"
+#include "wasi_threads_abi.h"
 #include "xlog.h"
 
 #if !defined(TOYWASM_ENABLE_WASM_THREADS)
@@ -253,14 +254,10 @@ fail:
 }
 
 static int
-wasi_thread_spawn(struct exec_context *ctx, struct host_instance *hi,
-                  const struct functype *ft, const struct cell *params,
-                  struct cell *results)
+wasi_thread_spawn_common(struct exec_context *ctx,
+                         struct wasi_threads_instance *wasi, uint32_t user_arg,
+                         uint32_t *tidp)
 {
-        WASI_TRACE;
-        struct wasi_threads_instance *wasi = (void *)hi;
-        HOST_FUNC_CONVERT_PARAMS(ft, params);
-        uint32_t user_arg = HOST_FUNC_PARAM(ft, params, 0, i32);
         struct instance *inst = NULL;
         struct thread_arg *arg = NULL;
         uint32_t tid;
@@ -340,6 +337,24 @@ fail:
                 instance_destroy(inst);
         }
         free(arg);
+        if (ret == 0) {
+                *tidp = tid;
+        }
+        return ret;
+}
+
+static int
+wasi_thread_spawn_old(struct exec_context *ctx, struct host_instance *hi,
+                      const struct functype *ft, const struct cell *params,
+                      struct cell *results)
+{
+        WASI_TRACE;
+        struct wasi_threads_instance *wasi = (void *)hi;
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
+        uint32_t user_arg = HOST_FUNC_PARAM(ft, params, 0, i32);
+        uint32_t tid;
+
+        int ret = wasi_thread_spawn_common(ctx, wasi, user_arg, &tid);
         int32_t result;
         if (ret != 0) {
                 /* negative errno on error */
@@ -354,6 +369,38 @@ fail:
 }
 
 static int
+wasi_thread_spawn(struct exec_context *ctx, struct host_instance *hi,
+                  const struct functype *ft, const struct cell *params,
+                  struct cell *results)
+{
+        WASI_TRACE;
+        struct wasi_threads_instance *wasi = (void *)hi;
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
+        uint32_t user_arg = HOST_FUNC_PARAM(ft, params, 0, i32);
+        uint32_t retp = HOST_FUNC_PARAM(ft, params, 1, i32);
+        uint32_t tid;
+
+        int ret = wasi_thread_spawn_common(ctx, wasi, user_arg, &tid);
+        struct wasi_thread_spawn_result r;
+        memset(&r, 0, sizeof(r));
+        if (ret != 0) {
+                xlog_trace("%s failed with %d", __func__, ret);
+                r.is_error = 1;
+                r.u.error = wasi_convert_errno(ret); /* XXX */
+        } else {
+                xlog_trace("%s succeeded tid %u", __func__, tid);
+                r.is_error = 0;
+                r.u.tid = tid;
+        }
+        ret = wasi_copyout(ctx, &r, retp, sizeof(r));
+        if (ret != 0) {
+                /* XXX what to do? trap? */
+                xlog_error("%s: copyout failed with %d", __func__, ret);
+        }
+        return 0;
+}
+
+static int
 wasi_thread_exit(struct exec_context *ctx, struct host_instance *hi,
                  const struct functype *ft, const struct cell *params,
                  struct cell *results)
@@ -364,7 +411,16 @@ wasi_thread_exit(struct exec_context *ctx, struct host_instance *hi,
 }
 
 const struct host_func wasi_threads_funcs[] = {
-        WASI_HOST_FUNC(thread_spawn, "(i)i"),
+        /*
+         * The thread-spawn API before and after wit definition:
+         * https://github.com/WebAssembly/wasi-threads/pull/26
+         * https://github.com/WebAssembly/wasi-libc/pull/385
+         *
+         * We will keep the old one for a while to ease
+         * experiment/migration/testing.
+         */
+        WASI_HOST_FUNC2("thread-spawn", wasi_thread_spawn, "(ii)"),
+        WASI_HOST_FUNC2("thread_spawn", wasi_thread_spawn_old, "(i)i"),
         /*
          * Note: thread_exit is not a part of the current wasi-threads.
          * It's implemented here just for my experiments.
