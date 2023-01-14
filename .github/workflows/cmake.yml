@@ -24,18 +24,31 @@ jobs:
         TOYWASM_ENABLE_WASM_THREADS: [ON, OFF]
         TOYWASM_ENABLE_WASI_THREADS: [ON, OFF]
         exclude:
-          - TOYWASM_USE_SEPARATE_EXECUTE: OFF
-            TOYWASM_USE_TAILCALL: ON
+          # I haven't used gcc for macos
           - os: macos-latest
             compiler: gcc
-          - os: ubuntu-latest
-            compiler: clang
+          # tailcall doesn't make sense w/o separate execute
+          - TOYWASM_USE_SEPARATE_EXECUTE: OFF
+            TOYWASM_USE_TAILCALL: ON
+          # I don't remeber why i excluded this.
+          # Probably because it's testet in wasm-on-wasm jobs?
           - TOYWASM_USE_SEPARATE_EXECUTE: ON
             TOYWASM_USE_TAILCALL: OFF
-          - TOYWASM_USE_SMALL_CELLS: ON
-            TOYWASM_USE_SEPARATE_LOCALS: ON
+          # wasi-threads requires wasm threads
           - TOYWASM_ENABLE_WASM_THREADS: OFF
             TOYWASM_ENABLE_WASI_THREADS: ON
+          # Exclude some non default configs with threads
+          - TOYWASM_USE_SEPARATE_EXECUTE: OFF
+            TOYWASM_ENABLE_WASM_THREADS: ON
+          - TOYWASM_USE_TAILCALL: OFF
+            TOYWASM_ENABLE_WASM_THREADS: ON
+          - TOYWASM_USE_SMALL_CELLS: OFF
+            TOYWASM_ENABLE_WASM_THREADS: ON
+          # exclude some more combinations to reduce the matrix
+          - TOYWASM_USE_SMALL_CELLS: ON
+            TOYWASM_USE_SEPARATE_LOCALS: ON
+          - os: ubuntu-latest
+            compiler: clang
           - os: ubuntu-latest
             BUILD_TYPE: Release
 
