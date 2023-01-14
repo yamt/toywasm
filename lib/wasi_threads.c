@@ -12,6 +12,7 @@
 #include <string.h>
 
 #include "context.h"
+#include "endian.h"
 #include "host_instance.h"
 #include "idalloc.h"
 #include "instance.h"
@@ -390,7 +391,7 @@ wasi_thread_spawn(struct exec_context *ctx, struct host_instance *hi,
         } else {
                 xlog_trace("%s succeeded tid %u", __func__, tid);
                 r.is_error = 0;
-                r.u.tid = tid;
+                le32_encode(&r.u.tid, tid);
         }
         ret = wasi_copyout(ctx, &r, retp, sizeof(r));
         if (ret != 0) {
