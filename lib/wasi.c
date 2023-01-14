@@ -242,11 +242,12 @@ wasi_copyout(struct exec_context *ctx, const void *hostaddr, uint32_t wasmaddr,
 
 static int
 wasi_copyin_iovec(struct exec_context *ctx, uint32_t iov_uaddr,
-                  uint32_t iov_count, struct iovec **resultp)
+                  uint32_t iov_count, struct iovec **resultp, int *usererrorp)
 {
         struct iovec *hostiov = NULL;
         void *p;
-        int ret;
+        int host_ret = 0;
+        int ret = 0;
         if (iov_count == 0) {
                 ret = EINVAL;
                 goto fail;
@@ -257,9 +258,9 @@ wasi_copyin_iovec(struct exec_context *ctx, uint32_t iov_uaddr,
                 goto fail;
         }
 retry:
-        ret = memory_getptr(ctx, 0, iov_uaddr, 0,
-                            iov_count * sizeof(struct wasi_iov), &p);
-        if (ret != 0) {
+        host_ret = memory_getptr(ctx, 0, iov_uaddr, 0,
+                                 iov_count * sizeof(struct wasi_iov), &p);
+        if (host_ret != 0) {
                 goto fail;
         }
         const struct wasi_iov *iov_in_module = p;
@@ -270,8 +271,9 @@ retry:
                 uint32_t iov_len = le32_decode(&iov_in_module[i].iov_len);
                 xlog_trace("iov [%" PRIu32 "] base %" PRIx32 " len %" PRIu32,
                            i, iov_base, iov_len);
-                ret = memory_getptr2(ctx, 0, iov_base, 0, iov_len, &p, &moved);
-                if (ret != 0) {
+                host_ret = memory_getptr2(ctx, 0, iov_base, 0, iov_len, &p,
+                                          &moved);
+                if (host_ret != 0) {
                         goto fail;
                 }
                 if (moved) {
@@ -281,10 +283,12 @@ retry:
                 hostiov[i].iov_len = iov_len;
         }
         *resultp = hostiov;
+        *usererrorp = 0;
         return 0;
 fail:
         free(hostiov);
-        return ret;
+        *usererrorp = ret;
+        return host_ret;
 }
 
 static bool
@@ -647,7 +651,7 @@ static int
 wasi_copyin_and_convert_path(struct exec_context *ctx,
                              struct wasi_instance *wasi, uint32_t dirwasifd,
                              uint32_t path, uint32_t pathlen, char **wasmpathp,
-                             char **hostpathp)
+                             char **hostpathp, int *usererrorp)
 {
         /*
          * TODO: somehow prevent it from escaping the dirwasifd directory.
@@ -660,14 +664,15 @@ wasi_copyin_and_convert_path(struct exec_context *ctx,
         char *hostpath = NULL;
         char *wasmpath = NULL;
         struct wasi_fdinfo *dirfdinfo = NULL;
-        int ret;
+        int host_ret = 0;
+        int ret = 0;
         wasmpath = malloc(pathlen + 1);
         if (wasmpath == NULL) {
                 ret = ENOMEM;
                 goto fail;
         }
-        ret = wasi_copyin(ctx, wasmpath, path, pathlen);
-        if (ret != 0) {
+        host_ret = wasi_copyin(ctx, wasmpath, path, pathlen);
+        if (host_ret != 0) {
                 goto fail;
         }
         wasmpath[pathlen] = 0;
@@ -697,12 +702,14 @@ wasi_copyin_and_convert_path(struct exec_context *ctx,
         wasi_fdinfo_release(wasi, dirfdinfo);
         *hostpathp = hostpath;
         *wasmpathp = wasmpath;
+        *usererrorp = 0;
         return 0;
 fail:
         wasi_fdinfo_release(wasi, dirfdinfo);
         free(hostpath);
         free(wasmpath);
-        return ret;
+        *usererrorp = ret;
+        return host_ret;
 }
 
 static int
@@ -1157,8 +1164,8 @@ wasi_fd_write(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        ret = wasi_copyin_iovec(ctx, iov_addr, iov_count, &hostiov);
-        if (ret != 0) {
+        host_ret = wasi_copyin_iovec(ctx, iov_addr, iov_count, &hostiov, &ret);
+        if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
         ssize_t n;
@@ -1181,10 +1188,13 @@ retry:
                 goto fail;
         }
         uint32_t r = host_to_le32(n);
-        ret = wasi_copyout(ctx, &r, retp, sizeof(r));
+        host_ret = wasi_copyout(ctx, &r, retp, sizeof(r));
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
-        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
+        if (host_ret == 0) {
+                HOST_FUNC_RESULT_SET(ft, results, 0, i32,
+                                     wasi_convert_errno(ret));
+        }
         free(hostiov);
         return host_ret;
 }
@@ -1215,8 +1225,8 @@ wasi_fd_pwrite(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        ret = wasi_copyin_iovec(ctx, iov_addr, iov_count, &hostiov);
-        if (ret != 0) {
+        host_ret = wasi_copyin_iovec(ctx, iov_addr, iov_count, &hostiov, &ret);
+        if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
         ssize_t n;
@@ -1239,10 +1249,13 @@ retry:
                 goto fail;
         }
         uint32_t r = host_to_le32(n);
-        ret = wasi_copyout(ctx, &r, retp, sizeof(r));
+        host_ret = wasi_copyout(ctx, &r, retp, sizeof(r));
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
-        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
+        if (host_ret == 0) {
+                HOST_FUNC_RESULT_SET(ft, results, 0, i32,
+                                     wasi_convert_errno(ret));
+        }
         free(hostiov);
         return host_ret;
 }
@@ -1272,8 +1285,8 @@ wasi_fd_read(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        ret = wasi_copyin_iovec(ctx, iov_addr, iov_count, &hostiov);
-        if (ret != 0) {
+        host_ret = wasi_copyin_iovec(ctx, iov_addr, iov_count, &hostiov, &ret);
+        if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
         ssize_t n;
@@ -1296,10 +1309,13 @@ retry:
                 goto fail;
         }
         uint32_t r = host_to_le32(n);
-        ret = wasi_copyout(ctx, &r, retp, sizeof(r));
+        host_ret = wasi_copyout(ctx, &r, retp, sizeof(r));
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
-        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
+        if (host_ret == 0) {
+                HOST_FUNC_RESULT_SET(ft, results, 0, i32,
+                                     wasi_convert_errno(ret));
+        }
         free(hostiov);
         return host_ret;
 }
@@ -1330,8 +1346,8 @@ wasi_fd_pread(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        ret = wasi_copyin_iovec(ctx, iov_addr, iov_count, &hostiov);
-        if (ret != 0) {
+        host_ret = wasi_copyin_iovec(ctx, iov_addr, iov_count, &hostiov, &ret);
+        if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
         ssize_t n;
@@ -1354,10 +1370,13 @@ retry:
                 goto fail;
         }
         uint32_t r = host_to_le32(n);
-        ret = wasi_copyout(ctx, &r, retp, sizeof(r));
+        host_ret = wasi_copyout(ctx, &r, retp, sizeof(r));
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
-        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
+        if (host_ret == 0) {
+                HOST_FUNC_RESULT_SET(ft, results, 0, i32,
+                                     wasi_convert_errno(ret));
+        }
         free(hostiov);
         return host_ret;
 }
@@ -1377,6 +1396,7 @@ wasi_fd_readdir(struct exec_context *ctx, struct host_instance *hi,
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 4, i32);
         struct wasi_fdinfo *fdinfo = NULL;
         int hostfd;
+        int host_ret = 0;
         int ret;
         ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
         if (ret != 0) {
@@ -1443,8 +1463,8 @@ wasi_fd_readdir(struct exec_context *ctx, struct host_instance *hi,
                         n = buflen; /* signal buffer full */
                         break;
                 }
-                ret = wasi_copyout(ctx, &wde, buf, sizeof(wde));
-                if (ret != 0) {
+                host_ret = wasi_copyout(ctx, &wde, buf, sizeof(wde));
+                if (host_ret != 0) {
                         goto fail;
                 }
                 buf += sizeof(wde);
@@ -1454,19 +1474,22 @@ wasi_fd_readdir(struct exec_context *ctx, struct host_instance *hi,
                         n = buflen; /* signal buffer full */
                         break;
                 }
-                ret = wasi_copyout(ctx, d->d_name, buf, namlen);
-                if (ret != 0) {
+                host_ret = wasi_copyout(ctx, d->d_name, buf, namlen);
+                if (host_ret != 0) {
                         goto fail;
                 }
                 buf += namlen;
                 n += namlen;
         }
         uint32_t r = host_to_le32(n);
-        ret = wasi_copyout(ctx, &r, retp, sizeof(r));
+        host_ret = wasi_copyout(ctx, &r, retp, sizeof(r));
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
-        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
-        return 0;
+        if (host_ret == 0) {
+                HOST_FUNC_RESULT_SET(ft, results, 0, i32,
+                                     wasi_convert_errno(ret));
+        }
+        return host_ret;
 }
 
 static int
@@ -1480,6 +1503,7 @@ wasi_fd_fdstat_get(struct exec_context *ctx, struct host_instance *hi,
         uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         uint32_t stat_addr = HOST_FUNC_PARAM(ft, params, 1, i32);
         struct wasi_fdinfo *fdinfo = NULL;
+        int host_ret = 0;
         int ret;
         ret = wasi_fd_lookup(wasi, wasifd, &fdinfo);
         if (ret != 0) {
@@ -1518,11 +1542,14 @@ wasi_fd_fdstat_get(struct exec_context *ctx, struct host_instance *hi,
          */
         st.fs_rights_inheriting = ~UINT64_C(0);
 
-        ret = wasi_copyout(ctx, &st, stat_addr, sizeof(st));
+        host_ret = wasi_copyout(ctx, &st, stat_addr, sizeof(st));
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
-        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
-        return 0;
+        if (host_ret == 0) {
+                HOST_FUNC_RESULT_SET(ft, results, 0, i32,
+                                     wasi_convert_errno(ret));
+        }
+        return host_ret;
 }
 
 static int
@@ -1589,6 +1616,7 @@ wasi_fd_seek(struct exec_context *ctx, struct host_instance *hi,
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 3, i32);
         struct wasi_fdinfo *fdinfo = NULL;
         int hostfd;
+        int host_ret = 0;
         int ret;
         ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
         if (ret != 0) {
@@ -1631,11 +1659,14 @@ wasi_fd_seek(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         uint64_t result = host_to_le64(ret1);
-        ret = wasi_copyout(ctx, &result, retp, sizeof(result));
+        host_ret = wasi_copyout(ctx, &result, retp, sizeof(result));
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
-        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
-        return 0;
+        if (host_ret == 0) {
+                HOST_FUNC_RESULT_SET(ft, results, 0, i32,
+                                     wasi_convert_errno(ret));
+        }
+        return host_ret;
 }
 
 static int
@@ -1650,6 +1681,7 @@ wasi_fd_tell(struct exec_context *ctx, struct host_instance *hi,
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 1, i32);
         struct wasi_fdinfo *fdinfo = NULL;
         int hostfd;
+        int host_ret = 0;
         int ret;
         ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
         if (ret != 0) {
@@ -1662,11 +1694,14 @@ wasi_fd_tell(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         uint64_t result = host_to_le64(ret1);
-        ret = wasi_copyout(ctx, &result, retp, sizeof(result));
+        host_ret = wasi_copyout(ctx, &result, retp, sizeof(result));
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
-        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
-        return 0;
+        if (host_ret == 0) {
+                HOST_FUNC_RESULT_SET(ft, results, 0, i32,
+                                     wasi_convert_errno(ret));
+        }
+        return host_ret;
 }
 
 static int
@@ -1820,6 +1855,7 @@ wasi_fd_filestat_get(struct exec_context *ctx, struct host_instance *hi,
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 1, i32);
         struct wasi_fdinfo *fdinfo = NULL;
         int hostfd;
+        int host_ret = 0;
         int ret;
         ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
         if (ret != 0) {
@@ -1834,11 +1870,14 @@ wasi_fd_filestat_get(struct exec_context *ctx, struct host_instance *hi,
         }
         struct wasi_filestat wst;
         wasi_convert_filestat(&hst, &wst);
-        ret = wasi_copyout(ctx, &wst, retp, sizeof(wst));
+        host_ret = wasi_copyout(ctx, &wst, retp, sizeof(wst));
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
-        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
-        return 0;
+        if (host_ret == 0) {
+                HOST_FUNC_RESULT_SET(ft, results, 0, i32,
+                                     wasi_convert_errno(ret));
+        }
+        return host_ret;
 }
 
 static int
@@ -1887,6 +1926,7 @@ wasi_fd_prestat_get(struct exec_context *ctx, struct host_instance *hi,
         HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 1, i32);
+        int host_ret = 0;
         int ret;
         struct wasi_fdinfo *fdinfo = NULL;
         ret = wasi_fd_lookup(wasi, wasifd, &fdinfo);
@@ -1901,11 +1941,14 @@ wasi_fd_prestat_get(struct exec_context *ctx, struct host_instance *hi,
         memset(&st, 0, sizeof(st));
         st.type = WASI_PREOPEN_TYPE_DIR;
         st.dir_name_len = host_to_le32(strlen(fdinfo->prestat_path));
-        ret = wasi_copyout(ctx, &st, retp, sizeof(st));
+        host_ret = wasi_copyout(ctx, &st, retp, sizeof(st));
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
-        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
-        return 0;
+        if (host_ret == 0) {
+                HOST_FUNC_RESULT_SET(ft, results, 0, i32,
+                                     wasi_convert_errno(ret));
+        }
+        return host_ret;
 }
 
 static int
@@ -1919,6 +1962,7 @@ wasi_fd_prestat_dir_name(struct exec_context *ctx, struct host_instance *hi,
         uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         uint32_t path = HOST_FUNC_PARAM(ft, params, 1, i32);
         uint32_t pathlen = HOST_FUNC_PARAM(ft, params, 2, i32);
+        int host_ret = 0;
         int ret;
         struct wasi_fdinfo *fdinfo = NULL;
         ret = wasi_fd_lookup(wasi, wasifd, &fdinfo);
@@ -1939,11 +1983,14 @@ wasi_fd_prestat_dir_name(struct exec_context *ctx, struct host_instance *hi,
                 ret = EINVAL;
                 goto fail;
         }
-        ret = wasi_copyout(ctx, fdinfo->prestat_path, path, len);
+        host_ret = wasi_copyout(ctx, fdinfo->prestat_path, path, len);
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
-        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
-        return 0;
+        if (host_ret == 0) {
+                HOST_FUNC_RESULT_SET(ft, results, 0, i32,
+                                     wasi_convert_errno(ret));
+        }
+        return host_ret;
 }
 
 static int
@@ -2112,13 +2159,16 @@ retry:
         }
         assert(events + nevents == ev);
         uint32_t result = host_to_le32(nevents);
-        ret = wasi_copyout(ctx, &result, retp, sizeof(result));
+        host_ret = wasi_copyout(ctx, &result, retp, sizeof(result));
 fail:
         for (i = 0; i < nfdinfos; i++) {
                 wasi_fdinfo_release(wasi, fdinfos[i]);
         }
         free(fdinfos);
-        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
+        if (host_ret == 0) {
+                HOST_FUNC_RESULT_SET(ft, results, 0, i32,
+                                     wasi_convert_errno(ret));
+        }
         free(pollfds);
         return host_ret;
 }
@@ -2133,6 +2183,7 @@ wasi_clock_res_get(struct exec_context *ctx, struct host_instance *hi,
         uint32_t clockid = HOST_FUNC_PARAM(ft, params, 0, i32);
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 1, i32);
         clockid_t hostclockid;
+        int host_ret = 0;
         int ret;
         ret = wasi_convert_clockid(clockid, &hostclockid);
         if (ret != 0) {
@@ -2146,10 +2197,13 @@ wasi_clock_res_get(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         uint64_t result = host_to_le64(timespec_to_ns(&ts));
-        ret = wasi_copyout(ctx, &result, retp, sizeof(result));
+        host_ret = wasi_copyout(ctx, &result, retp, sizeof(result));
 fail:
-        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
-        return 0;
+        if (host_ret == 0) {
+                HOST_FUNC_RESULT_SET(ft, results, 0, i32,
+                                     wasi_convert_errno(ret));
+        }
+        return host_ret;
 }
 
 static int
@@ -2165,6 +2219,7 @@ wasi_clock_time_get(struct exec_context *ctx, struct host_instance *hi,
 #endif
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 2, i32);
         clockid_t hostclockid;
+        int host_ret = 0;
         int ret;
         ret = wasi_convert_clockid(clockid, &hostclockid);
         if (ret != 0) {
@@ -2178,10 +2233,13 @@ wasi_clock_time_get(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         uint64_t result = host_to_le64(timespec_to_ns(&ts));
-        ret = wasi_copyout(ctx, &result, retp, sizeof(result));
+        host_ret = wasi_copyout(ctx, &result, retp, sizeof(result));
 fail:
-        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
-        return 0;
+        if (host_ret == 0) {
+                HOST_FUNC_RESULT_SET(ft, results, 0, i32,
+                                     wasi_convert_errno(ret));
+        }
+        return host_ret;
 }
 
 static int
@@ -2192,10 +2250,10 @@ args_environ_sizes_get(struct exec_context *ctx, struct wasi_instance *wasi,
         HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t argcp = HOST_FUNC_PARAM(ft, params, 0, i32);
         uint32_t argv_buf_sizep = HOST_FUNC_PARAM(ft, params, 1, i32);
-        int ret;
+        int host_ret;
         uint32_t argc_le32 = host_to_le32(argc);
-        ret = wasi_copyout(ctx, &argc_le32, argcp, sizeof(argc_le32));
-        if (ret != 0) {
+        host_ret = wasi_copyout(ctx, &argc_le32, argcp, sizeof(argc_le32));
+        if (host_ret != 0) {
                 goto fail;
         }
         int i;
@@ -2204,10 +2262,14 @@ args_environ_sizes_get(struct exec_context *ctx, struct wasi_instance *wasi,
                 argv_buf_size += strlen(argv[i]) + 1;
         }
         argv_buf_size = host_to_le32(argv_buf_size);
-        ret = wasi_copyout(ctx, &argv_buf_size, argv_buf_sizep,
-                           sizeof(argv_buf_size));
+        host_ret = wasi_copyout(ctx, &argv_buf_size, argv_buf_sizep,
+                                sizeof(argv_buf_size));
 fail:
-        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
+        if (host_ret == 0) {
+                int ret = 0; /* never fail */
+                HOST_FUNC_RESULT_SET(ft, results, 0, i32,
+                                     wasi_convert_errno(ret));
+        }
         return 0;
 }
 
@@ -2219,7 +2281,8 @@ args_environ_get(struct exec_context *ctx, struct wasi_instance *wasi,
         HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t argvp = HOST_FUNC_PARAM(ft, params, 0, i32);
         uint32_t argv_buf = HOST_FUNC_PARAM(ft, params, 1, i32);
-        int ret;
+        int host_ret = 0;
+        int ret = 0;
         uint32_t i;
         uint32_t *wasm_argv = NULL;
         if (argc > 0) {
@@ -2237,16 +2300,20 @@ args_environ_get(struct exec_context *ctx, struct wasi_instance *wasi,
         }
         for (i = 0; i < argc; i++) {
                 size_t sz = strlen(argv[i]) + 1;
-                ret = wasi_copyout(ctx, argv[i], le32_to_host(wasm_argv[i]),
-                                   sz);
-                if (ret != 0) {
+                host_ret = wasi_copyout(ctx, argv[i],
+                                        le32_to_host(wasm_argv[i]), sz);
+                if (host_ret != 0) {
                         goto fail;
                 }
         }
-        ret = wasi_copyout(ctx, wasm_argv, argvp, argc * sizeof(*wasm_argv));
+        host_ret =
+                wasi_copyout(ctx, wasm_argv, argvp, argc * sizeof(*wasm_argv));
 fail:
         free(wasm_argv);
-        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
+        if (host_ret == 0) {
+                HOST_FUNC_RESULT_SET(ft, results, 0, i32,
+                                     wasi_convert_errno(ret));
+        }
         return 0;
 }
 
@@ -2361,7 +2428,8 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
         char *hostpath = NULL;
         char *wasmpath = NULL;
         int hostfd = -1;
-        int ret;
+        int host_ret = 0;
+        int ret = 0;
         int oflags = 0;
         xlog_trace("wasm oflags %" PRIx32 " rights_base %" PRIx64, wasmoflags,
                    rights_base);
@@ -2412,9 +2480,10 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
                 oflags |= O_RDWR;
                 break;
         }
-        ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd, path, pathlen,
-                                           &wasmpath, &hostpath);
-        if (ret != 0) {
+        host_ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd, path,
+                                                pathlen, &wasmpath, &hostpath,
+                                                &ret);
+        if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
         xlog_trace("open %s oflags %x", hostpath, oflags);
@@ -2450,8 +2519,8 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
         hostfd = -1;
         xlog_trace("-> new wasi fd %" PRIu32, wasifd);
         uint32_t r = host_to_le32(wasifd);
-        ret = wasi_copyout(ctx, &r, retp, sizeof(r));
-        if (ret != 0) {
+        host_ret = wasi_copyout(ctx, &r, retp, sizeof(r));
+        if (host_ret != 0) {
                 /* XXX close wasifd? */
                 goto fail;
         }
@@ -2461,8 +2530,11 @@ fail:
         }
         free(hostpath);
         free(wasmpath);
-        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
-        return 0;
+        if (host_ret == 0) {
+                HOST_FUNC_RESULT_SET(ft, results, 0, i32,
+                                     wasi_convert_errno(ret));
+        }
+        return host_ret;
 }
 
 static int
@@ -2478,10 +2550,12 @@ wasi_path_unlink_file(struct exec_context *ctx, struct host_instance *hi,
         uint32_t pathlen = HOST_FUNC_PARAM(ft, params, 2, i32);
         char *hostpath = NULL;
         char *wasmpath = NULL;
-        int ret;
-        ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd, path, pathlen,
-                                           &wasmpath, &hostpath);
-        if (ret != 0) {
+        int host_ret;
+        int ret = 0;
+        host_ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd, path,
+                                                pathlen, &wasmpath, &hostpath,
+                                                &ret);
+        if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
         ret = unlink(hostpath);
@@ -2493,8 +2567,11 @@ wasi_path_unlink_file(struct exec_context *ctx, struct host_instance *hi,
 fail:
         free(hostpath);
         free(wasmpath);
-        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
-        return 0;
+        if (host_ret == 0) {
+                HOST_FUNC_RESULT_SET(ft, results, 0, i32,
+                                     wasi_convert_errno(ret));
+        }
+        return host_ret;
 }
 
 static int
@@ -2510,10 +2587,12 @@ wasi_path_create_directory(struct exec_context *ctx, struct host_instance *hi,
         uint32_t pathlen = HOST_FUNC_PARAM(ft, params, 2, i32);
         char *hostpath = NULL;
         char *wasmpath = NULL;
-        int ret;
-        ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd, path, pathlen,
-                                           &wasmpath, &hostpath);
-        if (ret != 0) {
+        int host_ret;
+        int ret = 0;
+        host_ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd, path,
+                                                pathlen, &wasmpath, &hostpath,
+                                                &ret);
+        if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
         ret = mkdir(hostpath, 0777);
@@ -2525,8 +2604,11 @@ wasi_path_create_directory(struct exec_context *ctx, struct host_instance *hi,
 fail:
         free(hostpath);
         free(wasmpath);
-        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
-        return 0;
+        if (host_ret == 0) {
+                HOST_FUNC_RESULT_SET(ft, results, 0, i32,
+                                     wasi_convert_errno(ret));
+        }
+        return host_ret;
 }
 
 static int
@@ -2542,10 +2624,12 @@ wasi_path_remove_directory(struct exec_context *ctx, struct host_instance *hi,
         uint32_t pathlen = HOST_FUNC_PARAM(ft, params, 2, i32);
         char *hostpath = NULL;
         char *wasmpath = NULL;
-        int ret;
-        ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd, path, pathlen,
-                                           &wasmpath, &hostpath);
-        if (ret != 0) {
+        int host_ret;
+        int ret = 0;
+        host_ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd, path,
+                                                pathlen, &wasmpath, &hostpath,
+                                                &ret);
+        if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
         ret = rmdir(hostpath);
@@ -2557,8 +2641,11 @@ wasi_path_remove_directory(struct exec_context *ctx, struct host_instance *hi,
 fail:
         free(hostpath);
         free(wasmpath);
-        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
-        return 0;
+        if (host_ret == 0) {
+                HOST_FUNC_RESULT_SET(ft, results, 0, i32,
+                                     wasi_convert_errno(ret));
+        }
+        return host_ret;
 }
 
 static int
@@ -2577,20 +2664,22 @@ wasi_path_symlink(struct exec_context *ctx, struct host_instance *hi,
         char *target_buf;
         char *hostpath = NULL;
         char *wasmpath = NULL;
-        int ret;
+        int host_ret = 0;
+        int ret = 0;
         target_buf = malloc(targetlen + 1);
         if (target_buf == NULL) {
                 ret = ENOMEM;
                 goto fail;
         }
-        ret = wasi_copyin(ctx, target_buf, target, targetlen);
-        if (ret != 0) {
+        host_ret = wasi_copyin(ctx, target_buf, target, targetlen);
+        if (host_ret != 0) {
                 goto fail;
         }
         target_buf[targetlen] = 0;
-        ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd, path, pathlen,
-                                           &wasmpath, &hostpath);
-        if (ret != 0) {
+        host_ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd, path,
+                                                pathlen, &wasmpath, &hostpath,
+                                                &ret);
+        if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
         ret = symlink(target_buf, hostpath);
@@ -2603,8 +2692,11 @@ fail:
         free(target_buf);
         free(hostpath);
         free(wasmpath);
-        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
-        return 0;
+        if (host_ret == 0) {
+                HOST_FUNC_RESULT_SET(ft, results, 0, i32,
+                                     wasi_convert_errno(ret));
+        }
+        return host_ret;
 }
 
 static int
@@ -2624,10 +2716,12 @@ wasi_path_readlink(struct exec_context *ctx, struct host_instance *hi,
         void *tmpbuf = NULL;
         char *hostpath = NULL;
         char *wasmpath = NULL;
-        int ret;
-        ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd, path, pathlen,
-                                           &wasmpath, &hostpath);
-        if (ret != 0) {
+        int host_ret = 0;
+        int ret = 0;
+        host_ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd, path,
+                                                pathlen, &wasmpath, &hostpath,
+                                                &ret);
+        if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
         /*
@@ -2663,21 +2757,24 @@ wasi_path_readlink(struct exec_context *ctx, struct host_instance *hi,
                 ret = ERANGE;
                 goto fail;
         }
-        ret = wasi_copyout(ctx, tmpbuf, buf, ret1);
-        if (ret != 0) {
+        host_ret = wasi_copyout(ctx, tmpbuf, buf, ret1);
+        if (host_ret != 0) {
                 goto fail;
         }
         uint32_t result = le32_to_host(ret1);
-        ret = wasi_copyout(ctx, &result, retp, sizeof(result));
-        if (ret != 0) {
+        host_ret = wasi_copyout(ctx, &result, retp, sizeof(result));
+        if (host_ret != 0) {
                 goto fail;
         }
 fail:
         free(tmpbuf);
         free(hostpath);
         free(wasmpath);
-        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
-        return 0;
+        if (host_ret == 0) {
+                HOST_FUNC_RESULT_SET(ft, results, 0, i32,
+                                     wasi_convert_errno(ret));
+        }
+        return host_ret;
 }
 
 static int
@@ -2699,7 +2796,8 @@ wasi_path_link(struct exec_context *ctx, struct host_instance *hi,
         char *wasmpath1 = NULL;
         char *hostpath2 = NULL;
         char *wasmpath2 = NULL;
-        int ret;
+        int host_ret = 0;
+        int ret = 0;
         if ((lookupflags & WASI_LOOKUPFLAG_SYMLINK_FOLLOW) == 0) {
 #if 1
                 ret = ENOTSUP;
@@ -2709,14 +2807,16 @@ wasi_path_link(struct exec_context *ctx, struct host_instance *hi,
                         "path_link: Ignoring !WASI_LOOKUPFLAG_SYMLINK_FOLLOW");
 #endif
         }
-        ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd1, path1,
-                                           pathlen1, &wasmpath1, &hostpath1);
-        if (ret != 0) {
+        host_ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd1, path1,
+                                                pathlen1, &wasmpath1,
+                                                &hostpath1, &ret);
+        if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
-        ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd2, path2,
-                                           pathlen2, &wasmpath2, &hostpath2);
-        if (ret != 0) {
+        host_ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd2, path2,
+                                                pathlen2, &wasmpath2,
+                                                &hostpath2, &ret);
+        if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
         ret = link(hostpath1, hostpath2);
@@ -2730,7 +2830,10 @@ fail:
         free(wasmpath1);
         free(hostpath2);
         free(wasmpath2);
-        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
+        if (host_ret == 0) {
+                HOST_FUNC_RESULT_SET(ft, results, 0, i32,
+                                     wasi_convert_errno(ret));
+        }
         return 0;
 }
 
@@ -2752,15 +2855,18 @@ wasi_path_rename(struct exec_context *ctx, struct host_instance *hi,
         char *wasmpath1 = NULL;
         char *hostpath2 = NULL;
         char *wasmpath2 = NULL;
-        int ret;
-        ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd1, path1,
-                                           pathlen1, &wasmpath1, &hostpath1);
-        if (ret != 0) {
+        int host_ret;
+        int ret = 0;
+        host_ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd1, path1,
+                                                pathlen1, &wasmpath1,
+                                                &hostpath1, &ret);
+        if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
-        ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd2, path2,
-                                           pathlen2, &wasmpath2, &hostpath2);
-        if (ret != 0) {
+        host_ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd2, path2,
+                                                pathlen2, &wasmpath2,
+                                                &hostpath2, &ret);
+        if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
         ret = rename(hostpath1, hostpath2);
@@ -2774,8 +2880,11 @@ fail:
         free(wasmpath1);
         free(hostpath2);
         free(wasmpath2);
-        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
-        return 0;
+        if (host_ret == 0) {
+                HOST_FUNC_RESULT_SET(ft, results, 0, i32,
+                                     wasi_convert_errno(ret));
+        }
+        return host_ret;
 }
 
 static int
@@ -2793,10 +2902,12 @@ wasi_path_filestat_get(struct exec_context *ctx, struct host_instance *hi,
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 4, i32);
         char *hostpath = NULL;
         char *wasmpath = NULL;
+        int host_ret = 0;
         int ret;
-        ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd, path, pathlen,
-                                           &wasmpath, &hostpath);
-        if (ret != 0) {
+        host_ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd, path,
+                                                pathlen, &wasmpath, &hostpath,
+                                                &ret);
+        if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
         struct stat hst;
@@ -2812,12 +2923,15 @@ wasi_path_filestat_get(struct exec_context *ctx, struct host_instance *hi,
         }
         struct wasi_filestat wst;
         wasi_convert_filestat(&hst, &wst);
-        ret = wasi_copyout(ctx, &wst, retp, sizeof(wst));
+        host_ret = wasi_copyout(ctx, &wst, retp, sizeof(wst));
 fail:
         free(hostpath);
         free(wasmpath);
-        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
-        return 0;
+        if (host_ret == 0) {
+                HOST_FUNC_RESULT_SET(ft, results, 0, i32,
+                                     wasi_convert_errno(ret));
+        }
+        return host_ret;
 }
 
 static int
@@ -2838,10 +2952,12 @@ wasi_path_filestat_set_times(struct exec_context *ctx,
         uint32_t fstflags = HOST_FUNC_PARAM(ft, params, 7, i32);
         char *hostpath = NULL;
         char *wasmpath = NULL;
-        int ret;
-        ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd, path, pathlen,
-                                           &wasmpath, &hostpath);
-        if (ret != 0) {
+        int host_ret;
+        int ret = 0;
+        host_ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd, path,
+                                                pathlen, &wasmpath, &hostpath,
+                                                &ret);
+        if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
         struct timeval tv[2];
@@ -2865,10 +2981,13 @@ wasi_path_filestat_set_times(struct exec_context *ctx,
                 assert(ret > 0);
         }
 fail:
-        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
+        if (host_ret == 0) {
+                HOST_FUNC_RESULT_SET(ft, results, 0, i32,
+                                     wasi_convert_errno(ret));
+        }
         free(hostpath);
         free(wasmpath);
-        return 0;
+        return host_ret;
 }
 
 static int
@@ -2962,8 +3081,8 @@ retry:
         }
         hostchildfd = -1;
         uint32_t r = host_to_le32(wasichildfd);
-        ret = wasi_copyout(ctx, &r, retp, sizeof(r));
-        if (ret != 0) {
+        host_ret = wasi_copyout(ctx, &r, retp, sizeof(r));
+        if (host_ret != 0) {
                 /* XXX close wasichildfd? */
                 goto fail;
         }
@@ -2971,7 +3090,10 @@ fail:
         if (hostchildfd == -1) {
                 close(hostchildfd);
         }
-        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
+        if (host_ret == 0) {
+                HOST_FUNC_RESULT_SET(ft, results, 0, i32,
+                                     wasi_convert_errno(ret));
+        }
         return host_ret;
 }
 
