@@ -13,3 +13,5 @@ struct wasi_thread_spawn_result {
 ctassert(sizeof(struct wasi_thread_spawn_result) == 8);
 ctassert_offset(struct wasi_thread_spawn_result, u.error, 4);
 ctassert_offset(struct wasi_thread_spawn_result, u.tid, 4);
+
+#define WASI_THREADS_ERROR_AGAIN 0

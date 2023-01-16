@@ -387,7 +387,8 @@ wasi_thread_spawn(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 xlog_trace("%s failed with %d", __func__, ret);
                 r.is_error = 1;
-                r.u.error = wasi_convert_errno(ret); /* XXX */
+                /* EAGAIN is the only defined error for now. */
+                r.u.error = WASI_THREADS_ERROR_AGAIN;
         } else {
                 xlog_trace("%s succeeded tid %u", __func__, tid);
                 r.is_error = 0;
