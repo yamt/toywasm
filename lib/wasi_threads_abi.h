@@ -1,5 +1,7 @@
 #include <stdint.h>
 
+#include "platform.h"
+
 struct wasi_thread_spawn_result {
         uint8_t is_error;
         union {
@@ -7,3 +9,7 @@ struct wasi_thread_spawn_result {
                 uint32_t tid;
         } u;
 };
+
+ctassert(sizeof(struct wasi_thread_spawn_result) == 8);
+ctassert_offset(struct wasi_thread_spawn_result, u.error, 4);
+ctassert_offset(struct wasi_thread_spawn_result, u.tid, 4);
