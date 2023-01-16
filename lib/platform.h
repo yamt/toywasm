@@ -69,3 +69,17 @@
 #else
 #undef toywasm_typeof
 #endif
+
+/*
+ * https://gcc.gnu.org/onlinedocs/gcc/Offsetof.html
+ * clang also has it.
+ *
+ */
+#if defined(__GNUC__)
+#define toywasm_offsetof(a, b) __builtin_offsetof(a, b)
+#define ctassert_offset(a, b, c) ctassert(toywasm_offsetof(a, b) == c)
+#else
+/* note: this implementation is not an integral constant. */
+#define toywasm_offsetof(a, b) ((size_t)(&((a *)0)->b))
+#define ctassert_offset(a, b, c)
+#endif
