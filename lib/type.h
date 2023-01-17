@@ -325,6 +325,10 @@ enum section_id {
  * - data segments
  * - exprs
  * - module->bin (currently only used to calculate "pc")
+ *
+ * This structure and all referenced child structures are read-only
+ * until module_destroy().
+ * Thus it can be safely shared among threads without any serializations.
  */
 
 struct module {
