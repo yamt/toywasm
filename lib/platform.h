@@ -51,10 +51,12 @@
 #endif
 
 /* compile-time assertion */
+#if !defined(ctassert)
 #if __STDC_VERSION__ >= 201112L || __has_extension(c_static_assert)
 #define ctassert(e) _Static_assert(e, #e)
 #else
 #define ctassert(e)
+#endif
 #endif
 
 /*
@@ -64,10 +66,12 @@
  * Note: we don't want to rely on typeof.
  * any use of it in toywasm should have a fallback implementation.
  */
+#if !defined(toywasm_typeof)
 #if defined(__GNUC__)
 #define toywasm_typeof(a) __typeof__(a)
 #else
 #undef toywasm_typeof
+#endif
 #endif
 
 /*
@@ -75,6 +79,7 @@
  * clang also has it.
  *
  */
+#if !defined(ctassert_offset)
 #if defined(__GNUC__)
 #define toywasm_offsetof(a, b) __builtin_offsetof(a, b)
 #define ctassert_offset(a, b, c) ctassert(toywasm_offsetof(a, b) == c)
@@ -82,4 +87,5 @@
 /* note: this implementation is not an integral constant. */
 #define toywasm_offsetof(a, b) ((size_t)(&((a *)0)->b))
 #define ctassert_offset(a, b, c)
+#endif
 #endif
