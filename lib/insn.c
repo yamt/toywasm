@@ -323,9 +323,14 @@ fail:
         return ret;
 }
 
+#if defined(TOYWASM_USE_SEPARATE_EXECUTE)
+#define EXECUTING false
+#define ECTX ((struct exec_context *)NULL)
+#else
 #define EXECUTING (ctx->exec != NULL)
-#define VALIDATING (ctx->validation != NULL)
 #define ECTX (ctx->exec)
+#endif
+#define VALIDATING (ctx->validation != NULL)
 #define VCTX (ctx->validation)
 #define INSN_IMPL(NAME)                                                       \
         int process_##NAME(const uint8_t **pp, const uint8_t *ep,             \
@@ -344,8 +349,8 @@ fail:
 #include "insn_impl.h"
 
 #undef EXECUTING
-#undef VALIDATING
 #undef ECTX
+#undef VALIDATING
 #undef VCTX
 #undef INSN_IMPL
 #undef LOAD_PC
@@ -361,8 +366,8 @@ fail:
 
 #if defined(TOYWASM_USE_SEPARATE_EXECUTE)
 #define EXECUTING true
-#define VALIDATING false
 #define ECTX ctx
+#define VALIDATING false
 #define VCTX ((struct validation_context *)NULL)
 #define INSN_IMPL(NAME)                                                       \
         int fetch_exec_##NAME(const uint8_t *p, struct cell *stack,           \
@@ -404,8 +409,8 @@ fail:
 #include "insn_impl.h"
 
 #undef EXECUTING
-#undef VALIDATING
 #undef ECTX
+#undef VALIDATING
 #undef VCTX
 #undef INSN_IMPL
 #undef LOAD_PC
