@@ -229,7 +229,7 @@ memory_instance_destroy(struct meminst *mi)
  */
 
 int
-instance_create(struct module *m, struct instance **instp,
+instance_create(const struct module *m, struct instance **instp,
                 const struct import_object *imports, struct report *report)
 {
         struct instance *inst;
@@ -256,7 +256,7 @@ instance_create(struct module *m, struct instance **instp,
 }
 
 int
-instance_create_no_init(struct module *m, struct instance **instp,
+instance_create_no_init(const struct module *m, struct instance **instp,
                         const struct import_object *imports,
                         struct report *report)
 {

@@ -13,7 +13,7 @@ struct name;
  * This API is inspired from js-api.
  * https://webassembly.github.io/spec/js-api/index.html#instances
  */
-int instance_create(struct module *m, struct instance **instp,
+int instance_create(const struct module *m, struct instance **instp,
                     const struct import_object *imports,
                     struct report *report);
 
@@ -24,7 +24,7 @@ int instance_create(struct module *m, struct instance **instp,
  * to deal with some of corner cases you can see in opam-2.0.0 linking.wast.
  * cf. https://github.com/WebAssembly/spec/issues/1530
  */
-int instance_create_no_init(struct module *m, struct instance **instp,
+int instance_create_no_init(const struct module *m, struct instance **instp,
                             const struct import_object *imports,
                             struct report *report);
 int instance_create_execute_init(struct instance *inst,
@@ -66,5 +66,5 @@ struct memtype;
 int memory_instance_create(struct meminst **mip, const struct memtype *mt);
 void memory_instance_destroy(struct meminst *mi);
 
-int create_satisfying_shared_memories(struct module *module,
+int create_satisfying_shared_memories(const struct module *module,
                                       struct import_object **imop);

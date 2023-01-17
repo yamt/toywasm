@@ -23,7 +23,7 @@ _dtor(struct import_object *imo)
  * used for wasi-threads.
  */
 int
-create_satisfying_shared_memories(struct module *m,
+create_satisfying_shared_memories(const struct module *m,
                                   struct import_object **imop)
 {
         struct import_object *imo = NULL;
