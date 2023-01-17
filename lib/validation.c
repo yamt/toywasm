@@ -36,8 +36,8 @@ push_valtype(enum valtype type, struct validation_context *ctx)
         const struct ctrlframe *cframe = &ctx->cframes[ctx->ncframes - 1];
         if (!cframe->unreachable) {
                 ctx->ncells += valtype_cellsize(type);
-                if (ctx->ncells > ctx->ei->maxvals) {
-                        ctx->ei->maxvals = ctx->ncells;
+                if (ctx->ncells > ctx->ei->maxcells) {
+                        ctx->ei->maxcells = ctx->ncells;
                 }
         }
         return 0;

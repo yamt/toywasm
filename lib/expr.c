@@ -169,9 +169,9 @@ read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
         *pp = p;
         expr->end = p;
         xlog_trace("code size %zu, jump table size %zu, max labels %" PRIu32
-                   ", vals %" PRIu32,
+                   ", cells %" PRIu32,
                    expr->end - expr->start, ei->njumps * sizeof(*ei->jumps),
-                   ei->maxlabels, ei->maxvals);
+                   ei->maxlabels, ei->maxcells);
         validation_context_clear(vctx);
         return 0;
 fail:

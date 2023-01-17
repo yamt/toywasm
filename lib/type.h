@@ -64,7 +64,7 @@ struct expr_exec_info {
         struct jump *jumps;
 
         uint32_t maxlabels; /* max labels (including the implicit one) */
-        uint32_t maxvals;   /* max vals on stack */
+        uint32_t maxcells;  /* max cells on stack */
 
 #if defined(TOYWASM_USE_SMALL_CELLS)
         /*

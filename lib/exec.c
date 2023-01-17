@@ -288,14 +288,14 @@ frame_enter(struct exec_context *ctx, struct instance *inst, uint32_t funcidx,
          * As we've copied "params" above, now it's safe to resize
          * stack.
          */
-        ret = stack_prealloc(ctx, ei->maxvals);
+        ret = stack_prealloc(ctx, ei->maxcells);
         if (ret != 0) {
                 return ret;
         }
 #else
         const bool params_on_stack = params == &VEC_NEXTELEM(ctx->stack);
 
-        ret = stack_prealloc(ctx, nlocals + ei->maxvals);
+        ret = stack_prealloc(ctx, nlocals + ei->maxcells);
         if (ret != 0) {
                 return ret;
         }
@@ -311,8 +311,8 @@ frame_enter(struct exec_context *ctx, struct instance *inst, uint32_t funcidx,
 #endif
         cells_zero(locals + nparams, nlocals - nparams);
 
-        xlog_trace_insn("frame enter: maxlabels %u maxvals %u", ei->maxlabels,
-                        ei->maxvals);
+        xlog_trace_insn("frame enter: maxlabels %u maxcells %u", ei->maxlabels,
+                        ei->maxcells);
         uint32_t i;
         for (i = 0; i < nlocals; i++) {
                 if (i == nparams) {
@@ -335,7 +335,7 @@ frame_enter(struct exec_context *ctx, struct instance *inst, uint32_t funcidx,
         assert(ctx->locals.lsize + nlocals <= ctx->locals.psize);
         ctx->locals.lsize += nlocals;
 #else
-        assert(ctx->stack.lsize + nlocals + ei->maxvals <= ctx->stack.psize);
+        assert(ctx->stack.lsize + nlocals + ei->maxcells <= ctx->stack.psize);
         ctx->stack.lsize += nlocals;
 #endif
         set_current_frame(ctx, frame, ei);
