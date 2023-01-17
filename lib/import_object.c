@@ -34,7 +34,7 @@ import_object_create_for_exports(struct instance *inst,
                                  const struct name *module_name,
                                  struct import_object **resultp)
 {
-        struct module *m = inst->module;
+        const struct module *m = inst->module;
         struct import_object *im;
         int ret;
 

@@ -149,7 +149,7 @@ fail:
 
 INSN_IMPL(global_get)
 {
-        struct module *m = MODULE;
+        const struct module *m = MODULE;
         int ret;
 
         LOAD_PC;
@@ -191,7 +191,7 @@ fail:
 
 INSN_IMPL(global_set)
 {
-        struct module *m = MODULE;
+        const struct module *m = MODULE;
         int ret;
 
         LOAD_PC;
@@ -218,7 +218,7 @@ fail:
 
 INSN_IMPL(table_get)
 {
-        struct module *m = MODULE;
+        const struct module *m = MODULE;
         int ret;
 
         LOAD_PC;
@@ -247,7 +247,7 @@ fail:
 
 INSN_IMPL(table_set)
 {
-        struct module *m = MODULE;
+        const struct module *m = MODULE;
         int ret;
 
         LOAD_PC;
@@ -292,7 +292,7 @@ INSN_IMPL(memory_size)
         CHECK_RET(ret);
         CHECK(zero == 0);
         uint32_t memidx = 0;
-        struct module *m = MODULE;
+        const struct module *m = MODULE;
         CHECK(memidx < m->nimportedmems + m->nmems);
         struct val val_sz;
         if (EXECUTING) {
@@ -317,7 +317,7 @@ INSN_IMPL(memory_grow)
         CHECK_RET(ret);
         CHECK(zero == 0);
         uint32_t memidx = 0;
-        struct module *m = MODULE;
+        const struct module *m = MODULE;
         CHECK(memidx < m->nimportedmems + m->nmems);
         POP_VAL(TYPE_i32, n);
         struct val val_error;
@@ -572,7 +572,7 @@ INSN_IMPL(ref_func)
         int ret;
         LOAD_PC;
         READ_LEB_U32(funcidx);
-        struct module *m = MODULE;
+        const struct module *m = MODULE;
         CHECK(funcidx < m->nimportedfuncs + m->nfuncs);
         struct val val_result;
         if (EXECUTING) {

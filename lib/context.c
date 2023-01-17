@@ -72,7 +72,7 @@ resulttype_free(struct resulttype *p)
 }
 
 uint32_t
-ptr2pc(struct module *m, const uint8_t *p)
+ptr2pc(const struct module *m, const uint8_t *p)
 {
         assert(p >= m->bin);
         assert(p - m->bin <= UINT32_MAX);
@@ -80,7 +80,7 @@ ptr2pc(struct module *m, const uint8_t *p)
 }
 
 const uint8_t *
-pc2ptr(struct module *m, uint32_t pc)
+pc2ptr(const struct module *m, uint32_t pc)
 {
         return m->bin + pc;
 }

@@ -401,7 +401,7 @@ fail:
 
 INSN_IMPL(call)
 {
-        struct module *m;
+        const struct module *m;
         int ret;
 
         LOAD_PC;
@@ -433,7 +433,7 @@ fail:
 
 INSN_IMPL(call_indirect)
 {
-        struct module *m = MODULE;
+        const struct module *m = MODULE;
         int ret;
 
         LOAD_PC;

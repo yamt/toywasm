@@ -114,7 +114,7 @@ fail:                                                                         \
 #define LOADOP2(NAME, MEM, STACK, CAST, I_OR_F)                               \
         INSN_IMPL(NAME)                                                       \
         {                                                                     \
-                struct module *m = MODULE;                                    \
+                const struct module *m = MODULE;                              \
                 struct memarg memarg;                                         \
                 int ret;                                                      \
                 LOAD_PC;                                                      \
@@ -146,7 +146,7 @@ fail:                                                                         \
 #define STOREOP2(NAME, MEM, STACK, CAST, I_OR_F)                              \
         INSN_IMPL(NAME)                                                       \
         {                                                                     \
-                struct module *m = MODULE;                                    \
+                const struct module *m = MODULE;                              \
                 struct memarg memarg;                                         \
                 int ret;                                                      \
                 LOAD_PC;                                                      \

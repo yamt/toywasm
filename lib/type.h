@@ -421,7 +421,7 @@ struct tableinst {
 };
 
 struct instance {
-        struct module *module;
+        const struct module *module;
         VEC(, struct funcinst *) funcs;
         VEC(, struct meminst *) mems;
         VEC(, struct tableinst *) tables;

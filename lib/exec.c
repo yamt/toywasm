@@ -201,7 +201,7 @@ set_current_frame(struct exec_context *ctx, const struct funcframe *frame,
                 ctx->localtype = NULL;
                 ctx->ei = ei;
         } else {
-                struct module *m = inst->module;
+                const struct module *m = inst->module;
                 const struct functype *ft = module_functype(m, funcidx);
                 const struct func *func =
                         &m->funcs[funcidx - m->nimportedfuncs];
@@ -443,7 +443,7 @@ funcinst_func(const struct funcinst *fi)
          * from the original instance directly.
          */
         assert(VEC_ELEM(inst->funcs, funcidx) == fi);
-        struct module *m = inst->module;
+        const struct module *m = inst->module;
         assert(funcidx >= m->nimportedfuncs);
         assert(funcidx < m->nimportedfuncs + m->nfuncs);
         return &m->funcs[funcidx - m->nimportedfuncs];
@@ -512,7 +512,7 @@ do_call(struct exec_context *ctx, const struct funcinst *finst)
  * get the number of struct cell for parameters and results.
  */
 static void
-get_arity_for_blocktype(struct module *m, int64_t blocktype,
+get_arity_for_blocktype(const struct module *m, int64_t blocktype,
                         uint32_t *parameter, uint32_t *result)
 {
         if (blocktype < 0) {
@@ -676,7 +676,7 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
                          * - if it's a "loop"
                          * - blocktype
                          */
-                        struct module *m = ctx->instance->module;
+                        const struct module *m = ctx->instance->module;
                         const uint8_t *blockp = pc2ptr(m, blockpc);
                         const uint8_t *p = blockp;
                         uint8_t op = *p++;
@@ -973,7 +973,7 @@ table_access(struct exec_context *ectx, uint32_t tableidx, uint32_t offset,
              uint32_t n)
 {
         struct instance *inst = ectx->instance;
-        struct module *m = inst->module;
+        const struct module *m = inst->module;
         assert(tableidx < m->nimportedtables + m->ntables);
         struct tableinst *t = VEC_ELEM(inst->tables, tableidx);
         if (offset > t->size || n > t->size - offset) {
@@ -991,7 +991,7 @@ table_init(struct exec_context *ectx, uint32_t tableidx, uint32_t elemidx,
            uint32_t d, uint32_t s, uint32_t n)
 {
         struct instance *inst = ectx->instance;
-        struct module *m = inst->module;
+        const struct module *m = inst->module;
         assert(tableidx < m->nimportedtables + m->ntables);
         assert(elemidx < m->nelems);
         int ret;
@@ -1148,7 +1148,7 @@ uint32_t
 memory_grow(struct exec_context *ctx, uint32_t memidx, uint32_t sz)
 {
         struct instance *inst = ctx->instance;
-        struct module *m = inst->module;
+        const struct module *m = inst->module;
         assert(memidx < m->nimportedmems + m->nmems);
         struct meminst *mi = VEC_ELEM(inst->mems, memidx);
         memory_lock(mi);
@@ -1173,7 +1173,7 @@ memory_notify(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
               uint32_t offset, uint32_t count, uint32_t *nwokenp)
 {
         struct instance *inst = ctx->instance;
-        struct module *m = inst->module;
+        const struct module *m = inst->module;
         assert(memidx < m->nimportedmems + m->nmems);
         struct meminst *mi = VEC_ELEM(inst->mems, memidx);
         struct shared_meminst *shared = mi->shared;
@@ -1203,7 +1203,7 @@ memory_wait(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
             int64_t timeout_ns, bool is64)
 {
         struct instance *inst = ctx->instance;
-        struct module *m = inst->module;
+        const struct module *m = inst->module;
         assert(memidx < m->nimportedmems + m->nmems);
         struct meminst *mi = VEC_ELEM(inst->mems, memidx);
         struct shared_meminst *shared = mi->shared;
@@ -1305,7 +1305,7 @@ void
 data_drop(struct exec_context *ectx, uint32_t dataidx)
 {
         struct instance *inst = ectx->instance;
-        struct module *m = inst->module;
+        const struct module *m = inst->module;
         assert(dataidx < m->ndatas);
         bitmap_set(&inst->data_dropped, dataidx);
 }
@@ -1314,7 +1314,7 @@ void
 elem_drop(struct exec_context *ectx, uint32_t elemidx)
 {
         struct instance *inst = ectx->instance;
-        struct module *m = inst->module;
+        const struct module *m = inst->module;
         assert(elemidx < m->nelems);
         bitmap_set(&inst->elem_dropped, elemidx);
 }

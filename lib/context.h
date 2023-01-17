@@ -212,8 +212,8 @@ struct context {
  * the offset shown by "wasm-objdump -d".
  * Also, it might be more space efficient than a host pointer.
  */
-uint32_t ptr2pc(struct module *m, const uint8_t *p);
-const uint8_t *pc2ptr(struct module *m, uint32_t pc);
+uint32_t ptr2pc(const struct module *m, const uint8_t *p);
+const uint8_t *pc2ptr(const struct module *m, uint32_t pc);
 
 int resulttype_alloc(uint32_t ntypes, const enum valtype *types,
                      struct resulttype **resultp);

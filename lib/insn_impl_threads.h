@@ -6,7 +6,7 @@
                 uint32_t memidx = 0;                                          \
                 struct memarg memarg;                                         \
                 READ_MEMARG##BITS(&memarg);                                   \
-                struct module *m = MODULE;                                    \
+                const struct module *m = MODULE;                              \
                 CHECK(memidx < m->nimportedmems + m->nmems);                  \
                 POP_VAL(TYPE_i64, timeout_ns);                                \
                 POP_VAL(TYPE_i##BITS, expected);                              \
@@ -36,7 +36,7 @@ fail:                                                                         \
 #define ATOMIC_LOADOP2(NAME, MEM, STACK, CAST, I_OR_F)                        \
         INSN_IMPL(NAME)                                                       \
         {                                                                     \
-                struct module *m = MODULE;                                    \
+                const struct module *m = MODULE;                              \
                 struct memarg memarg;                                         \
                 int ret;                                                      \
                 LOAD_PC;                                                      \
@@ -67,7 +67,7 @@ fail:                                                                         \
 #define ATOMIC_STOREOP2(NAME, MEM, STACK, CAST, I_OR_F)                       \
         INSN_IMPL(NAME)                                                       \
         {                                                                     \
-                struct module *m = MODULE;                                    \
+                const struct module *m = MODULE;                              \
                 struct memarg memarg;                                         \
                 int ret;                                                      \
                 LOAD_PC;                                                      \
@@ -97,7 +97,7 @@ fail:                                                                         \
 #define ATOMIC_RMW(NAME, MEM, STACK, OP)                                      \
         INSN_IMPL(NAME)                                                       \
         {                                                                     \
-                struct module *m = MODULE;                                    \
+                const struct module *m = MODULE;                              \
                 struct memarg memarg;                                         \
                 int ret;                                                      \
                 LOAD_PC;                                                      \
@@ -132,7 +132,7 @@ fail:                                                                         \
 #define ATOMIC_RMW_CMPXCHG(NAME, MEM, STACK)                                  \
         INSN_IMPL(NAME)                                                       \
         {                                                                     \
-                struct module *m = MODULE;                                    \
+                const struct module *m = MODULE;                              \
                 struct memarg memarg;                                         \
                 int ret;                                                      \
                 LOAD_PC;                                                      \
@@ -174,7 +174,7 @@ INSN_IMPL(memory_atomic_notify)
         uint32_t memidx = 0;
         struct memarg memarg;
         READ_MEMARG32(&memarg);
-        struct module *m = MODULE;
+        const struct module *m = MODULE;
         CHECK(memidx < m->nimportedmems + m->nmems);
         POP_VAL(TYPE_i32, count);
         POP_VAL(TYPE_i32, address);

@@ -18,7 +18,7 @@ INSN_IMPL(memory_init)
         ret = read_u8(&p, ep, &zero);
         CHECK_RET(ret);
         CHECK(zero == 0);
-        struct module *m = MODULE;
+        const struct module *m = MODULE;
         CHECK(memidx < m->nimportedmems + m->nmems);
         POP_VAL(TYPE_i32, n);
         POP_VAL(TYPE_i32, s);
@@ -74,7 +74,7 @@ INSN_IMPL(memory_copy)
         ret = read_u8(&p, ep, &zero);
         CHECK_RET(ret);
         CHECK(zero == 0);
-        struct module *m = MODULE;
+        const struct module *m = MODULE;
         CHECK(memidx < m->nimportedmems + m->nmems);
         POP_VAL(TYPE_i32, n);
         POP_VAL(TYPE_i32, s);
@@ -116,7 +116,7 @@ INSN_IMPL(memory_fill)
         ret = read_u8(&p, ep, &zero);
         CHECK_RET(ret);
         CHECK(zero == 0);
-        struct module *m = MODULE;
+        const struct module *m = MODULE;
         CHECK(memidx < m->nimportedmems + m->nmems);
         POP_VAL(TYPE_i32, n);
         POP_VAL(TYPE_i32, val);
@@ -143,7 +143,7 @@ INSN_IMPL(table_init)
         LOAD_PC;
         READ_LEB_U32(elemidx);
         READ_LEB_U32(tableidx);
-        struct module *m = MODULE;
+        const struct module *m = MODULE;
         CHECK(elemidx < m->nelems);
         CHECK(tableidx < m->nimportedtables + m->ntables);
         CHECK(m->tables[tableidx].et == m->elems[elemidx].type);
@@ -171,7 +171,7 @@ INSN_IMPL(elem_drop)
         int ret;
         LOAD_PC;
         READ_LEB_U32(elemidx);
-        struct module *m = MODULE;
+        const struct module *m = MODULE;
         CHECK(elemidx < m->nelems);
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
@@ -189,7 +189,7 @@ INSN_IMPL(table_copy)
         LOAD_PC;
         READ_LEB_U32(tableidx_dst);
         READ_LEB_U32(tableidx_src);
-        struct module *m = MODULE;
+        const struct module *m = MODULE;
         CHECK(tableidx_dst < m->nimportedtables + m->ntables);
         CHECK(tableidx_src < m->nimportedtables + m->ntables);
         CHECK(m->tables[tableidx_dst].et == m->tables[tableidx_src].et);
@@ -230,7 +230,7 @@ INSN_IMPL(table_grow)
         int ret;
         LOAD_PC;
         READ_LEB_U32(tableidx);
-        struct module *m = MODULE;
+        const struct module *m = MODULE;
         CHECK(tableidx < m->nimportedtables + m->ntables);
         POP_VAL(TYPE_i32, n);
         POP_VAL(module_tabletype(m, tableidx)->et, val);
@@ -277,7 +277,7 @@ INSN_IMPL(table_size)
         int ret;
         LOAD_PC;
         READ_LEB_U32(tableidx);
-        struct module *m = MODULE;
+        const struct module *m = MODULE;
         CHECK(tableidx < m->nimportedtables + m->ntables);
         struct val val_n;
         if (EXECUTING) {
@@ -298,7 +298,7 @@ INSN_IMPL(table_fill)
         int ret;
         LOAD_PC;
         READ_LEB_U32(tableidx);
-        struct module *m = MODULE;
+        const struct module *m = MODULE;
         CHECK(tableidx < m->nimportedtables + m->ntables);
         POP_VAL(TYPE_i32, n);
         POP_VAL(module_tabletype(m, tableidx)->et, val);

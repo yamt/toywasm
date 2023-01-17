@@ -492,7 +492,7 @@ fail:
 void
 instance_destroy(struct instance *inst)
 {
-        struct module *m = inst->module;
+        const struct module *m = inst->module;
         uint32_t i;
         struct funcinst **fp;
         VEC_FOREACH_IDX(i, fp, inst->funcs) {
@@ -576,7 +576,7 @@ int
 instance_execute_func_nocheck(struct exec_context *ctx, uint32_t funcidx,
                               const struct val *params, struct val *results)
 {
-        struct module *m = ctx->instance->module;
+        const struct module *m = ctx->instance->module;
         const struct functype *ft = module_functype(m, funcidx);
         const struct resulttype *ptype = &ft->parameter;
         const struct resulttype *rtype = &ft->result;
