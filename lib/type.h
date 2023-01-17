@@ -21,7 +21,7 @@
  * should be configurable at least.
  */
 #define MAX_FRAMES 2000
-#define MAX_STACKVALS 10000
+#define MAX_STACKCELLS 10000
 
 enum valtype {
         /* numtype */
