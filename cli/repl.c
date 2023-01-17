@@ -319,7 +319,7 @@ print_trap(const struct exec_context *ctx, const struct trap_info *trap)
                 msg = "uninitialized element";
                 break;
         case TRAP_TOO_MANY_FRAMES:
-        case TRAP_TOO_MANY_STACKVALS:
+        case TRAP_TOO_MANY_STACKCELLS:
                 msg = "stack overflow";
                 break;
         case TRAP_CALL_INDIRECT_OUT_OF_BOUNDS_TABLE_ACCESS:

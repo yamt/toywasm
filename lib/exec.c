@@ -173,7 +173,7 @@ stack_prealloc(struct exec_context *ctx, uint32_t count)
 {
         uint32_t needed = ctx->stack.lsize + count;
         if (needed >= MAX_STACKVALS) {
-                return trap_with_id(ctx, TRAP_TOO_MANY_STACKVALS,
+                return trap_with_id(ctx, TRAP_TOO_MANY_STACKCELLS,
                                     "too many values on the operand stack");
         }
         return VEC_PREALLOC(ctx->stack, count);
