@@ -316,6 +316,17 @@ enum section_id {
  * > definitions in the same index space.
  */
 
+/*
+ * struct module represents a loaded module.
+ *
+ * It has referecences to the underlying module bytecode in a few places:
+ *
+ * - names
+ * - data segments
+ * - exprs
+ * - module->bin (currently only used to calculate "pc")
+ */
+
 struct module {
         uint32_t ntypes;
         struct functype *types;
