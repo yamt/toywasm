@@ -180,6 +180,8 @@ INSN_IMPL(end)
                 } else {
                         frame_exit(ectx);
                         SAVE_STACK_PTR;
+                        assert(ectx->stack.lsize ==
+                               frame->height + frame->nresults);
                         rewind_stack(ectx, frame->height, frame->nresults);
                         LOAD_STACK_PTR;
                         RELOAD_PC;
