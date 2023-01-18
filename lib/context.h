@@ -37,7 +37,7 @@ struct ctrlframe {
 
 struct label {
         uint32_t pc;
-        uint32_t height;
+        uint32_t height; /* saved height of operand stack */
 };
 
 struct funcframe {
@@ -52,7 +52,7 @@ struct funcframe {
 #endif
 
         uint32_t callerpc;
-        uint32_t height;
+        uint32_t height; /* saved height of operand stack */
         uint32_t nresults;
 };
 
