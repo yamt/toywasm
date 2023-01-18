@@ -498,6 +498,7 @@ do_call(struct exec_context *ctx, const struct funcinst *finst)
 {
         STAT_INC(ctx->stats.call);
         if (finst->is_host) {
+                STAT_INC(ctx->stats.host_call);
                 return do_host_call(ctx, finst);
         } else {
                 return do_wasm_call(ctx, finst);
@@ -1079,6 +1080,7 @@ exec_context_print_stats(struct exec_context *ctx)
         VEC_PRINT_USAGE("frames", &ctx->frames);
 
         STAT_PRINT(call);
+        STAT_PRINT(host_call);
         STAT_PRINT(branch);
         STAT_PRINT(branch_goto_else);
         STAT_PRINT(jump_cache2_hit);
