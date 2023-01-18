@@ -180,8 +180,17 @@ INSN_IMPL(end)
                 } else {
                         frame_exit(ectx);
                         SAVE_STACK_PTR;
+#if defined(TOYWASM_USE_SEPARATE_LOCALS)
                         assert(ectx->stack.lsize ==
                                frame->height + frame->nresults);
+#else
+                        /*
+                         * Note: stack contains >=0 locals.
+                         * rewind_stack() "frees" them as well.
+                         */
+                        assert(ectx->stack.lsize >=
+                               frame->height + frame->nresults);
+#endif
                         rewind_stack(ectx, frame->height, frame->nresults);
                         LOAD_STACK_PTR;
                         RELOAD_PC;
