@@ -72,6 +72,13 @@ pop_val(struct val *val, uint32_t csz, struct exec_context *ctx)
 static void
 push_label(const uint8_t *p, struct cell *stack, struct exec_context *ctx)
 {
+        /*
+         * "- 1" for the first byte of the opecode parsed by
+         * eg. fetch_exec_next_insn.
+         *
+         * Note: Currently we don't have any control opecodes with
+         * sub opcodes.
+         */
         uint32_t pc = ptr2pc(ctx->instance->module, p - 1);
         struct label *l = VEC_PUSH(ctx->labels);
         l->pc = pc;
