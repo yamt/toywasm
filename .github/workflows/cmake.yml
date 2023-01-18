@@ -89,6 +89,7 @@ jobs:
           -DTOYWASM_USE_SEPARATE_LOCALS=${{matrix.TOYWASM_USE_SEPARATE_LOCALS}} \
           -DTOYWASM_ENABLE_WASM_THREADS=${{matrix.TOYWASM_ENABLE_WASM_THREADS}} \
           -DTOYWASM_ENABLE_WASI_THREADS=${{matrix.TOYWASM_ENABLE_WASI_THREADS}}
+        cmake -B ${{github.workspace}}/build -L
 
     - name: Build
       # Build your program with the given configuration
