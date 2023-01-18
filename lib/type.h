@@ -106,8 +106,8 @@ struct localcellidx {
 };
 
 struct resulttype {
-        uint32_t ntypes;
         enum valtype *types;
+        uint32_t ntypes;
         bool is_static;
 #if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
         struct localcellidx cellidx;
@@ -172,10 +172,10 @@ enum element_mode {
 };
 
 struct element {
-        enum valtype type;
-        uint32_t init_size; /* entries in init_exprs or funcs */
         struct expr *init_exprs;
         uint32_t *funcs;
+        uint32_t init_size; /* entries in init_exprs or funcs */
+        enum valtype type;
         enum element_mode mode;
 
         /* only for active */
