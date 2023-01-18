@@ -211,7 +211,12 @@ struct context {
 /*
  * This "pc" is intended to be compatible with
  * the offset shown by "wasm-objdump -d".
- * Also, it might be more space efficient than a host pointer.
+ *
+ * It's also compatible with "pcOffset" in the JS conventions:
+ * https://webassembly.github.io/spec/web-api/index.html#conventions
+ *
+ * Besides logging, we use it in a few places to save space as it's
+ * smaller than host pointers on 64-bit archs.
  */
 uint32_t ptr2pc(const struct module *m, const uint8_t *p);
 const uint8_t *pc2ptr(const struct module *m, uint32_t pc);
