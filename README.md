@@ -202,5 +202,5 @@ is built with an ancient wasi-sdk to workaround
     (`-D TOYWASM_USE_SMALL_CELLS=ON`)
 
 * I don't like to use huge-switch statements or
-  (labels as values)[https://gcc.gnu.org/onlinedocs/gcc/Labels-as-Values.html],
+  [labels as values](https://gcc.gnu.org/onlinedocs/gcc/Labels-as-Values.html),
   which are well-known techniques to implement efficient interpreters.
