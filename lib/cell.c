@@ -141,6 +141,13 @@ localtype_cellsize(const struct localtype *lt)
         return localtype_cellidx(lt, lt->nlocals, NULL);
 }
 
+/*
+ * frame_locals_cellidx: calculate the index and size of a local
+ * for the given localidx
+ *
+ * as this is called on every `local.get`, it is one of
+ * the performance critical code in the interpreter.
+ */
 uint32_t
 frame_locals_cellidx(struct exec_context *ctx, uint32_t localidx,
                      uint32_t *cszp)
