@@ -414,7 +414,7 @@ INSN_IMPL(return )
                 assert(ectx->frames.lsize > 0);
                 const struct funcframe *frame = &VEC_LASTELEM(ectx->frames);
                 uint32_t nlabels = ectx->labels.lsize - frame->labelidx;
-                xlog_trace_insn("return as tr %" PRIu32, nlabels);
+                xlog_trace_insn("return as br %" PRIu32, nlabels);
                 ectx->event_u.branch.index = nlabels;
                 ectx->event_u.branch.goto_else = false;
                 ectx->event = EXEC_EVENT_BRANCH;
