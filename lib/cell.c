@@ -58,7 +58,7 @@ resulttype_cellidx(const struct resulttype *rt, uint32_t idx, uint32_t *cszp)
 #if defined(TOYWASM_USE_SMALL_CELLS)
         assert(idx < rt->ntypes || (idx == rt->ntypes && cszp == NULL));
 #if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
-        if (rt->cellidx.cellidxes != NULL) {
+        if (__predict_true(rt->cellidx.cellidxes != NULL)) {
                 return localcellidx_lookup(&rt->cellidx, idx, cszp);
         }
 #endif
@@ -128,7 +128,7 @@ localtype_cellidx(const struct localtype *lt, uint32_t idx, uint32_t *cszp)
 {
         assert(idx < lt->nlocals || (idx == lt->nlocals && cszp == NULL));
 #if defined(TOYWASM_USE_LOCALTYPE_CELLIDX)
-        if (lt->cellidx.cellidxes != NULL) {
+        if (__predict_true(lt->cellidx.cellidxes != NULL)) {
                 return localcellidx_lookup(&lt->cellidx, idx, cszp);
         }
 #endif
