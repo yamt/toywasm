@@ -330,6 +330,25 @@ fail:
         return ret;
 }
 
+/*
+ * LOAD_PC: prepare PC on the entry of the function.
+ *
+ * SAVE_PC: use this when you advanced PC by parsing immediates.
+ *
+ * RELOAD_PC: sync the local copy of PC from ETX.
+ *
+ * SAVE_STACK_PTR/LOAD_STACK_PTR: sync the local copy of stack pointer
+ * to/from ECTX.
+ *
+ * ORIG_PC: the PC value at the point of LOAD_PC on the entry of the function.
+ *
+ * INSN_SUCCESS: successfully finish the execution of the opecode. Possibly
+ * with a tail-call to the function for the next opecode.
+ *
+ * INSN_SUCCESS_RETURN: same as INSN_SUCCESS, but ensure returning to
+ * the main loop for extra processing of events.
+ */
+
 #if defined(TOYWASM_USE_SEPARATE_EXECUTE)
 #define EXECUTING false
 #define ECTX ((struct exec_context *)NULL)
