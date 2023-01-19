@@ -146,7 +146,7 @@ localtype_cellsize(const struct localtype *lt)
  * for the given localidx
  *
  * as this is called on every `local.get`, it is one of
- * the performance critical code in the interpreter.
+ * the most performance critical code in the interpreter.
  */
 uint32_t
 frame_locals_cellidx(struct exec_context *ctx, uint32_t localidx,
