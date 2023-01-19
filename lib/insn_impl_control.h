@@ -43,7 +43,7 @@ INSN_IMPL(block)
                 rt_result = NULL;
         }
         SAVE_PC;
-        INSN_SUCCESS_RETURN;
+        INSN_SUCCESS;
 fail:
         resulttype_free(rt_parameter);
         resulttype_free(rt_result);
@@ -82,7 +82,7 @@ INSN_IMPL(loop)
                 rt_result = NULL;
         }
         SAVE_PC;
-        INSN_SUCCESS_RETURN;
+        INSN_SUCCESS;
 fail:
         resulttype_free(rt_parameter);
         resulttype_free(rt_result);
@@ -105,6 +105,11 @@ INSN_IMPL(if)
                         ectx->event_u.branch.index = 0;
                         ectx->event_u.branch.goto_else = true;
                         ectx->event = EXEC_EVENT_BRANCH;
+                        /*
+                         * Note: We don't bother to call SAVE_PC as we will
+                         * jump anyway.
+                         */
+                        INSN_SUCCESS_RETURN;
                 }
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
@@ -128,7 +133,7 @@ INSN_IMPL(if)
                 rt_result = NULL;
         }
         SAVE_PC;
-        INSN_SUCCESS_RETURN;
+        INSN_SUCCESS;
 fail:
         resulttype_free(rt_parameter);
         resulttype_free(rt_result);
@@ -193,7 +198,10 @@ INSN_IMPL(end)
 #endif
                         rewind_stack(ectx, frame->height, frame->nresults);
                         LOAD_STACK_PTR;
-                        RELOAD_PC;
+                        if (ectx->frames.lsize == 0) {
+                                INSN_SUCCESS_RETURN;
+                        }
+                        RELOAD_PC; /* after frame_exit */
                 }
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
@@ -237,7 +245,7 @@ INSN_IMPL(end)
                         }
                 }
         }
-        INSN_SUCCESS_RETURN;
+        INSN_SUCCESS;
 }
 
 INSN_IMPL(br)
@@ -251,6 +259,11 @@ INSN_IMPL(br)
                 ectx->event_u.branch.index = labelidx;
                 ectx->event_u.branch.goto_else = false;
                 ectx->event = EXEC_EVENT_BRANCH;
+                /*
+                 * Note: We don't bother to call SAVE_PC as we will
+                 * jump anyway.
+                 */
+                INSN_SUCCESS_RETURN;
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
                 const struct resulttype *rt;
@@ -265,7 +278,7 @@ INSN_IMPL(br)
                 mark_unreachable(vctx);
         }
         SAVE_PC;
-        INSN_SUCCESS_RETURN;
+        INSN_SUCCESS;
 fail:
         return ret;
 }
@@ -283,6 +296,11 @@ INSN_IMPL(br_if)
                         ectx->event_u.branch.index = labelidx;
                         ectx->event_u.branch.goto_else = false;
                         ectx->event = EXEC_EVENT_BRANCH;
+                        /*
+                         * Note: We don't bother to call SAVE_PC as we will
+                         * jump anyway.
+                         */
+                        INSN_SUCCESS_RETURN;
                 }
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
@@ -301,7 +319,7 @@ INSN_IMPL(br_if)
                 }
         }
         SAVE_PC;
-        INSN_SUCCESS_RETURN;
+        INSN_SUCCESS;
 fail:
         return ret;
 }
@@ -339,7 +357,10 @@ INSN_IMPL(br_table)
                 ectx->event_u.branch.index = idx;
                 ectx->event_u.branch.goto_else = false;
                 ectx->event = EXEC_EVENT_BRANCH;
-                SAVE_PC;
+                /*
+                 * Note: We don't bother to call SAVE_PC as we will
+                 * jump anyway.
+                 */
                 INSN_SUCCESS_RETURN;
         }
         ret = read_vec_u32(&p, ep, &vec_count, &table);
@@ -379,7 +400,7 @@ INSN_IMPL(br_table)
         }
         free(table);
         SAVE_PC;
-        INSN_SUCCESS_RETURN;
+        INSN_SUCCESS;
 fail:
         free(table);
         return ret;
