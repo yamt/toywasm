@@ -92,9 +92,9 @@ do_trap:
                 if (ret != 0) {
                         return ret;
                 }
-                xlog_trace("extend memory %" PRIu32 " from %" PRIu32
-                           " to %" PRIu32,
-                           memidx, meminst->allocated, need);
+                xlog_trace_insn("extend memory %" PRIu32 " from %" PRIu32
+                                " to %" PRIu32,
+                                memidx, meminst->allocated, need);
                 if (movedp != NULL) {
                         *movedp = true;
                 }
