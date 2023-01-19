@@ -180,7 +180,7 @@ INSN_IMPL(end)
                 struct funcframe *frame = &VEC_LASTELEM(ectx->frames);
                 xlog_trace_insn("end: nlabels %" PRIu32 " labelidx %" PRIu32,
                                 ectx->labels.lsize, frame->labelidx);
-                if (ectx->labels.lsize > frame->labelidx) {
+                if (__predict_true(ectx->labels.lsize > frame->labelidx)) {
                         VEC_POP_DROP(ectx->labels);
                 } else {
                         frame_exit(ectx);
@@ -198,7 +198,7 @@ INSN_IMPL(end)
 #endif
                         rewind_stack(ectx, frame->height, frame->nresults);
                         LOAD_STACK_PTR;
-                        if (ectx->frames.lsize == 0) {
+                        if (__predict_false(ectx->frames.lsize == 0)) {
                                 INSN_SUCCESS_RETURN;
                         }
                         RELOAD_PC; /* after frame_exit */
