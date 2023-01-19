@@ -146,7 +146,6 @@ frame_locals_cellidx(struct exec_context *ctx, uint32_t localidx,
                      uint32_t *cszp)
 {
 #if defined(TOYWASM_USE_SMALL_CELLS)
-        /* REVISIT: very inefficient */
         uint32_t cidx;
         uint32_t nparams = ctx->paramtype->ntypes;
         if (localidx < nparams) {
