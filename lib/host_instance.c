@@ -91,6 +91,9 @@ fail:
 void
 host_func_dump_params(const struct functype *ft, const struct cell *params)
 {
+        if (xlog_tracing == 0) {
+                return;
+        }
         const struct resulttype *rt = &ft->parameter;
         uint32_t i;
         for (i = 0; i < rt->ntypes; i++) {
