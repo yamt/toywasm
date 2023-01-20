@@ -779,6 +779,10 @@ fetch_exec_next_insn(const uint8_t *p, struct cell *stack,
 int
 check_interrupt(struct exec_context *ctx)
 {
+        /*
+         * theoretically we probably need a memory barrier.
+         * practically it shouldn't be a problem though.
+         */
         if (ctx->intrp != NULL && *ctx->intrp != 0) {
                 xlog_trace("get interrupt");
                 return trap_with_id(ctx, TRAP_VOLUNTARY_THREAD_EXIT,
