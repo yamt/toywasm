@@ -409,15 +409,25 @@ wasi_thread_exit(struct exec_context *ctx, struct host_instance *hi,
 
 const struct host_func wasi_threads_funcs[] = {
         /*
-         * The thread-spawn API before and after wit definition:
-         * https://github.com/WebAssembly/wasi-threads/pull/26
+         * Note: We keep a few old ABIs of thread-spawn for a while to
+         * ease experiment/migration/testing.
+         */
+
+        /*
+         * https://github.com/WebAssembly/wasi-threads/pull/28
          * https://github.com/WebAssembly/wasi-libc/pull/385
-         *
-         * We will keep the old one for a while to ease
-         * experiment/migration/testing.
          */
         WASI_HOST_FUNC2("thread-spawn", wasi_thread_spawn, "(ii)"),
+        /*
+         * https://github.com/WebAssembly/wasi-threads/pull/26
+         * https://github.com/WebAssembly/wasi-libc/pull/387
+         */
+        WASI_HOST_FUNC2("thread-spawn", wasi_thread_spawn_old, "(i)i"),
+        /*
+         * The "original" version.
+         */
         WASI_HOST_FUNC2("thread_spawn", wasi_thread_spawn_old, "(i)i"),
+
         /*
          * Note: thread_exit is not a part of the current wasi-threads.
          * It's implemented here just for my experiments.
