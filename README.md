@@ -73,7 +73,7 @@ is built with an ancient wasi-sdk to workaround
 
 ### Occasionally tested manually
 
-* wasm32-wasi-pthread
+* wasm32-wasi-threads
 * NuttX/xtensa
 * NuttX/sim on macOS/amd64
 * NetBSD/amd64
