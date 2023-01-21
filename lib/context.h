@@ -4,6 +4,7 @@
 #include "toywasm_config.h"
 
 #include "cell.h"
+#include "platform.h"
 #include "report.h"
 #include "vec.h"
 
@@ -248,7 +249,7 @@ int frame_enter(struct exec_context *ctx, struct instance *inst,
 void frame_clear(struct funcframe *frame);
 void frame_exit(struct exec_context *ctx);
 struct cell *frame_locals(struct exec_context *ctx,
-                          const struct funcframe *frame);
+                          const struct funcframe *frame) __purefunc;
 void exec_context_init(struct exec_context *ctx, struct instance *inst);
 void exec_context_clear(struct exec_context *ctx);
 void exec_context_print_stats(struct exec_context *ctx);

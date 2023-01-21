@@ -9,6 +9,7 @@
 #include "bitmap.h"
 #include "cell.h"
 #include "lock.h"
+#include "platform.h"
 #include "vec.h"
 
 #define WASM_MAGIC 0x6d736100
@@ -462,10 +463,10 @@ struct import_object {
         struct import_object *next;
 };
 
-bool is_numtype(enum valtype vt);
-bool is_vectype(enum valtype vt);
-bool is_reftype(enum valtype vt);
-bool is_valtype(enum valtype vt);
+bool is_numtype(enum valtype vt) __constfunc;
+bool is_vectype(enum valtype vt) __constfunc;
+bool is_reftype(enum valtype vt) __constfunc;
+bool is_valtype(enum valtype vt) __constfunc;
 int compare_resulttype(const struct resulttype *a, const struct resulttype *b);
 int compare_functype(const struct functype *a, const struct functype *b);
 int compare_name(const struct name *a, const struct name *b);

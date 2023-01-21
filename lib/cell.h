@@ -5,6 +5,8 @@
 
 #include "toywasm_config.h"
 
+#include "platform.h"
+
 enum valtype;
 struct localtype;
 struct resulttype;
@@ -20,7 +22,7 @@ struct cell {
 #endif
 };
 
-uint32_t valtype_cellsize(enum valtype t);
+uint32_t valtype_cellsize(enum valtype t) __constfunc;
 
 uint32_t resulttype_cellidx(const struct resulttype *rt, uint32_t idx,
                             uint32_t *cszp);
