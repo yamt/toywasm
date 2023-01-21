@@ -90,6 +90,7 @@
 #endif
 #endif
 
+#if !defined(xassert)
 #if defined(__clang__)
 #define xassert(e)                                                            \
         do {                                                                  \
@@ -99,3 +100,4 @@
 #else
 #define xassert(e) assert(e)
 #endif
+#endif /* !defined(xassert) */
