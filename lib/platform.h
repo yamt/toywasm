@@ -89,3 +89,13 @@
 #define ctassert_offset(a, b, c)
 #endif
 #endif
+
+#if defined(__clang__)
+#define xassert(e)                                                            \
+        do {                                                                  \
+                assert(e);                                                    \
+                __builtin_assume(e);                                          \
+        } while (0)
+#else
+#define xassert(e) assert(e)
+#endif
