@@ -473,59 +473,28 @@ INSN_IMPL(call_indirect)
         READ_LEB_U32(tableidx);
         CHECK(tableidx < m->nimportedtables + m->ntables);
         CHECK(typeidx < m->ntypes);
-        const struct tabletype *tab;
-        const struct functype *ft;
-#if defined(__GNUC__) && !defined(__clang__)
-        /* suppress warnings */
-        tab = NULL;
-        ft = NULL;
-#endif
-        if (EXECUTING || VALIDATING) {
-                tab = module_tabletype(m, tableidx);
-                ft = &m->types[typeidx];
-        }
-        CHECK(tab->et == TYPE_FUNCREF);
         POP_VAL(TYPE_i32, a);
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
-                struct instance *inst = ectx->instance;
-                const struct tableinst *t = VEC_ELEM(inst->tables, tableidx);
-                assert(t->type->et == TYPE_FUNCREF);
+                const struct funcinst *func;
                 uint32_t i = val_a.u.i32;
-                if (i >= t->size) {
-                        ret = trap_with_id(
-                                ectx,
-                                TRAP_CALL_INDIRECT_OUT_OF_BOUNDS_TABLE_ACCESS,
-                                "call_indirect (table idx out of range) "
-                                "%" PRIu32 " %" PRIu32 " %" PRIu32,
-                                typeidx, tableidx, i);
-                        goto fail;
-                }
-                struct val val;
-                uint32_t csz = valtype_cellsize(t->type->et);
-                val_from_cells(&val, &t->cells[i * csz], csz);
-                const struct funcinst *func = val.u.funcref.func;
-                if (func == NULL) {
-                        ret = trap_with_id(
-                                ectx, TRAP_CALL_INDIRECT_NULL_FUNCREF,
-                                "call_indirect (null funcref) %" PRIu32
-                                " %" PRIu32 " %" PRIu32,
-                                typeidx, tableidx, i);
-                        goto fail;
-                }
-                const struct functype *actual_ft = funcinst_functype(func);
-                if (compare_functype(ft, actual_ft)) {
-                        ret = trap_with_id(
-                                ectx, TRAP_CALL_INDIRECT_FUNCTYPE_MISMATCH,
-                                "call_indirect (functype mismatch) %" PRIu32
-                                " %" PRIu32 " %" PRIu32,
-                                typeidx, tableidx, i);
+                ret = get_func_indirect(ectx, tableidx, typeidx, i, &func);
+                if (__predict_false(ret != 0)) {
                         goto fail;
                 }
                 ectx->event_u.call.func = func;
                 ectx->event = EXEC_EVENT_CALL;
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
+                const struct tabletype *tab = module_tabletype(m, tableidx);
+                if (tab->et != TYPE_FUNCREF) {
+                        ret = validation_failure(
+                                vctx,
+                                "call_indirect unexpected table type %" PRIu32,
+                                tableidx);
+                        goto fail;
+                }
+                const struct functype *ft = &m->types[typeidx];
                 xlog_trace_insn("call_indirect (table %u type %u) %u %u",
                                 tableidx, typeidx, ft->parameter.ntypes,
                                 ft->result.ntypes);

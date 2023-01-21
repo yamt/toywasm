@@ -119,6 +119,52 @@ local_set(struct exec_context *ctx, uint32_t localidx,
         cells_copy(cells, stack - *cszp, *cszp);
 }
 
+/*
+ * https://webassembly.github.io/spec/core/exec/instructions.html#exec-call-indirect
+ */
+static int
+get_func_indirect(struct exec_context *ectx, uint32_t tableidx,
+                  uint32_t typeidx, uint32_t i, const struct funcinst **fip)
+{
+        struct instance *inst = ectx->instance;
+        const struct module *m = inst->module;
+        const struct functype *ft = &m->types[typeidx];
+        const struct tableinst *t = VEC_ELEM(inst->tables, tableidx);
+        assert(t->type->et == TYPE_FUNCREF);
+        int ret;
+        if (__predict_false(i >= t->size)) {
+                ret = trap_with_id(
+                        ectx, TRAP_CALL_INDIRECT_OUT_OF_BOUNDS_TABLE_ACCESS,
+                        "call_indirect (table idx out of range) "
+                        "%" PRIu32 " %" PRIu32 " %" PRIu32,
+                        typeidx, tableidx, i);
+                goto fail;
+        }
+        struct val val;
+        uint32_t csz = valtype_cellsize(t->type->et);
+        val_from_cells(&val, &t->cells[i * csz], csz);
+        const struct funcinst *func = val.u.funcref.func;
+        if (__predict_false(func == NULL)) {
+                ret = trap_with_id(ectx, TRAP_CALL_INDIRECT_NULL_FUNCREF,
+                                   "call_indirect (null funcref) %" PRIu32
+                                   " %" PRIu32 " %" PRIu32,
+                                   typeidx, tableidx, i);
+                goto fail;
+        }
+        const struct functype *actual_ft = funcinst_functype(func);
+        if (__predict_false(compare_functype(ft, actual_ft))) {
+                ret = trap_with_id(ectx, TRAP_CALL_INDIRECT_FUNCTYPE_MISMATCH,
+                                   "call_indirect (functype mismatch) %" PRIu32
+                                   " %" PRIu32 " %" PRIu32,
+                                   typeidx, tableidx, i);
+                goto fail;
+        }
+        *fip = func;
+        return 0;
+fail:
+        return ret;
+}
+
 static float
 wasm_fminf(float a, float b)
 {
