@@ -2491,7 +2491,16 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
         /*
          * TODO: avoid blocking on fifos for wasi-threads.
          */
-        hostfd = open(hostpath, oflags | O_NONBLOCK, 0777);
+        /*
+         * Note: mode 0666 is what wasm-micro-runtime and wasmtime use.
+         *
+         * wasm-micro-runtime has it hardcoded:
+         * https://github.com/bytecodealliance/wasm-micro-runtime/blob/cadf9d0ad36ec12e2a1cab4edf5f0dfb9bf84de0/core/iwasm/libraries/libc-wasi/sandboxed-system-primitives/src/posix.c#L1971
+         *
+         * wasmtime uses the default of the underlying library:
+         * https://doc.rust-lang.org/nightly/std/os/unix/fs/trait.OpenOptionsExt.html#tymethod.mode
+         */
+        hostfd = open(hostpath, oflags | O_NONBLOCK, 0666);
         if (hostfd == -1) {
                 ret = errno;
                 assert(ret > 0);
