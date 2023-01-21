@@ -236,21 +236,18 @@ cells_copy(struct cell *restrict dst, const struct cell *restrict src,
                 ncells--;
         }
 #else
-        switch (ncells) {
 #if defined(__has_builtin)
 #if __has_builtin(__builtin_memcpy_inline)
-        case 1:
+        if (__predict_true(ncells == 1)) {
                 __builtin_memcpy_inline(dst, src, 1 * sizeof(*dst));
-                break;
-        case 2:
+                return;
+        } else if (__predict_true(ncells == 2)) {
                 __builtin_memcpy_inline(dst, src, 2 * sizeof(*dst));
-                break;
-#endif
-#endif
-        default:
-                memcpy(dst, src, ncells * sizeof(*dst));
-                break;
+                return;
         }
+#endif
+#endif
+        memcpy(dst, src, ncells * sizeof(*dst));
 #endif
 }
 
