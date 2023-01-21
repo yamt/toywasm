@@ -101,3 +101,19 @@
 #define xassert(e) assert(e)
 #endif
 #endif /* !defined(xassert) */
+
+#if !defined(__purefunc)
+#if defined(__GNUC__)
+#define __purefunc __attribute__((pure))
+#else
+#define __purefunc
+#endif /* defined(__GNUC__) */
+#endif /* !defined(__purefunc) */
+
+#if !defined(__constfunc)
+#if defined(__GNUC__)
+#define __constfunc __attribute__((const))
+#else
+#define __constfunc
+#endif /* defined(__GNUC__) */
+#endif /* !defined(__constfunc) */
