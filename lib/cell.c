@@ -152,6 +152,7 @@ uint32_t
 frame_locals_cellidx(struct exec_context *ctx, uint32_t localidx,
                      uint32_t *cszp)
 {
+        xassert(cszp != NULL);
 #if defined(TOYWASM_USE_SMALL_CELLS)
         uint32_t cidx;
         uint32_t nparams = ctx->paramtype->ntypes;
