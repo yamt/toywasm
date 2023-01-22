@@ -27,6 +27,7 @@
 #include "nbio.h"
 #include "repl.h"
 #include "report.h"
+#include "toywasm_version.h"
 #include "type.h"
 #include "wasi.h"
 #if defined(TOYWASM_ENABLE_WASI_THREADS)
@@ -931,7 +932,7 @@ fail:
 void
 toywasm_repl_print_version(void)
 {
-        nbio_printf("toywasm wasm interpreter\n");
+        nbio_printf("toywasm %s\n", TOYWASM_VERSION);
 #if defined(__clang_version__)
         nbio_printf("__clang_version__ = %s\n", __clang_version__);
 #endif
