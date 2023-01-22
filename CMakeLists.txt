@@ -163,6 +163,25 @@ message(STATUS "USE_IPO: ${USE_IPO}")
 message(STATUS "USE_ASAN: ${USE_ASAN}")
 message(STATUS "USE_LSAN: ${USE_LSAN}")
 
+find_package(Git REQUIRED)
+execute_process(
+	COMMAND ${GIT_EXECUTABLE} describe --tags --dirty
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+	OUTPUT_VARIABLE GIT_DESCRIBE_OUTPUT
+	RESULT_VARIABLE GIT_DESCRIBE_RESULT
+)
+if((NOT GIT_DESCRIBE_RESULT) OR GIT_DESCRIBE_RESULT EQUAL 0)
+set(TOYWASM_VERSION ${GIT_DESCRIBE_OUTPUT})
+endif()
+if(DEFINED TOYWASM_VERSION)
+message(STATUS "toywasm version: ${TOYWASM_VERSION}")
+else()
+message(WARNING "failed to determine version. using \"unknown\".")
+set(TOYWASM_VERSION "unknown")
+endif()
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/lib/toywasm_version.h.in"
+	"${CMAKE_BINARY_DIR}/toywasm_version.h")
+
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/lib/toywasm_config.h.in"
 	"${CMAKE_BINARY_DIR}/toywasm_config.h")
 include_directories(${CMAKE_BINARY_DIR})

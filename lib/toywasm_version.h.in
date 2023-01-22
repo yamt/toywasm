@@ -1,0 +1,6 @@
+#if !defined(_TOYWASM_VERSION_H)
+#define _TOYWASM_VERSION_H
+
+#cmakedefine TOYWASM_VERSION "@TOYWASM_VERSION@"
+
+#endif /* !defined(_TOYWASM_VERSION_H) */
