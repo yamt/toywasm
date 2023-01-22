@@ -171,6 +171,8 @@ execute_process(
 	RESULT_VARIABLE GIT_DESCRIBE_RESULT
 	OUTPUT_STRIP_TRAILING_WHITESPACE
 )
+# RESULT_VARIABLE can be an error string or exit status.
+# see https://cmake.org/cmake/help/latest/command/execute_process.html
 if((NOT GIT_DESCRIBE_RESULT) OR GIT_DESCRIBE_RESULT EQUAL 0)
 set(TOYWASM_VERSION ${GIT_DESCRIBE_OUTPUT})
 endif()
