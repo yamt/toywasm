@@ -219,8 +219,8 @@ struct context {
  * Besides logging, we use it in a few places to save space as it's
  * smaller than host pointers on 64-bit archs.
  */
-uint32_t ptr2pc(const struct module *m, const uint8_t *p);
-const uint8_t *pc2ptr(const struct module *m, uint32_t pc);
+uint32_t ptr2pc(const struct module *m, const uint8_t *p) __purefunc;
+const uint8_t *pc2ptr(const struct module *m, uint32_t pc) __purefunc;
 
 int resulttype_alloc(uint32_t ntypes, const enum valtype *types,
                      struct resulttype **resultp);
