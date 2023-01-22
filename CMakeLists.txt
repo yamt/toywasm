@@ -165,7 +165,7 @@ message(STATUS "USE_LSAN: ${USE_LSAN}")
 
 find_package(Git REQUIRED)
 execute_process(
-	COMMAND ${GIT_EXECUTABLE} describe --tags --dirty
+	COMMAND ${GIT_EXECUTABLE} describe --tags --dirty --always --match "v*"
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 	OUTPUT_VARIABLE GIT_DESCRIBE_OUTPUT
 	RESULT_VARIABLE GIT_DESCRIBE_RESULT
