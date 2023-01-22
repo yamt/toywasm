@@ -28,7 +28,7 @@ rm -rf ~/Library/Caches/BytecodeAlliance.wasmtime
 echo "+++++++++++ Interpreters +++++++++++"
 
 TOYWASM=${TOYWASM:-toywasm}
-run "toywasm" ${TOYWASM} --wasi --wasi-dir .video --
+run "$(${TOYWASM} --version | head -1)" ${TOYWASM} --wasi --wasi-dir .video --
 # run "toywasm" ${TOYWASM} --wasi --wasi-dir .video --disable-jump-table --disable-localtype-cellidx --disable-resulttype-cellidx --
 
 run "$(wasm3 --version|head -1)" wasm3 --dir .video --
