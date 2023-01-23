@@ -4,10 +4,14 @@
 
 import argparse
 import os
+import shlex
 import sys
 import subprocess
 
-executable = os.getenv("TOYWASM", "toywasm")
+# https://github.com/WebAssembly/wasi-testsuite/pull/46
+executable = os.getenv("TEST_RUNTIME_EXE")
+if executable is None:
+    executable = os.getenv("TOYWASM", "toywasm")
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--test-file")
@@ -32,6 +36,6 @@ for x in args.env:
 for x in args.dir:
     options.extend(["--wasi-dir", x])
 result = subprocess.run(
-    [executable, "--wasi"] + options + ["--", args.test_file] + args.arg
+    shlex.split(executable) + ["--wasi"] + options + ["--", args.test_file] + args.arg
 )
 sys.exit(result.returncode)
