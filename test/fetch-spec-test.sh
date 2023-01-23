@@ -2,7 +2,7 @@
 
 set -e
 
-TEST_DIR=.wasm-spec-test
+TEST_DIR=${TEST_DIR:-.wasm-spec-test}
 fetch_spec_json()
 {
     REPO=https://github.com/yamt/wasm-spec-test
