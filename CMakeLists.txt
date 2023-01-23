@@ -83,6 +83,12 @@ endif()
 endif()
 endif()
 
+if(TOYWASM_USE_TAILCALL)
+if(CMAKE_C_COMPILER_TARGET MATCHES "wasm")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mtail-call")
+endif()
+endif()
+
 # TOYWASM_ENABLE_WASM_THREADS requires pthread
 if(TOYWASM_ENABLE_WASM_THREADS)
 # https://cmake.org/cmake/help/latest/module/FindThreads.html
