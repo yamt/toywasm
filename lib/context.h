@@ -129,11 +129,16 @@ enum exec_event {
         EXEC_EVENT_NONE,
         EXEC_EVENT_CALL,
         EXEC_EVENT_BRANCH,
+#if defined(TOYWASM_ENABLE_WASM_TAILCALL)
+        EXEC_EVENT_RETURN_CALL,
+#endif /* defined(TOYWASM_ENABLE_WASM_TAILCALL) */
 };
 
 struct exec_stat {
         uint64_t call;
-        uint64_t host_call;
+        uint64_t host_call;      /* included in call */
+        uint64_t tail_call;      /* included in call */
+        uint64_t host_tail_call; /* included in host_call and call */
         uint64_t branch;
         uint64_t branch_goto_else;
         uint64_t jump_cache_hit;

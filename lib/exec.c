@@ -505,6 +505,26 @@ do_call(struct exec_context *ctx, const struct funcinst *finst)
         }
 }
 
+#if defined(TOYWASM_ENABLE_WASM_TAILCALL)
+static int
+do_return_call(struct exec_context *ctx, const struct funcinst *finst)
+{
+        const struct funcframe *frame = &VEC_LASTELEM(ctx->frames);
+        uint32_t height = frame->height;
+        frame_exit(ctx);
+
+        const struct functype *ft = funcinst_functype(finst);
+        uint32_t arity = resulttype_cellsize(&ft->parameter);
+        rewind_stack(ctx, height, arity);
+
+        STAT_INC(ctx->stats.tail_call);
+        if (finst->is_host) {
+                STAT_INC(ctx->stats.host_tail_call);
+        }
+        return do_call(ctx, finst);
+}
+#endif /* defined(TOYWASM_ENABLE_WASM_TAILCALL) */
+
 /*
  * a bit shrinked version of get_functype_for_blocktype.
  * get the number of struct cell for parameters and results.
@@ -821,6 +841,15 @@ exec_expr(uint32_t funcidx, const struct expr *expr,
                         return ret;
                 }
                 switch (ctx->event) {
+#if defined(TOYWASM_ENABLE_WASM_TAILCALL)
+                case EXEC_EVENT_RETURN_CALL:
+                        assert(ctx->frames.lsize > 0);
+                        ret = do_return_call(ctx, ctx->event_u.call.func);
+                        if (ret != 0) {
+                                return ret;
+                        }
+                        break;
+#endif /* defined(TOYWASM_ENABLE_WASM_TAILCALL) */
                 case EXEC_EVENT_CALL:
                         assert(ctx->frames.lsize > 0);
                         ret = do_call(ctx, ctx->event_u.call.func);
@@ -1085,6 +1114,8 @@ exec_context_print_stats(struct exec_context *ctx)
 
         STAT_PRINT(call);
         STAT_PRINT(host_call);
+        STAT_PRINT(tail_call);
+        STAT_PRINT(host_tail_call);
         STAT_PRINT(branch);
         STAT_PRINT(branch_goto_else);
         STAT_PRINT(jump_cache2_hit);
