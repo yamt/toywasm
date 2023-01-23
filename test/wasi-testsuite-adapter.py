@@ -22,13 +22,11 @@ parser.add_argument("--version", action="store_true")
 args = parser.parse_args()
 
 if args.version:
-    # Note: "toywasm --version" is not in a format which
-    # wasi-testsuite expects. use a dummy version for now.
-
-    # result = subprocess.run([executable, "--version"])
-    # sys.exit(result.returncode)
-    print("toywasm 0.0")
-    sys.exit(0)
+    # Note: wasi-testsuite expects runtime-name and version,
+    # separated by a space.
+    result = subprocess.run([executable, "--version"], capture_output=True)
+    print(result.stdout.decode("utf-8").splitlines()[0])
+    sys.exit(result.returncode)
 
 options = []
 for x in args.env:
