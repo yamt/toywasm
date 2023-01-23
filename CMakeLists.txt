@@ -48,6 +48,7 @@ option(TOYWASM_USE_SMALL_CELLS "Use smaller stack cells" ON)
 option(TOYWASM_USE_RESULTTYPE_CELLIDX "Index local lookup for resulttype" ON)
 option(TOYWASM_USE_LOCALTYPE_CELLIDX "Index local lookup for localtype" ON)
 option(TOYWASM_ENABLE_WRITER "Enable module writer" ON)
+option(TOYWASM_ENABLE_WASM_TAILCALL "Enable WASM tail-call proposal" OFF)
 option(TOYWASM_ENABLE_WASM_THREADS "Enable WASM threads proposal" OFF)
 option(TOYWASM_ENABLE_WASI_THREADS "Enable wasi-threads proposal" OFF)
 
