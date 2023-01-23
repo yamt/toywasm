@@ -41,6 +41,8 @@ is built with an ancient wasi-sdk to workaround
 
 * [WebAssembly](https://github.com/WebAssembly/spec) except SIMD.
 
+* [tail-call](https://github.com/WebAssembly/tail-call)
+
 * [threads](https://github.com/WebAssembly/threads)
 
 * [wasi preview1](https://github.com/WebAssembly/wasi)
