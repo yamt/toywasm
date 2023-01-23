@@ -36,3 +36,6 @@ fetch_spec .spec https://github.com/WebAssembly/spec opam-2.0.0
 fetch_spec .spec-threads https://github.com/WebAssembly/threads 8e1a7de753fbe6455c33e670352bdfe43b8cc5bd
 # Note: we don't have the test harness necessary for threads.wast
 (cd .spec-threads && find test -name "atomic.wast") | compile threads
+
+fetch_spec .spec-tail-call https://github.com/WebAssembly/tail-call 8d7be0b84f992d6350f1df3d9b9d4159d5083b0f
+(cd .spec-tail-call && find test -name "return_call*.wast") | compile tail-call
