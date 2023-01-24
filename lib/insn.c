@@ -73,10 +73,10 @@ static void
 push_label(const uint8_t *p, struct cell *stack, struct exec_context *ctx)
 {
         /*
-         * "- 1" for the first byte of the opecode parsed by
+         * "- 1" for the first byte of the opcode parsed by
          * eg. fetch_exec_next_insn.
          *
-         * Note: Currently we don't have any control opecodes with
+         * Note: Currently we don't have any control opcodes with
          * sub opcodes.
          */
         uint32_t pc = ptr2pc(ctx->instance->module, p - 1);
@@ -388,8 +388,8 @@ fail:
  *
  * ORIG_PC: the PC value at the point of LOAD_PC on the entry of the function.
  *
- * INSN_SUCCESS: successfully finish the execution of the opecode. Possibly
- * with a tail-call to the function for the next opecode.
+ * INSN_SUCCESS: successfully finish the execution of the opcode. Possibly
+ * with a tail-call to the function for the next opcode.
  *
  * INSN_SUCCESS_RETURN: same as INSN_SUCCESS, but ensure returning to
  * the main loop for extra processing of events.
