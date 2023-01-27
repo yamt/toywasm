@@ -86,9 +86,6 @@ endif()
 if(TOYWASM_USE_TAILCALL)
 if(CMAKE_C_COMPILER_TARGET MATCHES "wasm")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mtail-call")
-# REVISIT: for some reasons, IPO + -mtail-call produces a non-working
-# binary and it makes wasm-on-wasm.sh fail. (LLVM 15.0.7)
-set(USE_IPO OFF)
 endif()
 endif()
 
