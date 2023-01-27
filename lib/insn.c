@@ -499,28 +499,39 @@ fail:
 #endif /* defined(TOYWASM_USE_SEPARATE_EXECUTE) */
 
 #if defined(TOYWASM_USE_SEPARATE_EXECUTE)
+typedef int (*exec_func_t)(const uint8_t *, struct cell *,
+                           struct exec_context *);
+
+static exec_func_t
+fetch_multibyte_opcode(const uint8_t **pp, struct exec_context *ctx,
+                       const struct exec_instruction_desc *table)
+{
+#if !(defined(TOYWASM_USE_SEPARATE_EXECUTE) && defined(TOYWASM_USE_TAILCALL))
+        assert(ctx->p + 1 == *pp);
+#endif
+        assert(ctx->event == EXEC_EVENT_NONE);
+        assert(ctx->frames.lsize > 0);
+#if defined(TOYWASM_ENABLE_TRACING_INSN)
+        uint32_t pc = ptr2pc(ctx->instance->module, *pp);
+#endif
+        uint32_t op = read_leb_u32_nocheck(pp);
+        const struct exec_instruction_desc *desc = &table[op];
+        xlog_trace_insn("exec %06" PRIx32 ": %s (2nd byte %02" PRIx32 ")", pc,
+                        instructions[op].name, op);
+        return desc->fetch_exec;
+}
+
 const static struct exec_instruction_desc exec_instructions_fc[];
 
 static int
 fetch_exec_next_insn_fc(const uint8_t *p, struct cell *stack,
                         struct exec_context *ctx)
 {
-#if !(defined(TOYWASM_USE_SEPARATE_EXECUTE) && defined(TOYWASM_USE_TAILCALL))
-        assert(ctx->p + 1 == p);
-#endif
-        assert(ctx->event == EXEC_EVENT_NONE);
-        assert(ctx->frames.lsize > 0);
-#if defined(TOYWASM_ENABLE_TRACING_INSN)
-        uint32_t pc = ptr2pc(ctx->instance->module, p);
-#endif
-        uint32_t op = read_leb_u32_nocheck(&p);
-        const struct exec_instruction_desc *desc = &exec_instructions_fc[op];
-        xlog_trace_insn("exec %06" PRIx32 ": %s (2nd byte %02" PRIx32 ")", pc,
-                        instructions[op].name, op);
 #if defined(TOYWASM_USE_TAILCALL)
         __musttail
 #endif
-                return desc->fetch_exec(p, stack, ctx);
+                return fetch_multibyte_opcode(&p, ctx, exec_instructions_fc)(
+                        p, stack, ctx);
 }
 
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
@@ -535,22 +546,11 @@ static int
 fetch_exec_next_insn_fe(const uint8_t *p, struct cell *stack,
                         struct exec_context *ctx)
 {
-#if !(defined(TOYWASM_USE_SEPARATE_EXECUTE) && defined(TOYWASM_USE_TAILCALL))
-        assert(ctx->p + 1 == p);
-#endif
-        assert(ctx->event == EXEC_EVENT_NONE);
-        assert(ctx->frames.lsize > 0);
-#if defined(TOYWASM_ENABLE_TRACING_INSN)
-        uint32_t pc = ptr2pc(ctx->instance->module, p);
-#endif
-        uint32_t op = read_leb_u32_nocheck(&p);
-        const struct exec_instruction_desc *desc = &exec_instructions_fe[op];
-        xlog_trace_insn("exec %06" PRIx32 ": %s (2nd byte %02" PRIx32 ")", pc,
-                        instructions[op].name, op);
 #if defined(TOYWASM_USE_TAILCALL)
         __musttail
 #endif
-                return desc->fetch_exec(p, stack, ctx);
+                return fetch_multibyte_opcode(&p, ctx, exec_instructions_fe)(
+                        p, stack, ctx);
 }
 #endif /* defined(TOYWASM_ENABLE_WASM_THREADS) */
 
