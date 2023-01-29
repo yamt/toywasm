@@ -350,6 +350,7 @@ get_functype_for_blocktype(struct module *m, int64_t blocktype,
 struct memarg {
         uint32_t offset;
         uint32_t align;
+        uint32_t memidx;
 };
 
 static int
@@ -358,22 +359,53 @@ read_memarg(const uint8_t **pp, const uint8_t *ep, struct memarg *arg)
         const uint8_t *p = *pp;
         uint32_t offset;
         uint32_t align;
+        uint32_t memidx = 0;
         int ret;
 
         ret = read_leb_u32(&p, ep, &align);
         if (ret != 0) {
                 goto fail;
         }
+#if defined(TOYWASM_ENABLE_WASM_MULTI_MEMORY)
+        /* if bit 6 is set, memidx follows. otherwise memidx is 0. */
+        if ((align & (1 << 6)) != 0) {
+                ret = read_leb_u32(&p, ep, &memidx);
+                if (ret != 0) {
+                        goto fail;
+                }
+        }
+#endif
         ret = read_leb_u32(&p, ep, &offset);
         if (ret != 0) {
                 goto fail;
         }
         arg->offset = offset;
+        arg->memidx = memidx;
         arg->align = align;
         *pp = p;
         ret = 0;
 fail:
         return ret;
+}
+
+static void
+read_memarg_nocheck(const uint8_t **pp, struct memarg *arg)
+{
+        uint32_t align;
+        uint32_t offset;
+        uint32_t memidx = 0;
+
+        align = read_leb_u32_nocheck(pp);
+#if defined(TOYWASM_ENABLE_WASM_MULTI_MEMORY)
+        /* if bit 6 is set, memidx follows. otherwise memidx is 0. */
+        if ((align & (1 << 6)) != 0) {
+                memidx = read_leb_u32_nocheck(pp);
+        }
+#endif
+        offset = read_leb_u32_nocheck(pp);
+        arg->offset = offset;
+        arg->memidx = memidx;
+        arg->align = align;
 }
 
 /*

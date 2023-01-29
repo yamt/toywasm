@@ -62,8 +62,7 @@
                         ret = read_memarg(&p, ep, arg);                       \
                         CHECK_RET(ret);                                       \
                 } else {                                                      \
-                        (arg)->align = read_leb_u32_nocheck(&p);              \
-                        (arg)->offset = read_leb_u32_nocheck(&p);             \
+                        read_memarg_nocheck(&p, arg);                         \
                 }                                                             \
         } while (false)
 
