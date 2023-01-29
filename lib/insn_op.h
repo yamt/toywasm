@@ -119,15 +119,14 @@ fail:                                                                         \
                 int ret;                                                      \
                 LOAD_PC;                                                      \
                 READ_MEMARG(&memarg);                                         \
-                uint32_t memidx = 0;                                          \
-                CHECK(memidx < m->nimportedmems + m->nmems);                  \
+                CHECK(memarg.memidx < m->nimportedmems + m->nmems);           \
                 CHECK(1 <= (MEM / 8) >>                                       \
                       memarg.align); /* 2 ** align <= N / 8 */                \
                 POP_VAL(TYPE_i32, i);                                         \
                 struct val val_c;                                             \
                 if (EXECUTING) {                                              \
                         void *datap;                                          \
-                        ret = memory_getptr(ECTX, memidx, val_i.u.i32,        \
+                        ret = memory_getptr(ECTX, memarg.memidx, val_i.u.i32, \
                                             memarg.offset, MEM / 8, &datap);  \
                         if (ret != 0) {                                       \
                                 goto fail;                                    \
@@ -151,15 +150,14 @@ fail:                                                                         \
                 int ret;                                                      \
                 LOAD_PC;                                                      \
                 READ_MEMARG(&memarg);                                         \
-                uint32_t memidx = 0;                                          \
-                CHECK(memidx < m->nimportedmems + m->nmems);                  \
+                CHECK(memarg.memidx < m->nimportedmems + m->nmems);           \
                 CHECK(1 <= (MEM / 8) >>                                       \
                       memarg.align); /* 2 ** align <= N / 8 */                \
                 POP_VAL(TYPE_##I_OR_F##STACK, v);                             \
                 POP_VAL(TYPE_i32, i);                                         \
                 if (EXECUTING) {                                              \
                         void *datap;                                          \
-                        ret = memory_getptr(ECTX, memidx, val_i.u.i32,        \
+                        ret = memory_getptr(ECTX, memarg.memidx, val_i.u.i32, \
                                             memarg.offset, MEM / 8, &datap);  \
                         if (ret != 0) {                                       \
                                 goto fail;                                    \

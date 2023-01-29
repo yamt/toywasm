@@ -285,13 +285,9 @@ STOREOP(i64_store32, 32, 64, )
 
 INSN_IMPL(memory_size)
 {
-        uint8_t zero;
         int ret;
         LOAD_PC;
-        ret = read_u8(&p, ep, &zero);
-        CHECK_RET(ret);
-        CHECK(zero == 0);
-        uint32_t memidx = 0;
+        READ_MEMIDX(memidx);
         const struct module *m = MODULE;
         CHECK(memidx < m->nimportedmems + m->nmems);
         struct val val_sz;
@@ -310,13 +306,9 @@ fail:
 
 INSN_IMPL(memory_grow)
 {
-        uint8_t zero;
         int ret;
         LOAD_PC;
-        ret = read_u8(&p, ep, &zero);
-        CHECK_RET(ret);
-        CHECK(zero == 0);
-        uint32_t memidx = 0;
+        READ_MEMIDX(memidx);
         const struct module *m = MODULE;
         CHECK(memidx < m->nimportedmems + m->nmems);
         POP_VAL(TYPE_i32, n);

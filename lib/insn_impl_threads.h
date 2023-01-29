@@ -3,11 +3,10 @@
         {                                                                     \
                 int ret;                                                      \
                 LOAD_PC;                                                      \
-                uint32_t memidx = 0;                                          \
                 struct memarg memarg;                                         \
                 READ_MEMARG##BITS(&memarg);                                   \
                 const struct module *m = MODULE;                              \
-                CHECK(memidx < m->nimportedmems + m->nmems);                  \
+                CHECK(memarg.memidx < m->nimportedmems + m->nmems);           \
                 POP_VAL(TYPE_i64, timeout_ns);                                \
                 POP_VAL(TYPE_i##BITS, expected);                              \
                 POP_VAL(TYPE_i32, address);                                   \
@@ -18,7 +17,7 @@
                         uint64_t expected = val_expected.u.i##BITS;           \
                         int64_t timeout_ns = val_timeout_ns.u.i64;            \
                         uint32_t result;                                      \
-                        ret = memory_wait(ectx, memidx, address,              \
+                        ret = memory_wait(ectx, memarg.memidx, address,       \
                                           memarg.offset, expected, &result,   \
                                           timeout_ns, BITS == 64);            \
                         if (ret != 0) {                                       \
@@ -41,16 +40,15 @@ fail:                                                                         \
                 int ret;                                                      \
                 LOAD_PC;                                                      \
                 READ_MEMARG##MEM(&memarg);                                    \
-                uint32_t memidx = 0;                                          \
-                CHECK(memidx < m->nimportedmems + m->nmems);                  \
+                CHECK(memarg.memidx < m->nimportedmems + m->nmems);           \
                 POP_VAL(TYPE_i32, i);                                         \
                 struct val val_c;                                             \
                 if (EXECUTING) {                                              \
                         void *datap;                                          \
                         struct atomics_mutex *lock;                           \
-                        ret = memory_atomic_getptr(ECTX, memidx, val_i.u.i32, \
-                                                   memarg.offset, MEM / 8,    \
-                                                   &datap, &lock);            \
+                        ret = memory_atomic_getptr(                           \
+                                ECTX, memarg.memidx, val_i.u.i32,             \
+                                memarg.offset, MEM / 8, &datap, &lock);       \
                         if (ret != 0) {                                       \
                                 goto fail;                                    \
                         }                                                     \
@@ -72,16 +70,15 @@ fail:                                                                         \
                 int ret;                                                      \
                 LOAD_PC;                                                      \
                 READ_MEMARG##MEM(&memarg);                                    \
-                uint32_t memidx = 0;                                          \
-                CHECK(memidx < m->nimportedmems + m->nmems);                  \
+                CHECK(memarg.memidx < m->nimportedmems + m->nmems);           \
                 POP_VAL(TYPE_##I_OR_F##STACK, v);                             \
                 POP_VAL(TYPE_i32, i);                                         \
                 if (EXECUTING) {                                              \
                         void *datap;                                          \
                         struct atomics_mutex *lock;                           \
-                        ret = memory_atomic_getptr(ECTX, memidx, val_i.u.i32, \
-                                                   memarg.offset, MEM / 8,    \
-                                                   &datap, &lock);            \
+                        ret = memory_atomic_getptr(                           \
+                                ECTX, memarg.memidx, val_i.u.i32,             \
+                                memarg.offset, MEM / 8, &datap, &lock);       \
                         if (ret != 0) {                                       \
                                 goto fail;                                    \
                         }                                                     \
@@ -102,17 +99,16 @@ fail:                                                                         \
                 int ret;                                                      \
                 LOAD_PC;                                                      \
                 READ_MEMARG##MEM(&memarg);                                    \
-                uint32_t memidx = 0;                                          \
-                CHECK(memidx < m->nimportedmems + m->nmems);                  \
+                CHECK(memarg.memidx < m->nimportedmems + m->nmems);           \
                 POP_VAL(TYPE_i##STACK, v);                                    \
                 POP_VAL(TYPE_i32, i);                                         \
                 struct val val_readv;                                         \
                 if (EXECUTING) {                                              \
                         void *datap;                                          \
                         struct atomics_mutex *lock;                           \
-                        ret = memory_atomic_getptr(ECTX, memidx, val_i.u.i32, \
-                                                   memarg.offset, MEM / 8,    \
-                                                   &datap, &lock);            \
+                        ret = memory_atomic_getptr(                           \
+                                ECTX, memarg.memidx, val_i.u.i32,             \
+                                memarg.offset, MEM / 8, &datap, &lock);       \
                         if (ret != 0) {                                       \
                                 goto fail;                                    \
                         }                                                     \
@@ -137,8 +133,7 @@ fail:                                                                         \
                 int ret;                                                      \
                 LOAD_PC;                                                      \
                 READ_MEMARG##MEM(&memarg);                                    \
-                uint32_t memidx = 0;                                          \
-                CHECK(memidx < m->nimportedmems + m->nmems);                  \
+                CHECK(memarg.memidx < m->nimportedmems + m->nmems);           \
                 POP_VAL(TYPE_i##STACK, replacement);                          \
                 POP_VAL(TYPE_i##STACK, expected);                             \
                 POP_VAL(TYPE_i32, i);                                         \
@@ -146,9 +141,9 @@ fail:                                                                         \
                 if (EXECUTING) {                                              \
                         void *datap;                                          \
                         struct atomics_mutex *lock;                           \
-                        ret = memory_atomic_getptr(ECTX, memidx, val_i.u.i32, \
-                                                   memarg.offset, MEM / 8,    \
-                                                   &datap, &lock);            \
+                        ret = memory_atomic_getptr(                           \
+                                ECTX, memarg.memidx, val_i.u.i32,             \
+                                memarg.offset, MEM / 8, &datap, &lock);       \
                         if (ret != 0) {                                       \
                                 goto fail;                                    \
                         }                                                     \
@@ -171,11 +166,10 @@ INSN_IMPL(memory_atomic_notify)
 {
         int ret;
         LOAD_PC;
-        uint32_t memidx = 0;
         struct memarg memarg;
         READ_MEMARG32(&memarg);
         const struct module *m = MODULE;
-        CHECK(memidx < m->nimportedmems + m->nmems);
+        CHECK(memarg.memidx < m->nimportedmems + m->nmems);
         POP_VAL(TYPE_i32, count);
         POP_VAL(TYPE_i32, address);
         struct val val_nwoken;
@@ -184,8 +178,8 @@ INSN_IMPL(memory_atomic_notify)
                 uint32_t address = val_address.u.i32;
                 uint32_t count = val_address.u.i32;
                 uint32_t nwoken;
-                ret = memory_notify(ectx, memidx, address, memarg.offset,
-                                    count, &nwoken);
+                ret = memory_notify(ectx, memarg.memidx, address,
+                                    memarg.offset, count, &nwoken);
                 if (ret != 0) {
                         goto fail;
                 }

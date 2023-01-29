@@ -95,6 +95,22 @@
                 }                                                             \
         } while (false)
 
+#define READ_ZERO_BYTE                                                        \
+        do {                                                                  \
+                uint8_t zero;                                                 \
+                ret = read_u8(&p, ep, &zero);                                 \
+                CHECK_RET(ret);                                               \
+                CHECK(zero == 0);                                             \
+        } while (false)
+
+#if defined(TOYWASM_ENABLE_WASM_MULTI_MEMORY)
+#define READ_MEMIDX(VAR) READ_LEB_U32(VAR)
+#else
+#define READ_MEMIDX(VAR)                                                      \
+        uint32_t VAR = 0;                                                     \
+        READ_ZERO_BYTE
+#endif
+
 #define READ_LEB_S33(VAR)                                                     \
         READ_IMM(int64_t, VAR, read_leb_s(&p, ep, 33, &VAR),                  \
                  read_leb_s33_nocheck(&p))

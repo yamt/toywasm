@@ -12,12 +12,8 @@ INSN_IMPL(memory_init)
 {
         int ret;
         LOAD_PC;
-        uint32_t memidx = 0;
         READ_LEB_U32(dataidx);
-        uint8_t zero;
-        ret = read_u8(&p, ep, &zero);
-        CHECK_RET(ret);
-        CHECK(zero == 0);
+        READ_MEMIDX(memidx);
         const struct module *m = MODULE;
         CHECK(memidx < m->nimportedmems + m->nmems);
         POP_VAL(TYPE_i32, n);
@@ -66,16 +62,11 @@ INSN_IMPL(memory_copy)
 {
         int ret;
         LOAD_PC;
-        uint32_t memidx = 0;
-        uint8_t zero;
-        ret = read_u8(&p, ep, &zero);
-        CHECK_RET(ret);
-        CHECK(zero == 0);
-        ret = read_u8(&p, ep, &zero);
-        CHECK_RET(ret);
-        CHECK(zero == 0);
+        READ_MEMIDX(memidx_dst);
+        READ_MEMIDX(memidx_src);
         const struct module *m = MODULE;
-        CHECK(memidx < m->nimportedmems + m->nmems);
+        CHECK(memidx_dst < m->nimportedmems + m->nmems);
+        CHECK(memidx_src < m->nimportedmems + m->nmems);
         POP_VAL(TYPE_i32, n);
         POP_VAL(TYPE_i32, s);
         POP_VAL(TYPE_i32, d);
@@ -86,13 +77,14 @@ INSN_IMPL(memory_copy)
                 void *dst_p;
                 bool moved;
 retry:
-                ret = memory_getptr(ectx, memidx, val_s.u.i32, 0, n, &src_p);
+                ret = memory_getptr(ectx, memidx_src, val_s.u.i32, 0, n,
+                                    &src_p);
                 if (ret != 0) {
                         goto fail;
                 }
                 moved = false;
-                ret = memory_getptr2(ectx, memidx, val_d.u.i32, 0, n, &dst_p,
-                                     &moved);
+                ret = memory_getptr2(ectx, memidx_dst, val_d.u.i32, 0, n,
+                                     &dst_p, &moved);
                 if (ret != 0) {
                         goto fail;
                 }
@@ -111,11 +103,7 @@ INSN_IMPL(memory_fill)
 {
         int ret;
         LOAD_PC;
-        uint32_t memidx = 0;
-        uint8_t zero;
-        ret = read_u8(&p, ep, &zero);
-        CHECK_RET(ret);
-        CHECK(zero == 0);
+        READ_MEMIDX(memidx);
         const struct module *m = MODULE;
         CHECK(memidx < m->nimportedmems + m->nmems);
         POP_VAL(TYPE_i32, n);
