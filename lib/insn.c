@@ -369,6 +369,7 @@ read_memarg(const uint8_t **pp, const uint8_t *ep, struct memarg *arg)
 #if defined(TOYWASM_ENABLE_WASM_MULTI_MEMORY)
         /* if bit 6 is set, memidx follows. otherwise memidx is 0. */
         if ((align & (1 << 6)) != 0) {
+                align &= ~(1 << 6);
                 ret = read_leb_u32(&p, ep, &memidx);
                 if (ret != 0) {
                         goto fail;
@@ -399,6 +400,7 @@ read_memarg_nocheck(const uint8_t **pp, struct memarg *arg)
 #if defined(TOYWASM_ENABLE_WASM_MULTI_MEMORY)
         /* if bit 6 is set, memidx follows. otherwise memidx is 0. */
         if ((align & (1 << 6)) != 0) {
+                align &= ~(1 << 6);
                 memidx = read_leb_u32_nocheck(pp);
         }
 #endif
