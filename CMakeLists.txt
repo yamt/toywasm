@@ -275,12 +275,17 @@ add_test(NAME toywasm-cli-simple-module COMMAND
 )
 set_tests_properties(toywasm-cli-simple-module PROPERTIES ENVIRONMENT "${TEST_ENV}")
 
+# some tests are not compatible with multi-memory
+# (binary.wast, imports.wast, memory.wast)
+# REVISIT: disable only those tests.
+if(NOT TOYWASM_ENABLE_WASM_MULTI_MEMORY)
 add_test(NAME toywasm-cli-wasm3-spec-test
 	COMMAND ./test/run-wasm3-spec-test-opam-2.0.0.sh --exec "${CMAKE_BINARY_DIR}/toywasm --repl --repl-prompt wasm3" --timeout 60 --spectest ${CMAKE_BINARY_DIR}/spectest.wasm
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 set_tests_properties(toywasm-cli-wasm3-spec-test PROPERTIES ENVIRONMENT "${TEST_ENV}")
 set_tests_properties(toywasm-cli-wasm3-spec-test PROPERTIES LABELS "spec")
+endif()
 
 if(TOYWASM_ENABLE_WASM_TAILCALL)
 add_test(NAME toywasm-cli-wasm3-spec-test-tailcall
@@ -327,12 +332,14 @@ add_test(NAME toywasm-cli-ffmpeg
 set_tests_properties(toywasm-cli-ffmpeg PROPERTIES ENVIRONMENT "${TEST_ENV}")
 set_tests_properties(toywasm-cli-ffmpeg PROPERTIES LABELS "slow")
 
+if(NOT TOYWASM_ENABLE_WASM_MULTI_MEMORY)
 add_test(NAME toywasm-cli-wasm3-spec-test-disable-optimizations
 	COMMAND ./test/run-wasm3-spec-test-opam-2.0.0.sh --exec "${CMAKE_BINARY_DIR}/toywasm --disable-jump-table --disable-resulttype-cellidx --disable-localtype-cellidx --repl --repl-prompt wasm3" --timeout 60 --spectest ${CMAKE_BINARY_DIR}/spectest.wasm
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 set_tests_properties(toywasm-cli-wasm3-spec-test-disable-optimizations PROPERTIES ENVIRONMENT "${TEST_ENV}")
 set_tests_properties(toywasm-cli-wasm3-spec-test-disable-optimizations PROPERTIES LABELS "spec")
+endif()
 
 add_test(NAME toywasm-cli-wasm3-wasi-test
 	COMMAND ./test/run-wasm3-wasi-test.sh --exec "${CMAKE_BINARY_DIR}/toywasm --wasi --wasi-dir ." --separate-args --timeout 360
