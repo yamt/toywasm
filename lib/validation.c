@@ -12,6 +12,7 @@
 #include "options.h"
 #include "type.h"
 #include "util.h"
+#include "validation.h"
 #include "xlog.h"
 
 int

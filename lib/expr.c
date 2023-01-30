@@ -14,6 +14,7 @@
 #include "load_context.h"
 #include "type.h"
 #include "util.h"
+#include "validation.h"
 #include "xlog.h"
 
 static int

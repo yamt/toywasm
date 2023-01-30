@@ -20,6 +20,7 @@
 #include "platform.h"
 #include "type.h"
 #include "util.h"
+#include "validation.h"
 #include "xlog.h"
 
 /*
