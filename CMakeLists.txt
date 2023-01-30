@@ -287,6 +287,15 @@ set_tests_properties(toywasm-cli-wasm3-spec-test PROPERTIES ENVIRONMENT "${TEST_
 set_tests_properties(toywasm-cli-wasm3-spec-test PROPERTIES LABELS "spec")
 endif()
 
+if(TOYWASM_ENABLE_WASM_MULTI_MEMORY)
+add_test(NAME toywasm-cli-wasm3-spec-test-multi-memory
+	COMMAND ./test/run-wasm3-spec-test-multi-memory.sh --exec "${CMAKE_BINARY_DIR}/toywasm --repl --repl-prompt wasm3" --timeout 60 --spectest ${CMAKE_BINARY_DIR}/spectest.wasm
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+set_tests_properties(toywasm-cli-wasm3-spec-test-multi-memory PROPERTIES ENVIRONMENT "${TEST_ENV}")
+set_tests_properties(toywasm-cli-wasm3-spec-test-multi-memory PROPERTIES LABELS "spec")
+endif()
+
 if(TOYWASM_ENABLE_WASM_TAILCALL)
 add_test(NAME toywasm-cli-wasm3-spec-test-tailcall
 	COMMAND ./test/run-wasm3-spec-test-tailcall.sh --exec "${CMAKE_BINARY_DIR}/toywasm --repl --repl-prompt wasm3" --timeout 60 --spectest ${CMAKE_BINARY_DIR}/spectest.wasm
