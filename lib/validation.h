@@ -1,5 +1,17 @@
 enum valtype;
 
+struct ctrlframe {
+        enum ctrlframe_op op;
+        uint32_t jumpslot;
+
+        struct resulttype *start_types;
+        struct resulttype *end_types;
+
+        uint32_t height;
+        uint32_t height_cell;
+        bool unreachable;
+};
+
 struct validation_context {
         /* ctrl frames */
         struct ctrlframe *cframes;

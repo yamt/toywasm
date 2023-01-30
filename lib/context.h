@@ -24,18 +24,6 @@ enum ctrlframe_op {
         FRAME_OP_INVOKE = 0xff,
 };
 
-struct ctrlframe {
-        enum ctrlframe_op op;
-        uint32_t jumpslot;
-
-        struct resulttype *start_types;
-        struct resulttype *end_types;
-
-        uint32_t height;
-        uint32_t height_cell;
-        bool unreachable;
-};
-
 struct label {
         uint32_t pc;
         uint32_t height; /* saved height of operand stack */
