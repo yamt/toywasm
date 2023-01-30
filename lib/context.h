@@ -115,7 +115,10 @@ struct exec_context {
         const struct localtype *localtype;
         const struct expr_exec_info *ei;
 
+        /* The instruction pointer */
         const uint8_t *p;
+
+        /* Some cache stuff */
 #if defined(TOYWASM_USE_LOCALS_CACHE)
         struct cell *current_locals;
 #endif
@@ -126,6 +129,7 @@ struct exec_context {
         struct jump_cache cache[TOYWASM_JUMP_CACHE2_SIZE];
 #endif
 
+        /* Execution stacks */
         VEC(, struct funcframe) frames;
         VEC(, struct cell) stack; /* operand stack */
         VEC(, struct label) labels;
@@ -133,13 +137,16 @@ struct exec_context {
         VEC(, struct cell) locals;
 #endif
 
+        /* check_interrupt() */
         const uint32_t *intrp;
 
+        /* Trap */
         bool trapped; /* used with a combination with EFAULT */
         struct trap_info trap;
         struct report *report;
         struct report report0;
 
+        /* Pending control flow event (call, br, ...) */
         enum exec_event event;
         union {
                 struct {
@@ -150,6 +157,8 @@ struct exec_context {
                         uint32_t index;
                 } branch;
         } event_u;
+
+        /* Statistics */
         struct exec_stat stats;
 };
 
