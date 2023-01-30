@@ -185,6 +185,20 @@ set_current_frame(struct exec_context *ctx, const struct funcframe *frame,
 {
         struct instance *inst = frame->instance;
         uint32_t funcidx = frame->funcidx;
+        if (__predict_false(ctx->instance->module != inst->module)) {
+                /*
+                 * Invalidate jump cache.
+                 *
+                 * Note: because jump cache entires are currently
+                 * keyed by PC, they are not safe to use among modules.
+                 */
+#if defined(TOYWASM_USE_JUMP_CACHE)
+                ctx->jump_cache = NULL;
+#endif
+#if TOYWASM_JUMP_CACHE2_SIZE > 0
+                memset(&ctx->cache, 0, sizeof(ctx->cache));
+#endif
+        }
         ctx->instance = inst;
         if (__predict_false(funcidx == FUNCIDX_INVALID)) {
                 /*
