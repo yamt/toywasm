@@ -272,6 +272,16 @@ toywasm_repl_set_wasi_prestat(struct repl_state *state, const char *path)
 }
 
 int
+toywasm_repl_set_wasi_prestat_mapdir(struct repl_state *state,
+                                     const char *path)
+{
+        if (state->wasi == NULL) {
+                return EPROTO;
+        }
+        return wasi_instance_prestat_add_mapdir(state->wasi, path);
+}
+
+int
 find_mod(struct repl_state *state, const char *modname,
          struct repl_module_state **modp)
 {

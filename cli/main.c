@@ -28,6 +28,7 @@ enum longopt {
         opt_version,
         opt_wasi,
         opt_wasi_dir,
+        opt_wasi_mapdir,
         opt_wasi_env,
 };
 
@@ -109,6 +110,12 @@ const struct option longopts[] = {
                 required_argument,
                 NULL,
                 opt_wasi_dir,
+        },
+        {
+                "wasi-mapdir",
+                required_argument,
+                NULL,
+                opt_wasi_mapdir,
         },
         {
                 "wasi-env",
@@ -199,6 +206,13 @@ main(int argc, char *const *argv)
                         break;
                 case opt_wasi_dir:
                         ret = toywasm_repl_set_wasi_prestat(state, optarg);
+                        if (ret != 0) {
+                                goto fail;
+                        }
+                        break;
+                case opt_wasi_mapdir:
+                        ret = toywasm_repl_set_wasi_prestat_mapdir(state,
+                                                                   optarg);
                         if (ret != 0) {
                                 goto fail;
                         }

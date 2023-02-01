@@ -88,6 +88,7 @@ struct wasi_fdinfo {
          *   hostfd == -1
          */
         char *prestat_path;
+        char *wasm_path; /* NULL means same as prestat_path */
         int hostfd;
         DIR *dir;
         uint32_t refcount;
@@ -307,6 +308,7 @@ wasi_fdinfo_alloc(void)
         fdinfo->hostfd = -1;
         fdinfo->dir = NULL;
         fdinfo->prestat_path = NULL;
+        fdinfo->wasm_path = NULL;
         fdinfo->refcount = 0;
         fdinfo->blocking = 1;
         assert(wasi_fdinfo_unused(fdinfo));
@@ -378,6 +380,7 @@ wasi_fdinfo_release(struct wasi_instance *wasi, struct wasi_fdinfo *fdinfo)
         if (fdinfo->refcount == 0) {
                 assert(fdinfo->hostfd == -1);
                 free(fdinfo->prestat_path);
+                free(fdinfo->wasm_path);
                 free(fdinfo);
         }
         toywasm_mutex_unlock(&wasi->lock);
@@ -421,7 +424,9 @@ wasi_fdinfo_close(struct wasi_fdinfo *fdinfo)
         }
         fdinfo->dir = NULL;
         free(fdinfo->prestat_path);
+        free(fdinfo->wasm_path);
         fdinfo->prestat_path = NULL;
+        fdinfo->wasm_path = NULL;
         return ret;
 }
 
@@ -526,6 +531,7 @@ wasi_fd_add(struct wasi_instance *wasi, int hostfd, char *path,
         fdinfo->hostfd = hostfd;
         fdinfo->dir = NULL;
         fdinfo->prestat_path = path;
+        fdinfo->wasm_path = NULL;
         fdinfo->blocking = (fdflags & WASI_FDFLAG_NONBLOCK) == 0;
         toywasm_mutex_lock(&wasi->lock);
         ret = wasi_fd_alloc(wasi, &wasifd);
@@ -1940,7 +1946,11 @@ wasi_fd_prestat_get(struct exec_context *ctx, struct host_instance *hi,
         struct wasi_fd_prestat st;
         memset(&st, 0, sizeof(st));
         st.type = WASI_PREOPEN_TYPE_DIR;
-        st.dir_name_len = host_to_le32(strlen(fdinfo->prestat_path));
+        const char *prestat_path = fdinfo->prestat_path;
+        if (fdinfo->wasm_path != NULL) {
+                prestat_path = fdinfo->wasm_path;
+        }
+        st.dir_name_len = host_to_le32(strlen(prestat_path));
         host_ret = wasi_copyout(ctx, &st, retp, sizeof(st));
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
@@ -1977,13 +1987,17 @@ wasi_fd_prestat_dir_name(struct exec_context *ctx, struct host_instance *hi,
         xlog_trace("wasm fd %" PRIu32 " is prestat %s", wasifd,
                    fdinfo->prestat_path);
 
-        size_t len = strlen(fdinfo->prestat_path);
+        const char *prestat_path = fdinfo->prestat_path;
+        if (fdinfo->wasm_path != NULL) {
+                prestat_path = fdinfo->wasm_path;
+        }
+        size_t len = strlen(prestat_path);
         if (len != pathlen) {
                 xlog_trace("pathlen mismatch %zu != %" PRIu32, len, pathlen);
                 ret = EINVAL;
                 goto fail;
         }
-        host_ret = wasi_copyout(ctx, fdinfo->prestat_path, path, len);
+        host_ret = wasi_copyout(ctx, prestat_path, path, len);
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
         if (host_ret == 0) {
@@ -3504,31 +3518,69 @@ wasi_instance_set_environ(struct wasi_instance *inst, int nenvs,
 #endif
 }
 
-int
-wasi_instance_prestat_add(struct wasi_instance *wasi, const char *path)
+static int
+wasi_instance_prestat_add_common(struct wasi_instance *wasi, const char *path,
+                                 bool is_mapdir)
 {
         struct wasi_fdinfo *fdinfo = NULL;
+        char *host_path = NULL;
+        char *wasm_path = NULL;
         uint32_t wasifd;
         int ret;
-        xlog_trace("prestat adding %s", path);
+        xlog_trace("prestat adding mapdir %s", path);
 
-        fdinfo = wasi_fdinfo_alloc();
-        if (fdinfo == NULL) {
-                return ENOMEM;
+        if (is_mapdir) {
+                /*
+                 * <wasm dir>::<host dir>
+                 *
+                 * intended to be compatible with wasmtime's --mapdir
+                 */
+
+                const char *colon = strchr(path, ':');
+                if (colon == NULL || colon[1] != ':') {
+                        ret = EINVAL;
+                        goto fail;
+                }
+                wasm_path = strndup(path, colon - path);
+                host_path = strdup(colon + 2);
+        } else {
+                host_path = strdup(path);
         }
-        fdinfo->prestat_path = strdup(path);
+        fdinfo = wasi_fdinfo_alloc();
+        if (host_path == NULL || (is_mapdir && wasm_path == NULL) ||
+            fdinfo == NULL) {
+                ret = ENOMEM;
+                goto fail;
+        }
+        fdinfo->prestat_path = host_path;
+        fdinfo->wasm_path = wasm_path;
         toywasm_mutex_lock(&wasi->lock);
         ret = wasi_fd_alloc(wasi, &wasifd);
         if (ret != 0) {
                 toywasm_mutex_unlock(&wasi->lock);
-                free(fdinfo->prestat_path);
-                free(fdinfo);
-                return ret;
+                goto fail;
         }
         wasi_fd_affix(wasi, wasifd, fdinfo);
         toywasm_mutex_unlock(&wasi->lock);
         xlog_trace("prestat added %s (%s)", path, fdinfo->prestat_path);
         return 0;
+fail:
+        free(host_path);
+        free(wasm_path);
+        free(fdinfo);
+        return ret;
+}
+
+int
+wasi_instance_prestat_add(struct wasi_instance *wasi, const char *path)
+{
+        return wasi_instance_prestat_add_common(wasi, path, false);
+}
+
+int
+wasi_instance_prestat_add_mapdir(struct wasi_instance *wasi, const char *path)
+{
+        return wasi_instance_prestat_add_common(wasi, path, true);
 }
 
 void

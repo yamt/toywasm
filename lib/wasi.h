@@ -7,6 +7,8 @@ void wasi_instance_set_environ(struct wasi_instance *inst, int nenvs,
                                char *const *envs);
 void wasi_instance_destroy(struct wasi_instance *inst);
 int wasi_instance_prestat_add(struct wasi_instance *inst, const char *path);
+int wasi_instance_prestat_add_mapdir(struct wasi_instance *inst,
+                                     const char *path);
 int import_object_create_for_wasi(struct wasi_instance *wasi,
                                   struct import_object **impp);
 
