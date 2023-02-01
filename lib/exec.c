@@ -1277,7 +1277,8 @@ memory_wait(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
         if (timeout_ns < 0) {
                 abstimeout = NULL;
         } else {
-                ret = abstime_from_reltime_ns(&abstimeout0, timeout_ns);
+                ret = abstime_from_reltime_ns(CLOCK_REALTIME, &abstimeout0,
+                                              timeout_ns);
                 if (ret != 0) {
                         goto fail;
                 }
@@ -1299,7 +1300,8 @@ retry:
         } else {
                 struct timespec next_abstimeout;
                 static const int64_t interval_ns = 300000000;
-                ret = abstime_from_reltime_ns(&next_abstimeout, interval_ns);
+                ret = abstime_from_reltime_ns(CLOCK_REALTIME, &next_abstimeout,
+                                              interval_ns);
                 if (ret != 0) {
                         goto fail;
                 }
