@@ -3220,9 +3220,12 @@ retry:
                 goto fail;
         }
         uint16_t roflags = 0;
+        /* https://github.com/WebAssembly/wasi-libc/pull/391 */
+#if !defined(__wasi__) || MSG_TRUNC == WASI_ROFLAG_RECV_DATA_TRUNCATED
         if ((msg.msg_flags & MSG_TRUNC) != 0) {
                 roflags = WASI_ROFLAG_RECV_DATA_TRUNCATED;
         }
+#endif
         uint32_t r = host_to_le32(n);
         host_ret = wasi_copyout(ctx, &r, retp, sizeof(r));
         if (host_ret != 0) {
