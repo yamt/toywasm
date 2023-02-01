@@ -61,6 +61,14 @@ struct wasi_iov {
 #define WASI_RIGHT_SOCK_SHUTDOWN (UINT64_C(1) << 28)
 #define WASI_RIGHT_SOCK_ACCEPT (UINT64_C(1) << 29)
 
+#define WASI_RIFLAG_RECV_PEEK (UINT16_C(1) << 0)
+#define WASI_RIFLAG_RECV_WAITALL (UINT16_C(1) << 1)
+
+#define WASI_ROFLAG_RECV_DATA_TRUNCATED (UINT16_C(1) << 0)
+
+#define WASI_SDFLAG_RD (UINT16_C(1) << 0)
+#define WASI_SDFLAG_WR (UINT16_C(1) << 1)
+
 struct wasi_fdstat {
         uint8_t fs_filetype;
         uint8_t pad1;
