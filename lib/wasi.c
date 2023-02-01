@@ -3331,7 +3331,6 @@ wasi_sock_shutdown(struct exec_context *ctx, struct host_instance *hi,
         HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         uint32_t sdflags = HOST_FUNC_PARAM(ft, params, 1, i32);
-        uint32_t retp = HOST_FUNC_PARAM(ft, params, 2, i32);
         struct wasi_fdinfo *fdinfo = NULL;
         int hostfd;
         int ret;
