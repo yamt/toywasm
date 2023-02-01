@@ -827,6 +827,7 @@ toywasm_repl_invoke(struct repl_state *state, const char *modname,
         struct exec_context ctx0;
         struct exec_context *ctx = &ctx0;
         exec_context_init(ctx, inst);
+        ctx->options = state->opts.exec_options;
 #if defined(TOYWASM_ENABLE_WASI_THREADS)
         if (state->wasi_threads != NULL) {
                 ctx->intrp =
@@ -1060,6 +1061,8 @@ repl_options_init(struct repl_options *opts)
         opts->load_options.generate_jump_table = true;
         opts->load_options.generate_localtype_cellidx = true;
         opts->load_options.generate_resulttype_cellidx = true;
+        opts->exec_options.max_frames = UINT32_MAX;
+        opts->exec_options.max_stackcells = UINT32_MAX;
 }
 
 void

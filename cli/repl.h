@@ -8,6 +8,7 @@ struct repl_options {
         struct repl_state *state;
         bool print_stats;
         struct load_options load_options;
+        struct exec_options exec_options;
 };
 
 struct repl_module_state {

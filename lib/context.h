@@ -4,6 +4,7 @@
 #include "toywasm_config.h"
 
 #include "cell.h"
+#include "options.h"
 #include "platform.h"
 #include "report.h"
 #include "vec.h"
@@ -157,6 +158,9 @@ struct exec_context {
                         uint32_t index;
                 } branch;
         } event_u;
+
+        /* Options */
+        struct exec_options options;
 
         /* Statistics */
         struct exec_stat stats;

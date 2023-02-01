@@ -17,13 +17,6 @@
 #define WASM_PAGE_SIZE 65536
 #define WASM_MAX_PAGES 65536
 
-/*
- * REVISIT: arbitrary limits for stack overflow tests in call.wast.
- * should be configurable at least.
- */
-#define MAX_FRAMES 2000
-#define MAX_STACKCELLS 10000
-
 enum valtype {
         /* numtype */
         TYPE_i32 = 0x7f,

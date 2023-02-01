@@ -20,6 +20,8 @@ enum longopt {
         opt_disable_resulttype_cellidx,
         opt_invoke,
         opt_load,
+        opt_max_frames,
+        opt_max_stack_cells,
         opt_register,
         opt_repl,
         opt_repl_prompt,
@@ -64,10 +66,16 @@ const struct option longopts[] = {
                 opt_load,
         },
         {
-                "register",
+                "max-frames",
                 required_argument,
                 NULL,
-                opt_register,
+                opt_max_frames,
+        },
+        {
+                "max-stack-cells",
+                required_argument,
+                NULL,
+                opt_max_stack_cells,
         },
         {
                 "repl",
@@ -176,6 +184,12 @@ main(int argc, char *const *argv)
                         if (ret != 0) {
                                 goto fail;
                         }
+                        break;
+                case opt_max_frames:
+                        opts->exec_options.max_frames = atoi(optarg);
+                        break;
+                case opt_max_stack_cells:
+                        opts->exec_options.max_stackcells = atoi(optarg);
                         break;
                 case opt_register:
                         ret = toywasm_repl_register(state, NULL, optarg);

@@ -172,7 +172,7 @@ static int
 stack_prealloc(struct exec_context *ctx, uint32_t count)
 {
         uint32_t needed = ctx->stack.lsize + count;
-        if (needed >= MAX_STACKCELLS) {
+        if (needed > ctx->options.max_stackcells) {
                 return trap_with_id(ctx, TRAP_TOO_MANY_STACKCELLS,
                                     "too many values on the operand stack");
         }
@@ -255,7 +255,7 @@ frame_enter(struct exec_context *ctx, struct instance *inst, uint32_t funcidx,
         struct funcframe *frame;
         int ret;
 
-        if (ctx->frames.lsize == MAX_FRAMES) {
+        if (ctx->frames.lsize == ctx->options.max_frames) {
                 return trap_with_id(ctx, TRAP_TOO_MANY_FRAMES,
                                     "too many frames");
         }
@@ -1089,6 +1089,8 @@ exec_context_init(struct exec_context *ctx, struct instance *inst)
         ctx->instance = inst;
         report_init(&ctx->report0);
         ctx->report = &ctx->report0;
+        ctx->options.max_frames = UINT32_MAX;
+        ctx->options.max_stackcells = UINT32_MAX;
 }
 
 void
