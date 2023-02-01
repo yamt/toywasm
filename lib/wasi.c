@@ -2067,15 +2067,16 @@ retry:
         for (i = 0; i < nsubscriptions; i++) {
                 const struct wasi_subscription *s = &subscriptions[i];
                 struct pollfd *pfd = &pollfds[i];
+                clockid_t host_clock_id;
+                bool abstime;
                 switch (s->type) {
                 case WASI_EVENTTYPE_CLOCK:
                         switch (le32_to_host(s->u.clock.clock_id)) {
                         case WASI_CLOCK_ID_REALTIME:
+                                host_clock_id = CLOCK_REALTIME;
                                 break;
                         case WASI_CLOCK_ID_MONOTONIC:
-                                /* TODO: this is of course wrong */
-                                xlog_trace("poll_oneoff: treating MONOTONIC "
-                                           "as REALTIME");
+                                host_clock_id = CLOCK_MONOTONIC;
                                 break;
                         default:
                                 xlog_trace("poll_oneoff: unsupported clock id "
@@ -2084,14 +2085,9 @@ retry:
                                 ret = ENOTSUP;
                                 goto fail;
                         }
-                        if ((s->u.clock.flags &
-                             host_to_le16(WASI_SUBCLOCKFLAG_ABSTIME)) != 0) {
-                                xlog_trace("poll_oneoff: unsupported flag "
-                                           "%" PRIx32,
-                                           le16_to_host(s->u.clock.flags));
-                                ret = ENOTSUP;
-                                goto fail;
-                        }
+                        abstime =
+                                (s->u.clock.flags &
+                                 host_to_le16(WASI_SUBCLOCKFLAG_ABSTIME)) != 0;
                         if (timeout_ms != -1) {
                                 xlog_trace("poll_oneoff: multiple clock "
                                            "subscriptions");
@@ -2099,10 +2095,28 @@ retry:
                                 goto fail;
                         }
                         timeout_ns = le64_to_host(s->u.clock.timeout);
-                        if (timeout_ns > (uint64_t)INT_MAX * 1000000) {
-                                timeout_ms = INT_MAX; /* early timeout is ok */
+                        struct timespec absts;
+                        if (abstime) {
+                                ret = timespec_from_ns(&absts, timeout_ns);
                         } else {
-                                timeout_ms = timeout_ns / 1000000;
+                                ret = abstime_from_reltime_ns(
+                                        host_clock_id, &absts, timeout_ns);
+                        }
+                        if (ret != 0) {
+                                goto fail;
+                        }
+                        if (host_clock_id != CLOCK_REALTIME) {
+                                ret = convert_timespec(host_clock_id,
+                                                       CLOCK_REALTIME, &absts,
+                                                       &absts);
+                                if (ret != 0) {
+                                        goto fail;
+                                }
+                        }
+                        ret = abstime_to_reltime_ms_roundup(
+                                CLOCK_REALTIME, &absts, &timeout_ms);
+                        if (ret != 0) {
+                                goto fail;
                         }
                         pfd->fd = -1;
                         xlog_trace("poll_oneoff: pfd[%" PRIu32 "] timer %d ms",
