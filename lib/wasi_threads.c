@@ -208,6 +208,7 @@ runner(void *vp)
         struct exec_context ctx0;
         struct exec_context *ctx = &ctx0;
         exec_context_init(ctx, inst);
+        /* XXX should inherit exec_options from the parent? */
         ctx->intrp = wasi_threads_interrupt_pointer(wasi);
 
         /*
