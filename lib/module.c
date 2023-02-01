@@ -1714,7 +1714,11 @@ module_load(struct module *m, const uint8_t *p, const uint8_t *ep,
 
         /*
          * export names should be unique.
+         * https://webassembly.github.io/spec/core/syntax/modules.html#exports
          * TODO use something which is not O(n^2)
+         *
+         * Note: on the other hand, import names are not necessarily unique.
+         * https://webassembly.github.io/spec/core/syntax/modules.html#imports
          */
         uint32_t i;
         for (i = 0; i < m->nexports; i++) {
