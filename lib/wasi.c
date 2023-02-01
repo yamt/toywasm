@@ -878,7 +878,8 @@ wasi_poll(struct exec_context *ctx, struct pollfd *fds, nfds_t nfds,
         if (timeout_ms < 0) {
                 abstimeout = NULL;
         } else {
-                ret = abstime_from_reltime_ms(&abstimeout0, timeout_ms);
+                ret = abstime_from_reltime_ms(CLOCK_REALTIME, &abstimeout0,
+                                              timeout_ms);
                 if (ret != 0) {
                         goto fail;
                 }
@@ -895,7 +896,8 @@ wasi_poll(struct exec_context *ctx, struct pollfd *fds, nfds_t nfds,
                         next_timeout_ms = interval_ms;
                 } else {
                         struct timespec next;
-                        ret = abstime_from_reltime_ms(&next, interval_ms);
+                        ret = abstime_from_reltime_ms(CLOCK_REALTIME, &next,
+                                                      interval_ms);
                         if (ret != 0) {
                                 goto fail;
                         }
@@ -903,7 +905,8 @@ wasi_poll(struct exec_context *ctx, struct pollfd *fds, nfds_t nfds,
                                 next_timeout_ms = interval_ms;
                         } else {
                                 ret = abstime_to_reltime_ms_roundup(
-                                        abstimeout, &next_timeout_ms);
+                                        CLOCK_REALTIME, abstimeout,
+                                        &next_timeout_ms);
                                 if (ret != 0) {
                                         goto fail;
                                 }

@@ -503,9 +503,9 @@ test_timeutil(void **state)
         struct timespec c;
         int ret;
 
-        ret = timespec_now(&a);
+        ret = timespec_now(CLOCK_REALTIME, &a);
         assert_int_equal(ret, 0);
-        ret = timespec_now(&b);
+        ret = timespec_now(CLOCK_REALTIME, &b);
         assert_int_equal(ret, 0);
         ret = timespec_cmp(&a, &b);
         assert_true(ret <= 0);

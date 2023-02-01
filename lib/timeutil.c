@@ -102,9 +102,9 @@ timespec_from_ns(struct timespec *a, uint64_t ns)
 }
 
 int
-timespec_now(struct timespec *a)
+timespec_now(clockid_t id, struct timespec *a)
 {
-        int ret = clock_gettime(CLOCK_REALTIME, a);
+        int ret = clock_gettime(id, a);
         if (ret != 0) {
                 assert(errno != 0);
                 return errno;
@@ -114,7 +114,8 @@ timespec_now(struct timespec *a)
 }
 
 int
-abstime_from_reltime_ns(struct timespec *abstime, uint64_t reltime_ns)
+abstime_from_reltime_ns(clockid_t id, struct timespec *abstime,
+                        uint64_t reltime_ns)
 {
         struct timespec now;
         struct timespec reltime;
@@ -123,7 +124,7 @@ abstime_from_reltime_ns(struct timespec *abstime, uint64_t reltime_ns)
         if (ret != 0) {
                 goto fail;
         }
-        ret = timespec_now(&now);
+        ret = timespec_now(id, &now);
         if (ret != 0) {
                 goto fail;
         }
@@ -135,19 +136,20 @@ fail:
         return ret;
 }
 int
-abstime_from_reltime_ms(struct timespec *abstime, int reltime_ms)
+abstime_from_reltime_ms(clockid_t id, struct timespec *abstime, int reltime_ms)
 {
-        return abstime_from_reltime_ns(abstime,
+        return abstime_from_reltime_ns(id, abstime,
                                        (uint64_t)reltime_ms * 1000000);
 }
 
 int
-abstime_to_reltime_ms_roundup(const struct timespec *abstime, int *reltime_ms)
+abstime_to_reltime_ms_roundup(clockid_t id, const struct timespec *abstime,
+                              int *reltime_ms)
 {
         struct timespec now;
         struct timespec reltime;
         int ret;
-        ret = timespec_now(&now);
+        ret = timespec_now(id, &now);
         if (ret != 0) {
                 goto fail;
         }
@@ -170,6 +172,42 @@ abstime_to_reltime_ms_roundup(const struct timespec *abstime, int *reltime_ms)
                 goto fail;
         }
         *reltime_ms = msec + msec2;
+        return 0;
+fail:
+        return ret;
+}
+
+int
+convert_timespec(clockid_t from_id, clockid_t to_id,
+                 const struct timespec *from_ts, struct timespec *result)
+{
+        struct timespec from_now;
+        struct timespec to_now;
+        int ret;
+        ret = timespec_now(from_id, &from_now);
+        if (ret != 0) {
+                goto fail;
+        }
+        ret = timespec_now(to_id, &to_now);
+        if (ret != 0) {
+                goto fail;
+        }
+        if (timespec_cmp(from_ts, &from_now) >= 0) {
+                struct timespec t;
+                timespec_sub(from_ts, &from_now, &t);
+                ret = timespec_add(&t, &to_now, result);
+                if (ret != 0) {
+                        goto fail;
+                }
+        } else {
+                struct timespec t;
+                timespec_sub(&from_now, from_ts, &t);
+                if (timespec_cmp(&to_now, &t) > 0) {
+                        ret = EOVERFLOW;
+                        goto fail;
+                }
+                timespec_sub(&to_now, &t, result);
+        }
         return 0;
 fail:
         return ret;
