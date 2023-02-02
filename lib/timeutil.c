@@ -7,10 +7,13 @@
 #include <time.h>
 
 /*
- * time_t overflow check in portable code is combersome
- * because time_t can be any integer types (posix) or numbers (C).
+ * time_t overflow check in portable code is combersome because time_t
+ * can be any integer types (posix) or even floating-point numeric types. (C)
  *
- * this implementation assumes it's an integer.
+ * this implementation assumes posix.
+ * that is,
+ * - it's an integer.
+ * - it can be signed or unsigned.
  */
 
 static void
