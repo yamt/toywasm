@@ -1,6 +1,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "toywasm_config.h"
+
 struct context;
 struct exec_context;
 struct cell;
@@ -26,6 +28,11 @@ struct instruction_desc {
 };
 
 #define INSN_FLAG_CONST 1
+#if defined(TOYWASM_ENABLE_WASM_EXTENDED_CONST)
+#define INSN_FLAG_EXTENDED_CONST INSN_FLAG_CONST
+#else
+#define INSN_FLAG_EXTENDED_CONST 0
+#endif
 
 extern const struct exec_instruction_desc exec_instructions[];
 
