@@ -463,7 +463,6 @@ instance_create_execute_init(struct instance *inst, struct exec_context *ctx)
                 if (d->mode != DATA_MODE_ACTIVE) {
                         continue;
                 }
-                assert(d->memory == 0);
                 struct val val;
                 ret = exec_const_expr(&d->offset, TYPE_i32, &val, ctx);
                 if (ret != 0) {
