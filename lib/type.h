@@ -68,6 +68,9 @@ struct expr_exec_info {
 #endif
 };
 
+/*
+ * REVISIT: const exprs don't really need expr_exec_info.
+ */
 struct expr {
         const uint8_t *start;
 #if defined(TOYWASM_ENABLE_WRITER)
