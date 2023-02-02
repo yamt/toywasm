@@ -41,6 +41,8 @@ is built with an ancient wasi-sdk to workaround
 
 * [WebAssembly](https://github.com/WebAssembly/spec) except SIMD.
 
+* [extended-const](https://github.com/WebAssembly/extended-const)
+
 * [multi-memory](https://github.com/WebAssembly/multi-memory)
 
 * [tail-call](https://github.com/WebAssembly/tail-call)
