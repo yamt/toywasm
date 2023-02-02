@@ -168,7 +168,9 @@ read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
         }
 #endif
         *pp = p;
+#if defined(TOYWASM_ENABLE_WRITER)
         expr->end = p;
+#endif
         xlog_trace("code size %zu, jump table size %zu, max labels %" PRIu32
                    ", cells %" PRIu32,
                    expr->end - expr->start, ei->njumps * sizeof(*ei->jumps),

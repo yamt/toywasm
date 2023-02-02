@@ -70,7 +70,9 @@ struct expr_exec_info {
 
 struct expr {
         const uint8_t *start;
+#if defined(TOYWASM_ENABLE_WRITER)
         const uint8_t *end;
+#endif
 
         struct expr_exec_info ei;
 };
