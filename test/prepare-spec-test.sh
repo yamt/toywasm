@@ -47,3 +47,8 @@ fetch_spec .spec-multi-memory https://github.com/WebAssembly/multi-memory 07fc57
 -name "store.wast" -o \
 -name "memory_size.wast" -o \
 -name "memory_grow.wast") | compile multi-memory
+
+fetch_spec .spec-extended-const https://github.com/WebAssembly/extended-const dd72ab9676e27d4c3fbf48030115e4ee64e05507
+(cd .spec-extended-const && find test \
+-name "data.wast" -o \
+-name "global.wast") | compile extended-const
