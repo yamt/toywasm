@@ -252,7 +252,7 @@ jobs:
 
     - name: Install
       run: |
-        cmake --build build.wasm --target install
+        cmake --build build.cross.${{matrix.arch}} --target install
 
     - name: Tar
       run: |
