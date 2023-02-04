@@ -139,6 +139,30 @@ const struct option longopts[] = {
         },
 };
 
+static void
+print_usage()
+{
+        printf("Usage:\n");
+        printf("\ttoywasm [OPTIONS] [--] <MODULE> [ARGS...]\n");
+
+        printf("Options:\n");
+        const struct option *opt = longopts;
+        while (opt->name != NULL) {
+                switch (opt->has_arg) {
+                case no_argument:
+                        printf("\t--%s\n", opt->name);
+                        break;
+                case required_argument:
+                        printf("\t--%s ARG\n", opt->name);
+                        break;
+                case optional_argument:
+                        printf("\t--%s [ARG]\n", opt->name);
+                        break;
+                }
+                opt++;
+        }
+}
+
 int
 main(int argc, char *const *argv)
 {
@@ -148,6 +172,7 @@ main(int argc, char *const *argv)
         int ret;
         int longidx;
         bool do_repl = false;
+        bool might_need_help = true;
 
         int exit_status = 1;
 
@@ -178,6 +203,7 @@ main(int argc, char *const *argv)
                         if (ret != 0) {
                                 goto fail;
                         }
+                        might_need_help = false;
                         break;
                 case opt_load:
                         ret = toywasm_repl_load(state, NULL, optarg);
@@ -211,6 +237,7 @@ main(int argc, char *const *argv)
                         break;
                 case opt_version:
                         toywasm_repl_print_version();
+                        might_need_help = false;
                         break;
                 case opt_wasi:
                         ret = toywasm_repl_load_wasi(state);
@@ -245,6 +272,9 @@ main(int argc, char *const *argv)
                                 goto fail;
                         }
                         break;
+                default:
+                        print_usage();
+                        exit(0);
                 }
         }
         argc -= optind;
@@ -258,6 +288,9 @@ main(int argc, char *const *argv)
                 exit(0);
         }
         if (argc == 0) {
+                if (might_need_help) {
+                        print_usage();
+                }
                 exit(0);
         }
         ret = toywasm_repl_set_wasi_args(state, argc, argv);
