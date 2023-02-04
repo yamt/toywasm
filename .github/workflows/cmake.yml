@@ -108,7 +108,7 @@ jobs:
       run: |
         cmake -B ${{github.workspace}}/build \
           -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}} \
-          -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/artifacts \
+          -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/dist \
           -DTOYWASM_USE_SEPARATE_EXECUTE=${{matrix.TOYWASM_USE_SEPARATE_EXECUTE}} \
           -DTOYWASM_USE_TAILCALL=${{matrix.TOYWASM_USE_TAILCALL}} \
           -DTOYWASM_ENABLE_TRACING=${{matrix.TOYWASM_ENABLE_TRACING}} \
@@ -147,12 +147,12 @@ jobs:
       run: |
         cmake --build ${{github.workspace}}/build --target install
 
-    - name: Copy LICENSE
+    - name: Tar
       run: |
-        cp LICENSE ${{github.workspace}}/artifacts
+        cd ${{github.workspace}}/dist
+        pax -wvzf ${{github.workspace}}/artifacts/toywasm-${{matrix.name}}.tgz *
 
     - name: Upload artifacts
-      if: matrix.name != 'noname'
       uses: actions/upload-artifact@v3
       with:
         name: ${{matrix.name}}
@@ -178,22 +178,23 @@ jobs:
 
     - name: Build and test
       env:
-        EXTRA_CMAKE_OPTIONS: -DCMAKE_INSTALL_PREFIX=../artifacts
+        EXTRA_CMAKE_OPTIONS: -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/dist
       run: ./wasm-on-wasm.sh
 
     - name: Install
       run: |
         cmake --build build.wasm --target install
 
-    - name: Copy LICENSE
+    - name: Tar
       run: |
-        cp LICENSE artifacts
+        cd ${{github.workspace}}/dist
+        pax -wvzf ${{github.workspace}}/artifacts/toywasm-wasm-wasi.tgz *
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
         name: wasm32-wasi
-        path: artifacts
+        path: ${{github.workspace}}/artifacts
 
   cross:
     strategy:
@@ -220,6 +221,7 @@ jobs:
     - name: Cross build
       env:
         ARCH: ${{matrix.arch}}
+        EXTRA_CMAKE_OPTIONS: -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/dist
       run: |
         sudo -E ./cross/cross-setup.sh
         ./cross/cross-build.sh
@@ -245,3 +247,18 @@ jobs:
         cd build.cross.${ARCH}
         ./toywasm --version
         ctest -V -L slow
+
+    - name: Install
+      run: |
+        cmake --build build.wasm --target install
+
+    - name: Tar
+      run: |
+        cd ${{github.workspace}}/dist
+        pax -wvzf ${{github.workspace}}/artifacts/toywasm-${{matrix.os}}-${{matrix.arch}}.tgz *
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{matrix.os}}-${{matrix.arch}}
+        path: ${{github.workspace}}/artifacts
