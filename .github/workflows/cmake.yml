@@ -17,6 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        name: [noname]
         os: [ubuntu-latest, macos-latest]
         compiler: [clang, gcc]
         BUILD_TYPE: [Release, Debug]
@@ -56,6 +57,31 @@ jobs:
             compiler: clang
           - os: ubuntu-latest
             BUILD_TYPE: Release
+        include:
+          - name: ubuntu
+            os: ubuntu-latest
+            compiler: clang
+            BUILD_TYPE: Release
+            TOYWASM_USE_SEPARATE_EXECUTE: ON
+            TOYWASM_USE_TAILCALL: ON
+            TOYWASM_ENABLE_TRACING: OFF
+            TOYWASM_USE_SMALL_CELLS: ON
+            TOYWASM_USE_SEPARATE_LOCALS: ON
+            MISC_FEATURES: OFF
+            TOYWASM_ENABLE_WASM_THREADS: OFF
+            TOYWASM_ENABLE_WASI_THREADS: OFF
+          - name: macos
+            os: macos
+            compiler: clang
+            BUILD_TYPE: Release
+            TOYWASM_USE_SEPARATE_EXECUTE: ON
+            TOYWASM_USE_TAILCALL: ON
+            TOYWASM_ENABLE_TRACING: OFF
+            TOYWASM_USE_SMALL_CELLS: ON
+            TOYWASM_USE_SEPARATE_LOCALS: ON
+            MISC_FEATURES: OFF
+            TOYWASM_ENABLE_WASM_THREADS: OFF
+            TOYWASM_ENABLE_WASI_THREADS: OFF
 
     # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
     # You can convert this to a matrix build if you need cross-platform coverage.
@@ -82,6 +108,7 @@ jobs:
       run: |
         cmake -B ${{github.workspace}}/build \
           -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}} \
+          -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/artifacts \
           -DTOYWASM_USE_SEPARATE_EXECUTE=${{matrix.TOYWASM_USE_SEPARATE_EXECUTE}} \
           -DTOYWASM_USE_TAILCALL=${{matrix.TOYWASM_USE_TAILCALL}} \
           -DTOYWASM_ENABLE_TRACING=${{matrix.TOYWASM_ENABLE_TRACING}} \
@@ -115,6 +142,21 @@ jobs:
       run: |
         ./toywasm --version
         ctest -C ${{matrix.BUILD_TYPE}} -V -L slow
+
+    - name: Install
+      run: |
+        cmake --build ${{github.workspace}}/build --target install
+
+    - name: Copy LICENSE
+      run: |
+        cp LICENSE ${{github.workspace}}/artifacts
+
+    - name: Upload artifacts
+      if: matrix.name != 'noname'
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{matrix.name}}
+        path: ${{github.workspace}}/artifacts
 
   wasm-on-wasm:
     env:
