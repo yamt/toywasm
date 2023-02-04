@@ -23,5 +23,6 @@ cmake \
 -DCMAKE_TOOLCHAIN_FILE=../cross/cross.cmake \
 -DTRIPLET=${TRIPLET} \
 -DARCH=${ARCH} \
+${EXTRA_CMAKE_OPTIONS} \
 ..
 make
