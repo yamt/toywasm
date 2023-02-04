@@ -415,3 +415,4 @@ add_custom_target(tar
 add_dependencies(tar toywasm-cli)
 
 install(TARGETS toywasm-cli DESTINATION bin)
+install(FILES LICENSE DESTINATION share/doc/toywasm)
