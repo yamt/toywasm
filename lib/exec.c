@@ -1384,3 +1384,48 @@ print_trace(const struct exec_context *ctx)
                        fp->callerpc);
         }
 }
+
+void
+print_memory(const struct exec_context *ctx, const struct instance *inst,
+             uint32_t memidx, uint32_t addr, uint32_t count)
+{
+        printf("==== print_memory start ====\n");
+        const struct module *m = inst->module;
+        if (memidx >= m->nmems + m->nimportedmems) {
+                printf("%s: out of range memidx\n", __func__);
+                goto fail;
+        }
+        const struct meminst *mi = VEC_ELEM(inst->mems, memidx);
+        if (addr >= mi->allocated) {
+                printf("%s: not allocated yet\n", __func__);
+                goto fail;
+        }
+        if (mi->allocated - addr < count) {
+                printf("%s: dump truncated\n", __func__);
+                count = mi->allocated - addr;
+        }
+        const uint8_t *p = mi->data + addr;
+        const char *sep = "";
+        uint32_t i;
+        for (i = 0; i < count; i++) {
+                if ((i % 16) == 0) {
+                        printf("%04" PRIx32 ":%08" PRIx32 ":", memidx,
+                               addr + i);
+                }
+                printf("%s%02x", sep, p[i]);
+                sep = " ";
+        }
+        printf("\n");
+fail:
+        printf("==== print_memory end ====\n");
+}
+
+void
+print_pc(const struct exec_context *ctx)
+{
+        /*
+         * XXX ctx->p is usually not up to date with TOYWASM_USE_TAILCALL.
+         * XXX ctx->p usually points to the middle of opecode.
+         */
+        printf("PC %06" PRIx32 "\n", ptr2pc(ctx->instance->module, ctx->p));
+}
