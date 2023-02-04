@@ -413,3 +413,5 @@ add_custom_target(tar
 	COMMAND ${PAX} -wzf toywasm-${TOYWASM_VERSION}.tgz toywasm
 )
 add_dependencies(tar toywasm-cli)
+
+install(TARGETS toywasm-cli DESTINATION bin)
