@@ -149,6 +149,7 @@ jobs:
 
     - name: Tar
       run: |
+        mkdir -p ${{github.workspace}}/artifacts
         cd ${{github.workspace}}/dist
         pax -wvzf ${{github.workspace}}/artifacts/toywasm-${{matrix.name}}.tgz *
 
@@ -187,6 +188,7 @@ jobs:
 
     - name: Tar
       run: |
+        mkdir -p ${{github.workspace}}/artifacts
         cd ${{github.workspace}}/dist
         pax -wvzf ${{github.workspace}}/artifacts/toywasm-wasm-wasi.tgz *
 
@@ -254,6 +256,7 @@ jobs:
 
     - name: Tar
       run: |
+        mkdir -p ${{github.workspace}}/artifacts
         cd ${{github.workspace}}/dist
         pax -wvzf ${{github.workspace}}/artifacts/toywasm-${{matrix.os}}-${{matrix.arch}}.tgz *
 
