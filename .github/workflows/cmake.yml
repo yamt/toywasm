@@ -193,6 +193,8 @@ jobs:
         pax -wvzf ${{github.workspace}}/artifacts/toywasm-wasm-wasi.tgz *
 
     - name: Upload artifacts
+      # wasm binary is same among OSes. Only upload one of them.
+      if: startsWith(matrix.os, 'ubuntu-')
       uses: actions/upload-artifact@v3
       with:
         name: wasm32-wasi
