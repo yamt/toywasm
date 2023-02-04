@@ -37,7 +37,7 @@ jobs:
           - TOYWASM_USE_SEPARATE_EXECUTE: OFF
             TOYWASM_USE_TAILCALL: ON
           # I don't remeber why i excluded this.
-          # Probably because it's testet in wasm-on-wasm jobs?
+          # Probably because it's tested in wasm-on-wasm jobs?
           - TOYWASM_USE_SEPARATE_EXECUTE: ON
             TOYWASM_USE_TAILCALL: OFF
           # wasi-threads requires wasm threads
