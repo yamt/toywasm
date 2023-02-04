@@ -407,3 +407,9 @@ target_link_libraries(toywasm-test toywasm-lib m ${CMOCKA_LIBRARY})
 add_test(NAME toywasm-test COMMAND toywasm-test)
 set_tests_properties(toywasm-test PROPERTIES ENVIRONMENT "${TEST_ENV}")
 endif()
+
+find_program(PAX pax REQUIRED)
+add_custom_target(tar
+	COMMAND ${PAX} -wzf toywasm-${TOYWASM_VERSION}.tgz toywasm
+)
+add_dependencies(tar toywasm-cli)
