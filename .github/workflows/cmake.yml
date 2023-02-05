@@ -109,6 +109,7 @@ jobs:
         cmake -B ${{github.workspace}}/build \
           -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}} \
           -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/dist \
+          -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
           -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 \
           -DTOYWASM_USE_SEPARATE_EXECUTE=${{matrix.TOYWASM_USE_SEPARATE_EXECUTE}} \
           -DTOYWASM_USE_TAILCALL=${{matrix.TOYWASM_USE_TAILCALL}} \
