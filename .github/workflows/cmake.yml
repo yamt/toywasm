@@ -193,7 +193,7 @@ jobs:
       run: |
         mkdir -p ${{github.workspace}}/artifacts
         cd ${{github.workspace}}/dist
-        pax -wvzf ${{github.workspace}}/artifacts/toywasm-wasm-wasi.tgz *
+        pax -wvzf ${{github.workspace}}/artifacts/toywasm-wasm32-wasi.tgz *
 
     - name: Upload artifacts
       # wasm binary is same among OSes. Only upload one of them.
