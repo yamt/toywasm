@@ -270,3 +270,37 @@ jobs:
       with:
         name: ${{matrix.os}}-${{matrix.arch}}
         path: ${{github.workspace}}/artifacts
+
+  release:
+    needs: [build, wasm-on-wasm, cross]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/download-artifact@v3
+      with:
+        name: macos-11.0
+        path: release_assets
+
+    - uses: actions/download-artifact@v3
+      with:
+        name: ubuntu-20.04-amd64
+        path: release_assets
+
+    - uses: actions/download-artifact@v3
+      with:
+        name: ubuntu-20.04-arm64
+        path: release_assets
+
+    - uses: actions/download-artifact@v3
+      with:
+        name: ubuntu-20.04-armhf
+        path: release_assets
+
+    - uses: actions/download-artifact@v3
+      with:
+        name: ubuntu-20.04-s390x
+        path: release_assets
+
+    - uses: actions/download-artifact@v3
+      with:
+        name: wasm32-wasi
+        path: release_assets
