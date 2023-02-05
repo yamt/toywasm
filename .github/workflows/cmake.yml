@@ -58,8 +58,8 @@ jobs:
           - os: ubuntu-latest
             BUILD_TYPE: Release
         include:
-          - name: ubuntu
-            os: ubuntu-latest
+          - name: ubuntu-20.04-amd64
+            os: ubuntu-20.04
             compiler: clang
             BUILD_TYPE: Release
             TOYWASM_USE_SEPARATE_EXECUTE: ON
