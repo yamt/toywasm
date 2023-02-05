@@ -304,3 +304,10 @@ jobs:
       with:
         name: wasm32-wasi
         path: release_assets
+
+    - uses: marvinpinto/action-automatic-releases@v1.2.1
+      with:
+        repo_token: ${{secrets.GITHUB_TOKEN}}
+        automatic_release_tag: latest
+        files: |
+          release_assets/*
