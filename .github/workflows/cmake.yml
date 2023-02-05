@@ -55,8 +55,7 @@ jobs:
             TOYWASM_USE_SEPARATE_LOCALS: ON
           - os: ubuntu-latest
             compiler: clang
-          - os: ubuntu-latest
-            BUILD_TYPE: Release
+          - BUILD_TYPE: Release
         include:
           - name: ubuntu-20.04-amd64
             os: ubuntu-20.04
