@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.16)
 
-if(NOT CMAKE_TOOLCHAIN_FILE)
+if(NOT DEFINED PREFER_BREW_LLVM)
+set(PREFER_BREW_LLVM ON)
+endif()
+if(NOT CMAKE_TOOLCHAIN_FILE AND PREFER_BREW_LLVM)
 # Prefer the homebrew version because xcode clang doesn't have detect_leaks
 # Note: CMAKE_SYSTEM_NAME is not available yet.
 set(BREW_LLVM_HOME /usr/local/opt/llvm@13)
