@@ -155,6 +155,7 @@ jobs:
         pax -wvzf ${{github.workspace}}/artifacts/toywasm-${{matrix.name}}.tgz *
 
     - name: Upload artifacts
+      if: matrix.name != 'noname'
       uses: actions/upload-artifact@v3
       with:
         name: ${{matrix.name}}
