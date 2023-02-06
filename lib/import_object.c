@@ -29,6 +29,10 @@ import_object_alloc(uint32_t nentries, struct import_object **resultp)
         return 0;
 }
 
+/*
+ * Note: an import_object created with this function is not
+ * immutable because memory and table instances can grow.
+ */
 int
 import_object_create_for_exports(struct instance *inst,
                                  const struct name *module_name,
