@@ -3,6 +3,8 @@ name: CMake
 on:
   push:
     branches: [ "master" ]
+    tags:
+      - "v*"
   pull_request:
     branches: [ "master" ]
 
@@ -305,9 +307,21 @@ jobs:
         name: wasm32-wasi
         path: release_assets
 
-    - uses: marvinpinto/action-automatic-releases@v1.2.1
+    - name: "Snapshot release"
+      uses: marvinpinto/action-automatic-releases@v1.2.1
+      if: !startsWith(github.ref, 'refs/tags/v')
       with:
         repo_token: ${{secrets.GITHUB_TOKEN}}
         automatic_release_tag: latest
+        prerelease: true
+        title: "Snapshot release"
+        files: |
+          release_assets/*
+
+    - name: "Tagged release"
+      uses: marvinpinto/action-automatic-releases@v1.2.1
+      if: startsWith(github.ref, 'refs/tags/v')
+      with:
+        repo_token: ${{secrets.GITHUB_TOKEN}}
         files: |
           release_assets/*
