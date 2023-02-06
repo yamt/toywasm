@@ -313,7 +313,7 @@ jobs:
       with:
         repo_token: ${{secrets.GITHUB_TOKEN}}
         automatic_release_tag: latest
-        title: "Snapshot release"
+        title: "Latest snapshot"
         files: |
           release_assets/*
 
