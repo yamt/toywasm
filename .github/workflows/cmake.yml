@@ -271,6 +271,7 @@ jobs:
         path: ${{github.workspace}}/artifacts
 
   release:
+    if: github.event_name != 'pull_request'
     needs: [build, wasm-on-wasm, cross]
     runs-on: ubuntu-latest
     steps:
