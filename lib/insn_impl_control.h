@@ -47,7 +47,7 @@ INSN_IMPL(block)
 fail:
         resulttype_free(rt_parameter);
         resulttype_free(rt_result);
-        return ret;
+        INSN_FAIL;
 }
 
 INSN_IMPL(loop)
@@ -86,7 +86,7 @@ INSN_IMPL(loop)
 fail:
         resulttype_free(rt_parameter);
         resulttype_free(rt_result);
-        return ret;
+        INSN_FAIL;
 }
 
 INSN_IMPL(if)
@@ -137,7 +137,7 @@ INSN_IMPL(if)
 fail:
         resulttype_free(rt_parameter);
         resulttype_free(rt_result);
-        return ret;
+        INSN_FAIL;
 }
 
 INSN_IMPL(else)
@@ -280,7 +280,7 @@ INSN_IMPL(br)
         SAVE_PC;
         INSN_SUCCESS;
 fail:
-        return ret;
+        INSN_FAIL;
 }
 
 INSN_IMPL(br_if)
@@ -321,7 +321,7 @@ INSN_IMPL(br_if)
         SAVE_PC;
         INSN_SUCCESS;
 fail:
-        return ret;
+        INSN_FAIL;
 }
 
 INSN_IMPL(br_table)
@@ -403,7 +403,7 @@ INSN_IMPL(br_table)
         INSN_SUCCESS;
 fail:
         free(table);
-        return ret;
+        INSN_FAIL;
 }
 
 INSN_IMPL(return )
@@ -428,7 +428,7 @@ INSN_IMPL(return )
         }
         INSN_SUCCESS_RETURN;
 fail:
-        return ret;
+        INSN_FAIL;
 }
 
 INSN_IMPL(call)
@@ -460,7 +460,7 @@ INSN_IMPL(call)
         SAVE_PC;
         INSN_SUCCESS_RETURN;
 fail:
-        return ret;
+        INSN_FAIL;
 }
 
 INSN_IMPL(call_indirect)
@@ -510,5 +510,5 @@ INSN_IMPL(call_indirect)
         SAVE_PC;
         INSN_SUCCESS_RETURN;
 fail:
-        return ret;
+        INSN_FAIL;
 }

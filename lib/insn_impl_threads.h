@@ -29,7 +29,7 @@
                 SAVE_PC;                                                      \
                 INSN_SUCCESS;                                                 \
 fail:                                                                         \
-                return ret;                                                   \
+                INSN_FAIL;                                                    \
         }
 
 #define ATOMIC_LOADOP2(NAME, MEM, STACK, CAST, I_OR_F)                        \
@@ -59,7 +59,7 @@ fail:                                                                         \
                 SAVE_PC;                                                      \
                 INSN_SUCCESS;                                                 \
 fail:                                                                         \
-                return ret;                                                   \
+                INSN_FAIL;                                                    \
         }
 
 #define ATOMIC_STOREOP2(NAME, MEM, STACK, CAST, I_OR_F)                       \
@@ -88,7 +88,7 @@ fail:                                                                         \
                 SAVE_PC;                                                      \
                 INSN_SUCCESS;                                                 \
 fail:                                                                         \
-                return ret;                                                   \
+                INSN_FAIL;                                                    \
         }
 
 #define ATOMIC_RMW(NAME, MEM, STACK, OP)                                      \
@@ -122,7 +122,7 @@ fail:                                                                         \
                 SAVE_PC;                                                      \
                 INSN_SUCCESS;                                                 \
 fail:                                                                         \
-                return ret;                                                   \
+                INSN_FAIL;                                                    \
         }
 
 #define ATOMIC_RMW_CMPXCHG(NAME, MEM, STACK)                                  \
@@ -159,7 +159,7 @@ fail:                                                                         \
                 SAVE_PC;                                                      \
                 INSN_SUCCESS;                                                 \
 fail:                                                                         \
-                return ret;                                                   \
+                INSN_FAIL;                                                    \
         }
 
 INSN_IMPL(memory_atomic_notify)
@@ -189,7 +189,7 @@ INSN_IMPL(memory_atomic_notify)
         SAVE_PC;
         INSN_SUCCESS;
 fail:
-        return ret;
+        INSN_FAIL;
 }
 
 ATOMIC_WAIT(memory_atomic_wait32, 32)
@@ -213,7 +213,7 @@ INSN_IMPL(atomic_fence)
         SAVE_PC;
         INSN_SUCCESS;
 fail:
-        return ret;
+        INSN_FAIL;
 }
 
 ATOMIC_LOADOP2(i32_atomic_load, 32, 32, , i)

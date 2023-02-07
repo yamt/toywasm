@@ -20,7 +20,7 @@ INSN_IMPL(drop)
         }
         INSN_SUCCESS;
 fail:
-        return ret;
+        INSN_FAIL;
 }
 
 INSN_IMPL(select)
@@ -51,7 +51,7 @@ INSN_IMPL(select)
         }
         INSN_SUCCESS;
 fail:
-        return ret;
+        INSN_FAIL;
 }
 
 INSN_IMPL(select_t)
@@ -76,7 +76,7 @@ INSN_IMPL(select_t)
         SAVE_PC;
         INSN_SUCCESS;
 fail:
-        return ret;
+        INSN_FAIL;
 }
 
 INSN_IMPL(local_get)
@@ -98,7 +98,7 @@ INSN_IMPL(local_get)
         SAVE_PC;
         INSN_SUCCESS;
 fail:
-        return ret;
+        INSN_FAIL;
 }
 
 INSN_IMPL(local_set)
@@ -121,7 +121,7 @@ INSN_IMPL(local_set)
         SAVE_PC;
         INSN_SUCCESS;
 fail:
-        return ret;
+        INSN_FAIL;
 }
 
 INSN_IMPL(local_tee)
@@ -144,7 +144,7 @@ INSN_IMPL(local_tee)
         SAVE_PC;
         INSN_SUCCESS;
 fail:
-        return ret;
+        INSN_FAIL;
 }
 
 INSN_IMPL(global_get)
@@ -186,7 +186,7 @@ INSN_IMPL(global_get)
         SAVE_PC;
         INSN_SUCCESS;
 fail:
-        return ret;
+        INSN_FAIL;
 }
 
 INSN_IMPL(global_set)
@@ -213,7 +213,7 @@ INSN_IMPL(global_set)
         SAVE_PC;
         INSN_SUCCESS;
 fail:
-        return ret;
+        INSN_FAIL;
 }
 
 INSN_IMPL(table_get)
@@ -242,7 +242,7 @@ INSN_IMPL(table_get)
         SAVE_PC;
         INSN_SUCCESS;
 fail:
-        return ret;
+        INSN_FAIL;
 }
 
 INSN_IMPL(table_set)
@@ -270,7 +270,7 @@ INSN_IMPL(table_set)
         SAVE_PC;
         INSN_SUCCESS;
 fail:
-        return ret;
+        INSN_FAIL;
 }
 
 STOREOP(i32_store, 32, 32, )
@@ -301,7 +301,7 @@ INSN_IMPL(memory_size)
         SAVE_PC;
         INSN_SUCCESS;
 fail:
-        return ret;
+        INSN_FAIL;
 }
 
 INSN_IMPL(memory_grow)
@@ -320,7 +320,7 @@ INSN_IMPL(memory_grow)
         SAVE_PC;
         INSN_SUCCESS;
 fail:
-        return ret;
+        INSN_FAIL;
 }
 
 LOADOP(i32_load, 32, 32, )
@@ -516,7 +516,7 @@ INSN_IMPL(ref_null)
         SAVE_PC;
         INSN_SUCCESS;
 fail:
-        return ret;
+        INSN_FAIL;
 }
 
 INSN_IMPL(ref_is_null)
@@ -556,7 +556,7 @@ INSN_IMPL(ref_is_null)
         SAVE_PC;
         INSN_SUCCESS;
 fail:
-        return ret;
+        INSN_FAIL;
 }
 
 INSN_IMPL(ref_func)
@@ -595,5 +595,5 @@ INSN_IMPL(ref_func)
         SAVE_PC;
         INSN_SUCCESS;
 fail:
-        return ret;
+        INSN_FAIL;
 }

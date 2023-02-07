@@ -36,7 +36,7 @@ INSN_IMPL(memory_init)
         SAVE_PC;
         INSN_SUCCESS;
 fail:
-        return ret;
+        INSN_FAIL;
 }
 
 INSN_IMPL(data_drop)
@@ -55,7 +55,7 @@ INSN_IMPL(data_drop)
         SAVE_PC;
         INSN_SUCCESS;
 fail:
-        return ret;
+        INSN_FAIL;
 }
 
 INSN_IMPL(memory_copy)
@@ -96,7 +96,7 @@ retry:
         SAVE_PC;
         INSN_SUCCESS;
 fail:
-        return ret;
+        INSN_FAIL;
 }
 
 INSN_IMPL(memory_fill)
@@ -122,7 +122,7 @@ INSN_IMPL(memory_fill)
         SAVE_PC;
         INSN_SUCCESS;
 fail:
-        return ret;
+        INSN_FAIL;
 }
 
 INSN_IMPL(table_init)
@@ -151,7 +151,7 @@ INSN_IMPL(table_init)
         SAVE_PC;
         INSN_SUCCESS;
 fail:
-        return ret;
+        INSN_FAIL;
 }
 
 INSN_IMPL(elem_drop)
@@ -168,7 +168,7 @@ INSN_IMPL(elem_drop)
         SAVE_PC;
         INSN_SUCCESS;
 fail:
-        return ret;
+        INSN_FAIL;
 }
 
 INSN_IMPL(table_copy)
@@ -210,7 +210,7 @@ INSN_IMPL(table_copy)
         SAVE_PC;
         INSN_SUCCESS;
 fail:
-        return ret;
+        INSN_FAIL;
 }
 
 INSN_IMPL(table_grow)
@@ -257,7 +257,7 @@ INSN_IMPL(table_grow)
         SAVE_PC;
         INSN_SUCCESS;
 fail:
-        return ret;
+        INSN_FAIL;
 }
 
 INSN_IMPL(table_size)
@@ -278,7 +278,7 @@ INSN_IMPL(table_size)
         SAVE_PC;
         INSN_SUCCESS;
 fail:
-        return ret;
+        INSN_FAIL;
 }
 
 INSN_IMPL(table_fill)
@@ -311,5 +311,5 @@ INSN_IMPL(table_fill)
         SAVE_PC;
         INSN_SUCCESS;
 fail:
-        return ret;
+        INSN_FAIL;
 }

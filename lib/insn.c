@@ -450,6 +450,7 @@ read_memarg_nocheck(const uint8_t **pp, struct memarg *arg)
 #define ORIG_PC (*pp)
 #define INSN_SUCCESS return 0
 #define INSN_SUCCESS_RETURN INSN_SUCCESS
+#define INSN_FAIL return ret
 #define STACK &VEC_NEXTELEM(ECTX->stack)
 #define STACK_ADJ(n) ECTX->stack.lsize += (n)
 
@@ -468,6 +469,7 @@ read_memarg_nocheck(const uint8_t **pp, struct memarg *arg)
 #undef ORIG_PC
 #undef INSN_SUCCESS
 #undef INSN_SUCCESS_RETURN
+#undef INSN_FAIL
 #undef STACK
 #undef STACK_ADJ
 
@@ -494,6 +496,7 @@ read_memarg_nocheck(const uint8_t **pp, struct memarg *arg)
         SAVE_STACK_PTR;                                                       \
         ctx->p = p;                                                           \
         return 0
+#define INSN_FAIL return ret
 #define ep NULL
 #define STACK stack
 #define STACK_ADJ(n) stack += (n)
@@ -528,6 +531,7 @@ read_memarg_nocheck(const uint8_t **pp, struct memarg *arg)
 #undef ORIG_PC
 #undef INSN_SUCCESS
 #undef INSN_SUCCESS_RETURN
+#undef INSN_FAIL
 #undef ep
 #undef STACK
 #undef STACK_ADJ

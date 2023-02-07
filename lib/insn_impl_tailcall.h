@@ -33,7 +33,7 @@ INSN_IMPL(return_call)
         SAVE_PC;
         INSN_SUCCESS_RETURN;
 fail:
-        return ret;
+        INSN_FAIL;
 }
 
 INSN_IMPL(return_call_indirect)
@@ -86,5 +86,5 @@ INSN_IMPL(return_call_indirect)
         SAVE_PC;
         INSN_SUCCESS_RETURN;
 fail:
-        return ret;
+        INSN_FAIL;
 }

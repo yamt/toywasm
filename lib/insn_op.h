@@ -10,7 +10,7 @@
                 PUSH_VAL(TYPE_##I_OR_F##BITS, c);                             \
                 INSN_SUCCESS;                                                 \
 fail:                                                                         \
-                return ret;                                                   \
+                INSN_FAIL;                                                    \
         }
 
 #define BINOP(NAME, I_OR_F, BITS, OP)                                         \
@@ -46,7 +46,7 @@ fail:                                                                         \
                 PUSH_VAL(TYPE_##I_OR_F##BITS, c);                             \
                 INSN_SUCCESS;                                                 \
 fail:                                                                         \
-                return ret;                                                   \
+                INSN_FAIL;                                                    \
         }
 
 #define TESTOP(NAME, I_OR_F, BITS, OP)                                        \
@@ -61,7 +61,7 @@ fail:                                                                         \
                 PUSH_VAL(TYPE_i32, b);                                        \
                 INSN_SUCCESS;                                                 \
 fail:                                                                         \
-                return ret;                                                   \
+                INSN_FAIL;                                                    \
         }
 
 #define CMPOP(NAME, BITS, CTYPE, OP) CMPOP2(NAME, BITS, (CTYPE), OP, i)
@@ -80,7 +80,7 @@ fail:                                                                         \
                 PUSH_VAL(TYPE_i32, c);                                        \
                 INSN_SUCCESS;                                                 \
 fail:                                                                         \
-                return ret;                                                   \
+                INSN_FAIL;                                                    \
         }
 
 #define EXTENDOP(NAME, FROM_WTYPE, TO_WTYPE, CCAST)                           \
@@ -95,7 +95,7 @@ fail:                                                                         \
                 PUSH_VAL(TYPE_##TO_WTYPE, b);                                 \
                 INSN_SUCCESS;                                                 \
 fail:                                                                         \
-                return ret;                                                   \
+                INSN_FAIL;                                                    \
         }
 
 #define REINTERPRETOP(NAME, FROM_WTYPE, TO_WTYPE)                             \
@@ -106,7 +106,7 @@ fail:                                                                         \
                 PUSH_VAL(TYPE_##TO_WTYPE, a);                                 \
                 INSN_SUCCESS;                                                 \
 fail:                                                                         \
-                return ret;                                                   \
+                INSN_FAIL;                                                    \
         }
 
 #define LOADOP(NAME, MEM, STACK, CAST) LOADOP2(NAME, MEM, STACK, CAST, i)
@@ -137,7 +137,7 @@ fail:                                                                         \
                 SAVE_PC;                                                      \
                 INSN_SUCCESS;                                                 \
 fail:                                                                         \
-                return ret;                                                   \
+                INSN_FAIL;                                                    \
         }
 
 #define STOREOP(NAME, MEM, STACK, CAST) STOREOP2(NAME, MEM, STACK, CAST, i)
@@ -167,7 +167,7 @@ fail:                                                                         \
                 SAVE_PC;                                                      \
                 INSN_SUCCESS;                                                 \
 fail:                                                                         \
-                return ret;                                                   \
+                INSN_FAIL;                                                    \
         }
 
 #define BITCOUNTOP(NAME, TYPE, OPE)                                           \
@@ -182,7 +182,7 @@ fail:                                                                         \
                 PUSH_VAL(TYPE_##TYPE, b);                                     \
                 INSN_SUCCESS;                                                 \
 fail:                                                                         \
-                return ret;                                                   \
+                INSN_FAIL;                                                    \
         }
 
 /* https://webassembly.github.io/spec/core/exec/instructions.html#exec-cvtop */
@@ -198,7 +198,7 @@ fail:                                                                         \
                 PUSH_VAL(TYPE_##T2, b);                                       \
                 INSN_SUCCESS;                                                 \
 fail:                                                                         \
-                return ret;                                                   \
+                INSN_FAIL;                                                    \
         }
 
 #define CONSTOP(NAME, BITS, WTYPE)                                            \
@@ -215,7 +215,7 @@ fail:                                                                         \
                 SAVE_PC;                                                      \
                 INSN_SUCCESS;                                                 \
 fail:                                                                         \
-                return ret;                                                   \
+                INSN_FAIL;                                                    \
         }
 
 #define CONSTOP_F(NAME, BITS, WTYPE)                                          \
@@ -234,5 +234,5 @@ fail:                                                                         \
                 SAVE_PC;                                                      \
                 INSN_SUCCESS;                                                 \
 fail:                                                                         \
-                return ret;                                                   \
+                INSN_FAIL;                                                    \
         }
