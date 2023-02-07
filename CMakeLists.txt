@@ -236,6 +236,7 @@ set(lib_sources
 
 if(TOYWASM_ENABLE_WASM_THREADS)
 list(APPEND lib_sources
+	"lib/cluster.c"
 	"lib/lock.c"
 	"lib/waitlist.c")
 if(TOYWASM_ENABLE_WASI_THREADS)

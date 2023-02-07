@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "cluster.h"
 #include "context.h"
 #include "endian.h"
 #include "host_instance.h"
@@ -30,11 +31,9 @@
 
 struct wasi_threads_instance {
         struct host_instance hi;
+        struct cluster cluster;
 
-        TOYWASM_MUTEX_DEFINE(lock);
         struct idalloc tids;
-        pthread_cond_t cv;
-        uint32_t nrunners;
 
         /* parameters for thread_spawn */
         struct module *module;
@@ -51,7 +50,6 @@ struct wasi_threads_instance {
          * to be portable to wasi-threads itself, which doesn't have any
          * async inter-thread communitation mechanisms like signals.
          */
-        uint32_t interrupt;
         struct trap_info trap;
 };
 
@@ -71,9 +69,7 @@ wasi_threads_instance_create(struct wasi_threads_instance **instp)
          * Note: the upper-most 3 bits are reserved.
          */
         idalloc_init(&inst->tids, 1, 0x1fffffff);
-        toywasm_mutex_init(&inst->lock);
-        int ret = pthread_cond_init(&inst->cv, NULL);
-        assert(ret == 0);
+        cluster_init(&inst->cluster);
         /*
          * if none of threads explicitly exits or traps,
          * treat as if exit(0).
@@ -87,9 +83,7 @@ void
 wasi_threads_instance_destroy(struct wasi_threads_instance *inst)
 {
         idalloc_destroy(&inst->tids);
-        toywasm_mutex_destroy(&inst->lock);
-        int ret = pthread_cond_destroy(&inst->cv);
-        assert(ret == 0);
+        cluster_destroy(&inst->cluster);
         free(inst);
 }
 
@@ -130,7 +124,7 @@ fail:
 void
 wasi_threads_instance_join(struct wasi_threads_instance *wasi)
 {
-        toywasm_mutex_lock(&wasi->lock);
+        toywasm_mutex_lock(&wasi->cluster.lock);
 #if 1
         /*
          * https://github.com/WebAssembly/wasi-threads/issues/21
@@ -138,22 +132,19 @@ wasi_threads_instance_join(struct wasi_threads_instance *wasi)
          * option b.
          * proc_exit(0) equivalent. terminate all other threads.
          */
-        if (!wasi->interrupt) {
+        if (!wasi->cluster.interrupt) {
                 xlog_trace("Emulating proc_exit(0) on a return from _start");
-                wasi->interrupt = 1;
+                wasi->cluster.interrupt = 1;
         }
 #endif
-        while (wasi->nrunners > 0) {
-                int ret = pthread_cond_wait(&wasi->cv, &wasi->lock.lock);
-                assert(ret == 0);
-        }
-        toywasm_mutex_unlock(&wasi->lock);
+        toywasm_mutex_unlock(&wasi->cluster.lock);
+        cluster_join(&wasi->cluster);
 }
 
 const uint32_t *
 wasi_threads_interrupt_pointer(struct wasi_threads_instance *inst)
 {
-        return &inst->interrupt;
+        return &inst->cluster.interrupt;
 }
 
 const struct trap_info *
@@ -175,13 +166,14 @@ wasi_threads_propagate_trap(struct wasi_threads_instance *wasi,
         if (trap_is_local(trap)) {
                 return;
         }
-        toywasm_mutex_lock(&wasi->lock);
+        toywasm_mutex_lock(&wasi->cluster.lock);
         /* propagate only the first one */
-        if (!wasi->interrupt) {
-                wasi->interrupt = 1; /* tell all threads to terminate */
+        if (!wasi->cluster.interrupt) {
+                wasi->cluster.interrupt =
+                        1; /* tell all threads to terminate */
                 wasi->trap = *trap;
         }
-        toywasm_mutex_unlock(&wasi->lock);
+        toywasm_mutex_unlock(&wasi->cluster.lock);
 }
 
 struct thread_arg {
@@ -243,15 +235,10 @@ runner(void *vp)
         }
 fail:
         instance_destroy(inst);
-        toywasm_mutex_lock(&wasi->lock);
+        toywasm_mutex_lock(&wasi->cluster.lock);
         idalloc_free(&wasi->tids, tid);
-        assert(wasi->nrunners > 0);
-        wasi->nrunners--;
-        if (wasi->nrunners == 0) {
-                ret = pthread_cond_signal(&wasi->cv);
-                assert(ret == 0);
-        }
-        toywasm_mutex_unlock(&wasi->lock);
+        cluster_remove_thread(&wasi->cluster);
+        toywasm_mutex_unlock(&wasi->cluster.lock);
         return NULL;
 }
 
@@ -297,13 +284,15 @@ wasi_thread_spawn_common(struct exec_context *ctx,
                            ret);
                 goto fail;
         }
-        toywasm_mutex_lock(&wasi->lock);
+        toywasm_mutex_lock(&wasi->cluster.lock);
         ret = idalloc_alloc(&wasi->tids, &tid);
-        toywasm_mutex_unlock(&wasi->lock);
         if (ret != 0) {
+                toywasm_mutex_unlock(&wasi->cluster.lock);
                 xlog_trace("%s: TID allocation failed with %d", __func__, ret);
                 goto fail;
         }
+        cluster_add_thread(&wasi->cluster);
+        toywasm_mutex_unlock(&wasi->cluster.lock);
 
         arg->wasi = wasi;
         arg->inst = inst;
@@ -313,9 +302,10 @@ wasi_thread_spawn_common(struct exec_context *ctx,
         pthread_t t;
         ret = pthread_create(&t, NULL, runner, arg);
         if (ret != 0) {
-                toywasm_mutex_lock(&wasi->lock);
+                toywasm_mutex_lock(&wasi->cluster.lock);
                 idalloc_free(&wasi->tids, tid);
-                toywasm_mutex_unlock(&wasi->lock);
+                cluster_remove_thread(&wasi->cluster);
+                toywasm_mutex_unlock(&wasi->cluster.lock);
                 xlog_trace("%s: pthread_create failed with %d", __func__, ret);
                 goto fail;
         }
@@ -328,11 +318,6 @@ wasi_thread_spawn_common(struct exec_context *ctx,
                 xlog_error("pthread_detach failed with %d", ret);
                 ret = 0;
         }
-
-        toywasm_mutex_lock(&wasi->lock);
-        assert(wasi->nrunners < UINT32_MAX);
-        wasi->nrunners++;
-        toywasm_mutex_unlock(&wasi->lock);
 
 fail:
         if (inst != NULL) {
