@@ -873,14 +873,6 @@ exec_expr(uint32_t funcidx, const struct expr *expr,
                         break;
                 case EXEC_EVENT_BRANCH:
                         assert(ctx->frames.lsize > 0);
-                        n++;
-                        if (n > CHECK_INTERVAL) {
-                                n = 0;
-                                ret = check_interrupt(ctx);
-                                if (ret != 0 && ret != EAGAIN) {
-                                        return ret;
-                                }
-                        }
                         do_branch(ctx, ctx->event_u.branch.index,
                                   ctx->event_u.branch.goto_else);
                         break;
@@ -890,6 +882,14 @@ exec_expr(uint32_t funcidx, const struct expr *expr,
                 ctx->event = EXEC_EVENT_NONE;
                 if (ctx->frames.lsize == 0) {
                         break;
+                }
+                n++;
+                if (__predict_false(n > CHECK_INTERVAL)) {
+                        n = 0;
+                        ret = check_interrupt(ctx);
+                        if (ret != 0 && ret != EAGAIN) {
+                                return ret;
+                        }
                 }
         }
         assert(ctx->stack.lsize == nstackused_saved + nresults);
