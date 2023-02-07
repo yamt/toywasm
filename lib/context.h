@@ -109,6 +109,12 @@ struct trap_info {
         uint32_t exit_code; /* wasi */
 };
 
+/*
+ * Note: errno.h macros are positive numbers. (C, posix)
+ * we use negative numbers for our purposes.
+ */
+#define ETOYWASMTRAP -1
+
 struct exec_context {
         /* Some cached info about the current frame. */
         struct instance *instance;
@@ -142,7 +148,7 @@ struct exec_context {
         const uint32_t *intrp;
 
         /* Trap */
-        bool trapped; /* used with a combination with EFAULT */
+        bool trapped; /* used with a combination with ETOYWASMTRAP */
         struct trap_info trap;
         struct report *report;
         struct report report0;

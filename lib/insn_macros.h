@@ -3,7 +3,7 @@
 
 #define TRAP(id, ...)                                                         \
         trap_with_id(ECTX, id, __VA_ARGS__);                                  \
-        ret = EFAULT;                                                         \
+        ret = ETOYWASMTRAP;                                                   \
         goto fail
 
 #define CHECK_RET(ret)                                                        \

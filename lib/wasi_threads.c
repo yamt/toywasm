@@ -209,7 +209,8 @@ runner(void *vp)
          */
         ret = instance_execute_func_nocheck(ctx, wasi->thread_start_funcidx,
                                             param, NULL);
-        if (ret == EFAULT && ctx->trapped) {
+        if (ret == ETOYWASMTRAP) {
+                assert(ctx->trapped);
                 wasi_threads_propagate_trap(wasi, &ctx->trap);
                 if (ctx->trap.trapid == TRAP_VOLUNTARY_EXIT ||
                     ctx->trap.trapid == TRAP_VOLUNTARY_THREAD_EXIT) {

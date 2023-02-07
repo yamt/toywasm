@@ -368,7 +368,8 @@ repl_exec_init(struct repl_module_state *mod, bool trap_ok)
         int ret;
         exec_context_init(ctx, mod->inst);
         ret = instance_create_execute_init(mod->inst, ctx);
-        if (ret == EFAULT && ctx->trapped) {
+        if (ret == ETOYWASMTRAP) {
+                assert(ctx->trapped);
                 print_trap(ctx, &ctx->trap);
                 if (trap_ok) {
                         ret = 0;
@@ -838,7 +839,8 @@ toywasm_repl_invoke(struct repl_state *state, const char *modname,
         if (state->opts.print_stats) {
                 exec_context_print_stats(ctx);
         }
-        if (ret == EFAULT && ctx->trapped) {
+        if (ret == ETOYWASMTRAP) {
+                assert(ctx->trapped);
                 const struct trap_info *trap = &ctx->trap;
 #if defined(TOYWASM_ENABLE_WASI_THREADS)
                 if (state->wasi_threads != NULL) {
