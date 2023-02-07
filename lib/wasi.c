@@ -976,7 +976,7 @@ emulate_blocking(struct exec_context *ctx, struct wasi_fdinfo *fdinfo,
         return true;
 fail:
         *host_retp = host_ret;
-        *retp = orig_ret;
+        *retp = ret;
         return false;
 }
 
@@ -1200,6 +1200,7 @@ retry:
         }
         uint32_t r = host_to_le32(n);
         host_ret = wasi_copyout(ctx, &r, retp, sizeof(r));
+        ret = 0;
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
         if (host_ret == 0) {
@@ -1261,6 +1262,7 @@ retry:
         }
         uint32_t r = host_to_le32(n);
         host_ret = wasi_copyout(ctx, &r, retp, sizeof(r));
+        ret = 0;
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
         if (host_ret == 0) {
@@ -1321,6 +1323,7 @@ retry:
         }
         uint32_t r = host_to_le32(n);
         host_ret = wasi_copyout(ctx, &r, retp, sizeof(r));
+        ret = 0;
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
         if (host_ret == 0) {
@@ -1382,6 +1385,7 @@ retry:
         }
         uint32_t r = host_to_le32(n);
         host_ret = wasi_copyout(ctx, &r, retp, sizeof(r));
+        ret = 0;
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
         if (host_ret == 0) {
@@ -3239,6 +3243,7 @@ retry:
         if (host_ret != 0) {
                 goto fail;
         }
+        ret = 0;
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
         if (host_ret == 0) {
@@ -3313,6 +3318,7 @@ retry:
         }
         uint32_t r = host_to_le32(n);
         host_ret = wasi_copyout(ctx, &r, retp, sizeof(r));
+        ret = 0;
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
         if (host_ret == 0) {
