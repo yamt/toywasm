@@ -952,7 +952,9 @@ emulate_blocking(struct exec_context *ctx, struct wasi_fdinfo *fdinfo,
 {
         int hostfd = fdinfo->hostfd;
         assert(hostfd != -1);
-        assert((fcntl(hostfd, F_GETFL, 0) & O_NONBLOCK) != 0);
+        /* See the comment in wasi_instance_create */
+        assert((hostfd < 3 && isatty(hostfd)) ||
+               (fcntl(hostfd, F_GETFL, 0) & O_NONBLOCK) != 0);
 
         if (!fdinfo->blocking || !is_again(orig_ret)) {
                 *host_retp = 0;
