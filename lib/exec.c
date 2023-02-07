@@ -877,7 +877,7 @@ exec_expr(uint32_t funcidx, const struct expr *expr,
                         if (n > CHECK_INTERVAL) {
                                 n = 0;
                                 ret = check_interrupt(ctx);
-                                if (ret != 0) {
+                                if (ret != 0 && ret != EAGAIN) {
                                         return ret;
                                 }
                         }
@@ -1262,15 +1262,8 @@ memory_wait(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
                 return trap_with_id(ctx, TRAP_ATOMIC_WAIT_ON_NON_SHARED_MEMORY,
                                     "wait on non-shared memory");
         }
-        const uint32_t sz = is64 ? 8 : 4;
-        struct atomics_mutex *lock;
-        void *p;
+        struct atomics_mutex *lock = NULL;
         int ret;
-        ret = memory_atomic_getptr(ctx, memidx, addr, offset, sz, &p, &lock);
-        if (ret != 0) {
-                return ret;
-        }
-        assert((lock == NULL) == (shared == NULL));
 
         struct timespec abstimeout0;
         const struct timespec *abstimeout;
@@ -1284,9 +1277,21 @@ memory_wait(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
                 }
                 abstimeout = &abstimeout0;
         }
+        const uint32_t sz = is64 ? 8 : 4;
+        void *p;
+retry2:
+        ret = memory_atomic_getptr(ctx, memidx, addr, offset, sz, &p, &lock);
+        if (ret != 0) {
+                return ret;
+        }
+        assert((lock == NULL) == (shared == NULL));
 retry:
         ret = check_interrupt(ctx);
         if (ret != 0) {
+                if (ret == EAGAIN) {
+                        memory_atomic_unlock(lock);
+                        goto retry2;
+                }
                 goto fail;
         }
         uint64_t prev;

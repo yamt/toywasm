@@ -1175,6 +1175,7 @@ wasi_fd_write(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
+retry2:
         host_ret = wasi_copyin_iovec(ctx, iov_addr, iov_count, &hostiov, &ret);
         if (host_ret != 0 || ret != 0) {
                 goto fail;
@@ -1190,6 +1191,10 @@ retry:
                         goto retry;
                 }
                 if (host_ret != 0 || ret != 0) {
+                        if (host_ret == EAGAIN) {
+                                free(hostiov);
+                                goto retry2;
+                        }
                         goto fail;
                 }
                 goto fail;
@@ -1237,6 +1242,7 @@ wasi_fd_pwrite(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
+retry2:
         host_ret = wasi_copyin_iovec(ctx, iov_addr, iov_count, &hostiov, &ret);
         if (host_ret != 0 || ret != 0) {
                 goto fail;
@@ -1252,6 +1258,10 @@ retry:
                         goto retry;
                 }
                 if (host_ret != 0 || ret != 0) {
+                        if (host_ret == EAGAIN) {
+                                free(hostiov);
+                                goto retry2;
+                        }
                         goto fail;
                 }
                 goto fail;
@@ -1298,6 +1308,7 @@ wasi_fd_read(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
+retry2:
         host_ret = wasi_copyin_iovec(ctx, iov_addr, iov_count, &hostiov, &ret);
         if (host_ret != 0 || ret != 0) {
                 goto fail;
@@ -1313,6 +1324,10 @@ retry:
                         goto retry;
                 }
                 if (host_ret != 0 || ret != 0) {
+                        if (host_ret == EAGAIN) {
+                                free(hostiov);
+                                goto retry2;
+                        }
                         goto fail;
                 }
                 goto fail;
@@ -1360,6 +1375,7 @@ wasi_fd_pread(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
+retry2:
         host_ret = wasi_copyin_iovec(ctx, iov_addr, iov_count, &hostiov, &ret);
         if (host_ret != 0 || ret != 0) {
                 goto fail;
@@ -1375,6 +1391,10 @@ retry:
                         goto retry;
                 }
                 if (host_ret != 0 || ret != 0) {
+                        if (host_ret == EAGAIN) {
+                                free(hostiov);
+                                goto retry2;
+                        }
                         goto fail;
                 }
                 goto fail;
@@ -2156,9 +2176,13 @@ retry:
         }
         xlog_trace("poll_oneoff: start polling");
         int nevents;
+retry2:
         host_ret = wasi_poll(ctx, pollfds, nsubscriptions, timeout_ms, &ret,
                              &nevents);
         if (host_ret != 0) {
+                if (host_ret == EAGAIN) {
+                        goto retry2;
+                }
                 ret = 0;
                 goto fail;
         }
@@ -3092,6 +3116,7 @@ wasi_sock_accept(struct exec_context *ctx, struct host_instance *hi,
         struct sockaddr_storage ss;
         struct sockaddr *sa = (void *)&ss;
         socklen_t salen;
+retry2:
 retry:
 #if defined(TOYWASM_OLD_WASI_LIBC)
         errno = ENOSYS;
@@ -3107,6 +3132,9 @@ retry:
                         goto retry;
                 }
                 if (host_ret != 0 || ret != 0) {
+                        if (host_ret == EAGAIN) {
+                                goto retry2;
+                        }
                         goto fail;
                 }
                 goto fail;
@@ -3193,6 +3221,7 @@ wasi_sock_recv(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
+retry2:
         host_ret = wasi_copyin_iovec(ctx, iov_addr, iov_count, &hostiov, &ret);
         if (host_ret != 0 || ret != 0) {
                 goto fail;
@@ -3217,6 +3246,10 @@ retry:
                         goto retry;
                 }
                 if (host_ret != 0 || ret != 0) {
+                        if (host_ret == EAGAIN) {
+                                free(hostiov);
+                                goto retry2;
+                        }
                         goto fail;
                 }
                 goto fail;
@@ -3284,6 +3317,7 @@ wasi_sock_send(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
+retry2:
         host_ret = wasi_copyin_iovec(ctx, iov_addr, iov_count, &hostiov, &ret);
         if (host_ret != 0 || ret != 0) {
                 goto fail;
@@ -3308,6 +3342,10 @@ retry:
                         goto retry;
                 }
                 if (host_ret != 0 || ret != 0) {
+                        if (host_ret == EAGAIN) {
+                                free(hostiov);
+                                goto retry2;
+                        }
                         goto fail;
                 }
                 goto fail;
