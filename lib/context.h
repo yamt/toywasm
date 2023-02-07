@@ -114,6 +114,7 @@ struct trap_info {
  * we use negative numbers for our purposes.
  */
 #define ETOYWASMTRAP -1
+#define ETOYWASMRESTART -2
 
 struct exec_context {
         /* Some cached info about the current frame. */

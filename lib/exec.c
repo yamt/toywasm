@@ -887,7 +887,7 @@ exec_expr(uint32_t funcidx, const struct expr *expr,
                 if (__predict_false(n > CHECK_INTERVAL)) {
                         n = 0;
                         ret = check_interrupt(ctx);
-                        if (ret != 0 && ret != EAGAIN) {
+                        if (ret != 0 && ret != ETOYWASMRESTART) {
                                 return ret;
                         }
                 }
@@ -1288,7 +1288,7 @@ retry2:
 retry:
         ret = check_interrupt(ctx);
         if (ret != 0) {
-                if (ret == EAGAIN) {
+                if (ret == ETOYWASMRESTART) {
                         memory_atomic_unlock(lock);
                         goto retry2;
                 }

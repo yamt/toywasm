@@ -1192,7 +1192,7 @@ retry:
                         goto retry;
                 }
                 if (host_ret != 0 || ret != 0) {
-                        if (host_ret == EAGAIN) {
+                        if (host_ret == ETOYWASMRESTART) {
                                 free(hostiov);
                                 goto retry2;
                         }
@@ -1259,7 +1259,7 @@ retry:
                         goto retry;
                 }
                 if (host_ret != 0 || ret != 0) {
-                        if (host_ret == EAGAIN) {
+                        if (host_ret == ETOYWASMRESTART) {
                                 free(hostiov);
                                 goto retry2;
                         }
@@ -1325,7 +1325,7 @@ retry:
                         goto retry;
                 }
                 if (host_ret != 0 || ret != 0) {
-                        if (host_ret == EAGAIN) {
+                        if (host_ret == ETOYWASMRESTART) {
                                 free(hostiov);
                                 goto retry2;
                         }
@@ -1392,7 +1392,7 @@ retry:
                         goto retry;
                 }
                 if (host_ret != 0 || ret != 0) {
-                        if (host_ret == EAGAIN) {
+                        if (host_ret == ETOYWASMRESTART) {
                                 free(hostiov);
                                 goto retry2;
                         }
@@ -2181,7 +2181,7 @@ retry2:
         host_ret = wasi_poll(ctx, pollfds, nsubscriptions, timeout_ms, &ret,
                              &nevents);
         if (host_ret != 0) {
-                if (host_ret == EAGAIN) {
+                if (host_ret == ETOYWASMRESTART) {
                         goto retry2;
                 }
                 ret = 0;
@@ -3133,7 +3133,7 @@ retry:
                         goto retry;
                 }
                 if (host_ret != 0 || ret != 0) {
-                        if (host_ret == EAGAIN) {
+                        if (host_ret == ETOYWASMRESTART) {
                                 goto retry2;
                         }
                         goto fail;
@@ -3247,7 +3247,7 @@ retry:
                         goto retry;
                 }
                 if (host_ret != 0 || ret != 0) {
-                        if (host_ret == EAGAIN) {
+                        if (host_ret == ETOYWASMRESTART) {
                                 free(hostiov);
                                 goto retry2;
                         }
@@ -3343,7 +3343,7 @@ retry:
                         goto retry;
                 }
                 if (host_ret != 0 || ret != 0) {
-                        if (host_ret == EAGAIN) {
+                        if (host_ret == ETOYWASMRESTART) {
                                 free(hostiov);
                                 goto retry2;
                         }
