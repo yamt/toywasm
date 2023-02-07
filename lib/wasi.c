@@ -757,6 +757,7 @@ wasi_convert_errno(int host_errno)
 {
         /* TODO implement */
         uint32_t wasmerrno;
+        assert(host_errno >= 0); /* ETOYWASMxxx shouldn't be here */
         switch (host_errno) {
         case 0:
                 wasmerrno = 0;
