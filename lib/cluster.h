@@ -2,6 +2,10 @@
 
 #include "lock.h"
 
+/*
+ * a group of instances.
+ * something similar to the "agent cluster" concept in web.
+ */
 struct cluster {
         TOYWASM_MUTEX_DEFINE(lock);
         pthread_cond_t cv;
