@@ -49,7 +49,7 @@ is built with an ancient wasi-sdk to workaround
 
 * [threads](https://github.com/WebAssembly/threads)
 
-* [wasi preview1](https://github.com/WebAssembly/wasi)
+* [wasi_snapshot_preview1](https://github.com/WebAssembly/wasi)
 
 * [wasi-threads](https://github.com/WebAssembly/wasi-threads)
 
