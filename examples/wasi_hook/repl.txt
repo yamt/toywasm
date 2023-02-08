@@ -1,0 +1,10 @@
+:load pivot.wasm
+:register pivot
+:register wasi_snapshot_preview1
+
+:module app load app.wasm
+:register app
+
+:load hook.wasm
+
+:module app invoke _start
