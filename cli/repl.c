@@ -7,7 +7,8 @@
  * ./run-spec-test.py --exec ".../main_bin --repl --repl-prompt wasm3"
  */
 
-#define _GNU_SOURCE /* strdup */
+#define _GNU_SOURCE      /* strdup */
+#define _DARWIN_C_SOURCE /* strdup */
 
 #include <assert.h>
 #include <errno.h>

@@ -1,4 +1,5 @@
-#define _GNU_SOURCE /* vasprintf */
+#define _GNU_SOURCE      /* vasprintf */
+#define _DARWIN_C_SOURCE /* vasprintf */
 
 #include <errno.h>
 #include <stdarg.h>

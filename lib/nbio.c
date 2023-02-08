@@ -1,4 +1,5 @@
-#define _GNU_SOURCE /* vasprintf, getline */
+#define _GNU_SOURCE      /* vasprintf, getline */
+#define _DARWIN_C_SOURCE /* vasprintf, getline */
 
 #include <assert.h>
 #include <errno.h>
