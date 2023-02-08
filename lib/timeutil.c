@@ -1,4 +1,4 @@
-#define _POSIX_C_SOURCE 199309 /* clock_gettime */
+#define _POSIX_C_SOURCE 199509L /* clock_gettime */
 
 #include <assert.h>
 #include <errno.h>

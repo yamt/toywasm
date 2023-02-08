@@ -1,3 +1,5 @@
+#define _POSIX_C_SOURCE 199509L /* timespec */
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <time.h>
