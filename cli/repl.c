@@ -872,7 +872,7 @@ toywasm_repl_invoke(struct repl_state *state, const char *modname,
         }
         exec_context_clear(ctx);
         if (ret != 0) {
-                xlog_printf("instance_execute_func failed\n");
+                xlog_printf("instance_execute_func failed with %d\n", ret);
                 goto fail;
         }
         if (print_result) {
