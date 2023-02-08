@@ -415,11 +415,16 @@ add_test(NAME toywasm-test COMMAND toywasm-test)
 set_tests_properties(toywasm-test PROPERTIES ENVIRONMENT "${TEST_ENV}")
 endif()
 
+# XXX Is there a way to create the file list from install() commands?
+# XXX Is there a way to express dependency on "install" target?
 find_program(PAX pax REQUIRED)
 add_custom_target(tar
-	COMMAND ${PAX} -wzf toywasm-${TOYWASM_VERSION}.tgz toywasm
+	COMMAND ${PAX} -wzf toywasm-${TOYWASM_VERSION}${TOYWASM_TARBALL_SUFFIX}.tgz
+        -s!${CMAKE_INSTALL_PREFIX}/!!
+        ${CMAKE_INSTALL_PREFIX}/bin/toywasm
+        ${CMAKE_INSTALL_PREFIX}/share/doc/toywasm/LICENSE
+        ${CMAKE_INSTALL_PREFIX}/share/doc/toywasm/README.md
 )
-add_dependencies(tar toywasm-cli)
 
 install(TARGETS toywasm-cli DESTINATION bin)
 install(FILES LICENSE README.md DESTINATION share/doc/toywasm)
