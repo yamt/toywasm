@@ -22,6 +22,7 @@
   (table (import "pivot" "$imports") 1 1 funcref)
   (func $my_fd_read (type $fd_read_type)
     ;; assume large enough buffer
+    ;; an equivalent of "memcpy(iov->iov_base, "Meow", 4);"
     local.get 1 ;; iovec
     i32.load ;; base
     i32.const 0x776f654d ;; "Meow"
