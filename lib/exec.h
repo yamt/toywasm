@@ -14,6 +14,7 @@ int exec_expr(uint32_t funcidx, const struct expr *expr,
               const struct resulttype *paramtype, uint32_t nresults,
               const struct cell *params, struct cell *results,
               struct exec_context *ctx);
+int exec_expr_continue(struct exec_context *ctx);
 
 int exec_const_expr(const struct expr *expr, enum valtype type,
                     struct val *result, struct exec_context *ctx);

@@ -500,6 +500,10 @@ do_host_call(struct exec_context *ctx, const struct funcinst *finst)
                                  &VEC_NEXTELEM(ctx->stack),
                                  &VEC_NEXTELEM(ctx->stack));
         if (ret != 0) {
+                if (ret == ETOYWASMRESTART) {
+                        ctx->stack.lsize += nparams;
+                        STAT_INC(ctx->stats.call_restart);
+                }
                 return ret;
         }
         ctx->stack.lsize += nresults;
@@ -832,34 +836,45 @@ exec_expr(uint32_t funcidx, const struct expr *expr,
           const struct cell *params, struct cell *results,
           struct exec_context *ctx)
 {
-        uint32_t nstackused_saved = ctx->stack.lsize;
-        uint32_t n = 0;
         int ret;
 
         assert(ctx->instance != NULL);
         assert(ctx->instance->module != NULL);
 
+        ctx->nstackused_saved = ctx->stack.lsize;
         ret = frame_enter(ctx, ctx->instance, funcidx, &expr->ei, localtype,
                           parametertype, nresults, params);
         if (ret != 0) {
                 return ret;
         }
         ctx->p = expr->start;
+        ctx->results = results;
+        ctx->nresults = nresults;
+        return exec_expr_continue(ctx);
+}
+
+int
+exec_expr_continue(struct exec_context *ctx)
+{
+        uint32_t n = 0;
         while (true) {
-                struct cell *stack = &VEC_NEXTELEM(ctx->stack);
-                ret = fetch_exec_next_insn(ctx->p, stack, ctx);
-                if (ret != 0) {
-                        if (ctx->trapped) {
-                                xlog_trace("got a trap");
-                        }
-                        return ret;
-                }
+                int ret;
                 switch (ctx->event) {
 #if defined(TOYWASM_ENABLE_WASM_TAILCALL)
                 case EXEC_EVENT_RETURN_CALL:
                         assert(ctx->frames.lsize > 0);
                         ret = do_return_call(ctx, ctx->event_u.call.func);
                         if (ret != 0) {
+                                if (ret == ETOYWASMRESTART) {
+                                        ctx->event = EXEC_EVENT_CALL;
+                                        /*
+                                         * Note: because we have changed
+                                         * ctx->event above, only the first
+                                         * restart is counted as
+                                         * tail_call_restart.
+                                         */
+                                        STAT_INC(ctx->stats.tail_call_restart);
+                                }
                                 return ret;
                         }
                         break;
@@ -887,13 +902,26 @@ exec_expr(uint32_t funcidx, const struct expr *expr,
                 if (__predict_false(n > CHECK_INTERVAL)) {
                         n = 0;
                         ret = check_interrupt(ctx);
-                        if (ret != 0 && ret != ETOYWASMRESTART) {
+                        if (ret != 0) {
+                                if (ret == ETOYWASMRESTART) {
+                                        STAT_INC(ctx->stats.exec_loop_restart);
+                                }
                                 return ret;
                         }
                 }
+                struct cell *stack = &VEC_NEXTELEM(ctx->stack);
+                ret = fetch_exec_next_insn(ctx->p, stack, ctx);
+                if (ret != 0) {
+                        if (ctx->trapped) {
+                                xlog_trace("got a trap");
+                        }
+                        return ret;
+                }
         }
-        assert(ctx->stack.lsize == nstackused_saved + nresults);
-        cells_copy(results, &VEC_ELEM(ctx->stack, ctx->stack.lsize - nresults),
+        uint32_t nresults = ctx->nresults;
+        assert(ctx->stack.lsize == ctx->nstackused_saved + nresults);
+        cells_copy(ctx->results,
+                   &VEC_ELEM(ctx->stack, ctx->stack.lsize - nresults),
                    nresults);
         ctx->stack.lsize -= nresults;
         return 0;
@@ -973,6 +1001,13 @@ exec_const_expr(const struct expr *expr, enum valtype type, struct val *result,
         assert(ARRAYCOUNT(result_cells) >= csz);
         ret = exec_expr(FUNCIDX_INVALID, expr, &no_locals, &empty, csz, NULL,
                         result_cells, ctx);
+        /*
+         * it's very unlikely for a const expr to use a restart.
+         * but just in case.
+         */
+        while (ret == ETOYWASMRESTART) {
+                ret = exec_expr_continue(ctx);
+        }
         if (ret != 0) {
                 return ret;
         }
@@ -1140,6 +1175,10 @@ exec_context_print_stats(struct exec_context *ctx)
         STAT_PRINT(type_annotation_lookup1);
         STAT_PRINT(type_annotation_lookup2);
         STAT_PRINT(type_annotation_lookup3);
+        STAT_PRINT(exec_loop_restart);
+        STAT_PRINT(call_restart);
+        STAT_PRINT(tail_call_restart);
+        STAT_PRINT(atomic_wait_restart);
 }
 
 uint32_t
@@ -1265,21 +1304,25 @@ memory_wait(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
         struct atomics_mutex *lock = NULL;
         int ret;
 
-        struct timespec abstimeout0;
+        /*
+         * Note: it's important to always consume restart_abstimeout.
+         */
         const struct timespec *abstimeout;
-        if (timeout_ns < 0) {
+        if (ctx->restart_abstimeout != NULL) {
+                abstimeout = ctx->restart_abstimeout;
+                ctx->restart_abstimeout = NULL;
+        } else if (timeout_ns < 0) {
                 abstimeout = NULL;
         } else {
-                ret = abstime_from_reltime_ns(CLOCK_REALTIME, &abstimeout0,
-                                              timeout_ns);
+                ret = abstime_from_reltime_ns(
+                        CLOCK_REALTIME, &ctx->restart_abstimeout0, timeout_ns);
                 if (ret != 0) {
                         goto fail;
                 }
-                abstimeout = &abstimeout0;
+                abstimeout = &ctx->restart_abstimeout0;
         }
         const uint32_t sz = is64 ? 8 : 4;
         void *p;
-retry2:
         ret = memory_atomic_getptr(ctx, memidx, addr, offset, sz, &p, &lock);
         if (ret != 0) {
                 return ret;
@@ -1289,8 +1332,8 @@ retry:
         ret = check_interrupt(ctx);
         if (ret != 0) {
                 if (ret == ETOYWASMRESTART) {
-                        memory_atomic_unlock(lock);
-                        goto retry2;
+                        ctx->restart_abstimeout = abstimeout;
+                        STAT_INC(ctx->stats.atomic_wait_restart);
                 }
                 goto fail;
         }
@@ -1348,14 +1391,19 @@ invoke(struct funcinst *finst, const struct resulttype *paramtype,
                 }
         }
         if (finst->is_host) {
+                /* XXX implement restart */
                 return finst->u.host.func(ctx, finst->u.host.instance, ft,
                                           params, results);
         }
         const struct func *func = funcinst_func(finst);
         ctx->instance = finst->u.wasm.instance;
         uint32_t nresults = resulttype_cellsize(&ft->result);
-        return exec_expr(finst->u.wasm.funcidx, &func->e, &func->localtype,
-                         &ft->parameter, nresults, params, results, ctx);
+        int ret = exec_expr(finst->u.wasm.funcidx, &func->e, &func->localtype,
+                            &ft->parameter, nresults, params, results, ctx);
+        while (ret == ETOYWASMRESTART) {
+                ret = exec_expr_continue(ctx);
+        }
+        return ret;
 }
 
 void

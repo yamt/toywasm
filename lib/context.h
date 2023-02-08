@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <stdint.h>
+#include <time.h>
 
 #include "toywasm_config.h"
 
@@ -92,6 +93,10 @@ struct exec_stat {
         uint64_t type_annotation_lookup1;
         uint64_t type_annotation_lookup2;
         uint64_t type_annotation_lookup3;
+        uint64_t exec_loop_restart;
+        uint64_t call_restart;
+        uint64_t tail_call_restart;
+        uint64_t atomic_wait_restart;
 };
 
 #define STAT_INC(s) (s)++
@@ -165,6 +170,15 @@ struct exec_context {
                         uint32_t index;
                 } branch;
         } event_u;
+
+        /* Restart */
+        struct timespec restart_abstimeout0;
+        const struct timespec *restart_abstimeout;
+
+        /* To simplify restart api */
+        struct cell *results;
+        uint32_t nresults;
+        uint32_t nstackused_saved;
 
         /* Options */
         struct exec_options options;

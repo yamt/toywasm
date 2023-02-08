@@ -833,8 +833,7 @@ wasi_poll(struct exec_context *ctx, struct pollfd *fds, nfds_t nfds,
           int timeout_ms, int *retp, int *neventsp)
 {
         const int interval_ms = 300;
-        struct timespec abstimeout0;
-        struct timespec *abstimeout;
+        const struct timespec *abstimeout;
         int host_ret = 0;
         int ret;
 
@@ -876,21 +875,27 @@ wasi_poll(struct exec_context *ctx, struct pollfd *fds, nfds_t nfds,
          * https://github.com/bytecodealliance/wasmtime/blob/93ae9078c5a2588b5241bd7221ace459d2b04d54/crates/test-programs/wasi-tests/src/bin/poll_oneoff_files.rs#L86-L89
          */
 
-        if (timeout_ms < 0) {
+        if (ctx->restart_abstimeout != NULL) {
+                abstimeout = ctx->restart_abstimeout;
+                ctx->restart_abstimeout = NULL;
+        } else if (timeout_ms < 0) {
                 abstimeout = NULL;
         } else {
-                ret = abstime_from_reltime_ms(CLOCK_REALTIME, &abstimeout0,
-                                              timeout_ms);
+                ret = abstime_from_reltime_ms(
+                        CLOCK_REALTIME, &ctx->restart_abstimeout0, timeout_ms);
                 if (ret != 0) {
                         goto fail;
                 }
-                abstimeout = &abstimeout0;
+                abstimeout = &ctx->restart_abstimeout0;
         }
         while (true) {
                 int next_timeout_ms;
 
                 host_ret = check_interrupt(ctx);
                 if (host_ret != 0) {
+                        if (host_ret == ETOYWASMRESTART) {
+                                ctx->restart_abstimeout = abstimeout;
+                        }
                         goto fail;
                 }
                 if (abstimeout == NULL) {
@@ -1175,7 +1180,6 @@ wasi_fd_write(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-retry2:
         host_ret = wasi_copyin_iovec(ctx, iov_addr, iov_count, &hostiov, &ret);
         if (host_ret != 0 || ret != 0) {
                 goto fail;
@@ -1191,10 +1195,6 @@ retry:
                         goto retry;
                 }
                 if (host_ret != 0 || ret != 0) {
-                        if (host_ret == ETOYWASMRESTART) {
-                                free(hostiov);
-                                goto retry2;
-                        }
                         goto fail;
                 }
                 goto fail;
@@ -1242,7 +1242,6 @@ wasi_fd_pwrite(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-retry2:
         host_ret = wasi_copyin_iovec(ctx, iov_addr, iov_count, &hostiov, &ret);
         if (host_ret != 0 || ret != 0) {
                 goto fail;
@@ -1258,10 +1257,6 @@ retry:
                         goto retry;
                 }
                 if (host_ret != 0 || ret != 0) {
-                        if (host_ret == ETOYWASMRESTART) {
-                                free(hostiov);
-                                goto retry2;
-                        }
                         goto fail;
                 }
                 goto fail;
@@ -1308,7 +1303,6 @@ wasi_fd_read(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-retry2:
         host_ret = wasi_copyin_iovec(ctx, iov_addr, iov_count, &hostiov, &ret);
         if (host_ret != 0 || ret != 0) {
                 goto fail;
@@ -1324,10 +1318,6 @@ retry:
                         goto retry;
                 }
                 if (host_ret != 0 || ret != 0) {
-                        if (host_ret == ETOYWASMRESTART) {
-                                free(hostiov);
-                                goto retry2;
-                        }
                         goto fail;
                 }
                 goto fail;
@@ -1375,7 +1365,6 @@ wasi_fd_pread(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-retry2:
         host_ret = wasi_copyin_iovec(ctx, iov_addr, iov_count, &hostiov, &ret);
         if (host_ret != 0 || ret != 0) {
                 goto fail;
@@ -1391,10 +1380,6 @@ retry:
                         goto retry;
                 }
                 if (host_ret != 0 || ret != 0) {
-                        if (host_ret == ETOYWASMRESTART) {
-                                free(hostiov);
-                                goto retry2;
-                        }
                         goto fail;
                 }
                 goto fail;
@@ -2176,14 +2161,9 @@ retry:
         }
         xlog_trace("poll_oneoff: start polling");
         int nevents;
-retry2:
         host_ret = wasi_poll(ctx, pollfds, nsubscriptions, timeout_ms, &ret,
                              &nevents);
         if (host_ret != 0) {
-                if (host_ret == ETOYWASMRESTART) {
-                        goto retry2;
-                }
-                ret = 0;
                 goto fail;
         }
         if (ret == ETIMEDOUT) {
@@ -2232,6 +2212,22 @@ fail:
                                      wasi_convert_errno(ret));
         }
         free(pollfds);
+        if (host_ret != ETOYWASMRESTART) {
+                /*
+                 * avoid leaving a stale restart_abstimeout.
+                 *
+                 * consider:
+                 * 1. poll_oneoff returns ETOYWASMRESTART with
+                 *    restart_abstimeout saved.
+                 * 2. exec_expr_continue restarts the poll_oneoff.
+                 * 3. however, for some reasons, poll_oneoff doesn't
+                 *    consume the saved timeout. it's entirely possible
+                 *    especially when the app is multi-threaded.
+                 * 4. the subsequent restartable operation gets confused
+                 *    by the saved timeout.
+                 */
+                ctx->restart_abstimeout = NULL;
+        }
         return host_ret;
 }
 
@@ -3116,7 +3112,6 @@ wasi_sock_accept(struct exec_context *ctx, struct host_instance *hi,
         struct sockaddr_storage ss;
         struct sockaddr *sa = (void *)&ss;
         socklen_t salen;
-retry2:
 retry:
 #if defined(TOYWASM_OLD_WASI_LIBC)
         errno = ENOSYS;
@@ -3132,9 +3127,6 @@ retry:
                         goto retry;
                 }
                 if (host_ret != 0 || ret != 0) {
-                        if (host_ret == ETOYWASMRESTART) {
-                                goto retry2;
-                        }
                         goto fail;
                 }
                 goto fail;
@@ -3221,7 +3213,6 @@ wasi_sock_recv(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-retry2:
         host_ret = wasi_copyin_iovec(ctx, iov_addr, iov_count, &hostiov, &ret);
         if (host_ret != 0 || ret != 0) {
                 goto fail;
@@ -3246,10 +3237,6 @@ retry:
                         goto retry;
                 }
                 if (host_ret != 0 || ret != 0) {
-                        if (host_ret == ETOYWASMRESTART) {
-                                free(hostiov);
-                                goto retry2;
-                        }
                         goto fail;
                 }
                 goto fail;
@@ -3317,7 +3304,6 @@ wasi_sock_send(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-retry2:
         host_ret = wasi_copyin_iovec(ctx, iov_addr, iov_count, &hostiov, &ret);
         if (host_ret != 0 || ret != 0) {
                 goto fail;
@@ -3342,10 +3328,6 @@ retry:
                         goto retry;
                 }
                 if (host_ret != 0 || ret != 0) {
-                        if (host_ret == ETOYWASMRESTART) {
-                                free(hostiov);
-                                goto retry2;
-                        }
                         goto fail;
                 }
                 goto fail;
