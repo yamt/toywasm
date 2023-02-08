@@ -880,7 +880,6 @@ exec_expr_continue(struct exec_context *ctx)
                         break;
 #endif /* defined(TOYWASM_ENABLE_WASM_TAILCALL) */
                 case EXEC_EVENT_CALL:
-                        assert(ctx->frames.lsize > 0);
                         ret = do_call(ctx, ctx->event_u.call.func);
                         if (ret != 0) {
                                 return ret;
@@ -1377,12 +1376,21 @@ fail:
 }
 #endif
 
+/*
+ * invoke: call a function.
+ *
+ * Note: the "finst" here can be a host function.
+ */
 int
 invoke(struct funcinst *finst, const struct resulttype *paramtype,
        const struct resulttype *resulttype, const struct cell *params,
        struct cell *results, struct exec_context *ctx)
 {
         const struct functype *ft = funcinst_functype(finst);
+
+        /*
+         * Optional type check.
+         */
         assert((paramtype == NULL) == (resulttype == NULL));
         if (paramtype != NULL) {
                 if (compare_resulttype(paramtype, &ft->parameter) != 0 ||
@@ -1390,19 +1398,35 @@ invoke(struct funcinst *finst, const struct resulttype *paramtype,
                         return EINVAL;
                 }
         }
-        if (finst->is_host) {
-                /* XXX implement restart */
-                return finst->u.host.func(ctx, finst->u.host.instance, ft,
-                                          params, results);
-        }
-        const struct func *func = funcinst_func(finst);
-        ctx->instance = finst->u.wasm.instance;
+
         uint32_t nresults = resulttype_cellsize(&ft->result);
-        int ret = exec_expr(finst->u.wasm.funcidx, &func->e, &func->localtype,
-                            &ft->parameter, nresults, params, results, ctx);
-        while (ret == ETOYWASMRESTART) {
-                ret = exec_expr_continue(ctx);
+        int ret;
+
+        /*
+         * Set up the context as if it was a restart of a "call" instruction.
+         */
+        uint32_t nparams = resulttype_cellsize(&ft->parameter);
+        ret = stack_prealloc(ctx, nparams);
+        if (ret != 0) {
+                return ret;
         }
+        struct cell *locals = &VEC_NEXTELEM(ctx->stack);
+        cells_copy(locals, params, nparams);
+        ctx->nstackused_saved = ctx->stack.lsize;
+        ctx->stack.lsize += nparams;
+
+        ctx->event_u.call.func = finst;
+        ctx->event = EXEC_EVENT_CALL;
+
+        ctx->nresults = nresults;
+        ctx->results = results;
+
+        /*
+         * and then "restart" the context execution.
+         */
+        do {
+                ret = exec_expr_continue(ctx);
+        } while (ret == ETOYWASMRESTART);
         return ret;
 }
 
