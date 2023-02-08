@@ -4,3 +4,4 @@ Inspired by:
 
 * https://github.com/bytecodealliance/preview2-prototyping
 * https://github.com/bytecodealliance/wit-bindgen/pull/421
+* https://github.com/bytecodealliance/wit-bindgen/pull/338
