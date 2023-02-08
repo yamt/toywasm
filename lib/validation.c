@@ -1,5 +1,3 @@
-#define _POSIX_C_SOURCE 199509L /* flockfile */
-
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>

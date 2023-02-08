@@ -24,6 +24,8 @@ project(toy-wasm LANGUAGES C)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED YES)
 set(CMAKE_C_EXTENSIONS NO)
+# we need timespec (199309L), flockfile (199506L), etc
+add_compile_definitions(_POSIX_C_SOURCE=199506L)
 
 include(CTest)
 include(CheckIPOSupported)

@@ -1,5 +1,3 @@
-#define _POSIX_C_SOURCE 199509L /* flockfile, clock_gettime */
-
 #include "toywasm_config.h"
 
 #include <inttypes.h>
