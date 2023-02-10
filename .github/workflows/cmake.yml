@@ -114,6 +114,7 @@ jobs:
           -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/dist \
           -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
           -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 \
+          -DTOYWASM_TARBALL_SUFFIX=-${{matrix.name}} \
           -DTOYWASM_USE_SEPARATE_EXECUTE=${{matrix.TOYWASM_USE_SEPARATE_EXECUTE}} \
           -DTOYWASM_USE_TAILCALL=${{matrix.TOYWASM_USE_TAILCALL}} \
           -DTOYWASM_ENABLE_TRACING=${{matrix.TOYWASM_ENABLE_TRACING}} \
@@ -154,9 +155,9 @@ jobs:
 
     - name: Tar
       run: |
+        cmake --build ${{github.workspace}}/build --target tar
         mkdir -p ${{github.workspace}}/artifacts
-        cd ${{github.workspace}}/dist
-        pax -wvzf ${{github.workspace}}/artifacts/toywasm-${{matrix.name}}.tgz *
+        cp ${{github.workspace}}/build/*.tgz ${{github.workspace}}/artifacts/
 
     - name: Upload artifacts
       if: matrix.name != 'noname'
@@ -185,7 +186,8 @@ jobs:
 
     - name: Build and test
       env:
-        EXTRA_CMAKE_OPTIONS: -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/dist
+        # Note: we don't care about tarball suffix for native build here.
+        EXTRA_CMAKE_OPTIONS: -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/dist -DTOYWASM_TARBALL_SUFFIX=-wasm32-wasi
       run: ./wasm-on-wasm.sh
 
     - name: Install
@@ -194,9 +196,9 @@ jobs:
 
     - name: Tar
       run: |
+        cmake --build ${{github.workspace}}/build --target tar
         mkdir -p ${{github.workspace}}/artifacts
-        cd ${{github.workspace}}/dist
-        pax -wvzf ${{github.workspace}}/artifacts/toywasm-wasm32-wasi.tgz *
+        cp ${{github.workspace}}/build/*.tgz ${{github.workspace}}/artifacts/
 
     - name: Upload artifacts
       # wasm binary is same among OSes. Only upload one of them.
@@ -231,7 +233,7 @@ jobs:
     - name: Cross build
       env:
         ARCH: ${{matrix.arch}}
-        EXTRA_CMAKE_OPTIONS: -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/dist
+        EXTRA_CMAKE_OPTIONS: -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/dist -DTOYWASM_TARBALL_SUFFIX=-${{matrix.os}}-${{matrix.arch}}
       run: |
         sudo -E ./cross/cross-setup.sh
         ./cross/cross-build.sh
@@ -264,9 +266,9 @@ jobs:
 
     - name: Tar
       run: |
+        cmake --build ${{github.workspace}}/build --target tar
         mkdir -p ${{github.workspace}}/artifacts
-        cd ${{github.workspace}}/dist
-        pax -wvzf ${{github.workspace}}/artifacts/toywasm-${{matrix.os}}-${{matrix.arch}}.tgz *
+        cp ${{github.workspace}}/build/*.tgz ${{github.workspace}}/artifacts/
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
