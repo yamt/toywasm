@@ -114,10 +114,77 @@ jobs:
             MISC_FEATURES: ON
             TOYWASM_ENABLE_WASM_THREADS: ON
             TOYWASM_ENABLE_WASI_THREADS: ON
+
+          - name: ubuntu-20.04-arm64
+            os: ubuntu-20.04
+            compiler: clang
+            arch: arm64
+            BUILD_TYPE: Release
+            TOYWASM_USE_SEPARATE_EXECUTE: ON
+            TOYWASM_USE_TAILCALL: ON
+            TOYWASM_ENABLE_TRACING: OFF
+            TOYWASM_USE_SMALL_CELLS: ON
+            TOYWASM_USE_SEPARATE_LOCALS: ON
+            MISC_FEATURES: OFF
+            TOYWASM_ENABLE_WASM_THREADS: OFF
+            TOYWASM_ENABLE_WASI_THREADS: OFF
+          - name: ubuntu-20.04-armhf
+            os: ubuntu-20.04
+            compiler: clang
+            arch: armhf
+            BUILD_TYPE: Release
+            TOYWASM_USE_SEPARATE_EXECUTE: ON
+            TOYWASM_USE_TAILCALL: ON
+            TOYWASM_ENABLE_TRACING: OFF
+            TOYWASM_USE_SMALL_CELLS: ON
+            TOYWASM_USE_SEPARATE_LOCALS: ON
+            MISC_FEATURES: OFF
+            TOYWASM_ENABLE_WASM_THREADS: OFF
+            TOYWASM_ENABLE_WASI_THREADS: OFF
+          - name: ubuntu-20.04-s390x
+            os: ubuntu-20.04
+            compiler: clang
+            arch: s390x
+            BUILD_TYPE: Release
+            TOYWASM_USE_SEPARATE_EXECUTE: ON
+            TOYWASM_USE_TAILCALL: ON
+            TOYWASM_ENABLE_TRACING: OFF
+            TOYWASM_USE_SMALL_CELLS: ON
+            TOYWASM_USE_SEPARATE_LOCALS: ON
+            MISC_FEATURES: OFF
+            TOYWASM_ENABLE_WASM_THREADS: OFF
+            TOYWASM_ENABLE_WASI_THREADS: OFF
+
           - name: full-ubuntu-20.04-arm64
             os: ubuntu-20.04
             compiler: clang
             arch: arm64
+            BUILD_TYPE: Release
+            TOYWASM_USE_SEPARATE_EXECUTE: ON
+            TOYWASM_USE_TAILCALL: ON
+            TOYWASM_ENABLE_TRACING: OFF
+            TOYWASM_USE_SMALL_CELLS: ON
+            TOYWASM_USE_SEPARATE_LOCALS: ON
+            MISC_FEATURES: ON
+            TOYWASM_ENABLE_WASM_THREADS: ON
+            TOYWASM_ENABLE_WASI_THREADS: ON
+          - name: full-ubuntu-20.04-armhf
+            os: ubuntu-20.04
+            compiler: clang
+            arch: armhf
+            BUILD_TYPE: Release
+            TOYWASM_USE_SEPARATE_EXECUTE: ON
+            TOYWASM_USE_TAILCALL: ON
+            TOYWASM_ENABLE_TRACING: OFF
+            TOYWASM_USE_SMALL_CELLS: ON
+            TOYWASM_USE_SEPARATE_LOCALS: ON
+            MISC_FEATURES: ON
+            TOYWASM_ENABLE_WASM_THREADS: ON
+            TOYWASM_ENABLE_WASI_THREADS: ON
+          - name: full-ubuntu-20.04-s390x
+            os: ubuntu-20.04
+            compiler: clang
+            arch: s390x
             BUILD_TYPE: Release
             TOYWASM_USE_SEPARATE_EXECUTE: ON
             TOYWASM_USE_TAILCALL: ON
