@@ -450,7 +450,31 @@ read_memarg_nocheck(const uint8_t **pp, struct memarg *arg)
 #define ORIG_PC (*pp)
 #define INSN_SUCCESS return 0
 #define INSN_SUCCESS_RETURN INSN_SUCCESS
-#define INSN_FAIL return ret
+#if defined(TOYWASM_USE_SEPARATE_EXECUTE)
+#define PREPARE_FOR_POSSIBLE_RESTART
+#define INSN_FAIL_RESTARTABLE(NAME) INSN_FAIL
+#else
+#define PREPARE_FOR_POSSIBLE_RESTART                                          \
+        uint32_t saved_stack_ptr;                                             \
+        if (EXECUTING) {                                                      \
+                saved_stack_ptr = ECTX->stack.lsize;                          \
+        }
+#define INSN_FAIL_RESTARTABLE(NAME)                                           \
+        assert(ret != 0);                                                     \
+        if (EXECUTING) {                                                      \
+                if (ret == ETOYWASMRESTART) {                                 \
+                        struct exec_context *ectx = ECTX;                     \
+                        ectx->stack.lsize = saved_stack_ptr;                  \
+                        ectx->event = EXEC_EVENT_RESTART_INSN;                \
+                        ectx->event_u.restart_insn.process = process_##NAME;  \
+                }                                                             \
+        }                                                                     \
+        return ret
+#endif
+#define INSN_FAIL                                                             \
+        assert(ret != 0);                                                     \
+        assert(ret != ETOYWASMRESTART);                                       \
+        return ret
 #define STACK &VEC_NEXTELEM(ECTX->stack)
 #define STACK_ADJ(n) ECTX->stack.lsize += (n)
 
@@ -467,9 +491,11 @@ read_memarg_nocheck(const uint8_t **pp, struct memarg *arg)
 #undef SAVE_STACK_PTR
 #undef LOAD_STACK_PTR
 #undef ORIG_PC
+#undef PREPARE_FOR_POSSIBLE_RESTART
 #undef INSN_SUCCESS
 #undef INSN_SUCCESS_RETURN
 #undef INSN_FAIL
+#undef INSN_FAIL_RESTARTABLE
 #undef STACK
 #undef STACK_ADJ
 
@@ -496,7 +522,21 @@ read_memarg_nocheck(const uint8_t **pp, struct memarg *arg)
         SAVE_STACK_PTR;                                                       \
         ctx->p = p;                                                           \
         return 0
-#define INSN_FAIL return ret
+#define PREPARE_FOR_POSSIBLE_RESTART struct cell *saved_stack_ptr = stack
+#define INSN_FAIL_RESTARTABLE(NAME)                                           \
+        assert(ret != 0);                                                     \
+        if (ret == ETOYWASMRESTART) {                                         \
+                ctx->p = ORIG_PC;                                             \
+                stack = saved_stack_ptr;                                      \
+                SAVE_STACK_PTR;                                               \
+                ctx->event = EXEC_EVENT_RESTART_INSN;                         \
+                ctx->event_u.restart_insn.fetch_exec = fetch_exec_##NAME;     \
+        }                                                                     \
+        return ret
+#define INSN_FAIL                                                             \
+        assert(ret != 0);                                                     \
+        assert(ret != ETOYWASMRESTART);                                       \
+        return ret
 #define ep NULL
 #define STACK stack
 #define STACK_ADJ(n) stack += (n)
@@ -529,9 +569,11 @@ read_memarg_nocheck(const uint8_t **pp, struct memarg *arg)
 #undef SAVE_STACK_PTR
 #undef LOAD_STACK_PTR
 #undef ORIG_PC
+#undef PREPARE_FOR_POSSIBLE_RESTART
 #undef INSN_SUCCESS
 #undef INSN_SUCCESS_RETURN
 #undef INSN_FAIL
+#undef INSN_FAIL_RESTARTABLE
 #undef ep
 #undef STACK
 #undef STACK_ADJ
@@ -540,6 +582,11 @@ read_memarg_nocheck(const uint8_t **pp, struct memarg *arg)
 #if defined(TOYWASM_USE_SEPARATE_EXECUTE)
 typedef int (*exec_func_t)(const uint8_t *, struct cell *,
                            struct exec_context *);
+
+#if defined(TOYWASM_ENABLE_TRACING_INSN)
+static const char *
+instruction_name(const struct exec_instruction_desc *exec_table, uint32_t op);
+#endif /* defined(TOYWASM_ENABLE_TRACING_INSN) */
 
 static exec_func_t
 fetch_multibyte_opcode(const uint8_t **pp, struct exec_context *ctx,
@@ -556,7 +603,7 @@ fetch_multibyte_opcode(const uint8_t **pp, struct exec_context *ctx,
         uint32_t op = read_leb_u32_nocheck(pp);
         const struct exec_instruction_desc *desc = &table[op];
         xlog_trace_insn("exec %06" PRIx32 ": %s (2nd byte %02" PRIx32 ")", pc,
-                        instructions[op].name, op);
+                        instruction_name(table, op), op);
         return desc->fetch_exec;
 }
 
@@ -658,3 +705,25 @@ const struct instruction_desc instructions[] = {
 };
 
 const size_t instructions_size = ARRAYCOUNT(instructions);
+
+#if defined(TOYWASM_USE_SEPARATE_EXECUTE) &&                                  \
+        defined(TOYWASM_ENABLE_TRACING_INSN)
+static const char *
+instruction_name(const struct exec_instruction_desc *exec_table, uint32_t op)
+{
+        const struct instruction_desc *table;
+        if (exec_table == exec_instructions) {
+                table = instructions;
+        } else if (exec_table == exec_instructions_fc) {
+                table = instructions_fc;
+#if defined(TOYWASM_ENABLE_WASM_THREADS)
+        } else if (exec_table == exec_instructions_fe) {
+                table = instructions_fe;
+#endif /* defined(TOYWASM_ENABLE_WASM_THREADS) */
+        } else {
+                return "unknown";
+        }
+        return table[op].name;
+}
+#endif /* defined(TOYWASM_USE_SEPARATE_EXECUTE) &&                            \
+          defined(TOYWASM_ENABLE_TRACING_INSN) */

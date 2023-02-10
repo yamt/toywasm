@@ -501,6 +501,13 @@ do_host_call(struct exec_context *ctx, const struct funcinst *finst)
                                  &VEC_NEXTELEM(ctx->stack));
         if (ret != 0) {
                 if (ret == ETOYWASMRESTART) {
+                        /*
+                         * Restore the stack pointer for restarting.
+                         *
+                         * Note: it's a responsibility of host functions
+                         * to keep function arguments on the stack intact
+                         * when returning ETOYWASMRESTART at least.
+                         */
                         ctx->stack.lsize += nparams;
                         STAT_INC(ctx->stats.call_restart);
                 }
@@ -812,6 +819,22 @@ fetch_exec_next_insn(const uint8_t *p, struct cell *stack,
 #endif
 }
 
+static int
+restart_insn(struct exec_context *ctx)
+{
+        assert(ctx->event == EXEC_EVENT_RESTART_INSN);
+        ctx->event = EXEC_EVENT_NONE;
+#if defined(TOYWASM_USE_SEPARATE_EXECUTE)
+        struct cell *stack = &VEC_NEXTELEM(ctx->stack);
+        return ctx->event_u.restart_insn.fetch_exec(ctx->p, stack, ctx);
+#else
+        struct context common_ctx;
+        memset(&common_ctx, 0, sizeof(common_ctx));
+        common_ctx.exec = ctx;
+        return ctx->event_u.restart_insn.process(&ctx->p, NULL, &common_ctx);
+#endif
+}
+
 #define CHECK_INTERVAL 1000
 
 int
@@ -889,6 +912,26 @@ exec_expr_continue(struct exec_context *ctx)
                         assert(ctx->frames.lsize > 0);
                         do_branch(ctx, ctx->event_u.branch.index,
                                   ctx->event_u.branch.goto_else);
+                        break;
+                case EXEC_EVENT_RESTART_INSN:
+                        /*
+                         * While it's possible to have a more generic
+                         * instruction restart logic by pushing back PC,
+                         * it's a bit tricky with the way how we implement
+                         * instruction fetch.
+                         *
+                         * Note: it isn't simple as "PC -= insn_len"
+                         * because wasm opcodes have variable length.
+                         * multibyte opcodes even have redundant encodings.
+                         *
+                         * Instead, this implementation relies on the
+                         * opcode functions set up an explicit execution
+                         * event when returning ETOYWASMRESTART.
+                         */
+                        ret = restart_insn(ctx);
+                        if (ret != 0) {
+                                return ret;
+                        }
                         break;
                 case EXEC_EVENT_NONE:
                         break;
@@ -1426,6 +1469,9 @@ invoke(struct funcinst *finst, const struct resulttype *paramtype,
          */
         do {
                 ret = exec_expr_continue(ctx);
+                if (ret == ETOYWASMRESTART) {
+                        xlog_trace("%s: restarting execution\n", __func__);
+                }
         } while (ret == ETOYWASMRESTART);
         return ret;
 }

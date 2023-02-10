@@ -2,6 +2,7 @@
         INSN_IMPL(NAME)                                                       \
         {                                                                     \
                 int ret;                                                      \
+                PREPARE_FOR_POSSIBLE_RESTART;                                 \
                 LOAD_PC;                                                      \
                 struct memarg memarg;                                         \
                 READ_MEMARG##BITS(&memarg);                                   \
@@ -29,7 +30,7 @@
                 SAVE_PC;                                                      \
                 INSN_SUCCESS;                                                 \
 fail:                                                                         \
-                INSN_FAIL;                                                    \
+                INSN_FAIL_RESTARTABLE(NAME);                                  \
         }
 
 #define ATOMIC_LOADOP2(NAME, MEM, STACK, CAST, I_OR_F)                        \

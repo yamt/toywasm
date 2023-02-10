@@ -75,6 +75,7 @@ enum exec_event {
         EXEC_EVENT_NONE,
         EXEC_EVENT_CALL,
         EXEC_EVENT_BRANCH,
+        EXEC_EVENT_RESTART_INSN,
 #if defined(TOYWASM_ENABLE_WASM_TAILCALL)
         EXEC_EVENT_RETURN_CALL,
 #endif /* defined(TOYWASM_ENABLE_WASM_TAILCALL) */
@@ -120,6 +121,8 @@ struct trap_info {
  */
 #define ETOYWASMTRAP -1
 #define ETOYWASMRESTART -2
+
+struct context;
 
 struct exec_context {
         /* Some cached info about the current frame. */
@@ -169,6 +172,15 @@ struct exec_context {
                         bool goto_else;
                         uint32_t index;
                 } branch;
+                struct {
+#if defined(TOYWASM_USE_SEPARATE_EXECUTE)
+                        int (*fetch_exec)(const uint8_t *p, struct cell *stack,
+                                          struct exec_context *ctx);
+#else
+                        int (*process)(const uint8_t **pp, const uint8_t *ep,
+                                       struct context *ctx);
+#endif
+                } restart_insn;
         } event_u;
 
         /* Restart */
