@@ -40,6 +40,11 @@ run "$(wasmedge --version) (interpreter)" wasmedge --dir .video --
 
 echo "+++++++++++ JIT ++++++++++++++++++++"
 
+# this seems to use the compiler.
+# XXX is there a way to use the interpreter?
+# XXX i'm not sure how compilation cache works by default.
+run "wazero $(wazero version)" wazero run -mount .video --
+
 # Note: i needed to tweak these size options manually to run
 # this particular wasm binary
 run "$(iwasm.fast-jit --version) (fast jit)" iwasm.fast-jit --dir=.video --jit-codecache-size=100000000
