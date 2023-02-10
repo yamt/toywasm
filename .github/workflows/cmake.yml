@@ -220,9 +220,9 @@ jobs:
 
     - name: Tar
       run: |
-        cmake --build ${{github.workspace}}/build --target tar
+        cmake --build build.wasm --target tar
         mkdir -p ${{github.workspace}}/artifacts
-        cp ${{github.workspace}}/build/*.tgz ${{github.workspace}}/artifacts/
+        cp build.wasm/*.tgz ${{github.workspace}}/artifacts/
 
     - name: Upload artifacts
       # wasm binary is same among OSes. Only upload one of them.
@@ -290,7 +290,7 @@ jobs:
 
     - name: Tar
       run: |
-        cmake --build ${{github.workspace}}/build --target tar
+        cmake --build build.cross.${{matrix.arch}} --target tar
         mkdir -p ${{github.workspace}}/artifacts
         cp ${{github.workspace}}/build/*.tgz ${{github.workspace}}/artifacts/
 
