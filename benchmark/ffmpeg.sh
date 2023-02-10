@@ -57,6 +57,7 @@ echo "+++++++++++ JIT ++++++++++++++++++++"
 
 # this seems to use the compiler.
 # XXX is there a way to use the interpreter?
+# https://github.com/paritytech/wasmi/issues/661
 # XXX i'm not sure how compilation cache works by default.
 run "wazero $(wazero version)" wazero run -mount .video --
 
