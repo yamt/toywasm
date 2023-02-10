@@ -27,6 +27,13 @@ rm -rf ~/Library/Caches/BytecodeAlliance.wasmtime
 
 echo "+++++++++++ Interpreters +++++++++++"
 
+# https://github.com/WebAssembly/wabt/issues/2074
+#
+# [mov,mp4,m4a,3gp,3g2,mj2 @ 0xb7e740] moov atom not found
+# .video/video-1080p-60fps-2s.mp4: Invalid data found when processing input
+#
+# run "wasm-interp $(wasm-interp --version)" wasm-interp --wasi --dir .video --
+
 # https://github.com/paritytech/wasmi
 # i couldn't find how to pass wasi cli arguments
 # https://github.com/paritytech/wasmi/blob/master/crates/cli/src/main.rs#L22-L23
