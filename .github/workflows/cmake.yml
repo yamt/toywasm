@@ -312,7 +312,17 @@ jobs:
 
     - uses: actions/download-artifact@v3
       with:
+        name: full-macos-11.0
+        path: release_assets
+
+    - uses: actions/download-artifact@v3
+      with:
         name: ubuntu-20.04-amd64
+        path: release_assets
+
+    - uses: actions/download-artifact@v3
+      with:
+        name: full-ubuntu-20.04-amd64
         path: release_assets
 
     - uses: actions/download-artifact@v3
