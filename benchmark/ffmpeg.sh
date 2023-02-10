@@ -27,6 +27,12 @@ rm -rf ~/Library/Caches/BytecodeAlliance.wasmtime
 
 echo "+++++++++++ Interpreters +++++++++++"
 
+# https://github.com/paritytech/wasmi
+# i couldn't find how to pass wasi cli arguments
+# https://github.com/paritytech/wasmi/blob/master/crates/cli/src/main.rs#L22-L23
+# Error: invalid amount of arguments given to function fn _start(). expected 0 but received 9
+# run "$(wasmi_cli --version)" wasmi_cli --dir .video --
+
 TOYWASM=${TOYWASM:-toywasm}
 run "$(${TOYWASM} --version | head -1)" ${TOYWASM} --wasi --wasi-dir .video --
 # run "toywasm" ${TOYWASM} --wasi --wasi-dir .video --disable-jump-table --disable-localtype-cellidx --disable-resulttype-cellidx --
