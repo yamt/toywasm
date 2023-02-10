@@ -193,21 +193,18 @@ jobs:
         cmake -B ${{env.builddir}} -L
 
     - name: Build
-      # Build your program with the given configuration
       run: cmake --build ${{env.builddir}} --config ${{matrix.BUILD_TYPE}}
-
-    - name: Test
-      working-directory: ${{env.builddir}}
-      # Execute tests defined by the CMake configuration.
-      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-      run: |
-        ./toywasm --version
-        ctest -C ${{matrix.BUILD_TYPE}} -V -LE slow
 
     - name: Install QEMU
       if: matrix.arch != 'native'
       run: |
         sudo apt-get update && sudo apt-get install -y qemu-user-static
+
+    - name: Test
+      working-directory: ${{env.builddir}}
+      run: |
+        ./toywasm --version
+        ctest -C ${{matrix.BUILD_TYPE}} -V -LE slow
 
     - name: Test (slow)
       if: matrix.BUILD_TYPE == 'Release' && matrix.arch != 's390x'
