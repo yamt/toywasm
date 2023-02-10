@@ -419,7 +419,7 @@ endif()
 
 # XXX Is there a way to create the file list from install() commands?
 # XXX Is there a way to express dependency on "install" target?
-find_program(PAX pax REQUIRED)
+find_program(PAX pax)
 add_custom_target(tar
 	COMMAND ${PAX} -wzf toywasm-${TOYWASM_VERSION}${TOYWASM_TARBALL_SUFFIX}.tgz
         -s!${CMAKE_INSTALL_PREFIX}/!!
