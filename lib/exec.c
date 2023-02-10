@@ -849,6 +849,14 @@ check_interrupt(struct exec_context *ctx)
                 return trap_with_id(ctx, TRAP_VOLUNTARY_THREAD_EXIT,
                                     "interrupt");
         }
+#if !defined(NDEBUG) /* a bit abuse of NDEBUG */
+        /* inject artificial restart events to test restart logic. */
+        static int x = 0;
+        x++;
+        if ((x & 2) == 0) {
+                return ETOYWASMRESTART;
+        }
+#endif
         return 0;
 }
 
