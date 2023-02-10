@@ -37,21 +37,37 @@ is built with an ancient wasi-sdk to workaround
 * Performance
 * Stable API/ABI
 
-## Which specs are implemented?
+## What are implemented?
 
-* [WebAssembly](https://github.com/WebAssembly/spec) except SIMD.
+|Feature                 |Status                                            |
+| ---------------------- | ------------------------------------------------ |
+|[WebAssembly]           |Complete except `simd`                            |
+|[extended-const]        |Complete (`TOYWASM_ENABLE_WASM_EXTENDED_CONST`)   |
+|[multi-memory]          |Complete (`TOYWASM_ENABLE_WASM_MULTI_MEMORY`)     |
+|[tail-call]             |Complete (`TOYWASM_ENABLE_WASM_TAILCALL`)         |
+|[threads]               |Complete (`TOYWASM_ENABLE_WASM_THREADS`)          |
+|[wasi_snapshot_preview1]|See [the top comment in lib/wasi.c]               |
+|[wasi-threads]          |Complete (`TOYWASM_ENABLE_WASI_THREADS`)          |
 
-* [extended-const](https://github.com/WebAssembly/extended-const)
+Note: As this runtime is relatively new, all proposals which had finished
+when I started this implementation are just included in the `WebAssembly`
+above in the above table.
+It includes
+`mutable-global`,
+`nontrapping-float-to-int-conversions`,
+`sign-extension-ops`,
+`multi-value`,
+`reference-types`,
+`bulk-memory-operations`.
 
-* [multi-memory](https://github.com/WebAssembly/multi-memory)
-
-* [tail-call](https://github.com/WebAssembly/tail-call)
-
-* [threads](https://github.com/WebAssembly/threads)
-
-* [wasi_snapshot_preview1](https://github.com/WebAssembly/wasi)
-
-* [wasi-threads](https://github.com/WebAssembly/wasi-threads)
+[WebAssembly]: https://github.com/WebAssembly/spec
+[extended-const]: https://github.com/WebAssembly/extended-const
+[multi-memory]: https://github.com/WebAssembly/multi-memory
+[tail-call]: https://github.com/WebAssembly/tail-call
+[threads]: https://github.com/WebAssembly/threads
+[wasi_snapshot_preview1]: https://github.com/WebAssembly/wasi
+[wasi-threads]: https://github.com/WebAssembly/wasi-threads
+[the top comment in lib/wasi.c]: lib/wasi.c
 
 ## Where can this run?
 
