@@ -292,7 +292,7 @@ jobs:
       run: |
         cmake --build build.cross.${{matrix.arch}} --target tar
         mkdir -p ${{github.workspace}}/artifacts
-        cp ${{github.workspace}}/build/*.tgz ${{github.workspace}}/artifacts/
+        cp build.cross.${{matrix.arch}}/*.tgz ${{github.workspace}}/artifacts/
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
