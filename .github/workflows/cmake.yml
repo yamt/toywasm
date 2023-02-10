@@ -58,6 +58,8 @@ jobs:
           - os: ubuntu-latest
             compiler: clang
           - BUILD_TYPE: Release
+        # how include works is not intuitive to me:
+        # https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs#expanding-or-adding-matrix-configurations
         include:
           - name: ubuntu-20.04-amd64
             os: ubuntu-20.04
