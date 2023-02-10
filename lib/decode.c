@@ -88,11 +88,12 @@ read_vec_u32(const uint8_t **pp, const uint8_t *ep, uint32_t *countp,
  * - the ctx pointer
  */
 int
-read_vec_with_ctx(const uint8_t **pp, const uint8_t *ep, size_t elem_size,
-                  int (*read_elem)(const uint8_t **pp, const uint8_t *ep,
-                                   uint32_t idx, void *elem, void *),
-                  void (*clear_elem)(void *elem), void *ctx, uint32_t *countp,
-                  void **resultp)
+_read_vec_with_ctx_impl(const uint8_t **pp, const uint8_t *ep,
+                        size_t elem_size,
+                        int (*read_elem)(const uint8_t **pp, const uint8_t *ep,
+                                         uint32_t idx, void *elem, void *),
+                        void (*clear_elem)(void *elem), void *ctx,
+                        uint32_t *countp, void **resultp)
 {
         const uint8_t *p = *pp;
         uint32_t vec_count;
@@ -139,7 +140,7 @@ struct read_vec_ctx {
         void *ctx;
 };
 
-int
+static int
 read_elem_wrapper(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
                   void *elem, void *vp)
 {
@@ -155,6 +156,6 @@ read_vec(const uint8_t **pp, const uint8_t *ep, size_t elem_size,
         struct read_vec_ctx ctx = {
                 .read_elem = read_elem,
         };
-        return read_vec_with_ctx(pp, ep, elem_size, read_elem_wrapper,
-                                 clear_elem, &ctx, countp, resultp);
+        return _read_vec_with_ctx_impl(pp, ep, elem_size, read_elem_wrapper,
+                                       clear_elem, &ctx, countp, resultp);
 }
