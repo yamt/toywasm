@@ -73,6 +73,18 @@ jobs:
             MISC_FEATURES: OFF
             TOYWASM_ENABLE_WASM_THREADS: OFF
             TOYWASM_ENABLE_WASI_THREADS: OFF
+          - name: full-ubuntu-20.04-amd64
+            os: ubuntu-20.04
+            compiler: clang
+            BUILD_TYPE: Release
+            TOYWASM_USE_SEPARATE_EXECUTE: ON
+            TOYWASM_USE_TAILCALL: ON
+            TOYWASM_ENABLE_TRACING: OFF
+            TOYWASM_USE_SMALL_CELLS: ON
+            TOYWASM_USE_SEPARATE_LOCALS: ON
+            MISC_FEATURES: ON
+            TOYWASM_ENABLE_WASM_THREADS: ON
+            TOYWASM_ENABLE_WASI_THREADS: ON
           - name: macos-11.0
             os: macos-latest
             compiler: clang
@@ -85,6 +97,18 @@ jobs:
             MISC_FEATURES: OFF
             TOYWASM_ENABLE_WASM_THREADS: OFF
             TOYWASM_ENABLE_WASI_THREADS: OFF
+          - name: full-macos-11.0
+            os: macos-latest
+            compiler: clang
+            BUILD_TYPE: Release
+            TOYWASM_USE_SEPARATE_EXECUTE: ON
+            TOYWASM_USE_TAILCALL: ON
+            TOYWASM_ENABLE_TRACING: OFF
+            TOYWASM_USE_SMALL_CELLS: ON
+            TOYWASM_USE_SEPARATE_LOCALS: ON
+            MISC_FEATURES: ON
+            TOYWASM_ENABLE_WASM_THREADS: ON
+            TOYWASM_ENABLE_WASI_THREADS: ON
 
     # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
     # You can convert this to a matrix build if you need cross-platform coverage.
