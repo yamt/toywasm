@@ -128,9 +128,6 @@ jobs:
             TOYWASM_ENABLE_WASM_THREADS: ON
             TOYWASM_ENABLE_WASI_THREADS: ON
 
-    # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
-    # You can convert this to a matrix build if you need cross-platform coverage.
-    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
     runs-on: ${{matrix.os}}
 
     steps:
@@ -170,8 +167,6 @@ jobs:
 
     - name: Configure CMake
       if: matrix.arch == 'native'
-      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
-      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       run: |
         cmake -B ${{env.builddir}} \
           -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}} \
@@ -212,8 +207,6 @@ jobs:
     - name: Test (slow)
       if: matrix.BUILD_TYPE == 'Release' && matrix.arch != 's390x'
       working-directory: ${{env.builddir}}
-      # Execute tests defined by the CMake configuration.
-      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: |
         ./toywasm --version
         ctest -C ${{matrix.BUILD_TYPE}} -V -L slow
