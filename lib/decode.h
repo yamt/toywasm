@@ -25,6 +25,18 @@ int _read_vec_with_ctx_impl(const uint8_t **pp, const uint8_t *ep,
                             void (*clear_elem)(void *elem), void *ctx,
                             uint32_t *countp, void **resultp);
 
+/*
+ * Note: here we cast functions taking "struct foo *" to function pointers
+ * taking "void *" and call them via the pointers. (without casting them
+ * back to the correct type.)
+ * IIRC, it's an undefined behavior in C.
+ * While I'm not entirely happy with this,
+ * - It works on most of the C runtime environments, including the C ABI
+ *   usually used for WASM.
+ * - I prefer to have type checks than using "void *" in every callback
+ *   implementations.
+ */
+
 #if defined(toywasm_typeof)
 /* a version with non-standard checks */
 #define read_vec_with_ctx(pp, ep, elem_size, read_elem, clear_elem, ctx,      \
