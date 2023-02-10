@@ -343,7 +343,7 @@ jobs:
 
   release:
     if: github.event_name != 'pull_request'
-    needs: [build, wasm-on-wasm, cross]
+    needs: [build, wasm-on-wasm]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/download-artifact@v3
