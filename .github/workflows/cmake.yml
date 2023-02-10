@@ -151,13 +151,13 @@ jobs:
         fetch-depth: 0
 
     - name: Fix sources.list
-      if: matrix.arch != native
+      if: matrix.arch != 'native'
       run: |
         curl -L -O https://raw.githubusercontent.com/yamt/garbage/master/myubuntu/apt/sources.list
         sudo cp sources.list /etc/apt/
 
     - name: Cross build
-      if: matrix.arch != native
+      if: matrix.arch != 'native'
       env:
         ARCH: ${{matrix.arch}}
         EXTRA_CMAKE_OPTIONS: -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/dist -DTOYWASM_TARBALL_SUFFIX=-${{matrix.os}}-${{matrix.arch}}
@@ -166,7 +166,7 @@ jobs:
         ./cross/cross-build.sh
 
     - name: Configure CMake
-      if: matrix.arch == native
+      if: matrix.arch == 'native'
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       run: |
@@ -202,7 +202,7 @@ jobs:
         ctest -C ${{matrix.BUILD_TYPE}} -V -LE slow
 
     - name: Install QEMU
-      if: matrix.arch != native
+      if: matrix.arch != 'native'
       run: |
         sudo apt-get update && sudo apt-get install -y qemu-user-static
 
