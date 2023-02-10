@@ -22,6 +22,7 @@ jobs:
         name: [noname]
         os: [ubuntu-latest, macos-latest]
         compiler: [clang, gcc]
+        cross_arch: [native]
         BUILD_TYPE: [Release, Debug]
         TOYWASM_USE_SEPARATE_EXECUTE: [ON, OFF]
         TOYWASM_USE_TAILCALL: [ON, OFF]
@@ -109,6 +110,19 @@ jobs:
             MISC_FEATURES: ON
             TOYWASM_ENABLE_WASM_THREADS: ON
             TOYWASM_ENABLE_WASI_THREADS: ON
+          - name: full-ubuntu-20.04-arm64
+            os: ubuntu-20.04
+            compiler: clang
+            arch: arm64
+            BUILD_TYPE: Release
+            TOYWASM_USE_SEPARATE_EXECUTE: ON
+            TOYWASM_USE_TAILCALL: ON
+            TOYWASM_ENABLE_TRACING: OFF
+            TOYWASM_USE_SMALL_CELLS: ON
+            TOYWASM_USE_SEPARATE_LOCALS: ON
+            MISC_FEATURES: ON
+            TOYWASM_ENABLE_WASM_THREADS: ON
+            TOYWASM_ENABLE_WASI_THREADS: ON
 
     # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
     # You can convert this to a matrix build if you need cross-platform coverage.
@@ -116,6 +130,11 @@ jobs:
     runs-on: ${{matrix.os}}
 
     steps:
+    - name: Set environment
+      run: |
+        echo "builddir=${{github.workspace}}/build.cross.${{matrix.arch}}" >> ${GITHUB_ENV}
+        oo
+
     - name: Install dependencies (ubuntu)
       if: startsWith(matrix.os, 'ubuntu-')
       run: sudo apt-get update && sudo apt-get install -y wabt libcmocka-dev clang lld llvm-dev pax virtualenv
@@ -131,11 +150,27 @@ jobs:
       with:
         fetch-depth: 0
 
+    - name: Fix sources.list
+      if: matrix.arch != native
+      run: |
+        curl -L -O https://raw.githubusercontent.com/yamt/garbage/master/myubuntu/apt/sources.list
+        sudo cp sources.list /etc/apt/
+
+    - name: Cross build
+      if: matrix.arch != native
+      env:
+        ARCH: ${{matrix.arch}}
+        EXTRA_CMAKE_OPTIONS: -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/dist -DTOYWASM_TARBALL_SUFFIX=-${{matrix.os}}-${{matrix.arch}}
+      run: |
+        sudo -E ./cross/cross-setup.sh
+        ./cross/cross-build.sh
+
     - name: Configure CMake
+      if: matrix.arch == native
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       run: |
-        cmake -B ${{github.workspace}}/build \
+        cmake -B ${{env.builddir}} \
           -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}} \
           -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/dist \
           -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
@@ -152,23 +187,28 @@ jobs:
           -DTOYWASM_ENABLE_WASM_TAILCALL=${{matrix.MISC_FEATURES}} \
           -DTOYWASM_ENABLE_WASM_THREADS=${{matrix.TOYWASM_ENABLE_WASM_THREADS}} \
           -DTOYWASM_ENABLE_WASI_THREADS=${{matrix.TOYWASM_ENABLE_WASI_THREADS}}
-        cmake -B ${{github.workspace}}/build -L
+        cmake -B ${{env.builddir}} -L
 
     - name: Build
       # Build your program with the given configuration
-      run: cmake --build ${{github.workspace}}/build --config ${{matrix.BUILD_TYPE}}
+      run: cmake --build ${{env.builddir}} --config ${{matrix.BUILD_TYPE}}
 
     - name: Test
-      working-directory: ${{github.workspace}}/build
+      working-directory: ${{env.builddir}}
       # Execute tests defined by the CMake configuration.
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: |
         ./toywasm --version
         ctest -C ${{matrix.BUILD_TYPE}} -V -LE slow
 
+    - name: Install QEMU
+      if: matrix.arch != native
+      run: |
+        sudo apt-get update && sudo apt-get install -y qemu-user-static
+
     - name: Test (slow)
-      if: matrix.BUILD_TYPE == 'Release'
-      working-directory: ${{github.workspace}}/build
+      if: matrix.BUILD_TYPE == 'Release' && matrix.arch != 's390x'
+      working-directory: ${{env.builddir}}
       # Execute tests defined by the CMake configuration.
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: |
@@ -177,13 +217,13 @@ jobs:
 
     - name: Install
       run: |
-        cmake --build ${{github.workspace}}/build --target install
+        cmake --build ${{env.builddir}} --target install
 
     - name: Tar
       run: |
-        cmake --build ${{github.workspace}}/build --target tar
+        cmake --build ${{env.builddir}} --target tar
         mkdir -p ${{github.workspace}}/artifacts
-        cp ${{github.workspace}}/build/*.tgz ${{github.workspace}}/artifacts/
+        cp ${{env.builddir}}/*.tgz ${{github.workspace}}/artifacts/
 
     - name: Upload artifacts
       if: matrix.name != 'noname'
