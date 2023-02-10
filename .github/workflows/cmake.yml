@@ -383,6 +383,21 @@ jobs:
 
     - uses: actions/download-artifact@v3
       with:
+        name: full-ubuntu-20.04-arm64
+        path: release_assets
+
+    - uses: actions/download-artifact@v3
+      with:
+        name: full-ubuntu-20.04-armhf
+        path: release_assets
+
+    - uses: actions/download-artifact@v3
+      with:
+        name: full-ubuntu-20.04-s390x
+        path: release_assets
+
+    - uses: actions/download-artifact@v3
+      with:
         name: wasm32-wasi
         path: release_assets
 
