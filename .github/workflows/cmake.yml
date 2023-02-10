@@ -133,7 +133,6 @@ jobs:
     - name: Set environment
       run: |
         echo "builddir=${{github.workspace}}/build.cross.${{matrix.arch}}" >> ${GITHUB_ENV}
-        oo
 
     - name: Install dependencies (ubuntu)
       if: startsWith(matrix.os, 'ubuntu-')
