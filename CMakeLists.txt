@@ -372,10 +372,10 @@ endif()
 
 add_test(NAME toywasm-cli-wasm3-wasi-test
 	COMMAND ./test/run-wasm3-wasi-test.sh --exec "${CMAKE_BINARY_DIR}/toywasm --wasi --wasi-dir ." --separate-args --timeout 360
-	CONFIGURATIONS Release
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 set_tests_properties(toywasm-cli-wasm3-wasi-test PROPERTIES ENVIRONMENT "${TEST_ENV}")
+set_tests_properties(toywasm-cli-wasm3-wasi-test PROPERTIES LABELS "slow")
 
 # sample wasm files
 
