@@ -274,10 +274,14 @@ jobs:
       run: |
         sudo apt-get update && sudo apt-get install -y qemu-user-static
 
-    - name: Test
+    - name: toywasm --version
       working-directory: ${{env.builddir}}
       run: |
         ./toywasm --version
+
+    - name: Test
+      working-directory: ${{env.builddir}}
+      run: |
         ctest -C ${{matrix.BUILD_TYPE}} -V -LE slow
 
     - name: Test (slow)
