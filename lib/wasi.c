@@ -934,7 +934,7 @@ wasi_poll(struct exec_context *ctx, struct pollfd *fds, nfds_t nfds,
                 }
         }
 fail:
-        assert(ret >= 0);
+        assert(host_ret != 0 || ret >= 0);
         assert(host_ret != 0 || ret != 0 || *neventsp > 0);
         *retp = ret;
         return host_ret;
