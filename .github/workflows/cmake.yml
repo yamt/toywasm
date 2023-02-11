@@ -258,7 +258,7 @@ jobs:
     - name: cmake configure (native)
       if: matrix.arch == 'native'
       env:
-        EXTRA_CMAKE_OPTIONS: ${{env.extra_cmake_options}} -DTOYWASM_TARBALL_SUFFIX=-${{matrix.os}}
+        EXTRA_CMAKE_OPTIONS: ${{env.extra_cmake_options}} -DTOYWASM_TARBALL_SUFFIX=-${{matrix.name}}
       run: |
         cmake -B ${{env.builddir}} ${EXTRA_CMAKE_OPTIONS}
 
