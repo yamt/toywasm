@@ -286,7 +286,7 @@ jobs:
 
     - name: Test (slow)
       # for non-native, only runs slow tests on one job for each arch.
-      if: matrix.BUILD_TYPE == 'Release' && (matrix.arch == 'native' || startWith(matrix.name, 'full-')
+      if: matrix.BUILD_TYPE == 'Release' && (matrix.arch == 'native' || startsWith(matrix.name, 'full-')
       working-directory: ${{env.builddir}}
       run: |
         ./toywasm --version
