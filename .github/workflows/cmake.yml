@@ -253,7 +253,7 @@ jobs:
         EXTRA_CMAKE_OPTIONS: ${{env.extra_cmake_options}} -DTOYWASM_TARBALL_SUFFIX=-${{matrix.os}}-${{matrix.arch}}
       run: |
         sudo -E ./cross/cross-setup.sh
-        ./cross/cross-cmake-configue.sh
+        ./cross/cross-cmake-configure.sh
 
     - name: cmake configure (native)
       if: matrix.arch == 'native'
