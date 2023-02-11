@@ -285,8 +285,9 @@ jobs:
         ctest -C ${{matrix.BUILD_TYPE}} -V -LE slow
 
     - name: Test (slow)
-      # for non-native, only runs slow tests on one job for each arch.
-      if: matrix.BUILD_TYPE == 'Release' && (matrix.arch == 'native' || startsWith(matrix.name, 'full-'))
+      # - for non-native, only runs slow tests on one job for each arch.
+      # - don't run it on s390x because it's too slow.
+      if: matrix.BUILD_TYPE == 'Release' && (matrix.arch == 'native' || (matrix.arch != 's390x' && startsWith(matrix.name, 'full-')))
       working-directory: ${{env.builddir}}
       run: |
         ./toywasm --version
