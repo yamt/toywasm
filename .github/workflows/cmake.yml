@@ -201,6 +201,24 @@ jobs:
     - name: Set environment
       run: |
         echo "builddir=${{github.workspace}}/build.cross.${{matrix.arch}}" >> ${GITHUB_ENV}
+        echo "extra_cmake_options=$(cat <<EOF" >> ${GITHUB_ENV}
+        echo "-DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}}" >> ${GITHUB_ENV}
+        echo "-DCMAKE_INSTALL_PREFIX=${{github.workspace}}/dist" >> ${GITHUB_ENV}
+        echo "-DCMAKE_OSX_ARCHITECTURES=\"arm64;x86_64\"" >> ${GITHUB_ENV}
+        echo "-DCMAKE_OSX_DEPLOYMENT_TARGET=11.0"  >> ${GITHUB_ENV}
+        echo "-DTOYWASM_USE_SEPARATE_EXECUTE=${{matrix.TOYWASM_USE_SEPARATE_EXECUTE}}" >> ${GITHUB_ENV}
+        echo "-DTOYWASM_USE_TAILCALL=${{matrix.TOYWASM_USE_TAILCALL}}" >> ${GITHUB_ENV}
+        echo "-DTOYWASM_ENABLE_TRACING=${{matrix.TOYWASM_ENABLE_TRACING}}" >> ${GITHUB_ENV}
+        echo "-DTOYWASM_ENABLE_TRACING_INSN=${{matrix.TOYWASM_ENABLE_TRACING}}" >> ${GITHUB_ENV}
+        echo "-DTOYWASM_USE_SMALL_CELLS=${{matrix.TOYWASM_USE_SMALL_CELLS}}" >> ${GITHUB_ENV}
+        echo "-DTOYWASM_USE_SEPARATE_LOCALS=${{matrix.TOYWASM_USE_SEPARATE_LOCALS}}" >> ${GITHUB_ENV}
+        echo "-DTOYWASM_ENABLE_WASM_EXTENDED_CONST=${{matrix.MISC_FEATURES}}" >> ${GITHUB_ENV}
+        echo "-DTOYWASM_ENABLE_WASM_MULTI_MEMORY=${{matrix.MISC_FEATURES}}" >> ${GITHUB_ENV}
+        echo "-DTOYWASM_ENABLE_WASM_TAILCALL=${{matrix.MISC_FEATURES}}" >> ${GITHUB_ENV}
+        echo "-DTOYWASM_ENABLE_WASM_THREADS=${{matrix.TOYWASM_ENABLE_WASM_THREADS}}" >> ${GITHUB_ENV}
+        echo "-DTOYWASM_ENABLE_WASI_THREADS=${{matrix.TOYWASM_ENABLE_WASI_THREADS}}"  >> ${GITHUB_ENV}
+        echo "EOF" >> ${GITHUB_ENV}
+        echo ")" >> ${GITHUB_ENV}
 
     - name: Install dependencies (ubuntu)
       if: startsWith(matrix.os, 'ubuntu-')
@@ -228,39 +246,24 @@ jobs:
         curl -L -O https://raw.githubusercontent.com/yamt/garbage/master/myubuntu/apt/sources.list
         sudo cp sources.list /etc/apt/
 
-    - name: Cross build
+    - name: cmake configure (cross)
       if: matrix.arch != 'native'
       env:
         ARCH: ${{matrix.arch}}
-        EXTRA_CMAKE_OPTIONS: -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/dist -DTOYWASM_TARBALL_SUFFIX=-${{matrix.os}}-${{matrix.arch}}
+        EXTRA_CMAKE_OPTIONS: ${{env.extra_cmake_options}} -DTOYWASM_TARBALL_SUFFIX=-${{matrix.os}}-${{matrix.arch}}
       run: |
         sudo -E ./cross/cross-setup.sh
-        ./cross/cross-build.sh
+        ./cross/cross-cmake-configue.sh
 
-    - name: Configure CMake
+    - name: cmake configure (native)
       if: matrix.arch == 'native'
       run: |
         cmake -B ${{env.builddir}} \
-          -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}} \
-          -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/dist \
-          -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
-          -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 \
-          -DTOYWASM_TARBALL_SUFFIX=-${{matrix.name}} \
-          -DTOYWASM_USE_SEPARATE_EXECUTE=${{matrix.TOYWASM_USE_SEPARATE_EXECUTE}} \
-          -DTOYWASM_USE_TAILCALL=${{matrix.TOYWASM_USE_TAILCALL}} \
-          -DTOYWASM_ENABLE_TRACING=${{matrix.TOYWASM_ENABLE_TRACING}} \
-          -DTOYWASM_ENABLE_TRACING_INSN=${{matrix.TOYWASM_ENABLE_TRACING}} \
-          -DTOYWASM_USE_SMALL_CELLS=${{matrix.TOYWASM_USE_SMALL_CELLS}} \
-          -DTOYWASM_USE_SEPARATE_LOCALS=${{matrix.TOYWASM_USE_SEPARATE_LOCALS}} \
-          -DTOYWASM_ENABLE_WASM_EXTENDED_CONST=${{matrix.MISC_FEATURES}} \
-          -DTOYWASM_ENABLE_WASM_MULTI_MEMORY=${{matrix.MISC_FEATURES}} \
-          -DTOYWASM_ENABLE_WASM_TAILCALL=${{matrix.MISC_FEATURES}} \
-          -DTOYWASM_ENABLE_WASM_THREADS=${{matrix.TOYWASM_ENABLE_WASM_THREADS}} \
-          -DTOYWASM_ENABLE_WASI_THREADS=${{matrix.TOYWASM_ENABLE_WASI_THREADS}}
+            ${{env.extra_cmake_options}} -DTOYWASM_TARBALL_SUFF
+        IX=-${{matrix.os}}
         cmake -B ${{env.builddir}} -L
 
     - name: Build
-      if: matrix.arch == 'native'
       run: cmake --build ${{env.builddir}} --config ${{matrix.BUILD_TYPE}}
 
     - name: Install QEMU
