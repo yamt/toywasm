@@ -389,6 +389,22 @@ static void
 wasi_fdinfo_drain(struct wasi_instance *wasi, struct wasi_fdinfo *fdinfo)
         EXCLUDES(wasi->lock)
 {
+        /*
+         * Note:
+         * When a thread gets a reference to an fdinfo in order to
+         * close it, (ie. fd_close and fd_renumber)
+         * it detaches the fdinfo from the table as well atomically.
+         * (ie. while holding a lock)
+         * Thus, there can't be multiple threads calling this function
+         * for the fdinfo.
+         *
+         * Note:
+         * We block without calling check_interrupt(). It means we rely
+         * on the other threads checking check_interrupt() and
+         * terminate/restart correctly and allow us to finish draining
+         * the fdinfo "soon".
+         * CAVEAT: It might not be the case for 0-3 tty hostfds.
+         */
         toywasm_mutex_lock(&wasi->lock);
         while (true) {
                 assert(fdinfo->refcount >= 1);
