@@ -250,7 +250,7 @@ jobs:
       if: matrix.arch != 'native'
       env:
         ARCH: ${{matrix.arch}}
-        EXTRA_CMAKE_OPTIONS: ${{env.extra_cmake_options}} -DTOYWASM_TARBALL_SUFFIX=-${{matrix.os}}-${{matrix.arch}}
+        EXTRA_CMAKE_OPTIONS: ${{env.extra_cmake_options}} -DTOYWASM_TARBALL_SUFFIX=-${{matrix.name}}
       run: |
         sudo -E ./cross/cross-setup.sh
         ./cross/cross-cmake-configure.sh
