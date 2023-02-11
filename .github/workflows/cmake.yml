@@ -259,8 +259,7 @@ jobs:
       if: matrix.arch == 'native'
       run: |
         cmake -B ${{env.builddir}} \
-            ${{env.extra_cmake_options}} -DTOYWASM_TARBALL_SUFF
-        IX=-${{matrix.os}}
+            ${{env.extra_cmake_options}} -DTOYWASM_TARBALL_SUFFIX=-${{matrix.os}}
         cmake -B ${{env.builddir}} -L
 
     - name: Build
