@@ -199,9 +199,10 @@ jobs:
 
     steps:
     - name: Set environment
+      # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#multiline-strings
       run: |
         echo "builddir=${{github.workspace}}/build.cross.${{matrix.arch}}" >> ${GITHUB_ENV}
-        echo "extra_cmake_options=$(cat <<EOF" >> ${GITHUB_ENV}
+        echo "extra_cmake_options<<EOF" >> ${GITHUB_ENV}
         echo "-DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}}" >> ${GITHUB_ENV}
         echo "-DCMAKE_INSTALL_PREFIX=${{github.workspace}}/dist" >> ${GITHUB_ENV}
         echo "-DCMAKE_OSX_ARCHITECTURES=\"arm64;x86_64\"" >> ${GITHUB_ENV}
@@ -218,7 +219,6 @@ jobs:
         echo "-DTOYWASM_ENABLE_WASM_THREADS=${{matrix.TOYWASM_ENABLE_WASM_THREADS}}" >> ${GITHUB_ENV}
         echo "-DTOYWASM_ENABLE_WASI_THREADS=${{matrix.TOYWASM_ENABLE_WASI_THREADS}}"  >> ${GITHUB_ENV}
         echo "EOF" >> ${GITHUB_ENV}
-        echo ")" >> ${GITHUB_ENV}
 
     - name: Install dependencies (ubuntu)
       if: startsWith(matrix.os, 'ubuntu-')
