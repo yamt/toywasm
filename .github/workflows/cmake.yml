@@ -260,6 +260,7 @@ jobs:
         cmake -B ${{env.builddir}} -L
 
     - name: Build
+      if: matrix.arch == 'native'
       run: cmake --build ${{env.builddir}} --config ${{matrix.BUILD_TYPE}}
 
     - name: Install QEMU
