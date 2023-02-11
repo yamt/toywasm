@@ -25,4 +25,3 @@ cmake \
 -DARCH=${ARCH} \
 ${EXTRA_CMAKE_OPTIONS} \
 ..
-make
