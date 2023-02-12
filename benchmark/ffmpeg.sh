@@ -48,6 +48,11 @@ run "$(iwasm.classic --version) (classic interpreter)" iwasm.classic --dir=.vide
 
 run "$(wasmedge --version) (interpreter)" wasmedge --dir .video --
 
+# unreleased as of writing this.
+# https://github.com/tetratelabs/wazero/pull/1115
+# https://github.com/tetratelabs/wazero/pull/1116
+# run "wazero $(wazero version) (interpreter)" wazero run -intepreter -mount .video --
+
 # https://github.com/WebAssembly/wabt/issues/2074
 #
 # [mov,mp4,m4a,3gp,3g2,mj2 @ 0xb7e740] moov atom not found
