@@ -183,8 +183,9 @@ It includes
   directly where possible. That is, it doesn't "compile" wasm bytecode
   into intermediate code.
 
-  Unfortunately, wasm is simply not efficient to execute that way.
-  It's basically designed to be somehow "compiled" at the load time.
+  Unfortunately, wasm bytecode is simply not efficient to execute
+  that way. It's basically designed to be somehow "compiled" at the
+  load time.
 
   Many of interpreters out there translate wasm bytecode to their internal
   bytecode for performance reasons. Wasm3 and WAMR "fast" interpreter
@@ -200,8 +201,8 @@ It includes
 
     This is to speed up branching. Wasm branch instruction don't have
     a cheap way to know the destination address to jump to. Without this
-    table, whenever we execute branch instructions, we need to parse
-    every instructions the branch would skip over.
+    table, whenever we execute a forward-branching instruction, we need
+    to parse every instructions the branch would skip over.
 
     This is optional and can be disabled by the `--disable-jump-table`
     runtime option.
@@ -217,7 +218,7 @@ It includes
     You can disable them by `--disable-localtype-cellidx`
     and the `--disable-resulttype-cellidx` runtime options.
 
-    When toywasm is built with fixed-sized values,
+    When toywasm is built to use fixed-sized values,
     (`-D TOYWASM_USE_SMALL_CELLS=OFF`) an access to a local is O(1).
     In that case, this table is not necessary or used, regardless of
     the above mentioned cli options.
@@ -225,7 +226,9 @@ It includes
     cpu-efficient especially on a 64-bit host. It's probably more
     memory-efficient as well because it doesn't involve the static
     overhead. (this table) The situation might change when we implement
-    larger values. (`v128` used by SIMD.)
+    larger values. (`v128` used by SIMD.) Or, when a module is using
+    many 32-bit values on the operand stack. Or, when you are using many
+    instances.
 
   * Type annotations for value-polymorphic instructions.
 
@@ -233,12 +236,14 @@ It includes
     there is no cheap way to know the type at runtime.
     While validating the bytecode, toywasm annotates these instructions
     with the sizes of the values so that the necessary infomation is
-    available when executing it later. While it's theoretically possible
-    to calculate them at the execution time, it would be something like
-    repeating the validation step.
+    available when executing the code later. While it's theoretically
+    possible to calculate them at the execution time, it would be
+    something like repeating the validation step. An alternative is
+    to annotate each values on the stack. But it's likely even more
+    expensive.
 
-    This is unconditionally enabled if and only if toywasm is built with
-    variable-sized values, which is the default.
+    This annotation is unconditionally enabled if and only if toywasm is
+    built with variable-sized values, which is the default.
     (`-D TOYWASM_USE_SMALL_CELLS=ON`)
 
 * I don't like to use huge-switch statements or
