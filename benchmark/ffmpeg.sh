@@ -29,7 +29,17 @@ echo "+++++++++++ Interpreters +++++++++++"
 
 TOYWASM=${TOYWASM:-toywasm}
 run "$(${TOYWASM} --version | head -1)" ${TOYWASM} --wasi --wasi-dir .video --
-# run "toywasm" ${TOYWASM} --wasi --wasi-dir .video --disable-jump-table --disable-localtype-cellidx --disable-resulttype-cellidx --
+
+# with fixed sized cells.
+# separate binary as it's a build-time option.
+if [ -n "${TOYWASM_FIXED}" ]; then
+    run "$(${TOYWASM_FIXED} --version | head -1) (-DTOYWASM_USE_SMALL_CELLS=OFF)" ${TOYWASM_FIXED} --wasi --wasi-dir .video --
+fi
+
+# without tables. optional because this is very slow.
+if [ -n "${TOYWASM_SLOW}" ]; then
+    run "$(${TOYWASM} --version | head -1) (annotations disabled)" ${TOYWASM} --wasi --wasi-dir .video --disable-jump-table --disable-localtype-cellidx --disable-resulttype-cellidx --
+fi
 
 run "$(wasm3 --version|head -1)" wasm3 --dir .video --
 
