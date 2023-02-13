@@ -60,12 +60,7 @@ run "$(wasmedge --version) (interpreter)" wasmedge --dir .video --
 #
 # run "wasm-interp $(wasm-interp --version)" wasm-interp --wasi --dir .video --
 
-# https://github.com/paritytech/wasmi/issues/661
-# i couldn't find how to pass wasi cli arguments
-#
-# https://github.com/paritytech/wasmi/blob/master/crates/cli/src/main.rs#L22-L23
-# Error: invalid amount of arguments given to function fn _start(). expected 0 but received 9
-#
+# https://github.com/paritytech/wasmi/issues/675
 # run "$(wasmi_cli --version)" wasmi_cli --dir .video --
 
 echo "+++++++++++ JIT ++++++++++++++++++++"
