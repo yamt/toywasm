@@ -243,7 +243,7 @@ int frame_enter(struct exec_context *ctx, struct instance *inst,
                 const struct cell *params);
 void frame_clear(struct funcframe *frame);
 void frame_exit(struct exec_context *ctx);
-struct cell *frame_locals(struct exec_context *ctx,
+struct cell *frame_locals(const struct exec_context *ctx,
                           const struct funcframe *frame) __purefunc;
 void exec_context_init(struct exec_context *ctx, struct instance *inst);
 void exec_context_clear(struct exec_context *ctx);

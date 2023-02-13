@@ -159,7 +159,7 @@ frame_clear(struct funcframe *frame)
 }
 
 struct cell *
-frame_locals(struct exec_context *ctx, const struct funcframe *frame)
+frame_locals(const struct exec_context *ctx, const struct funcframe *frame)
 {
 #if defined(TOYWASM_USE_SEPARATE_LOCALS)
         return &VEC_ELEM(ctx->locals, frame->localidx);
@@ -1503,16 +1503,89 @@ elem_drop(struct exec_context *ectx, uint32_t elemidx)
 }
 
 void
+print_locals(const struct exec_context *ctx, const struct funcframe *fp)
+{
+        const struct instance *inst = fp->instance;
+        const struct funcinst *finst = VEC_ELEM(inst->funcs, fp->funcidx);
+        const struct functype *ft = funcinst_functype(finst);
+        const struct func *func = funcinst_func(finst);
+        const struct resulttype *rt = &ft->parameter;
+        const struct localtype *lt = &func->localtype;
+        const struct cell *locals = frame_locals(ctx, fp);
+
+        uint32_t i;
+        for (i = 0; i < rt->ntypes; i++) {
+                uint32_t csz;
+                uint32_t cidx = resulttype_cellidx(rt, i, &csz);
+                struct val val;
+                val_from_cells(&val, locals + cidx, csz);
+                switch (csz) {
+                case 1:
+                        printf("param [%" PRIu32 "] = %08" PRIx32 "\n", i,
+                               val.u.i32);
+                        break;
+                case 2:
+                        printf("param [%" PRIu32 "] = %016" PRIx64 "\n", i,
+                               val.u.i64);
+                        break;
+                default:
+                        printf("param [%" PRIu32 "] = unknown size\n", i);
+                        break;
+                }
+        }
+        uint32_t localstart = rt->ntypes;
+        uint32_t localstartcidx = resulttype_cellsize(rt);
+        for (i = 0; i < lt->nlocals; i++) {
+                uint32_t csz;
+                uint32_t cidx = localtype_cellidx(lt, i, &csz);
+                struct val val;
+                val_from_cells(&val, locals + localstartcidx + cidx, csz);
+                switch (csz) {
+                case 1:
+                        printf("local [%" PRIu32 "] = %08" PRIx32 "\n",
+                               localstart + i, val.u.i32);
+                        break;
+                case 2:
+                        printf("local [%" PRIu32 "] = %016" PRIx64 "\n",
+                               localstart + i, val.u.i64);
+                        break;
+                default:
+                        printf("local [%" PRIu32 "] = unknown size\n",
+                               localstart + i);
+                        break;
+                }
+        }
+}
+
+void
 print_trace(const struct exec_context *ctx)
 {
         const struct funcframe *fp;
         uint32_t i;
         VEC_FOREACH_IDX(i, fp, ctx->frames) {
+                const struct instance *inst = fp->instance;
+                const struct funcinst *finst =
+                        VEC_ELEM(inst->funcs, fp->funcidx);
+                const struct func *func = funcinst_func(finst);
+                /*
+                 * XXX funcpc here is the address of the first expr.
+                 *
+                 * it seems more common to use the address of the size LEB.
+                 * at least it's the convention used by wasm-objdump etc.
+                 * our funcpc is usually a few bytes ahead. (the size LEB
+                 * and the following definition of locals)
+                 */
+                uint32_t funcpc = ptr2pc(inst->module, func->e.start);
+                /* no callerpc for the first frame */
                 if (i == 0) {
-                        continue; /* no callerpc for the first frame */
+                        printf("frame[%3" PRIu32 "] funcpc %06" PRIx32 "\n", i,
+                               funcpc);
+                } else {
+                        printf("frame[%3" PRIu32 "] funcpc %06" PRIx32
+                               " callerpc %06" PRIx32 "\n",
+                               i, funcpc, fp->callerpc);
                 }
-                printf("frame[%3" PRIu32 "] callerpc %06" PRIx32 "\n", i,
-                       fp->callerpc);
+                print_locals(ctx, fp);
         }
 }
 
