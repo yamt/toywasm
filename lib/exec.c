@@ -824,6 +824,8 @@ restart_insn(struct exec_context *ctx)
 {
         assert(ctx->event == EXEC_EVENT_RESTART_INSN);
         ctx->event = EXEC_EVENT_NONE;
+        xlog_trace("%s: restarting insn at %" PRIx32, __func__,
+                   ptr2pc(ctx->instance->module, ctx->p));
 #if defined(TOYWASM_USE_SEPARATE_EXECUTE)
         struct cell *stack = &VEC_NEXTELEM(ctx->stack);
         return ctx->event_u.restart_insn.fetch_exec(ctx->p, stack, ctx);
@@ -1423,6 +1425,12 @@ retry:
         }
 fail:
         memory_atomic_unlock(lock);
+        if (ret == 0) {
+                xlog_trace("%s: returning %d result %d", __func__, ret,
+                           *resultp);
+        } else {
+                xlog_trace("%s: returning %d", __func__, ret);
+        }
         return ret;
 }
 #endif

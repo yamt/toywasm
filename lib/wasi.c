@@ -963,7 +963,11 @@ wait_fd_ready(struct exec_context *ctx, int hostfd, short event, int *retp)
         pfd.fd = hostfd;
         pfd.events = event;
         int nev;
-        return wasi_poll(ctx, &pfd, 1, -1, retp, &nev);
+        int ret = wasi_poll(ctx, &pfd, 1, -1, retp, &nev);
+        if (ret == ETOYWASMRESTART) {
+                xlog_trace("%s: restarting", __func__);
+        }
+        return ret;
 }
 
 static bool
