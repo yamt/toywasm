@@ -937,10 +937,7 @@ exec_expr_continue(struct exec_context *ctx)
                          * event when returning ETOYWASMRESTART.
                          */
                         ret = restart_insn(ctx);
-                        if (ret != 0) {
-                                return ret;
-                        }
-                        break;
+                        goto after_insn;
                 case EXEC_EVENT_NONE:
                         break;
                 }
@@ -961,6 +958,9 @@ exec_expr_continue(struct exec_context *ctx)
                 }
                 struct cell *stack = &VEC_NEXTELEM(ctx->stack);
                 ret = fetch_exec_next_insn(ctx->p, stack, ctx);
+after_insn:
+                assert((ret == ETOYWASMRESTART) ==
+                       (ctx->event == EXEC_EVENT_RESTART_INSN));
                 if (ret != 0) {
                         if (ctx->trapped) {
                                 xlog_trace("got a trap");
