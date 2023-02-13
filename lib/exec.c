@@ -499,6 +499,7 @@ do_host_call(struct exec_context *ctx, const struct funcinst *finst)
         ret = finst->u.host.func(ctx, finst->u.host.instance, ft,
                                  &VEC_NEXTELEM(ctx->stack),
                                  &VEC_NEXTELEM(ctx->stack));
+        assert(ret == ETOYWASMRESTART || ctx->restart_type == RESTART_NONE);
         if (ret != 0) {
                 if (ret == ETOYWASMRESTART) {
                         /*
@@ -1178,6 +1179,7 @@ exec_context_init(struct exec_context *ctx, struct instance *inst)
         ctx->report = &ctx->report0;
         ctx->options.max_frames = UINT32_MAX;
         ctx->options.max_stackcells = UINT32_MAX;
+        ctx->restart_type = RESTART_NONE;
 }
 
 void
@@ -1360,19 +1362,23 @@ memory_wait(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
          * Note: it's important to always consume restart_abstimeout.
          */
         const struct timespec *abstimeout;
-        if (ctx->restart_abstimeout != NULL) {
-                abstimeout = ctx->restart_abstimeout;
-                ctx->restart_abstimeout = NULL;
+        assert(ctx->restart_type == RESTART_NONE ||
+               ctx->restart_type == RESTART_TIMER);
+        if (ctx->restart_type == RESTART_TIMER) {
+                abstimeout = &ctx->restart_u.timer.abstimeout;
+                ctx->restart_type = RESTART_NONE;
         } else if (timeout_ns < 0) {
                 abstimeout = NULL;
         } else {
-                ret = abstime_from_reltime_ns(
-                        CLOCK_REALTIME, &ctx->restart_abstimeout0, timeout_ns);
+                ret = abstime_from_reltime_ns(CLOCK_REALTIME,
+                                              &ctx->restart_u.timer.abstimeout,
+                                              timeout_ns);
                 if (ret != 0) {
                         goto fail;
                 }
-                abstimeout = &ctx->restart_abstimeout0;
+                abstimeout = &ctx->restart_u.timer.abstimeout;
         }
+        assert(ctx->restart_type == RESTART_NONE);
         const uint32_t sz = is64 ? 8 : 4;
         void *p;
         ret = memory_atomic_getptr(ctx, memidx, addr, offset, sz, &p, &lock);
@@ -1380,26 +1386,35 @@ memory_wait(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
                 return ret;
         }
         assert((lock == NULL) == (shared == NULL));
-retry:
-        ret = check_interrupt(ctx);
-        if (ret != 0) {
-                if (ret == ETOYWASMRESTART) {
-                        ctx->restart_abstimeout = abstimeout;
-                        STAT_INC(ctx->stats.atomic_wait_restart);
-                }
-                goto fail;
-        }
+retry:;
         uint64_t prev;
         if (is64) {
                 prev = *(uint64_t *)p;
         } else {
                 prev = *(uint32_t *)p;
         }
+        xlog_trace("%s: addr=0x%" PRIx32 " offset=0x%" PRIx32
+                   " actual=%" PRIu64 " expected %" PRIu64,
+                   __func__, addr, offset, prev, expected);
         if (prev != expected) {
                 *resultp = 1; /* not equal */
         } else {
+                ret = check_interrupt(ctx);
+                if (ret != 0) {
+                        if (ret == ETOYWASMRESTART) {
+                                if (abstimeout != NULL) {
+                                        assert(abstimeout ==
+                                               &ctx->restart_u.timer
+                                                        .abstimeout);
+                                        ctx->restart_type = RESTART_TIMER;
+                                }
+                                STAT_INC(ctx->stats.atomic_wait_restart);
+                        }
+                        goto fail;
+                }
                 struct timespec next_abstimeout;
-                static const int64_t interval_ns = 300000000;
+                static const int64_t interval_ns =
+                        CHECK_INTERRUPT_INTERVAL_MS * 1000000;
                 ret = abstime_from_reltime_ns(CLOCK_REALTIME, &next_abstimeout,
                                               interval_ns);
                 if (ret != 0) {

@@ -385,9 +385,9 @@ wasi_fdinfo_release(struct wasi_instance *wasi, struct wasi_fdinfo *fdinfo)
         toywasm_mutex_unlock(&wasi->lock);
 }
 
-static void
-wasi_fdinfo_drain(struct wasi_instance *wasi, struct wasi_fdinfo *fdinfo)
-        EXCLUDES(wasi->lock)
+static int
+wasi_fdinfo_drain(struct exec_context *ctx, struct wasi_instance *wasi,
+                  struct wasi_fdinfo *fdinfo) EXCLUDES(wasi->lock)
 {
         /*
          * Note:
@@ -397,28 +397,39 @@ wasi_fdinfo_drain(struct wasi_instance *wasi, struct wasi_fdinfo *fdinfo)
          * (ie. while holding a lock)
          * Thus, there can't be multiple threads calling this function
          * for the fdinfo.
-         *
-         * Note:
-         * We block without calling check_interrupt(). It means we rely
-         * on the other threads checking check_interrupt() and
-         * terminate/restart correctly and allow us to finish draining
-         * the fdinfo "soon".
-         * CAVEAT: It might not be the case for 0-3 tty hostfds.
          */
-        toywasm_mutex_lock(&wasi->lock);
+        int ret;
         while (true) {
+                ret = check_interrupt(ctx);
+                if (ret != 0) {
+                        xlog_trace("%s: failed with %d", __func__, ret);
+                        goto fail;
+                }
+                toywasm_mutex_lock(&wasi->lock);
                 assert(fdinfo->refcount >= 1);
                 if (fdinfo->refcount == 1) {
                         break;
                 }
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
-                int ret = pthread_cond_wait(&wasi->cv, &wasi->lock.lock);
-                assert(ret == 0);
+                struct timespec absto;
+                ret = abstime_from_reltime_ms(CLOCK_REALTIME, &absto,
+                                              CHECK_INTERRUPT_INTERVAL_MS);
+                if (ret != 0) {
+                        toywasm_mutex_unlock(&wasi->lock);
+                        goto fail;
+                }
+                ret = pthread_cond_timedwait(&wasi->cv, &wasi->lock.lock,
+                                             &absto);
+                assert(ret == 0 || ret == ETIMEDOUT);
 #else
                 assert(false);
 #endif
+                toywasm_mutex_unlock(&wasi->lock);
         }
         toywasm_mutex_unlock(&wasi->lock);
+        return 0;
+fail:
+        return ret;
 }
 
 static int
@@ -847,7 +858,7 @@ static int
 wasi_poll(struct exec_context *ctx, struct pollfd *fds, nfds_t nfds,
           int timeout_ms, int *retp, int *neventsp)
 {
-        const int interval_ms = 300;
+        const int interval_ms = CHECK_INTERRUPT_INTERVAL_MS;
         const struct timespec *abstimeout;
         int host_ret = 0;
         int ret;
@@ -890,26 +901,35 @@ wasi_poll(struct exec_context *ctx, struct pollfd *fds, nfds_t nfds,
          * https://github.com/bytecodealliance/wasmtime/blob/93ae9078c5a2588b5241bd7221ace459d2b04d54/crates/test-programs/wasi-tests/src/bin/poll_oneoff_files.rs#L86-L89
          */
 
-        if (ctx->restart_abstimeout != NULL) {
-                abstimeout = ctx->restart_abstimeout;
-                ctx->restart_abstimeout = NULL;
+        assert(ctx->restart_type == RESTART_NONE ||
+               ctx->restart_type == RESTART_TIMER);
+        if (ctx->restart_type == RESTART_TIMER) {
+                abstimeout = &ctx->restart_u.timer.abstimeout;
+                ctx->restart_type = RESTART_NONE;
         } else if (timeout_ms < 0) {
                 abstimeout = NULL;
         } else {
-                ret = abstime_from_reltime_ms(
-                        CLOCK_REALTIME, &ctx->restart_abstimeout0, timeout_ms);
+                ret = abstime_from_reltime_ms(CLOCK_REALTIME,
+                                              &ctx->restart_u.timer.abstimeout,
+                                              timeout_ms);
                 if (ret != 0) {
                         goto fail;
                 }
-                abstimeout = &ctx->restart_abstimeout0;
+                abstimeout = &ctx->restart_u.timer.abstimeout;
         }
+        assert(ctx->restart_type == RESTART_NONE);
         while (true) {
                 int next_timeout_ms;
 
                 host_ret = check_interrupt(ctx);
                 if (host_ret != 0) {
                         if (host_ret == ETOYWASMRESTART) {
-                                ctx->restart_abstimeout = abstimeout;
+                                if (abstimeout != NULL) {
+                                        assert(abstimeout ==
+                                               &ctx->restart_u.timer
+                                                        .abstimeout);
+                                        ctx->restart_type = RESTART_TIMER;
+                                }
                         }
                         goto fail;
                 }
@@ -952,6 +972,8 @@ wasi_poll(struct exec_context *ctx, struct pollfd *fds, nfds_t nfds,
 fail:
         assert(host_ret != 0 || ret >= 0);
         assert(host_ret != 0 || ret != 0 || *neventsp > 0);
+        assert(host_ret == ETOYWASMRESTART ||
+               ctx->restart_type == RESTART_NONE);
         *retp = ret;
         return host_ret;
 }
@@ -1119,7 +1141,18 @@ wasi_fd_close(struct exec_context *ctx, struct host_instance *hi,
         HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         struct wasi_fdinfo *fdinfo = NULL;
+        int host_ret = 0;
         int ret;
+
+        assert(ctx->restart_type == RESTART_NONE ||
+               ctx->restart_type == RESTART_CLOSE);
+        if (ctx->restart_type == RESTART_CLOSE) {
+                fdinfo = ctx->restart_u.close.fdinfo;
+                ctx->restart_type = RESTART_NONE;
+                ret = 0;
+                goto cont;
+        }
+
         toywasm_mutex_lock(&wasi->lock);
         ret = wasi_fd_lookup_locked(wasi, wasifd, &fdinfo);
         if (ret != 0) {
@@ -1157,7 +1190,27 @@ wasi_fd_close(struct exec_context *ctx, struct host_instance *hi,
          * i guess portable applications should not rely on either
          * behaviors.
          */
-        wasi_fdinfo_drain(wasi, fdinfo);
+cont:
+        host_ret = wasi_fdinfo_drain(ctx, wasi, fdinfo);
+        if (host_ret != 0) {
+                if (host_ret == ETOYWASMRESTART) {
+                        xlog_trace("%s: restarting fdinfo %p drain", __func__,
+                                   fdinfo);
+                        ctx->restart_type = RESTART_CLOSE;
+                        ctx->restart_u.close.fdinfo = fdinfo;
+                        fdinfo = NULL;
+                } else {
+                        /*
+                         * as we've already detached fdinfo from the table,
+                         * just close forcibly to avoid leak.
+                         */
+                        ret = wasi_fdinfo_close(fdinfo);
+                        if (ret != 0) {
+                                xlog_error("failed to close");
+                        }
+                }
+                goto fail;
+        }
         ret = wasi_fdinfo_close(fdinfo);
         if (ret != 0) {
                 ret = errno;
@@ -1167,8 +1220,11 @@ wasi_fd_close(struct exec_context *ctx, struct host_instance *hi,
         ret = 0;
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
-        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
-        return 0;
+        if (host_ret == 0) {
+                HOST_FUNC_RESULT_SET(ft, results, 0, i32,
+                                     wasi_convert_errno(ret));
+        }
+        return host_ret;
 fail_locked:
         toywasm_mutex_unlock(&wasi->lock);
         goto fail;
@@ -1816,7 +1872,17 @@ wasi_fd_renumber(struct exec_context *ctx, struct host_instance *hi,
         uint32_t wasifd_to = HOST_FUNC_PARAM(ft, params, 1, i32);
         struct wasi_fdinfo *fdinfo_from = NULL;
         struct wasi_fdinfo *fdinfo_to = NULL;
+        int host_ret = 0;
         int ret;
+
+        assert(ctx->restart_type == RESTART_NONE ||
+               ctx->restart_type == RESTART_CLOSE);
+        if (ctx->restart_type == RESTART_CLOSE) {
+                fdinfo_to = ctx->restart_u.close.fdinfo;
+                ctx->restart_type = RESTART_NONE;
+                ret = 0;
+                goto cont;
+        }
 
         toywasm_mutex_lock(&wasi->lock);
 
@@ -1863,7 +1929,27 @@ wasi_fd_renumber(struct exec_context *ctx, struct host_instance *hi,
 
         /* close the old "to" file */
         if (!wasi_fdinfo_unused(fdinfo_to)) {
-                wasi_fdinfo_drain(wasi, fdinfo_to);
+cont:
+                host_ret = wasi_fdinfo_drain(ctx, wasi, fdinfo_to);
+                if (host_ret != 0) {
+                        if (host_ret == ETOYWASMRESTART) {
+                                xlog_trace("%s: restarting fdinfo %p drain",
+                                           __func__, fdinfo_to);
+                                ctx->restart_type = RESTART_CLOSE;
+                                ctx->restart_u.close.fdinfo = fdinfo_to;
+                                fdinfo_to = NULL;
+                        } else {
+                                /*
+                                 * as we've already detached fdinfo from the
+                                 * table, just close forcibly to avoid leak.
+                                 */
+                                ret = wasi_fdinfo_close(fdinfo_to);
+                                if (ret != 0) {
+                                        xlog_error("failed to close");
+                                }
+                        }
+                        goto fail;
+                }
                 ret = wasi_fdinfo_close(fdinfo_to);
                 if (ret != 0) {
                         /* log and ignore */
@@ -1875,8 +1961,11 @@ wasi_fd_renumber(struct exec_context *ctx, struct host_instance *hi,
 fail:
         wasi_fdinfo_release(wasi, fdinfo_from);
         wasi_fdinfo_release(wasi, fdinfo_to);
-        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
-        return 0;
+        if (host_ret == 0) {
+                HOST_FUNC_RESULT_SET(ft, results, 0, i32,
+                                     wasi_convert_errno(ret));
+        }
+        return host_ret;
 fail_locked:
         toywasm_mutex_unlock(&wasi->lock);
         goto fail;
@@ -2233,7 +2322,7 @@ fail:
         free(pollfds);
         if (host_ret != ETOYWASMRESTART) {
                 /*
-                 * avoid leaving a stale restart_abstimeout.
+                 * avoid leaving a stale restart state.
                  *
                  * consider:
                  * 1. poll_oneoff returns ETOYWASMRESTART with
@@ -2245,7 +2334,9 @@ fail:
                  * 4. the subsequent restartable operation gets confused
                  *    by the saved timeout.
                  */
-                ctx->restart_abstimeout = NULL;
+                ctx->restart_type = RESTART_NONE;
+        } else {
+                xlog_trace("%s: restarting", __func__);
         }
         return host_ret;
 }

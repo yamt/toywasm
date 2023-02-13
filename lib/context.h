@@ -81,6 +81,12 @@ enum exec_event {
 #endif /* defined(TOYWASM_ENABLE_WASM_TAILCALL) */
 };
 
+enum restart_type {
+        RESTART_NONE,
+        RESTART_TIMER,
+        RESTART_CLOSE,
+};
+
 struct exec_stat {
         uint64_t call;
         uint64_t host_call;      /* included in call */
@@ -122,7 +128,10 @@ struct trap_info {
 #define ETOYWASMTRAP -1
 #define ETOYWASMRESTART -2
 
+#define CHECK_INTERRUPT_INTERVAL_MS 300
+
 struct context;
+struct wasi_fdinfo;
 
 struct exec_context {
         /* Some cached info about the current frame. */
@@ -184,8 +193,25 @@ struct exec_context {
         } event_u;
 
         /* Restart */
-        struct timespec restart_abstimeout0;
-        const struct timespec *restart_abstimeout;
+        enum restart_type restart_type;
+        union {
+                /*
+                 * RESTART_TIMER
+                 * fd_poll_oneoff
+                 * memory.atomic.wait32/64
+                 */
+                struct {
+                        struct timespec abstimeout;
+                } timer;
+
+                /*
+                 * RESTART_CLOSE
+                 * fd_close, fd_renumber
+                 */
+                struct {
+                        struct wasi_fdinfo *fdinfo;
+                } close;
+        } restart_u;
 
         /* To simplify restart api */
         struct cell *results;
