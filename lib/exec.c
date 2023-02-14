@@ -1660,7 +1660,7 @@ print_pc(const struct exec_context *ctx)
 {
         /*
          * XXX ctx->p is usually not up to date with TOYWASM_USE_TAILCALL.
-         * XXX ctx->p usually points to the middle of opecode.
+         * XXX ctx->p usually points to the middle of opcode.
          */
         printf("PC %06" PRIx32 "\n", ptr2pc(ctx->instance->module, ctx->p));
 }
