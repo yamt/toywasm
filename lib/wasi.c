@@ -2296,6 +2296,9 @@ retry:
                         if (pfd->revents != 0) {
                                 /*
                                  * translate per-fd error.
+                                 *
+                                 * Note: the mapping to EBADF and EPIPE here
+                                 * matches wasi-libc.
                                  */
                                 if ((pfd->revents & POLLNVAL) != 0) {
                                         ev->error = wasi_convert_errno(EBADF);
