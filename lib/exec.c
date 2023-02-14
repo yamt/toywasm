@@ -507,7 +507,7 @@ do_host_call(struct exec_context *ctx, const struct funcinst *finst)
                          *
                          * Note: it's a responsibility of host functions
                          * to keep function arguments on the stack intact
-                         * when returning ETOYWASMRESTART at least.
+                         * when returning ETOYWASMRESTART.
                          */
                         ctx->stack.lsize += nparams;
                         STAT_INC(ctx->stats.call_restart);
