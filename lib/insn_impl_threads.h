@@ -46,7 +46,7 @@ fail:                                                                         \
                 struct val val_c;                                             \
                 if (EXECUTING) {                                              \
                         void *datap;                                          \
-                        struct atomics_mutex *lock;                           \
+                        struct toywasm_mutex *lock;                           \
                         ret = memory_atomic_getptr(                           \
                                 ECTX, memarg.memidx, val_i.u.i32,             \
                                 memarg.offset, MEM / 8, &datap, &lock);       \
@@ -76,7 +76,7 @@ fail:                                                                         \
                 POP_VAL(TYPE_i32, i);                                         \
                 if (EXECUTING) {                                              \
                         void *datap;                                          \
-                        struct atomics_mutex *lock;                           \
+                        struct toywasm_mutex *lock;                           \
                         ret = memory_atomic_getptr(                           \
                                 ECTX, memarg.memidx, val_i.u.i32,             \
                                 memarg.offset, MEM / 8, &datap, &lock);       \
@@ -106,7 +106,7 @@ fail:                                                                         \
                 struct val val_readv;                                         \
                 if (EXECUTING) {                                              \
                         void *datap;                                          \
-                        struct atomics_mutex *lock;                           \
+                        struct toywasm_mutex *lock;                           \
                         ret = memory_atomic_getptr(                           \
                                 ECTX, memarg.memidx, val_i.u.i32,             \
                                 memarg.offset, MEM / 8, &datap, &lock);       \
@@ -141,7 +141,7 @@ fail:                                                                         \
                 struct val val_readv;                                         \
                 if (EXECUTING) {                                              \
                         void *datap;                                          \
-                        struct atomics_mutex *lock;                           \
+                        struct toywasm_mutex *lock;                           \
                         ret = memory_atomic_getptr(                           \
                                 ECTX, memarg.memidx, val_i.u.i32,             \
                                 memarg.offset, MEM / 8, &datap, &lock);       \

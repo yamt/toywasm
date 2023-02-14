@@ -248,11 +248,11 @@ int memory_getptr(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
                   uint32_t offset, uint32_t size, void **pp);
 int memory_getptr2(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
                    uint32_t offset, uint32_t size, void **pp, bool *movedp);
-struct atomics_mutex;
+struct toywasm_mutex;
 int memory_atomic_getptr(struct exec_context *ctx, uint32_t memidx,
                          uint32_t ptr, uint32_t offset, uint32_t size,
-                         void **pp, struct atomics_mutex **lockp);
-void memory_atomic_unlock(struct atomics_mutex *lock);
+                         void **pp, struct toywasm_mutex **lockp);
+void memory_atomic_unlock(struct toywasm_mutex *lock);
 int frame_enter(struct exec_context *ctx, struct instance *inst,
                 uint32_t funcidx, const struct expr_exec_info *ei,
                 const struct localtype *localtype,

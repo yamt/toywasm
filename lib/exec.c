@@ -117,15 +117,16 @@ memory_getptr(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
 int
 memory_atomic_getptr(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
                      uint32_t offset, uint32_t size, void **pp,
-                     struct atomics_mutex **lockp)
+                     struct toywasm_mutex **lockp)
+        NO_THREAD_SAFETY_ANALYSIS /* conditionl lock */
 {
         struct instance *inst = ctx->instance;
         struct meminst *meminst = VEC_ELEM(inst->mems, memidx);
         struct shared_meminst *shared = meminst->shared;
-        struct atomics_mutex *lock = NULL;
+        struct toywasm_mutex *lock = NULL;
         if (shared != NULL) {
                 lock = atomics_mutex_getptr(&shared->tab, ptr + offset);
-                atomics_mutex_lock(lock);
+                toywasm_mutex_lock(lock);
         }
         int ret;
         ret = memory_getptr(ctx, memidx, ptr, offset, size, pp);
@@ -145,10 +146,11 @@ fail:
 }
 
 void
-memory_atomic_unlock(struct atomics_mutex *lock)
+memory_atomic_unlock(struct toywasm_mutex *lock)
+        NO_THREAD_SAFETY_ANALYSIS /* conditionl lock */
 {
         if (lock != NULL) {
-                atomics_mutex_unlock(lock);
+                toywasm_mutex_unlock(lock);
         }
 }
 #endif
@@ -1326,7 +1328,7 @@ memory_notify(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
         assert(memidx < m->nimportedmems + m->nmems);
         struct meminst *mi = VEC_ELEM(inst->mems, memidx);
         struct shared_meminst *shared = mi->shared;
-        struct atomics_mutex *lock;
+        struct toywasm_mutex *lock;
         void *p;
         int ret;
         ret = memory_atomic_getptr(ctx, memidx, addr, offset, 4, &p, &lock);
@@ -1361,7 +1363,7 @@ memory_wait(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
                 return trap_with_id(ctx, TRAP_ATOMIC_WAIT_ON_NON_SHARED_MEMORY,
                                     "wait on non-shared memory");
         }
-        struct atomics_mutex *lock = NULL;
+        struct toywasm_mutex *lock = NULL;
         int ret;
 
         /*

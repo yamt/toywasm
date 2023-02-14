@@ -1,6 +1,6 @@
 #include <stdint.h>
 
-struct atomics_mutex;
+struct toywasm_mutex;
 struct waiter_list;
 struct timespec;
 
@@ -16,7 +16,5 @@ void waiter_list_table_init(struct waiter_list_table *tab);
 int atomics_wait(struct waiter_list_table *tab, uint32_t ident,
                  const struct timespec *abstimeout);
 
-struct atomics_mutex *atomics_mutex_getptr(struct waiter_list_table *tab,
+struct toywasm_mutex *atomics_mutex_getptr(struct waiter_list_table *tab,
                                            uint32_t ident);
-void atomics_mutex_lock(struct atomics_mutex *lock);
-void atomics_mutex_unlock(struct atomics_mutex *lock);

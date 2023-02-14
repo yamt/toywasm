@@ -23,6 +23,7 @@
 #define EXCLUDES(...) _TAS(__attribute__((locks_excluded((__VA_ARGS__)))))
 #define ACQUIRES(...) _TAS(__attribute__((acquire_capability((__VA_ARGS__)))))
 #define RELEASES(...) _TAS(__attribute__((release_capability((__VA_ARGS__)))))
+#define ASSERT_HELD(l) _TAS(__attribute__((assert_capability(l))))
 #define NO_THREAD_SAFETY_ANALYSIS                                             \
         _TAS(__attribute__((no_thread_safety_analysis)))
 

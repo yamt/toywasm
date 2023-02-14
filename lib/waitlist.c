@@ -9,20 +9,17 @@
 #include <time.h>
 
 #include "list.h"
+#include "lock.h"
 #include "waitlist.h"
 #include "xlog.h"
 
-struct atomics_mutex {
-        pthread_mutex_t lock;
-};
-
-static struct atomics_mutex g_atomics_lock = {
+static TOYWASM_MUTEX_DEFINE(g_atomics_lock) = {
         PTHREAD_MUTEX_INITIALIZER,
 };
 
 struct waiter {
         LIST_ENTRY(struct waiter) e;
-        pthread_cond_t cv;
+        TOYWASM_CV_DEFINE(cv);
         bool woken;
 };
 
@@ -33,36 +30,20 @@ struct waiter_list {
         uint32_t nwaiters;
 };
 
-struct atomics_mutex *
+struct toywasm_mutex *
 atomics_mutex_getptr(struct waiter_list_table *tab, uint32_t ident)
 {
         /* REVISIT: is it worth to use finer grained lock? */
         return &g_atomics_lock;
 }
 
-void
-atomics_mutex_lock(struct atomics_mutex *lock)
-{
-        assert(lock != NULL);
-        int ret = pthread_mutex_lock(&lock->lock);
-        assert(ret == 0);
-}
-
-void
-atomics_mutex_unlock(struct atomics_mutex *lock)
-{
-        assert(lock != NULL);
-        int ret = pthread_mutex_unlock(&lock->lock);
-        assert(ret == 0);
-}
-
 static struct waiter_list *
 waiter_list_lookup(struct waiter_list_table *tab, uint32_t ident,
-                   struct atomics_mutex **lockp, bool allocate)
+                   struct toywasm_mutex **lockp, bool allocate)
 {
         struct waiter_list *l;
         struct waiter_list **headp = &tab->lists[0];
-        struct atomics_mutex *lock = atomics_mutex_getptr(tab, ident);
+        struct toywasm_mutex *lock = atomics_mutex_getptr(tab, ident);
         *lockp = lock;
         for (l = *headp; l != NULL; l = l->next) {
                 if (l->ident == ident) {
@@ -111,16 +92,14 @@ waiter_list_table_init(struct waiter_list_table *tab)
 static void
 waiter_init(struct waiter *w)
 {
-        int ret = pthread_cond_init(&w->cv, NULL);
-        assert(ret == 0);
+        toywasm_cv_init(&w->cv);
         w->woken = false;
 }
 
 static void
 waiter_destroy(struct waiter *w)
 {
-        int ret = pthread_cond_destroy(&w->cv);
-        assert(ret == 0);
+        toywasm_cv_destroy(&w->cv);
 }
 
 static void
@@ -139,12 +118,13 @@ waiter_insert_tail(struct waiter_list *l, struct waiter *w)
 }
 
 static int
-waiter_block(struct waiter_list *l, struct atomics_mutex *lock,
+waiter_block(struct waiter_list *l, struct toywasm_mutex *lock,
              struct waiter *w, const struct timespec *abstimeout)
+        REQUIRES(lock)
 {
         int ret;
         while (!w->woken) {
-                ret = pthread_cond_timedwait(&w->cv, &lock->lock, abstimeout);
+                ret = toywasm_cv_timedwait(&w->cv, lock, abstimeout);
                 if (ret == ETIMEDOUT) {
                         if (w->woken) {
                                 xlog_trace("%s: ignoring timeout", __func__);
@@ -158,12 +138,16 @@ waiter_block(struct waiter_list *l, struct atomics_mutex *lock,
 }
 
 static void
-waiter_wakeup(struct waiter_list *l, struct atomics_mutex *lock,
-              struct waiter *w)
+waiter_wakeup(struct waiter_list *l, struct toywasm_mutex *lock,
+              struct waiter *w) REQUIRES(lock)
 {
         w->woken = true;
-        int ret = pthread_cond_signal(&w->cv);
-        assert(ret == 0);
+        toywasm_cv_signal(&w->cv, lock);
+}
+
+static void
+assert_held(struct toywasm_mutex *lock) ASSERT_HELD(lock)
+{
 }
 
 /*
@@ -174,12 +158,14 @@ waiter_wakeup(struct waiter_list *l, struct atomics_mutex *lock,
 uint32_t
 atomics_notify(struct waiter_list_table *tab, uint32_t ident, uint32_t count)
 {
+        /* Note: the lock in held by the caller (memory_atomic_getptr) */
         xlog_trace("%s: ident=%" PRIx32, __func__, ident);
-        struct atomics_mutex *lock;
+        struct toywasm_mutex *lock;
         struct waiter_list *l = waiter_list_lookup(tab, ident, &lock, false);
         if (l == NULL) {
                 return 0;
         }
+        assert_held(lock);
         assert(!LIST_EMPTY(&l->waiters));
         struct waiter *w;
         uint32_t left = count;
@@ -208,12 +194,14 @@ int
 atomics_wait(struct waiter_list_table *tab, uint32_t ident,
              const struct timespec *abstimeout)
 {
+        /* Note: the lock in held by the caller (memory_atomic_getptr) */
         xlog_trace("%s: ident=%" PRIx32, __func__, ident);
         int ret;
-        struct atomics_mutex *lock;
+        struct toywasm_mutex *lock;
         struct waiter_list *l = waiter_list_lookup(tab, ident, &lock, true);
+        assert_held(lock);
         if (l->nwaiters == UINT32_MAX) {
-                atomics_mutex_unlock(lock);
+                toywasm_mutex_unlock(lock);
                 return EOVERFLOW;
         }
         struct waiter w0;
