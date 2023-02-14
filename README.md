@@ -4,7 +4,7 @@ A WebAssembly interpreter.
 
 ## On-browser demo
 
-You can try it out on [webassembly.sh](https://webassembly.sh/?run-command=toywasm%20--version):
+You can try it out on [webassembly.sh](https://webassembly.sh/?run-command=toywasm%20--print-stats%20--wasi%20--%20_wasmer/wapm_packages/yamt/toywasm@0.0.13/build/toywasm%20--version):
 
 ```shell
 $ curl -o cowsay.wasm https://registry-cdn.wapm.io/contents/liftm/cowsay/0.2.2/target/wasm32-wasi/release/cowsay.wasm
