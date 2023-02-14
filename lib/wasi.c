@@ -770,6 +770,8 @@ wasi_copyin_and_convert_path(struct exec_context *ctx,
                 goto fail;
         }
         wasi_fdinfo_release(wasi, dirfdinfo);
+        xlog_trace("%s: wasifd %d wasmpath %s hostpath %s", __func__,
+                   dirwasifd, wasmpath, hostpath);
         *hostpathp = hostpath;
         *wasmpathp = wasmpath;
         *usererrorp = 0;
