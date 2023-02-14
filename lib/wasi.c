@@ -414,78 +414,82 @@ wasi_fdinfo_close(struct wasi_fdinfo *fdinfo)
 }
 
 static int
-wasi_fdinfo_drain_and_close(struct exec_context *ctx,
-                            struct wasi_instance *wasi,
-                            struct wasi_fdinfo *fdinfo, int *retp)
-        EXCLUDES(wasi->lock)
+wasi_fdinfo_wait(struct exec_context *ctx, struct wasi_instance *wasi,
+                 struct wasi_fdinfo *fdinfo) REQUIRES(wasi->lock)
 {
-        /*
-         * Note:
-         * When a thread gets a reference to an fdinfo in order to
-         * close it, (ie. fd_close and fd_renumber)
-         * it detaches the fdinfo from the table as well atomically.
-         * (ie. while holding a lock)
-         * Thus, there can't be multiple threads calling this function
-         * for the fdinfo.
-         */
-        int host_ret;
-        int ret;
-        while (true) {
-                host_ret = check_interrupt(ctx);
-                if (host_ret != 0) {
-                        xlog_trace("%s: failed with %d", __func__, host_ret);
-                        goto fail;
-                }
-                toywasm_mutex_lock(&wasi->lock);
-                assert(fdinfo->refcount >= 1);
-                if (fdinfo->refcount == 1) {
-                        break;
-                }
+        int host_ret = 0;
+        assert(fdinfo->refcount >= 2);
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
-                struct timespec absto;
-                ret = abstime_from_reltime_ms(CLOCK_REALTIME, &absto,
-                                              CHECK_INTERRUPT_INTERVAL_MS);
-                if (ret != 0) {
-                        toywasm_mutex_unlock(&wasi->lock);
-                        goto fail;
-                }
-                ret = pthread_cond_timedwait(&wasi->cv, &wasi->lock.lock,
-                                             &absto);
-                assert(ret == 0 || ret == ETIMEDOUT);
-#else
-                assert(false);
-#endif
-                toywasm_mutex_unlock(&wasi->lock);
+        struct timespec absto;
+        int ret = abstime_from_reltime_ms(CLOCK_REALTIME, &absto,
+                                          CHECK_INTERRUPT_INTERVAL_MS);
+        if (ret != 0) {
+                goto fail;
         }
+        ret = pthread_cond_timedwait(&wasi->cv, &wasi->lock.lock, &absto);
+        assert(ret == 0 || ret == ETIMEDOUT);
+        /*
+         * Note: at this point, fdinfo might not be a valid anymore.
+         */
+#else
+        assert(false);
+#endif
         toywasm_mutex_unlock(&wasi->lock);
-        ret = wasi_fdinfo_close(fdinfo);
-        *retp = ret;
+        host_ret = check_interrupt(ctx);
+        if (host_ret != 0) {
+                xlog_trace("%s: failed with %d", __func__, host_ret);
+        }
+        toywasm_mutex_lock(&wasi->lock);
+fail:
+        return host_ret;
+}
+
+static int
+wasi_fd_lookup_locked_for_close(struct exec_context *ctx,
+                                struct wasi_instance *wasi, uint32_t wasifd,
+                                struct wasi_fdinfo **fdinfop, int *retp)
+        REQUIRES(wasi->lock)
+{
+        struct wasi_fdinfo *fdinfo;
+        int ret;
+retry:
+        ret = wasi_fd_lookup_locked(wasi, wasifd, &fdinfo);
+        if (ret != 0) {
+                goto fail;
+        }
+        if (fdinfo_is_prestat(fdinfo)) {
+                ret = ENOTSUP;
+                goto fail;
+        }
+
+        /*
+         * it should have at least two references for
+         * fdtable and wasi_fd_lookup_locked above.
+         */
+        assert(fdinfo->refcount >= 2);
+        if (fdinfo->refcount > 2) {
+                /*
+                 * it's important to drop our own reference before waiting.
+                 * otherwise, it can deadlock if two or more threads attempt
+                 * to close the same fd.
+                 */
+                fdinfo->refcount--;
+                int host_ret = wasi_fdinfo_wait(ctx, wasi, fdinfo);
+                if (host_ret != 0) {
+                        return host_ret;
+                }
+                /*
+                 * as wasi_fdinfo_wait might have dropped the lock,
+                 * restart from fd lookup.
+                 */
+                goto retry;
+        }
+        *fdinfop = fdinfo;
+        *retp = 0;
         return 0;
 fail:
-        if (host_ret != 0) {
-                if (host_ret == ETOYWASMRESTART) {
-                        xlog_trace("%s: restarting fdinfo %p drain", __func__,
-                                   fdinfo);
-                        ctx->restart_type = RESTART_CLOSE;
-                        ctx->restart_u.close.fdinfo = fdinfo;
-                        toywasm_mutex_lock(&wasi->lock);
-                        fdinfo->refcount++;
-                        toywasm_mutex_unlock(&wasi->lock);
-                } else {
-                        /*
-                         * as we've already detached fdinfo from the table,
-                         * just close forcibly to avoid leak.
-                         */
-                        int hostfd = fdinfo->hostfd;
-                        ret = wasi_fdinfo_close(fdinfo);
-                        if (ret != 0) {
-                                xlog_error(
-                                        "failed to close hostfd %d forcibly",
-                                        hostfd);
-                        }
-                }
-        }
-        return host_ret;
+        *retp = ret;
+        return 0;
 }
 
 static int
@@ -1179,35 +1183,6 @@ wasi_fd_close(struct exec_context *ctx, struct host_instance *hi,
         int host_ret = 0;
         int ret;
 
-        assert(ctx->restart_type == RESTART_NONE ||
-               ctx->restart_type == RESTART_CLOSE);
-        if (ctx->restart_type == RESTART_CLOSE) {
-                fdinfo = ctx->restart_u.close.fdinfo;
-                ctx->restart_type = RESTART_NONE;
-                ret = 0;
-                goto cont;
-        }
-
-        toywasm_mutex_lock(&wasi->lock);
-        ret = wasi_fd_lookup_locked(wasi, wasifd, &fdinfo);
-        if (ret != 0) {
-                goto fail_locked;
-        }
-        if (fdinfo_is_prestat(fdinfo)) {
-                ret = ENOTSUP;
-                goto fail_locked;
-        }
-        if (fdinfo->hostfd == -1) {
-                ret = EBADF;
-                goto fail_locked;
-        }
-
-        assert(fdinfo->refcount >= 2);
-        fdinfo->refcount--;
-        assert(VEC_ELEM(wasi->fdtable, wasifd) == fdinfo);
-        VEC_ELEM(wasi->fdtable, wasifd) = NULL;
-        toywasm_mutex_unlock(&wasi->lock);
-
         /*
          * we simply make fd_close block until other threads finish working
          * on the descriptor.
@@ -1225,8 +1200,27 @@ wasi_fd_close(struct exec_context *ctx, struct host_instance *hi,
          * i guess portable applications should not rely on either
          * behaviors.
          */
-cont:
-        host_ret = wasi_fdinfo_drain_and_close(ctx, wasi, fdinfo, &ret);
+
+        toywasm_mutex_lock(&wasi->lock);
+        host_ret = wasi_fd_lookup_locked_for_close(ctx, wasi, wasifd, &fdinfo,
+                                                   &ret);
+        if (host_ret != 0 || ret != 0) {
+                toywasm_mutex_unlock(&wasi->lock);
+                goto fail;
+        }
+        if (fdinfo->hostfd == -1) {
+                toywasm_mutex_unlock(&wasi->lock);
+                ret = EBADF;
+                goto fail;
+        }
+
+        assert(fdinfo->refcount == 2);
+        fdinfo->refcount--;
+        assert(VEC_ELEM(wasi->fdtable, wasifd) == fdinfo);
+        VEC_ELEM(wasi->fdtable, wasifd) = NULL;
+        toywasm_mutex_unlock(&wasi->lock);
+
+        ret = wasi_fdinfo_close(fdinfo);
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
         if (host_ret == 0) {
@@ -1234,9 +1228,6 @@ fail:
                                      wasi_convert_errno(ret));
         }
         return host_ret;
-fail_locked:
-        toywasm_mutex_unlock(&wasi->lock);
-        goto fail;
 }
 
 static int
@@ -1884,20 +1875,20 @@ wasi_fd_renumber(struct exec_context *ctx, struct host_instance *hi,
         int host_ret = 0;
         int ret;
 
-        assert(ctx->restart_type == RESTART_NONE ||
-               ctx->restart_type == RESTART_CLOSE);
-        if (ctx->restart_type == RESTART_CLOSE) {
-                fdinfo_to = ctx->restart_u.close.fdinfo;
-                ctx->restart_type = RESTART_NONE;
-                ret = 0;
-                goto cont;
-        }
-
         toywasm_mutex_lock(&wasi->lock);
 
         /* ensure the table size is big enough */
         ret = wasi_fdtable_expand(wasi, wasifd_to);
         if (ret != 0) {
+                goto fail_locked;
+        }
+
+        /* Note: we check "to" first because it can involve a restart */
+
+        /* check "to" */
+        host_ret = wasi_fd_lookup_locked_for_close(ctx, wasi, wasifd_to,
+                                                   &fdinfo_to, &ret);
+        if (host_ret != 0 || ret != 0) {
                 goto fail_locked;
         }
 
@@ -1915,18 +1906,8 @@ wasi_fd_renumber(struct exec_context *ctx, struct host_instance *hi,
                 goto fail_locked;
         }
 
-        /* chech "to" */
-        ret = wasi_fd_lookup_locked(wasi, wasifd_to, &fdinfo_to);
-        if (ret != 0) {
-                goto fail_locked;
-        }
-        if (fdinfo_is_prestat(fdinfo_to)) {
-                ret = ENOTSUP;
-                goto fail_locked;
-        }
-
         /* renumber */
-        assert(fdinfo_to->refcount >= 2);
+        assert(fdinfo_to->refcount == 2);
         fdinfo_to->refcount--;
         VEC_ELEM(wasi->fdtable, wasifd_to) = fdinfo_from;
         VEC_ELEM(wasi->fdtable, wasifd_from) = NULL;
@@ -1938,10 +1919,8 @@ wasi_fd_renumber(struct exec_context *ctx, struct host_instance *hi,
 
         /* close the old "to" file */
         if (!wasi_fdinfo_unused(fdinfo_to)) {
-cont:
-                host_ret = wasi_fdinfo_drain_and_close(ctx, wasi, fdinfo_to,
-                                                       &ret);
-                if (host_ret == 0 && ret != 0) {
+                ret = wasi_fdinfo_close(fdinfo_to);
+                if (ret != 0) {
                         /* log and ignore */
                         xlog_error("%s: closing to-fd failed with %d",
                                    __func__, ret);

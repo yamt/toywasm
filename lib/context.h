@@ -84,7 +84,6 @@ enum exec_event {
 enum restart_type {
         RESTART_NONE,
         RESTART_TIMER,
-        RESTART_CLOSE,
 };
 
 struct exec_stat {
@@ -203,14 +202,6 @@ struct exec_context {
                 struct {
                         struct timespec abstimeout;
                 } timer;
-
-                /*
-                 * RESTART_CLOSE
-                 * fd_close, fd_renumber
-                 */
-                struct {
-                        struct wasi_fdinfo *fdinfo;
-                } close;
         } restart_u;
 
         /* To simplify restart api */
