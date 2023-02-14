@@ -38,11 +38,30 @@ void toywasm_mutex_init(struct toywasm_mutex *lock);
 void toywasm_mutex_destroy(struct toywasm_mutex *lock);
 void toywasm_mutex_lock(struct toywasm_mutex *lock) ACQUIRES(lock);
 void toywasm_mutex_unlock(struct toywasm_mutex *lock) RELEASES(lock);
+#define TOYWASM_CV_DEFINE(name) pthread_cond_t name
+void toywasm_cv_init(pthread_cond_t *cv);
+void toywasm_cv_destroy(pthread_cond_t *cv);
+void toywasm_cv_wait(pthread_cond_t *cv, struct toywasm_mutex *lock)
+        REQUIRES(lock);
+struct timespec;
+int toywasm_cv_timedwait(pthread_cond_t *cv, struct toywasm_mutex *lock,
+                         const struct timespec *abs) REQUIRES(lock);
+void toywasm_cv_signal(pthread_cond_t *cv, struct toywasm_mutex *lock)
+        REQUIRES(lock);
+void toywasm_cv_broadcast(pthread_cond_t *cv, struct toywasm_mutex *lock)
+        REQUIRES(lock);
 #else /* defined(TOYWASM_ENABLE_WASM_THREADS) */
 #define TOYWASM_MUTEX_DEFINE(name)
 #define toywasm_mutex_init(a)
 #define toywasm_mutex_destroy(a)
 #define toywasm_mutex_lock(a)
 #define toywasm_mutex_unlock(a)
+#define TOYWASM_CV_DEFINE(name)
+#define toywasm_cv_init(a)
+#define toywasm_cv_destroy(a)
+#define toywasm_cv_timedwait(a, lk, abs) 0
+#define toywasm_cv_wait(a, lk)
+#define toywasm_cv_signal(a, lk)
+#define toywasm_cv_broadcast(a, lk)
 #endif /* defined(TOYWASM_ENABLE_WASM_THREADS) */
 #endif /* !defined(_LOCK_H) */
