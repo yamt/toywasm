@@ -386,8 +386,38 @@ wasi_fdinfo_release(struct wasi_instance *wasi, struct wasi_fdinfo *fdinfo)
 }
 
 static int
-wasi_fdinfo_drain(struct exec_context *ctx, struct wasi_instance *wasi,
-                  struct wasi_fdinfo *fdinfo) EXCLUDES(wasi->lock)
+wasi_fdinfo_close(struct wasi_fdinfo *fdinfo)
+{
+        int ret = 0;
+        int hostfd = fdinfo->hostfd;
+#if defined(__wasi__) /* wasi has no dup */
+        if (hostfd != -1 && hostfd >= 3) {
+#else
+        if (hostfd != -1) {
+#endif
+                ret = close(fdinfo->hostfd);
+                if (ret != 0) {
+                        ret = errno;
+                        assert(ret > 0);
+                }
+        }
+        fdinfo->hostfd = -1;
+        if (fdinfo->dir != NULL) {
+                closedir(fdinfo->dir);
+        }
+        fdinfo->dir = NULL;
+        free(fdinfo->prestat_path);
+        free(fdinfo->wasm_path);
+        fdinfo->prestat_path = NULL;
+        fdinfo->wasm_path = NULL;
+        return ret;
+}
+
+static int
+wasi_fdinfo_drain_and_close(struct exec_context *ctx,
+                            struct wasi_instance *wasi,
+                            struct wasi_fdinfo *fdinfo, int *retp)
+        EXCLUDES(wasi->lock)
 {
         /*
          * Note:
@@ -398,10 +428,11 @@ wasi_fdinfo_drain(struct exec_context *ctx, struct wasi_instance *wasi,
          * Thus, there can't be multiple threads calling this function
          * for the fdinfo.
          */
+        int host_ret;
         int ret;
         while (true) {
-                ret = check_interrupt(ctx);
-                if (ret != 0) {
+                host_ret = check_interrupt(ctx);
+                if (host_ret != 0) {
                         xlog_trace("%s: failed with %d", __func__, ret);
                         goto fail;
                 }
@@ -427,33 +458,34 @@ wasi_fdinfo_drain(struct exec_context *ctx, struct wasi_instance *wasi,
                 toywasm_mutex_unlock(&wasi->lock);
         }
         toywasm_mutex_unlock(&wasi->lock);
+        ret = wasi_fdinfo_close(fdinfo);
+        *retp = ret;
         return 0;
 fail:
-        return ret;
-}
-
-static int
-wasi_fdinfo_close(struct wasi_fdinfo *fdinfo)
-{
-        int ret = 0;
-        int hostfd = fdinfo->hostfd;
-#if defined(__wasi__) /* wasi has no dup */
-        if (hostfd != -1 && hostfd >= 3) {
-#else
-        if (hostfd != -1) {
-#endif
-                ret = close(fdinfo->hostfd);
+        if (host_ret != 0) {
+                if (host_ret == ETOYWASMRESTART) {
+                        xlog_trace("%s: restarting fdinfo %p drain", __func__,
+                                   fdinfo);
+                        ctx->restart_type = RESTART_CLOSE;
+                        ctx->restart_u.close.fdinfo = fdinfo;
+                        toywasm_mutex_lock(&wasi->lock);
+                        fdinfo->refcount++;
+                        toywasm_mutex_unlock(&wasi->lock);
+                } else {
+                        /*
+                         * as we've already detached fdinfo from the table,
+                         * just close forcibly to avoid leak.
+                         */
+                        int hostfd = fdinfo->hostfd;
+                        ret = wasi_fdinfo_close(fdinfo);
+                        if (ret != 0) {
+                                xlog_error(
+                                        "failed to close hostfd %d forcibly",
+                                        hostfd);
+                        }
+                }
         }
-        fdinfo->hostfd = -1;
-        if (fdinfo->dir != NULL) {
-                closedir(fdinfo->dir);
-        }
-        fdinfo->dir = NULL;
-        free(fdinfo->prestat_path);
-        free(fdinfo->wasm_path);
-        fdinfo->prestat_path = NULL;
-        fdinfo->wasm_path = NULL;
-        return ret;
+        return host_ret;
 }
 
 static int
@@ -510,7 +542,7 @@ wasi_fdtable_free(struct wasi_instance *wasi) NO_THREAD_SAFETY_ANALYSIS
                 if (ret != 0) {
                         xlog_trace("failed to close: wasm fd %" PRIu32
                                    " host fd %u with errno %d",
-                                   i, hostfd, errno);
+                                   i, hostfd, ret);
                 }
                 free(fdinfo);
         }
@@ -1191,33 +1223,7 @@ wasi_fd_close(struct exec_context *ctx, struct host_instance *hi,
          * behaviors.
          */
 cont:
-        host_ret = wasi_fdinfo_drain(ctx, wasi, fdinfo);
-        if (host_ret != 0) {
-                if (host_ret == ETOYWASMRESTART) {
-                        xlog_trace("%s: restarting fdinfo %p drain", __func__,
-                                   fdinfo);
-                        ctx->restart_type = RESTART_CLOSE;
-                        ctx->restart_u.close.fdinfo = fdinfo;
-                        fdinfo = NULL;
-                } else {
-                        /*
-                         * as we've already detached fdinfo from the table,
-                         * just close forcibly to avoid leak.
-                         */
-                        ret = wasi_fdinfo_close(fdinfo);
-                        if (ret != 0) {
-                                xlog_error("failed to close");
-                        }
-                }
-                goto fail;
-        }
-        ret = wasi_fdinfo_close(fdinfo);
-        if (ret != 0) {
-                ret = errno;
-                assert(ret > 0);
-                goto fail;
-        }
-        ret = 0;
+        host_ret = wasi_fdinfo_drain_and_close(ctx, wasi, fdinfo, &ret);
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
         if (host_ret == 0) {
@@ -1930,28 +1936,9 @@ wasi_fd_renumber(struct exec_context *ctx, struct host_instance *hi,
         /* close the old "to" file */
         if (!wasi_fdinfo_unused(fdinfo_to)) {
 cont:
-                host_ret = wasi_fdinfo_drain(ctx, wasi, fdinfo_to);
-                if (host_ret != 0) {
-                        if (host_ret == ETOYWASMRESTART) {
-                                xlog_trace("%s: restarting fdinfo %p drain",
-                                           __func__, fdinfo_to);
-                                ctx->restart_type = RESTART_CLOSE;
-                                ctx->restart_u.close.fdinfo = fdinfo_to;
-                                fdinfo_to = NULL;
-                        } else {
-                                /*
-                                 * as we've already detached fdinfo from the
-                                 * table, just close forcibly to avoid leak.
-                                 */
-                                ret = wasi_fdinfo_close(fdinfo_to);
-                                if (ret != 0) {
-                                        xlog_error("failed to close");
-                                }
-                        }
-                        goto fail;
-                }
-                ret = wasi_fdinfo_close(fdinfo_to);
-                if (ret != 0) {
+                host_ret = wasi_fdinfo_drain_and_close(ctx, wasi, fdinfo_to,
+                                                       &ret);
+                if (host_ret == 0 && ret != 0) {
                         /* log and ignore */
                         xlog_error("%s: closing to-fd failed with %d",
                                    __func__, ret);
