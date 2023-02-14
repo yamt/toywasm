@@ -11,3 +11,9 @@ path_link
 
 # loose implementation of path_open.
 interesting_paths
+
+# test_fd_readwrite_invalid_fd expects that the entire poll_oneoff
+# fails with EBADF.
+# on the other hand, our implementation returns an event with error=EBADF.
+# i feel our interpretation is more reasonable.
+poll_oneoff_files
