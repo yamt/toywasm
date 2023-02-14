@@ -98,9 +98,7 @@ struct wasi_instance {
         struct host_instance hi;
 
         TOYWASM_MUTEX_DEFINE(lock);
-#if defined(TOYWASM_ENABLE_WASM_THREADS)
-        pthread_cond_t cv;
-#endif
+        TOYWASM_CV_DEFINE(cv);
         VEC(, struct wasi_fdinfo *)
         fdtable GUARDED_VAR(lock); /* indexed by wasi fd */
 
@@ -372,8 +370,7 @@ wasi_fdinfo_release(struct wasi_instance *wasi, struct wasi_fdinfo *fdinfo)
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
         if (fdinfo->refcount == 1) {
                 /* wake up drain */
-                int ret = pthread_cond_signal(&wasi->cv);
-                assert(ret == 0);
+                toywasm_cv_signal(&wasi->cv, &wasi->lock);
         }
 #endif
         if (fdinfo->refcount == 0) {
@@ -426,7 +423,7 @@ wasi_fdinfo_wait(struct exec_context *ctx, struct wasi_instance *wasi,
         if (ret != 0) {
                 goto fail;
         }
-        ret = pthread_cond_timedwait(&wasi->cv, &wasi->lock.lock, &absto);
+        ret = toywasm_cv_timedwait(&wasi->cv, &wasi->lock, &absto);
         assert(ret == 0 || ret == ETIMEDOUT);
         /*
          * Note: at this point, fdinfo might not be a valid anymore.
@@ -3627,10 +3624,7 @@ wasi_instance_create(struct wasi_instance **instp) NO_THREAD_SAFETY_ANALYSIS
                 }
         }
         toywasm_mutex_init(&inst->lock);
-#if defined(TOYWASM_ENABLE_WASM_THREADS)
-        ret = pthread_cond_init(&inst->cv, NULL);
-        assert(ret == 0);
-#endif
+        toywasm_cv_init(&inst->cv);
         *instp = inst;
         return 0;
 fail:
@@ -3737,10 +3731,7 @@ void
 wasi_instance_destroy(struct wasi_instance *inst)
 {
         wasi_fdtable_free(inst);
-#if defined(TOYWASM_ENABLE_WASM_THREADS)
-        int ret = pthread_cond_destroy(&inst->cv);
-        assert(ret == 0);
-#endif
+        toywasm_cv_destroy(&inst->cv);
         toywasm_mutex_destroy(&inst->lock);
         free(inst);
 }

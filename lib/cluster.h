@@ -8,7 +8,7 @@
  */
 struct cluster {
         TOYWASM_MUTEX_DEFINE(lock);
-        pthread_cond_t cv;
+        TOYWASM_CV_DEFINE(cv);
         uint32_t nrunners;
         uint32_t interrupt;
 };

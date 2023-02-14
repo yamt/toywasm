@@ -6,16 +6,14 @@ void
 cluster_init(struct cluster *c)
 {
         toywasm_mutex_init(&c->lock);
-        int ret = pthread_cond_init(&c->cv, NULL);
-        assert(ret == 0);
+        toywasm_cv_init(&c->cv);
         c->nrunners = 0;
 }
 
 void
 cluster_destroy(struct cluster *c)
 {
-        int ret = pthread_cond_destroy(&c->cv);
-        assert(ret == 0);
+        toywasm_cv_destroy(&c->cv);
         toywasm_mutex_destroy(&c->lock);
 }
 
@@ -24,8 +22,7 @@ cluster_join(struct cluster *c)
 {
         toywasm_mutex_lock(&c->lock);
         while (c->nrunners > 0) {
-                int ret = pthread_cond_wait(&c->cv, &c->lock.lock);
-                assert(ret == 0);
+                toywasm_cv_wait(&c->cv, &c->lock);
         }
         toywasm_mutex_unlock(&c->lock);
 }
@@ -43,7 +40,6 @@ cluster_remove_thread(struct cluster *c)
         assert(c->nrunners > 0);
         c->nrunners--;
         if (c->nrunners == 0) {
-                int ret = pthread_cond_signal(&c->cv);
-                assert(ret == 0);
+                toywasm_cv_signal(&c->cv, &c->lock);
         }
 }
