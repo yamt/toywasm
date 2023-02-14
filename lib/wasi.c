@@ -869,6 +869,9 @@ wasi_convert_errno(int host_errno)
         case EPERM:
                 wasmerrno = 63;
                 break;
+        case EPIPE:
+                wasmerrno = 64;
+                break;
         case ERANGE:
                 wasmerrno = 68;
                 break;
