@@ -440,7 +440,9 @@ wasi_fdinfo_wait(struct exec_context *ctx, struct wasi_instance *wasi,
                 xlog_trace("%s: failed with %d", __func__, host_ret);
         }
         toywasm_mutex_lock(&wasi->lock);
+#if defined(TOYWASM_ENABLE_WASM_THREADS)
 fail:
+#endif
         return host_ret;
 }
 
