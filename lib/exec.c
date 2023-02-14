@@ -929,11 +929,17 @@ exec_expr_continue(struct exec_context *ctx)
                          * While it's possible to have a more generic
                          * instruction restart logic by pushing back PC,
                          * it's a bit tricky with the way how we implement
-                         * instruction fetch.
+                         * instruction fetch. A naive implementation would
+                         * make fetch_exec_next_insn save the PC for
+                         * possible restart. But it can be a bit expensive
+                         * comparing to what fetch_exec_next_insn currently
+                         * does.
                          *
                          * Note: it isn't simple as "PC -= insn_len"
                          * because wasm opcodes have variable length.
-                         * multibyte opcodes even have redundant encodings.
+                         * Because multibyte opcodes even have redundant
+                         * encodings, it's basically impossible to parse
+                         * the instruction backward.
                          *
                          * Instead, this implementation relies on the
                          * opcode functions set up an explicit execution
@@ -1187,7 +1193,7 @@ exec_context_clear(struct exec_context *ctx)
 {
         /*
          * REVISIT: RESTART_CLOSE holds wasi fdinfo reference.
-         * i'm not happy with it. how to fix?
+         * i'm not happy to call wasi functions here. how to fix?
          */
         assert(ctx->restart_type != RESTART_CLOSE);
         struct funcframe *frame;
