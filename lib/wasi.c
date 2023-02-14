@@ -433,7 +433,7 @@ wasi_fdinfo_drain_and_close(struct exec_context *ctx,
         while (true) {
                 host_ret = check_interrupt(ctx);
                 if (host_ret != 0) {
-                        xlog_trace("%s: failed with %d", __func__, ret);
+                        xlog_trace("%s: failed with %d", __func__, host_ret);
                         goto fail;
                 }
                 toywasm_mutex_lock(&wasi->lock);
