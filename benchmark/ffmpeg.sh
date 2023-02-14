@@ -48,6 +48,8 @@ run "$(iwasm.classic --version) (classic interpreter)" iwasm.classic --dir=.vide
 
 run "$(wasmedge --version) (interpreter)" wasmedge --dir .video --
 
+run "$(wasmi_cli --version)" wasmi_cli --dir .video --
+
 # unreleased as of writing this.
 # https://github.com/tetratelabs/wazero/pull/1115
 # https://github.com/tetratelabs/wazero/pull/1116
@@ -59,9 +61,6 @@ run "$(wasmedge --version) (interpreter)" wasmedge --dir .video --
 # .video/video-1080p-60fps-2s.mp4: Invalid data found when processing input
 #
 # run "wasm-interp $(wasm-interp --version)" wasm-interp --wasi --dir .video --
-
-# https://github.com/paritytech/wasmi/issues/675
-# run "$(wasmi_cli --version)" wasmi_cli --dir .video --
 
 echo "+++++++++++ JIT ++++++++++++++++++++"
 
