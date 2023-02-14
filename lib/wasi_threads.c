@@ -55,6 +55,7 @@ struct wasi_threads_instance {
 
 int
 wasi_threads_instance_create(struct wasi_threads_instance **instp)
+        NO_THREAD_SAFETY_ANALYSIS
 {
         struct wasi_threads_instance *inst;
 
@@ -70,6 +71,7 @@ wasi_threads_instance_create(struct wasi_threads_instance **instp)
          */
         idalloc_init(&inst->tids, 1, 0x1fffffff);
         cluster_init(&inst->cluster);
+        cluster_add_thread(&inst->cluster); /* count the main thread */
         /*
          * if none of threads explicitly exits or traps,
          * treat as if exit(0).
@@ -137,6 +139,7 @@ wasi_threads_instance_join(struct wasi_threads_instance *wasi)
                 wasi->cluster.interrupt = 1;
         }
 #endif
+        cluster_remove_thread(&wasi->cluster); /* remove ourselves */
         toywasm_mutex_unlock(&wasi->cluster.lock);
         cluster_join(&wasi->cluster);
 }
