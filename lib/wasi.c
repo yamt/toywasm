@@ -2236,7 +2236,6 @@ retry:
                                                  le32_to_host(s->u.fd_read.fd),
                                                  &pfd->fd, &fdinfos[nfdinfos]);
                         if (ret != 0) {
-                                pfd->fd = -1;
                                 pfd->revents = POLLNVAL;
                                 nevents++;
                         }
