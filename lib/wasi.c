@@ -2170,6 +2170,7 @@ retry:
         uint32_t i;
         int timeout_ms = -1;
         uint64_t timeout_ns;
+        int nevents = 0;
         for (i = 0; i < nsubscriptions; i++) {
                 const struct wasi_subscription *s = &subscriptions[i];
                 struct pollfd *pfd = &pollfds[i];
@@ -2235,7 +2236,9 @@ retry:
                                                  le32_to_host(s->u.fd_read.fd),
                                                  &pfd->fd, &fdinfos[nfdinfos]);
                         if (ret != 0) {
-                                goto fail;
+                                pfd->fd = -1;
+                                pfd->revents = POLLNVAL;
+                                nevents++;
                         }
                         nfdinfos++;
                         if (s->type == WASI_EVENTTYPE_FD_READ) {
@@ -2254,19 +2257,24 @@ retry:
                         goto fail;
                 }
         }
-        xlog_trace("poll_oneoff: start polling");
-        int nevents;
-        host_ret = wasi_poll(ctx, pollfds, nsubscriptions, timeout_ms, &ret,
-                             &nevents);
-        if (host_ret != 0) {
-                goto fail;
-        }
-        if (ret == ETIMEDOUT) {
-                /* timeout is an event */
-                nevents = 1;
-        } else if (ret != 0) {
-                xlog_trace("poll_oneoff: wasi_poll failed with %d", ret);
-                goto fail;
+        if (nevents == 0) {
+                xlog_trace("poll_oneoff: start polling");
+                host_ret = wasi_poll(ctx, pollfds, nsubscriptions, timeout_ms,
+                                     &ret, &nevents);
+                if (host_ret != 0) {
+                        goto fail;
+                }
+                if (ret == ETIMEDOUT) {
+                        /* timeout is an event */
+                        nevents = 1;
+                } else if (ret != 0) {
+                        xlog_trace("poll_oneoff: wasi_poll failed with %d",
+                                   ret);
+                        goto fail;
+                }
+        } else {
+                host_ret = 0;
+                ret = 0;
         }
         struct wasi_event *ev = events;
         for (i = 0; i < nsubscriptions; i++) {
@@ -2286,6 +2294,16 @@ retry:
                 case WASI_EVENTTYPE_FD_READ:
                 case WASI_EVENTTYPE_FD_WRITE:
                         if (pfd->revents != 0) {
+                                /*
+                                 * translate per-fd error.
+                                 */
+                                if ((pfd->revents & POLLNVAL) != 0) {
+                                        ev->error = wasi_convert_errno(EBADF);
+                                } else if ((pfd->revents & POLLHUP) != 0) {
+                                        ev->error = wasi_convert_errno(EPIPE);
+                                } else if ((pfd->revents & POLLERR) != 0) {
+                                        ev->error = wasi_convert_errno(EIO);
+                                }
                                 ev++;
                         }
                         break;
