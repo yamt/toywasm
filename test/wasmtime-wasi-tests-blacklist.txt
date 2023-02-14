@@ -20,3 +20,11 @@ interesting_paths
 # Note: wasmtime behavior is intentional:
 # https://github.com/bytecodealliance/wasmtime/commit/b84c4d748826837fb532fa64bf32ac6b50690d77
 poll_oneoff_files
+
+# on github runners, it seems that poll on stdin somehow returns POLLHUP.
+# you can reproduce it locally with: true|toywasm --wasi poll_oneoff_stdio.wasm
+# i don't know why this is not a problem in wasmtime. i suspect they just
+# ignore POLLHUP.
+# 5: === poll_oneoff_stdio.wasm
+# 5: thread 'main' panicked at 'expected errno SUCCESS; got PIPE', src/bin/poll_oneoff_stdio.rs:60:13
+poll_oneoff_stdio
