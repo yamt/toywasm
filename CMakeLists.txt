@@ -105,7 +105,7 @@ if(CMAKE_C_COMPILER_TARGET MATCHES "wasm")
 # https://reviews.llvm.org/D130053
 # https://llvm.org/docs/LangRef.html#thread-local-storage-models
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ftls-model=local-exec")
-set(WASM_MAX_MEMORY 2621440)
+set(WASM_MAX_MEMORY 67108864)
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--max-memory=${WASM_MAX_MEMORY}")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--import-memory")
 endif()
