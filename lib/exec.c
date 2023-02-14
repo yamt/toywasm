@@ -1185,6 +1185,11 @@ exec_context_init(struct exec_context *ctx, struct instance *inst)
 void
 exec_context_clear(struct exec_context *ctx)
 {
+        /*
+         * REVISIT: RESTART_CLOSE holds wasi fdinfo reference.
+         * i'm not happy with it. how to fix?
+         */
+        assert(ctx->restart_type != RESTART_CLOSE);
         struct funcframe *frame;
         VEC_FOREACH(frame, ctx->frames) {
                 frame_clear(frame);
