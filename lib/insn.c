@@ -1,3 +1,5 @@
+#define _NETBSD_SOURCE /* old NetBSD math.h bug workaround */
+
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>

@@ -9,6 +9,7 @@
 
 #define _GNU_SOURCE      /* strdup */
 #define _DARWIN_C_SOURCE /* strdup */
+#define _NETBSD_SOURCE   /* strdup */
 
 #include <assert.h>
 #include <errno.h>
@@ -104,6 +105,9 @@ read_hex_from_stdin(uint8_t *p, size_t left)
                 }
                 buf[2] = 0;
                 uintmax_t v;
+#if defined(__GNUC__) && !defined(__clang__)
+                v = 0;
+#endif
                 int ret = str_to_uint(buf, 16, &v);
                 if (ret != 0) {
                         return ret;
@@ -583,6 +587,9 @@ arg_conv(enum valtype type, const char *s, struct val *result)
 {
         uintmax_t u;
         int ret;
+#if defined(__GNUC__) && !defined(__clang__)
+        u = 0;
+#endif
         memset(result, 0, sizeof(*result));
         switch (type) {
         case TYPE_i32:
@@ -729,6 +736,9 @@ unescape(char *p0, size_t *lenp)
                                 }
                                 buf[2] = 0;
                                 uintmax_t v;
+#if defined(__GNUC__) && !defined(__clang__)
+                                v = 0;
+#endif
                                 int ret = str_to_uint(buf, 16, &v);
                                 if (ret != 0) {
                                         return ret;

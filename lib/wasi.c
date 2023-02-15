@@ -1096,6 +1096,9 @@ wasi_fd_advise(struct exec_context *ctx, struct host_instance *hi,
         struct wasi_fdinfo *fdinfo;
         int hostfd;
         int ret;
+#if defined(__GNUC__) && !defined(__clang__)
+        fdinfo = NULL;
+#endif
         ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
         if (ret != 0) {
                 goto fail;
@@ -1122,6 +1125,9 @@ wasi_fd_allocate(struct exec_context *ctx, struct host_instance *hi,
         struct wasi_fdinfo *fdinfo;
         int hostfd;
         int ret;
+#if defined(__GNUC__) && !defined(__clang__)
+        fdinfo = NULL;
+#endif
         ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
         if (ret != 0) {
                 goto fail;
@@ -1154,6 +1160,9 @@ wasi_fd_filestat_set_size(struct exec_context *ctx, struct host_instance *hi,
         struct wasi_fdinfo *fdinfo;
         int hostfd;
         int ret;
+#if defined(__GNUC__) && !defined(__clang__)
+        fdinfo = NULL;
+#endif
         ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
         if (ret != 0) {
                 goto fail;

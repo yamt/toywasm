@@ -1331,6 +1331,9 @@ memory_notify(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
         struct toywasm_mutex *lock;
         void *p;
         int ret;
+#if defined(__GNUC__) && !defined(__clang__)
+        lock = NULL;
+#endif
         ret = memory_atomic_getptr(ctx, memidx, addr, offset, 4, &p, &lock);
         if (ret != 0) {
                 return ret;

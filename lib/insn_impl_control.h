@@ -478,6 +478,9 @@ INSN_IMPL(call_indirect)
                 struct exec_context *ectx = ECTX;
                 const struct funcinst *func;
                 uint32_t i = val_a.u.i32;
+#if defined(__GNUC__) && !defined(__clang__)
+                func = NULL;
+#endif
                 ret = get_func_indirect(ectx, tableidx, typeidx, i, &func);
                 if (__predict_false(ret != 0)) {
                         goto fail;
