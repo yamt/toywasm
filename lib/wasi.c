@@ -3346,12 +3346,21 @@ retry:
                 goto fail;
         }
         uint16_t roflags = 0;
-        /* https://github.com/WebAssembly/wasi-libc/pull/391 */
-#if !defined(__wasi__) || MSG_TRUNC == WASI_ROFLAG_RECV_DATA_TRUNCATED
+        /*
+         * wasi-sdk <=19 had a broken MSG_TRUNC definition.
+         * https://github.com/WebAssembly/wasi-libc/pull/391
+         *
+         * Note: older versions of wasi-sdk doesn't even have
+         * __WASI_ROFLAGS_RECV_DATA_TRUNCATED.
+         */
+#if defined(__wasi__) && defined(MSG_TRUNC) &&                                \
+        defined(__WASI_ROFLAGS_RECV_DATA_TRUNCATED)
+#undef MSG_TRUNC
+#define MSG_TRUNC __WASI_ROFLAGS_RECV_DATA_TRUNCATED
+#endif /* defined(__wasi__) */
         if ((msg.msg_flags & MSG_TRUNC) != 0) {
                 roflags = WASI_ROFLAG_RECV_DATA_TRUNCATED;
         }
-#endif
         uint32_t r = host_to_le32(n);
         host_ret = wasi_copyout(ctx, &r, retp, sizeof(r));
         if (host_ret != 0) {
