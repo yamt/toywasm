@@ -53,7 +53,7 @@ run "$(wasmi_cli --version)" wasmi_cli --dir .video --
 # unreleased as of writing this.
 # https://github.com/tetratelabs/wazero/pull/1115
 # https://github.com/tetratelabs/wazero/pull/1116
-# run "wazero $(wazero version) (interpreter)" wazero run -intepreter -mount .video --
+# run "wazero $(wazero version) (interpreter)" wazero run -interpreter -mount .video --
 
 # https://github.com/WebAssembly/wabt/issues/2074
 #
