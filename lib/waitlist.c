@@ -122,7 +122,7 @@ waiter_block(struct waiter_list *l, struct toywasm_mutex *lock,
              struct waiter *w, const struct timespec *abstimeout)
         REQUIRES(lock)
 {
-        int ret;
+        int ret = 0;
         while (!w->woken) {
                 ret = toywasm_cv_timedwait(&w->cv, lock, abstimeout);
                 if (ret == ETIMEDOUT) {
