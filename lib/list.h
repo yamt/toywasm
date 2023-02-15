@@ -63,6 +63,6 @@ void list_insert_tail(struct list_head *h, void *elem, struct list_entry *e);
                          (struct list_entry *)&(ELEM)->NAME)
 
 #define LIST_HEAD_INIT(HEAD)                                                  \
-        CHECK_TYPE(&(HEAD)->first, (HEAD)->tailnextp);                        \
         ctassert(sizeof(*(HEAD)) == sizeof(struct list_head));                \
-        list_head_init((struct list_head *)(HEAD))
+        list_head_init((struct list_head *)(HEAD));                           \
+        CHECK_TYPE(&(HEAD)->first, (HEAD)->tailnextp)
