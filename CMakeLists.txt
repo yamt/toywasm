@@ -108,6 +108,8 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ftls-model=local-exec")
 set(WASM_MAX_MEMORY 67108864)
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--max-memory=${WASM_MAX_MEMORY}")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--import-memory")
+# require LLVM >=16
+#set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--export-memory")
 endif()
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pthread")
