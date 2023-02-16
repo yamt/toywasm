@@ -853,6 +853,9 @@ wasi_convert_errno(int host_errno)
         case EINVAL:
                 wasmerrno = 28;
                 break;
+        case EIO:
+                wasmerrno = 29;
+                break;
         case EISDIR:
                 wasmerrno = 31;
                 break;
