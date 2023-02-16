@@ -355,7 +355,7 @@ jobs:
       if: startsWith(matrix.os, 'ubuntu-')
       uses: actions/upload-artifact@v3
       with:
-        name: wasm32-wasi
+        name: ${{matrix.name}}
         path: ${{github.workspace}}/artifacts
 
   release:
