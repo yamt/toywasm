@@ -253,7 +253,7 @@ list(APPEND lib_sources
 	"lib/waitlist.c")
 if(TOYWASM_USE_USER_SCHED)
 list(APPEND lib_sources
-	"lib/sched.c")
+	"lib/usched.c")
 else()
 list(APPEND lib_sources
 	"lib/lock.c")
