@@ -760,6 +760,47 @@ unescape(char *p0, size_t *lenp)
 }
 
 /*
+ * an instance_execute_func wrapper with wasi-threads handling.
+ * REVISIT: move to lib
+ */
+static int
+exec_func(struct exec_context *ctx, uint32_t funcidx,
+          const struct resulttype *ptype, const struct resulttype *rtype,
+          const struct val *param, struct val *result,
+          const struct trap_info **trapp, const struct repl_state *state)
+{
+        int ret;
+#if defined(TOYWASM_ENABLE_WASI_THREADS)
+        if (state->wasi_threads != NULL) {
+                ctx->intrp =
+                        wasi_threads_interrupt_pointer(state->wasi_threads);
+        }
+#endif
+        ret = instance_execute_func(ctx, funcidx, ptype, rtype, param, result);
+        *trapp = NULL;
+        if (ret == ETOYWASMTRAP) {
+                assert(ctx->trapped);
+                const struct trap_info *trap = &ctx->trap;
+#if defined(TOYWASM_ENABLE_WASI_THREADS)
+                if (state->wasi_threads != NULL) {
+                        wasi_threads_propagate_trap(state->wasi_threads, trap);
+                        wasi_threads_instance_join(state->wasi_threads);
+                        trap = wasi_threads_instance_get_trap(
+                                state->wasi_threads);
+                }
+#endif
+                *trapp = trap;
+        } else {
+#if defined(TOYWASM_ENABLE_WASI_THREADS)
+                if (state->wasi_threads != NULL) {
+                        wasi_threads_instance_join(state->wasi_threads);
+                }
+#endif
+        }
+        return ret;
+}
+
+/*
  * "cmd" is like "add 1 2"
  */
 int
@@ -840,27 +881,15 @@ toywasm_repl_invoke(struct repl_state *state, const char *modname,
         struct exec_context *ctx = &ctx0;
         exec_context_init(ctx, inst);
         ctx->options = state->opts.exec_options;
-#if defined(TOYWASM_ENABLE_WASI_THREADS)
-        if (state->wasi_threads != NULL) {
-                ctx->intrp =
-                        wasi_threads_interrupt_pointer(state->wasi_threads);
-        }
-#endif
-        ret = instance_execute_func(ctx, funcidx, ptype, rtype, param, result);
+        const struct trap_info *trap;
+        ret = exec_func(ctx, funcidx, ptype, rtype, param, result, &trap,
+                        state);
         if (state->opts.print_stats) {
                 exec_context_print_stats(ctx);
         }
+
         if (ret == ETOYWASMTRAP) {
-                assert(ctx->trapped);
-                const struct trap_info *trap = &ctx->trap;
-#if defined(TOYWASM_ENABLE_WASI_THREADS)
-                if (state->wasi_threads != NULL) {
-                        wasi_threads_propagate_trap(state->wasi_threads, trap);
-                        wasi_threads_instance_join(state->wasi_threads);
-                        trap = wasi_threads_instance_get_trap(
-                                state->wasi_threads);
-                }
-#endif
+                assert(trap != NULL);
                 if (trap->trapid == TRAP_VOLUNTARY_EXIT) {
                         uint32_t exit_code = trap->exit_code;
                         xlog_trace("voluntary exit (%" PRIu32 ")", exit_code);
@@ -874,12 +903,6 @@ toywasm_repl_invoke(struct repl_state *state, const char *modname,
                         goto fail;
                 }
                 print_trap(ctx, trap);
-        } else {
-#if defined(TOYWASM_ENABLE_WASI_THREADS)
-                if (state->wasi_threads != NULL) {
-                        wasi_threads_instance_join(state->wasi_threads);
-                }
-#endif
         }
         exec_context_clear(ctx);
         if (ret != 0) {
