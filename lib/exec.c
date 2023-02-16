@@ -1446,9 +1446,9 @@ retry:;
                                 goto retry;
                         }
                         *resultp = 2; /* timed out */
-                        ret = 0;
                 }
         }
+        ret = 0;
 fail:
         memory_atomic_unlock(lock);
         if (ret == 0) {
