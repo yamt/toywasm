@@ -104,7 +104,11 @@ endif()
 if(TOYWASM_ENABLE_WASM_THREADS AND NOT TOYWASM_USE_USER_SCHED)
 # https://cmake.org/cmake/help/latest/module/FindThreads.html
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
-find_package(Threads REQUIRED)
+find_package(Threads)
+if (NOT THREADS_FOUND)
+message(WARNING "Enabling TOYWASM_USE_USER_SCHED because pthread was not found")
+set(TOYWASM_USE_USER_SCHED ON)
+else()
 if(CMAKE_C_COMPILER_TARGET MATCHES "wasm")
 # https://reviews.llvm.org/D130053
 # https://llvm.org/docs/LangRef.html#thread-local-storage-models
@@ -117,6 +121,7 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--import-memory")
 endif()
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pthread")
+endif()
 endif()
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
