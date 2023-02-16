@@ -66,7 +66,7 @@ void toywasm_cv_broadcast(pthread_cond_t *cv, struct toywasm_mutex *lock)
 #define TOYWASM_CV_DEFINE(name)
 #define toywasm_cv_init(a)
 #define toywasm_cv_destroy(a)
-#define toywasm_cv_timedwait(a, lk, abs) 0
+#define toywasm_cv_timedwait(a, lk, abs) ETIMEDOUT
 #define toywasm_cv_wait(a, lk)
 #define toywasm_cv_signal(a, lk)
 #define toywasm_cv_broadcast(a, lk)
