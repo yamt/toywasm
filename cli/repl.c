@@ -29,9 +29,9 @@
 #include "nbio.h"
 #include "repl.h"
 #include "report.h"
-#include "sched.h"
 #include "toywasm_version.h"
 #include "type.h"
+#include "usched.h"
 #include "wasi.h"
 #if defined(TOYWASM_ENABLE_WASI_THREADS)
 #include "wasi_threads.h"

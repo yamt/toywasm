@@ -12,8 +12,8 @@
 
 #include "context.h"
 #include "instance.h"
-#include "sched.h"
 #include "timeutil.h"
+#include "usched.h"
 #include "xlog.h"
 
 void

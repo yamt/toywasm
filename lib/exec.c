@@ -14,10 +14,10 @@
 #include "leb128.h"
 #include "nbio.h"
 #include "platform.h"
-#include "sched.h"
 #include "shared_memory_impl.h"
 #include "timeutil.h"
 #include "type.h"
+#include "usched.h"
 #include "util.h"
 #include "xlog.h"
 
