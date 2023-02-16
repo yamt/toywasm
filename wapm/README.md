@@ -2,7 +2,9 @@
 
 1. bump the version in wapm.toml
 
-2. build and publish
+2. tag
+
+3. build and publish
 
 ```shell
 % ./build.sh
