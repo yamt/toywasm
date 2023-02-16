@@ -1,21 +1,27 @@
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
-#include <pthread.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
-#include "list.h"
 #include "lock.h"
+
+#if defined(USE_PTHREAD)
+#include <pthread.h>
+#endif
+
+#include "list.h"
 #include "waitlist.h"
 #include "xlog.h"
 
+#if defined(USE_PTHREAD)
 static TOYWASM_MUTEX_DEFINE(g_atomics_lock) = {
         PTHREAD_MUTEX_INITIALIZER,
 };
+#endif
 
 struct waiter {
         LIST_ENTRY(struct waiter) e;
@@ -34,7 +40,13 @@ struct toywasm_mutex *
 atomics_mutex_getptr(struct waiter_list_table *tab, uint32_t ident)
 {
         /* REVISIT: is it worth to use finer grained lock? */
+#if defined(USE_PTHREAD)
         return &g_atomics_lock;
+#else
+        /* return a dummy non-NULL pointer */
+        static char dummy;
+        return (struct toywasm_mutex *)&dummy;
+#endif
 }
 
 static struct waiter_list *

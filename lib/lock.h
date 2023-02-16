@@ -3,7 +3,13 @@
 
 #include "toywasm_config.h"
 
-#if defined(TOYWASM_ENABLE_WASM_THREADS) && defined(__clang__)
+#if defined(TOYWASM_ENABLE_WASM_THREADS) && !defined(TOYWASM_USE_USER_SCHED)
+#define USE_PTHREAD
+#else
+#undef USE_PTHREAD
+#endif
+
+#if defined(USE_PTHREAD) && defined(__clang__)
 /*
  * https://clang.llvm.org/docs/ThreadSafetyAnalysis.html
  *
@@ -27,7 +33,7 @@
 #define NO_THREAD_SAFETY_ANALYSIS                                             \
         _TAS(__attribute__((no_thread_safety_analysis)))
 
-#if defined(TOYWASM_ENABLE_WASM_THREADS)
+#if defined(USE_PTHREAD)
 #include <pthread.h>
 
 struct CAPABILITY("mutex") toywasm_mutex {
@@ -51,7 +57,7 @@ void toywasm_cv_signal(pthread_cond_t *cv, struct toywasm_mutex *lock)
         REQUIRES(lock);
 void toywasm_cv_broadcast(pthread_cond_t *cv, struct toywasm_mutex *lock)
         REQUIRES(lock);
-#else /* defined(TOYWASM_ENABLE_WASM_THREADS) */
+#else /* defined(USE_PTHREAD) */
 #define TOYWASM_MUTEX_DEFINE(name)
 #define toywasm_mutex_init(a)
 #define toywasm_mutex_destroy(a)
@@ -64,5 +70,5 @@ void toywasm_cv_broadcast(pthread_cond_t *cv, struct toywasm_mutex *lock)
 #define toywasm_cv_wait(a, lk)
 #define toywasm_cv_signal(a, lk)
 #define toywasm_cv_broadcast(a, lk)
-#endif /* defined(TOYWASM_ENABLE_WASM_THREADS) */
+#endif /* defined(USE_PTHREAD) */
 #endif /* !defined(_LOCK_H) */
