@@ -316,8 +316,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        name: [wasm32-wasi, full-wasm32-wasi]
         os: [ubuntu-latest, macos-12]
         compiler: [clang]
+        include:
+          - name: full-wasm32-wasi
+            extra: "-DTOYWASM_ENABLE_WASM_EXTENDED_CONST=ON -DTOYWASM_ENABLE_WASM_MULTI_MEMORY=ON -DTOYWASM_ENABLE_WASM_TAILCALL=ON -DTOYWASM_ENABLE_WASM_THREADS=ON -DTOYWASM_ENABLE_WASI_THREADS=ON"
 
     runs-on: ${{matrix.os}}
 
@@ -333,7 +337,7 @@ jobs:
     - name: Build and test
       env:
         # Note: we don't care about tarball suffix for native build here.
-        EXTRA_CMAKE_OPTIONS: -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/dist -DTOYWASM_TARBALL_SUFFIX=-wasm32-wasi
+        EXTRA_CMAKE_OPTIONS: -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/dist -DTOYWASM_TARBALL_SUFFIX=-${{matrix.name}} ${{matrix.extra}}
       run: ./wasm-on-wasm.sh
 
     - name: Install
@@ -412,6 +416,11 @@ jobs:
     - uses: actions/download-artifact@v3
       with:
         name: wasm32-wasi
+        path: release_assets
+
+    - uses: actions/download-artifact@v3
+      with:
+        name: full-wasm32-wasi
         path: release_assets
 
     - name: Snapshot release
