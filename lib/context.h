@@ -206,6 +206,7 @@ struct exec_context {
 
         /* To simplify restart api */
         struct cell *results;
+        const struct resulttype *resulttype;
         uint32_t nresults;
         uint32_t nstackused_saved;
 

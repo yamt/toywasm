@@ -777,6 +777,10 @@ exec_func(struct exec_context *ctx, uint32_t funcidx,
         }
 #endif
         ret = instance_execute_func(ctx, funcidx, ptype, rtype, param, result);
+        while (ret == ETOYWASMRESTART) {
+                xlog_trace("%s: restarting execution\n", __func__);
+                ret = instance_execute_continue(ctx, result);
+        }
         *trapp = NULL;
         if (ret == ETOYWASMTRAP) {
                 assert(ctx->trapped);

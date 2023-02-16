@@ -1067,6 +1067,8 @@ exec_const_expr(const struct expr *expr, enum valtype type, struct val *result,
          * but just in case.
          */
         while (ret == ETOYWASMRESTART) {
+                xlog_trace("%s: restarting execution of a const expr\n",
+                           __func__);
                 ret = exec_expr_continue(ctx);
         }
         if (ret != 0) {
@@ -1509,13 +1511,7 @@ invoke(struct funcinst *finst, const struct resulttype *paramtype,
         /*
          * and then "restart" the context execution.
          */
-        do {
-                ret = exec_expr_continue(ctx);
-                if (ret == ETOYWASMRESTART) {
-                        xlog_trace("%s: restarting execution\n", __func__);
-                }
-        } while (ret == ETOYWASMRESTART);
-        return ret;
+        return ETOYWASMRESTART;
 }
 
 void

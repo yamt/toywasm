@@ -479,6 +479,12 @@ instance_create_execute_init(struct instance *inst, struct exec_context *ctx)
                 assert(m->start < m->nimportedfuncs + m->nfuncs);
                 struct funcinst *finst = VEC_ELEM(inst->funcs, m->start);
                 ret = invoke(finst, NULL, NULL, NULL, NULL, ctx);
+                while (ret == ETOYWASMRESTART) {
+                        xlog_trace("%s: restarting execution of the start "
+                                   "function\n",
+                                   __func__);
+                        ret = exec_expr_continue(ctx);
+                }
                 if (ret != 0) {
                         goto fail;
                 }
@@ -564,9 +570,44 @@ instance_execute_func(struct exec_context *ctx, uint32_t funcidx,
                      ctx);
         if (ret == 0) {
                 vals_from_cells(results, result_cells, resulttype);
+        } else if (ret == ETOYWASMRESTART) {
+                /*
+                 * ctx->nresults is set by invoke().
+                 * while it's redundant, it can be used by
+                 * instance_exec_continue() to save
+                 * a resulttype_cellsize() call.
+                 */
+                assert(ctx->nresults == result_ncells);
+                ctx->resulttype = resulttype; /* for possible restart */
         }
 fail:
         free(param_cells);
+        free(result_cells);
+        return ret;
+}
+
+int
+instance_execute_continue(struct exec_context *ctx, struct val *results)
+{
+        const struct resulttype *resulttype = ctx->resulttype;
+        struct cell *result_cells = NULL;
+        uint32_t result_ncells = ctx->nresults;
+        int ret;
+
+        assert(result_ncells == resulttype_cellsize(resulttype));
+        if (result_ncells > 0) {
+                result_cells = calloc(result_ncells, sizeof(*result_cells));
+                if (result_cells == NULL) {
+                        ret = ENOMEM;
+                        goto fail;
+                }
+        }
+        ctx->results = result_cells;
+        ret = exec_expr_continue(ctx);
+        if (ret == 0 && result_ncells > 0) {
+                vals_from_cells(results, result_cells, resulttype);
+        }
+fail:
         free(result_cells);
         return ret;
 }

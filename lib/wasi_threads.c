@@ -212,6 +212,10 @@ runner(void *vp)
          */
         ret = instance_execute_func_nocheck(ctx, wasi->thread_start_funcidx,
                                             param, NULL);
+        while (ret == ETOYWASMRESTART) {
+                xlog_trace("%s: restarting execution\n", __func__);
+                ret = instance_execute_continue(ctx, NULL);
+        }
         if (ret == ETOYWASMTRAP) {
                 assert(ctx->trapped);
                 wasi_threads_propagate_trap(wasi, &ctx->trap);
