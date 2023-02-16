@@ -19,6 +19,7 @@
 #include "instance.h"
 #include "lock.h"
 #include "module.h"
+#include "sched.h"
 #include "type.h"
 #include "wasi_impl.h"
 #include "wasi_threads.h"
@@ -51,7 +52,19 @@ struct wasi_threads_instance {
          * async inter-thread communitation mechanisms like signals.
          */
         struct trap_info trap;
+
+#if defined(TOYWASM_USE_USER_SCHED)
+        struct sched sched;
+#endif
 };
+
+#if defined(TOYWASM_USE_USER_SCHED)
+struct sched *
+wasi_threads_sched(struct wasi_threads_instance *wasi)
+{
+        return &wasi->sched;
+}
+#endif
 
 int
 wasi_threads_instance_create(struct wasi_threads_instance **instp)
@@ -77,6 +90,9 @@ wasi_threads_instance_create(struct wasi_threads_instance **instp)
          * treat as if exit(0).
          */
         inst->trap.trapid = TRAP_VOLUNTARY_EXIT;
+#if defined(TOYWASM_USE_USER_SCHED)
+        sched_init(&inst->sched);
+#endif
         *instp = inst;
         return 0;
 }
@@ -86,6 +102,9 @@ wasi_threads_instance_destroy(struct wasi_threads_instance *inst)
 {
         idalloc_destroy(&inst->tids);
         cluster_destroy(&inst->cluster);
+#if defined(TOYWASM_USE_USER_SCHED)
+        sched_clear(&inst->sched);
+#endif
         free(inst);
 }
 
@@ -141,6 +160,9 @@ wasi_threads_instance_join(struct wasi_threads_instance *wasi)
 #endif
         cluster_remove_thread(&wasi->cluster); /* remove ourselves */
         toywasm_mutex_unlock(&wasi->cluster.lock);
+#if defined(TOYWASM_USE_USER_SCHED)
+        sched_run(&wasi->sched, NULL);
+#endif
         cluster_join(&wasi->cluster);
 }
 
@@ -186,36 +208,38 @@ struct thread_arg {
         int32_t tid;
 };
 
-static void *
-runner(void *vp)
+static int
+exec_thread_start_func(struct exec_context *ctx, const struct thread_arg *arg)
 {
-        const struct thread_arg *arg = vp;
         struct wasi_threads_instance *wasi = arg->wasi;
-        struct instance *inst = arg->inst;
         uint32_t tid;
-        int ret;
 
         struct val param[2];
         param[0].u.i32 = tid = arg->tid;
         param[1].u.i32 = arg->user_arg;
-        free(vp);
 
-        struct exec_context ctx0;
-        struct exec_context *ctx = &ctx0;
-        exec_context_init(ctx, inst);
         /* XXX should inherit exec_options from the parent? */
         ctx->intrp = wasi_threads_interrupt_pointer(wasi);
+#if defined(TOYWASM_USE_USER_SCHED)
+        ctx->sched = wasi_threads_sched(wasi);
+#endif
 
         /*
          * Note: the type of this function has already been confirmed by
          * wasi_threads_instance_set_thread_spawn_args.
          */
-        ret = instance_execute_func_nocheck(ctx, wasi->thread_start_funcidx,
-                                            param, NULL);
-        while (ret == ETOYWASMRESTART) {
-                xlog_trace("%s: restarting execution\n", __func__);
-                ret = instance_execute_continue(ctx, NULL);
-        }
+        return instance_execute_func_nocheck(ctx, wasi->thread_start_funcidx,
+                                             param, NULL);
+}
+
+static void
+done_thread_start_func(struct exec_context *ctx, const struct thread_arg *arg,
+                       int ret)
+{
+        struct wasi_threads_instance *wasi = arg->wasi;
+        struct instance *inst = arg->inst;
+        uint32_t tid = arg->tid;
+
         if (ret == ETOYWASMTRAP) {
                 assert(ctx->trapped);
                 wasi_threads_propagate_trap(wasi, &ctx->trap);
@@ -247,8 +271,68 @@ fail:
         idalloc_free(&wasi->tids, tid);
         cluster_remove_thread(&wasi->cluster);
         toywasm_mutex_unlock(&wasi->cluster.lock);
+}
+
+#if defined(TOYWASM_USE_USER_SCHED)
+static void
+user_runner_exec_done(struct exec_context *ctx)
+{
+        void *vp = ctx->exec_done_arg;
+        int ret = ctx->exec_ret;
+
+        const struct thread_arg *arg = vp;
+        done_thread_start_func(ctx, arg, ret);
+        free(vp);
+        free(ctx);
+}
+
+static int
+user_runner_exec_start(struct thread_arg *arg)
+{
+        struct exec_context *ctx = malloc(sizeof(*ctx));
+        int ret;
+        if (ctx == NULL) {
+                ret = ENOMEM;
+                goto fail;
+        }
+        exec_context_init(ctx, arg->inst);
+        ctx->exec_done = user_runner_exec_done;
+        ctx->exec_done_arg = arg;
+        ret = exec_thread_start_func(ctx, arg);
+        if (ret == ETOYWASMRESTART) {
+                struct sched *sched = wasi_threads_sched(arg->wasi);
+                sched_enqueue(sched, ctx);
+        } else {
+                ctx->exec_done(ctx);
+        }
+        ret = 0;
+fail:
+        return ret;
+}
+#else  /* defined(TOYWASM_USE_USER_SCHED) */
+static void *
+runner(void *vp)
+{
+        const struct thread_arg *arg = vp;
+        struct wasi_threads_instance *wasi = arg->wasi;
+        struct instance *inst = arg->inst;
+        uint32_t tid;
+        int ret;
+
+        struct exec_context ctx0;
+        struct exec_context *ctx = &ctx0;
+        exec_context_init(ctx, inst);
+
+        ret = exec_thread_start_func(ctx, arg);
+        while (ret == ETOYWASMRESTART) {
+                xlog_trace("%s: restarting execution\n", __func__);
+                ret = instance_execute_continue(ctx);
+        }
+        done_thread_start_func(ctx, arg, ret);
+        free(vp);
         return NULL;
 }
+#endif /* defined(TOYWASM_USE_USER_SCHED) */
 
 static int
 wasi_thread_spawn_common(struct exec_context *ctx,
@@ -307,6 +391,9 @@ wasi_thread_spawn_common(struct exec_context *ctx,
         arg->tid = tid;
         arg->user_arg = user_arg;
 
+#if defined(TOYWASM_USE_USER_SCHED)
+        ret = user_runner_exec_start(arg);
+#else
         pthread_t t;
         ret = pthread_create(&t, NULL, runner, arg);
         if (ret != 0) {
@@ -317,8 +404,6 @@ wasi_thread_spawn_common(struct exec_context *ctx,
                 xlog_trace("%s: pthread_create failed with %d", __func__, ret);
                 goto fail;
         }
-        inst = NULL;
-        arg = NULL;
 
         ret = pthread_detach(t);
         if (ret != 0) {
@@ -326,6 +411,9 @@ wasi_thread_spawn_common(struct exec_context *ctx,
                 xlog_error("pthread_detach failed with %d", ret);
                 ret = 0;
         }
+#endif
+        inst = NULL;
+        arg = NULL;
 
 fail:
         if (inst != NULL) {

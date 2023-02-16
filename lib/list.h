@@ -1,3 +1,6 @@
+#if !defined(_TOYWASM_LIST_H)
+#define _TOYWASM_LIST_H
+
 #include "platform.h"
 
 struct list_elem;
@@ -24,6 +27,12 @@ void list_insert_tail(struct list_head *h, void *elem, struct list_entry *e);
 
 #define LIST_HEAD(TYPE)                                                       \
         struct {                                                              \
+                TYPE *first;                                                  \
+                TYPE **tailnextp;                                             \
+        }
+
+#define LIST_HEAD_NAMED(TYPE, NAME)                                           \
+        struct NAME {                                                         \
                 TYPE *first;                                                  \
                 TYPE **tailnextp;                                             \
         }
@@ -66,3 +75,5 @@ void list_insert_tail(struct list_head *h, void *elem, struct list_entry *e);
         ctassert(sizeof(*(HEAD)) == sizeof(struct list_head));                \
         list_head_init((struct list_head *)(HEAD));                           \
         CHECK_TYPE(&(HEAD)->first, (HEAD)->tailnextp)
+
+#endif /* !defined(_TOYWASM_LIST_H) */

@@ -1,5 +1,6 @@
 struct wasi_threads_instance;
 struct import_object;
+struct sched;
 
 void wasi_threads_instance_destroy(struct wasi_threads_instance *inst);
 int wasi_threads_instance_create(struct wasi_threads_instance **resultp);
@@ -39,6 +40,8 @@ void wasi_threads_propagate_trap(struct wasi_threads_instance *wasi,
                                  const struct trap_info *trap);
 const struct trap_info *
 wasi_threads_instance_get_trap(struct wasi_threads_instance *wasi);
+
+struct sched *wasi_threads_sched(struct wasi_threads_instance *wasi);
 
 int import_object_create_for_wasi_threads(struct wasi_threads_instance *wasi,
                                           struct import_object **impp);

@@ -14,6 +14,7 @@
 #include "leb128.h"
 #include "nbio.h"
 #include "platform.h"
+#include "sched.h"
 #include "shared_memory_impl.h"
 #include "timeutil.h"
 #include "type.h"
@@ -854,14 +855,21 @@ check_interrupt(struct exec_context *ctx)
                 return trap_with_id(ctx, TRAP_VOLUNTARY_THREAD_EXIT,
                                     "interrupt");
         }
+#if defined(TOYWASM_USE_USER_SCHED)
+        if (ctx->sched != NULL && sched_need_resched(ctx->sched)) {
+                xlog_trace("%s: need resched ctx %p", __func__, ctx);
+                return ETOYWASMRESTART;
+        }
+#else                /* defined(TOYWASM_USE_USER_SCHED) */
 #if !defined(NDEBUG) /* a bit abuse of NDEBUG */
         /* inject artificial restart events to test restart logic. */
         static int x = 0;
         x++;
-        if ((x & 2) == 0) {
+        if ((x % 10) == 0) {
                 return ETOYWASMRESTART;
         }
 #endif
+#endif /* defined(TOYWASM_USE_USER_SCHED) */
         return 0;
 }
 
@@ -1437,8 +1445,12 @@ retry:;
                 if (abstimeout != NULL &&
                     timespec_cmp(&next_abstimeout, abstimeout) >= 0) {
                         tv = abstimeout;
+                        xlog_trace("%s: abs %ju.%09lu\n", __func__,
+                                   (uintmax_t)tv->tv_sec, tv->tv_nsec);
                 } else {
                         tv = &next_abstimeout;
+                        xlog_trace("%s: next %ju.%09lu\n", __func__,
+                                   (uintmax_t)tv->tv_sec, tv->tv_nsec);
                 }
                 ret = atomics_wait(&shared->tab, addr + offset, tv);
                 if (ret == 0) {

@@ -5,6 +5,7 @@
 #include "toywasm_config.h"
 
 #include "cell.h"
+#include "list.h"
 #include "options.h"
 #include "platform.h"
 #include "report.h"
@@ -127,8 +128,14 @@ struct trap_info {
 #define ETOYWASMTRAP -1
 #define ETOYWASMRESTART -2
 
+#if defined(TOYWASM_USE_USER_SCHED)
+/* use shorter interval for userlang thread */
+#define CHECK_INTERRUPT_INTERVAL_MS 50
+#else
 #define CHECK_INTERRUPT_INTERVAL_MS 300
+#endif
 
+struct sched;
 struct context;
 struct wasi_fdinfo;
 
@@ -163,6 +170,10 @@ struct exec_context {
 
         /* check_interrupt() */
         const uint32_t *intrp;
+
+        /* scheduler */
+        struct sched *sched;
+        LIST_ENTRY(struct exec_context) rq;
 
         /* Trap */
         bool trapped; /* used with a combination with ETOYWASMTRAP */
@@ -207,8 +218,14 @@ struct exec_context {
         /* To simplify restart api */
         struct cell *results;
         const struct resulttype *resulttype;
+        struct val *results_val;
         uint32_t nresults;
         uint32_t nstackused_saved;
+#if defined(TOYWASM_USE_USER_SCHED)
+        int exec_ret;
+        void (*exec_done)(struct exec_context *);
+        void *exec_done_arg;
+#endif
 
         /* Options */
         struct exec_options options;

@@ -40,6 +40,7 @@ endif()
 
 option(TOYWASM_USE_SEPARATE_EXECUTE "Use separate execute callback" ON)
 option(TOYWASM_USE_TAILCALL "Use tailcall" ON)
+option(TOYWASM_USE_USER_SCHED "Use userland scheduler" OFF)
 option(TOYWASM_ENABLE_TRACING "Enable xlog_trace" OFF)
 option(TOYWASM_ENABLE_TRACING_INSN "Enable per-instruction xlog_trace" OFF)
 option(TOYWASM_USE_JUMP_BINARY_SEARCH "Enable binary search for jump tables" ON)
@@ -96,8 +97,11 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mtail-call")
 endif()
 endif()
 
-# TOYWASM_ENABLE_WASM_THREADS requires pthread
-if(TOYWASM_ENABLE_WASM_THREADS)
+# TOYWASM_ENABLE_WASM_THREADS might require pthread
+if(NOT TOYWASM_ENABLE_WASM_THREADS)
+set(TOYWASM_USE_USER_SCHED OFF)
+endif()
+if(TOYWASM_ENABLE_WASM_THREADS AND NOT TOYWASM_USE_USER_SCHED)
 # https://cmake.org/cmake/help/latest/module/FindThreads.html
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 find_package(Threads REQUIRED)
@@ -248,6 +252,11 @@ list(APPEND lib_sources
 	"lib/shared_memory.c"
 	"lib/wasi_threads.c")
 endif()
+endif()
+
+if(TOYWASM_USE_USER_SCHED)
+list(APPEND lib_sources
+	"lib/sched.c")
 endif()
 
 if(TOYWASM_ENABLE_WRITER)
