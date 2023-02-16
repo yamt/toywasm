@@ -66,7 +66,7 @@ int instance_execute_func_nocheck(struct exec_context *ctx, uint32_t funcidx,
  *   - instance_execute_func_nocheck
  *   - instance_execute_continue
  */
-int instance_execute_continue(struct exec_context *ctx, struct val *results);
+int instance_execute_continue(struct exec_context *ctx);
 
 int import_object_create_for_exports(struct instance *inst,
                                      const struct name *module_name,

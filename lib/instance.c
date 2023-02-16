@@ -579,6 +579,7 @@ instance_execute_func(struct exec_context *ctx, uint32_t funcidx,
                  */
                 assert(ctx->nresults == result_ncells);
                 ctx->resulttype = resulttype; /* for possible restart */
+                ctx->results_val = results;
         }
 fail:
         free(param_cells);
@@ -587,7 +588,7 @@ fail:
 }
 
 int
-instance_execute_continue(struct exec_context *ctx, struct val *results)
+instance_execute_continue(struct exec_context *ctx)
 {
         const struct resulttype *resulttype = ctx->resulttype;
         struct cell *result_cells = NULL;
@@ -605,7 +606,7 @@ instance_execute_continue(struct exec_context *ctx, struct val *results)
         ctx->results = result_cells;
         ret = exec_expr_continue(ctx);
         if (ret == 0 && result_ncells > 0) {
-                vals_from_cells(results, result_cells, resulttype);
+                vals_from_cells(ctx->results_val, result_cells, resulttype);
         }
 fail:
         free(result_cells);
