@@ -314,14 +314,11 @@ static void *
 runner(void *vp)
 {
         const struct thread_arg *arg = vp;
-        struct wasi_threads_instance *wasi = arg->wasi;
-        struct instance *inst = arg->inst;
-        uint32_t tid;
         int ret;
 
         struct exec_context ctx0;
         struct exec_context *ctx = &ctx0;
-        exec_context_init(ctx, inst);
+        exec_context_init(ctx, arg->inst);
 
         ret = exec_thread_start_func(ctx, arg);
         while (ret == ETOYWASMRESTART) {
