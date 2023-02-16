@@ -1,7 +1,13 @@
 #include "toywasm_config.h"
 
+#if defined(TOYWASM_ENABLE_WASM_THREADS) && !defined(TOYWASM_USE_USER_SCHED)
+#define USE_PTHREAD
+#else
+#undef USE_PTHREAD
+#endif
+
 #include <inttypes.h>
-#if defined(TOYWASM_ENABLE_WASM_THREADS)
+#if defined(USE_PTHREAD)
 #include <pthread.h>
 #endif
 #include <stdarg.h>
@@ -34,7 +40,7 @@ xlog_vprintf(const char *fmt, va_list ap)
         flockfile(stderr);
         nbio_fprintf(stderr, "%s (%ju.%09ld): ", buf, (uintmax_t)ts.tv_sec,
                      ts.tv_nsec);
-#if defined(TOYWASM_ENABLE_WASM_THREADS)
+#if defined(USE_PTHREAD)
         pthread_t self = pthread_self();
         nbio_fprintf(stderr, "[%jx] ", (uintmax_t)self);
 #endif
