@@ -81,6 +81,11 @@ sched_need_resched(struct sched *sched)
         struct timespec now;
         int ret;
 
+        /* if we are the only thread, no point to resched. */
+        if (LIST_FIRST(&sched->runq) == NULL) {
+                return false;
+        }
+
         ret = timespec_now(CLOCK_MONOTONIC, &now);
         if (ret != 0) {
                 /* XXX what to do? */
