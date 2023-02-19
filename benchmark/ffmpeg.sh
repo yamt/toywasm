@@ -50,10 +50,7 @@ run "$(wasmedge --version) (interpreter)" wasmedge --dir .video --
 
 run "$(wasmi_cli --version)" wasmi_cli --dir .video --
 
-# unreleased as of writing this.
-# https://github.com/tetratelabs/wazero/pull/1115
-# https://github.com/tetratelabs/wazero/pull/1116
-# run "wazero $(wazero version) (interpreter)" wazero run -interpreter -mount .video --
+run "wazero $(wazero version) (interpreter)" wazero run -interpreter -mount .video --
 
 # https://github.com/WebAssembly/wabt/issues/2074
 #
@@ -64,15 +61,12 @@ run "$(wasmi_cli --version)" wasmi_cli --dir .video --
 
 echo "+++++++++++ JIT ++++++++++++++++++++"
 
-# this seems to use the compiler.
-# XXX is there a way to use the interpreter?
-# https://github.com/paritytech/wasmi/issues/661
-# XXX i'm not sure how compilation cache works by default.
-run "wazero $(wazero version)" wazero run -mount .video --
-
 # Note: i needed to tweak these size options manually to run
 # this particular wasm binary
 run "$(iwasm.fast-jit --version) (fast jit)" iwasm.fast-jit --dir=.video --jit-codecache-size=100000000
 
 run "$(wasmer --version)" wasmer run --dir .video --
 run "$(wasmtime --version)" wasmtime run --dir .video --
+
+# XXX i'm not sure how compilation cache works by default.
+run "wazero $(wazero version)" wazero run -mount .video --
