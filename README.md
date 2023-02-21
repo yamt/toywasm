@@ -102,10 +102,27 @@ It includes
 
 ## How slow is this?
 
-* reasonable performance for an interpreter
-* far slower than jit-based engines (as expected)
+A few observations with
+[a simple benchmark with ffmpeg](./benchmark/ffmpeg.sh):
 
-[benchmark with ffmpeg](./benchmark/ffmpeg.sh)
+* toywasm performs reasonably well for an interpreter.
+  It's slower than the fastest interpreters though.
+
+* toywasm with annotations disabled is very slow.
+
+* toywasm's memory consumption is reasonable as well.
+  (See "maximum resident set size" and "peak memory footprint".
+  I don't know what exactly these metrics reported by macOS's time(1)
+  mean though. Also, for some reasons, these numbers seem a bit unstable
+  and vary among runs. If you know better metrics to show memory footprint,
+  preferably available on macOS, please let us know.)
+
+* toywasm is far slower than JIT-based engines as expected.
+
+* Many of JIT-based engines use multiple threads to hide its
+  compilation time. (You can see their "user" time is often longer
+  than "real" because of this.)
+
 ```
 +++++++++++ Interpreters +++++++++++
 ===== toywasm v0.0.16-3-ga2d6bc9 (default configuration)
