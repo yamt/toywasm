@@ -97,6 +97,9 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mtail-call")
 endif()
 endif()
 
+if(NOT DEFINED USE_TSAN)
+set(USE_TSAN OFF)
+endif()
 # TOYWASM_ENABLE_WASM_THREADS might require pthread
 if(NOT TOYWASM_ENABLE_WASM_THREADS)
 set(TOYWASM_USE_USER_SCHED OFF)
@@ -121,6 +124,9 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--import-memory")
 endif()
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pthread")
+if(USE_TSAN)
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fsanitize=thread")
+endif()
 endif()
 endif()
 
@@ -187,6 +193,7 @@ message(STATUS "BUILD_TESTING: ${BUILD_TESTING}")
 message(STATUS "USE_IPO: ${USE_IPO}")
 message(STATUS "USE_ASAN: ${USE_ASAN}")
 message(STATUS "USE_LSAN: ${USE_LSAN}")
+message(STATUS "USE_TSAN: ${USE_TSAN}")
 
 find_package(Git REQUIRED)
 execute_process(
