@@ -7,6 +7,7 @@ set -e
 
 run()
 {
+    sync;sync;sync;sleep 10
     echo "===== $1"
     shift 1
     echo "----- $@"
