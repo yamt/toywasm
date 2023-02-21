@@ -260,3 +260,8 @@ add_custom_target(tar
 
 install(TARGETS toywasm-cli DESTINATION bin)
 install(FILES LICENSE README.md DESTINATION share/doc/toywasm)
+
+install(TARGETS toywasm-lib
+        EXPORT toywasm-config)
+install(EXPORT toywasm-config
+        DESTINATION lib/cmake/toywasm)
