@@ -424,8 +424,17 @@ endif()
 # unit test
 
 if(BUILD_TESTING)
-find_package(cmocka CONFIG REQUIRED)
-include_directories(${CMOCKA_INCLUDE_DIR})
+find_package(cmocka REQUIRED)
+
+# compat with cmocka <1.1.6
+# https://gitlab.com/cmocka/cmocka/-/commit/e4c51ce9a4792d7d301d49e4e962036bfaa7f75e
+if(NOT TARGET cmocka::cmocka)
+add_library(cmocka::cmocka STATIC IMPORTED)
+set_target_properties(cmocka::cmocka
+                      PROPERTIES
+                      IMPORTED_LOCATION "${CMOCKA_LIBRARIES}"
+                      INTERFACE_INCLUDE_DIRECTORIES "${CMOCKA_INCLUDE_DIR}")
+endif()
 
 set(test_sources
 	"test/test.c"
@@ -440,6 +449,7 @@ target_link_libraries(toywasm-test toywasm-lib m ${CMOCKA_LIBRARY})
 
 add_test(NAME toywasm-test COMMAND toywasm-test)
 set_tests_properties(toywasm-test PROPERTIES ENVIRONMENT "${TEST_ENV}")
+target_link_libraries(toywasm-test cmocka::cmocka)
 endif()
 
 # XXX Is there a way to create the file list from install() commands?
