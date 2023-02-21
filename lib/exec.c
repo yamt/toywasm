@@ -860,8 +860,16 @@ check_interrupt(struct exec_context *ctx)
                 xlog_trace("%s: need resched ctx %p", __func__, ctx);
                 return ETOYWASMRESTART;
         }
-#else                /* defined(TOYWASM_USE_USER_SCHED) */
-#if !defined(NDEBUG) /* a bit abuse of NDEBUG */
+#else /* defined(TOYWASM_USE_USER_SCHED) */
+
+#undef TSAN
+#if defined(__has_feature)
+#if __has_feature(thread_sanitizer)
+#define TSAN
+#endif
+#endif
+
+#if !defined(TSAN) && !defined(NDEBUG) /* a bit abuse of NDEBUG */
         /* inject artificial restart events to test restart logic. */
         static int x = 0;
         x++;

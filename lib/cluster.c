@@ -8,6 +8,7 @@ cluster_init(struct cluster *c)
         toywasm_mutex_init(&c->lock);
         toywasm_cv_init(&c->cv);
         c->nrunners = 0;
+        atomic_init(&c->interrupt, 0);
 }
 
 void

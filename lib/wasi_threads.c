@@ -166,7 +166,7 @@ wasi_threads_instance_join(struct wasi_threads_instance *wasi)
         cluster_join(&wasi->cluster);
 }
 
-const uint32_t *
+const atomic_uint *
 wasi_threads_interrupt_pointer(struct wasi_threads_instance *inst)
 {
         return &inst->cluster.interrupt;
@@ -194,8 +194,8 @@ wasi_threads_propagate_trap(struct wasi_threads_instance *wasi,
         toywasm_mutex_lock(&wasi->cluster.lock);
         /* propagate only the first one */
         if (!wasi->cluster.interrupt) {
-                wasi->cluster.interrupt =
-                        1; /* tell all threads to terminate */
+                /* tell all threads to terminate */
+                wasi->cluster.interrupt = 1;
                 wasi->trap = *trap;
         }
         toywasm_mutex_unlock(&wasi->cluster.lock);

@@ -1,3 +1,5 @@
+#include <stdatomic.h>
+
 struct wasi_threads_instance;
 struct import_object;
 struct sched;
@@ -32,7 +34,7 @@ int wasi_threads_instance_set_thread_spawn_args(
  */
 void wasi_threads_instance_join(struct wasi_threads_instance *inst);
 
-const uint32_t *
+const atomic_uint *
 wasi_threads_interrupt_pointer(struct wasi_threads_instance *inst);
 
 struct trap_info;

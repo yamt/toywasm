@@ -1,3 +1,4 @@
+#include <stdatomic.h>
 #include <stdint.h>
 
 #include "lock.h"
@@ -10,7 +11,7 @@ struct cluster {
         TOYWASM_MUTEX_DEFINE(lock);
         TOYWASM_CV_DEFINE(cv);
         uint32_t nrunners;
-        uint32_t interrupt;
+        atomic_uint interrupt;
 };
 
 void cluster_init(struct cluster *c);

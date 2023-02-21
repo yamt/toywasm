@@ -1,3 +1,4 @@
+#include <stdatomic.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <time.h>
@@ -169,7 +170,7 @@ struct exec_context {
 #endif
 
         /* check_interrupt() */
-        const uint32_t *intrp;
+        const atomic_uint *intrp;
 
         /* scheduler */
         struct sched *sched;
