@@ -19,9 +19,9 @@ endif()
 
 include(cmake/ToywasmConfig.cmake)
 
-# lib
+# lib-core
 
-set(lib_sources
+set(lib_core_sources
 	"lib/bitmap.c"
 	"lib/cell.c"
 	"lib/context.c"
@@ -45,40 +45,35 @@ set(lib_sources
 	"lib/util.c"
 	"lib/validation.c"
 	"lib/vec.c"
-	"lib/wasi.c"
 	"lib/xlog.c"
 	"${CMAKE_BINARY_DIR}/toywasm_config.c"
 )
 
 if(TOYWASM_ENABLE_WASM_THREADS)
-list(APPEND lib_sources
+list(APPEND lib_core_sources
 	"lib/cluster.c"
 	"lib/waitlist.c")
 if(TOYWASM_USE_USER_SCHED)
-list(APPEND lib_sources
+list(APPEND lib_core_sources
 	"lib/usched.c")
 else()
-list(APPEND lib_sources
+list(APPEND lib_core_sources
 	"lib/lock.c")
-endif()
-if(TOYWASM_ENABLE_WASI_THREADS)
-list(APPEND lib_sources
-	"lib/shared_memory.c"
-	"lib/wasi_threads.c")
 endif()
 endif()
 
 if(TOYWASM_ENABLE_WRITER)
-set(lib_sources_writer
+set(lib_core_sources_writer
 	"lib/module_writer.c"
 )
 endif()
 
-set(lib_headers
+set(lib_core_headers
 	"lib/bitmap.h"
 	"lib/cell.h"
 	"lib/context.h"
 	"lib/fileio.h"
+	"lib/idalloc.h"
 	"lib/instance.h"
 	"lib/list.h"
 	"lib/load_context.h"
@@ -89,37 +84,74 @@ set(lib_headers
 	"lib/options.h"
 	"lib/platform.h"
 	"lib/report.h"
+	"lib/shared_memory.c"
 	"lib/type.h"
 	"lib/usched.h"
 	"lib/util.h"
 	"lib/vec.h"
-	"lib/wasi.h"
-	"lib/wasi_threads.h"
 	"lib/xlog.h"
 	"${CMAKE_BINARY_DIR}/toywasm_config.h"
 	"${CMAKE_BINARY_DIR}/toywasm_version.h"
 )
 
-add_library(toywasm-lib STATIC ${lib_sources} ${lib_sources_writer})
-set_target_properties(toywasm-lib PROPERTIES OUTPUT_NAME toywasm)
+add_library(toywasm-lib-core STATIC ${lib_core_sources} ${lib_core_sources_writer})
+set_target_properties(toywasm-lib-core PROPERTIES OUTPUT_NAME toywasm-core)
 if (USE_IPO)
 # Note: -flto=full seems to produce considerably faster code
 # than flto=thin for us. However, cmake INTERPROCEDURAL_OPTIMIZATION
 # always use -flto=thin for clang.
 # cf. https://gitlab.kitware.com/cmake/cmake/-/issues/16808
-set_property(TARGET toywasm-lib PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+set_property(TARGET toywasm-lib-core PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 endif()
-set_property(TARGET toywasm-lib PROPERTY PUBLIC_HEADER ${lib_headers})
-target_include_directories(toywasm-lib
+set_property(TARGET toywasm-lib-core PROPERTY PUBLIC_HEADER ${lib_core_headers})
+target_include_directories(toywasm-lib-core
                            INTERFACE
                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lib>
                            $<INSTALL_INTERFACE:include>)
 
-install(TARGETS toywasm-lib
-        EXPORT toywasm-config
+install(TARGETS toywasm-lib-core
+        EXPORT toywasm-lib-core-config
         PUBLIC_HEADER DESTINATION include/toywasm)
-install(EXPORT toywasm-config
-        DESTINATION lib/cmake/toywasm)
+install(EXPORT toywasm-lib-core-config
+        DESTINATION lib/cmake/toywasm-lib-core)
+
+# lib-wasi
+
+set(lib_wasi_sources
+	"libwasi/wasi.c"
+)
+
+if(TOYWASM_ENABLE_WASI_THREADS)
+list(APPEND lib_core_sources
+	"libwasi/wasi_threads.c")
+endif()
+
+set(lib_wasi_headers
+	"libwasi/wasi.h"
+	"libwasi/wasi_threads.h"
+)
+
+add_library(toywasm-lib-wasi STATIC ${lib_wasi_sources})
+set_target_properties(toywasm-lib-wasi PROPERTIES OUTPUT_NAME toywasm-wasi)
+if (USE_IPO)
+# Note: -flto=full seems to produce considerably faster code
+# than flto=thin for us. However, cmake INTERPROCEDURAL_OPTIMIZATION
+# always use -flto=thin for clang.
+# cf. https://gitlab.kitware.com/cmake/cmake/-/issues/16808
+set_property(TARGET toywasm-lib-wasi PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif()
+set_property(TARGET toywasm-lib-wasi PROPERTY PUBLIC_HEADER ${lib_wasi_headers})
+target_link_libraries(toywasm-lib-wasi toywasm-lib-core)
+target_include_directories(toywasm-lib-wasi
+                           INTERFACE
+                           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/libwasi>
+                           $<INSTALL_INTERFACE:include>)
+
+install(TARGETS toywasm-lib-wasi
+        EXPORT toywasm-lib-wasi-config
+        PUBLIC_HEADER DESTINATION include/toywasm)
+install(EXPORT toywasm-lib-wasi-config
+        DESTINATION lib/cmake/toywasm-lib-wasi)
 
 # cli
 
@@ -129,7 +161,7 @@ set(cli_sources
 )
 
 add_executable(toywasm-cli ${cli_sources})
-target_link_libraries(toywasm-cli toywasm-lib m)
+target_link_libraries(toywasm-cli toywasm-lib-core toywasm-lib-wasi m)
 set_target_properties(toywasm-cli PROPERTIES OUTPUT_NAME toywasm)
 
 add_test(NAME toywasm-cli-simple-module COMMAND
@@ -275,7 +307,7 @@ add_executable(toywasm-test ${test_sources})
 # Force native build because cmocka from homebrew is not universal binary.
 set_target_properties(toywasm-test
     PROPERTIES OSX_ARCHITECTURES ${CMAKE_HOST_SYSTEM_PROCESSOR})
-target_link_libraries(toywasm-test toywasm-lib m ${CMOCKA_LIBRARY})
+target_link_libraries(toywasm-test toywasm-lib-core toywasm-lib-wasi m ${CMOCKA_LIBRARY})
 
 add_test(NAME toywasm-test COMMAND toywasm-test)
 set_tests_properties(toywasm-test PROPERTIES ENVIRONMENT "${TEST_ENV}")

@@ -2,14 +2,14 @@ cmake_minimum_required(VERSION 3.16)
 
 project(app LANGUAGES C)
 
-find_package(toywasm REQUIRED)
+find_package(toywasm-lib-core REQUIRED)
 
 set(app_sources
 	"app.c"
 )
 
 add_executable(app ${app_sources})
-target_link_libraries(app toywasm-lib m)
+target_link_libraries(app toywasm-lib-core m)
 
 # XXX the library is built with short enum.
 # maybe we can use INTERFACE_COMPILE_OPTIONS.
