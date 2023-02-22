@@ -9,7 +9,7 @@ set(app_sources
 )
 
 add_executable(app ${app_sources})
-target_link_libraries(app toywasm-lib)
+target_link_libraries(app toywasm-lib m)
 
 # XXX the library is built with short enum.
 # maybe we can use INTERFACE_COMPILE_OPTIONS.
