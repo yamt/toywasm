@@ -304,7 +304,7 @@ jobs:
         cp ${{env.builddir}}/*.tgz ${{github.workspace}}/artifacts/
 
     - name: Test example app with the library we built
-      if: matrix.arch == 'native'
+      if: matrix.BUILD_TYPE == 'Release' && matrix.arch == 'native'
       run: |
         ./test/test-example-app.sh ${{env.builddir}}/toywasm-v*.tgz ${{env.builddir}}/spectest.wasm
 
