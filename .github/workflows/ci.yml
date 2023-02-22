@@ -303,6 +303,11 @@ jobs:
         mkdir -p ${{github.workspace}}/artifacts
         cp ${{env.builddir}}/*.tgz ${{github.workspace}}/artifacts/
 
+    - name: Test example app with the library we built
+      if: matrix.arch == 'native'
+      run: |
+        ./test/test-example-app.sh ${{env.builddir}}/toywasm-v*.tgz ${{env.builddir}}/spectest.wasm
+
     - name: Upload artifacts
       if: matrix.name != 'noname'
       uses: actions/upload-artifact@v3
