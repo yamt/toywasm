@@ -5,7 +5,7 @@ set(lib_wasi_sources
 )
 
 if(TOYWASM_ENABLE_WASI_THREADS)
-list(APPEND lib_core_sources
+list(APPEND lib_wasi_sources
 	"wasi_threads.c")
 endif()
 
