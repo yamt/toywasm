@@ -176,7 +176,7 @@ add_executable(toywasm-test ${test_sources})
 # Force native build because cmocka from homebrew is not universal binary.
 set_target_properties(toywasm-test
     PROPERTIES OSX_ARCHITECTURES ${CMAKE_HOST_SYSTEM_PROCESSOR})
-target_link_libraries(toywasm-test toywasm-lib-core toywasm-lib-wasi m ${CMOCKA_LIBRARY})
+target_link_libraries(toywasm-test toywasm-lib-core m ${CMOCKA_LIBRARY})
 
 add_test(NAME toywasm-test COMMAND toywasm-test)
 set_tests_properties(toywasm-test PROPERTIES ENVIRONMENT "${TEST_ENV}")
