@@ -91,6 +91,7 @@ set(lib_headers
 	"lib/report.h"
 	"lib/type.h"
 	"lib/usched.h"
+	"lib/util.h"
 	"lib/vec.h"
 	"lib/wasi.h"
 	"lib/wasi_threads.h"
