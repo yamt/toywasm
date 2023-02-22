@@ -15,3 +15,10 @@ target_link_libraries(app toywasm-lib m)
 # maybe we can use INTERFACE_COMPILE_OPTIONS.
 # but i feel a bit uncomfortable with it.
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fshort-enums")
+
+# for a library with IPO enabled
+if (CMAKE_SYSTEM_NAME MATCHES "Linux")
+if (CMAKE_C_COMPILER_ID MATCHES "Clang")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=lld")
+endif()
+endif()
