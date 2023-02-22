@@ -185,5 +185,5 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/lib/toywasm_config.h.in"
 	"${CMAKE_BINARY_DIR}/toywasm_config.h")
 include_directories(${CMAKE_BINARY_DIR})
 
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cli/toywasm_config.c.in"
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/lib/toywasm_config.c.in"
 	"${CMAKE_BINARY_DIR}/toywasm_config.c")
