@@ -772,11 +772,11 @@ exec_func(struct exec_context *ctx, uint32_t funcidx,
 {
         int ret;
 #if defined(TOYWASM_ENABLE_WASI_THREADS)
-        if (state->wasi_threads != NULL) {
-                ctx->intrp =
-                        wasi_threads_interrupt_pointer(state->wasi_threads);
+        struct wasi_threads_instance *wasi_threads = state->wasi_threads;
+        if (wasi_threads != NULL) {
+                ctx->intrp = wasi_threads_interrupt_pointer(wasi_threads);
 #if defined(TOYWASM_USE_USER_SCHED)
-                ctx->sched = wasi_threads_sched(state->wasi_threads);
+                ctx->sched = wasi_threads_sched(wasi_threads);
 #endif
         }
 #endif
@@ -800,18 +800,17 @@ exec_func(struct exec_context *ctx, uint32_t funcidx,
                 assert(ctx->trapped);
                 const struct trap_info *trap = &ctx->trap;
 #if defined(TOYWASM_ENABLE_WASI_THREADS)
-                if (state->wasi_threads != NULL) {
-                        wasi_threads_propagate_trap(state->wasi_threads, trap);
-                        wasi_threads_instance_join(state->wasi_threads);
-                        trap = wasi_threads_instance_get_trap(
-                                state->wasi_threads);
+                if (wasi_threads != NULL) {
+                        wasi_threads_propagate_trap(wasi_threads, trap);
+                        wasi_threads_instance_join(wasi_threads);
+                        trap = wasi_threads_instance_get_trap(wasi_threads);
                 }
 #endif
                 *trapp = trap;
         } else {
 #if defined(TOYWASM_ENABLE_WASI_THREADS)
-                if (state->wasi_threads != NULL) {
-                        wasi_threads_instance_join(state->wasi_threads);
+                if (wasi_threads != NULL) {
+                        wasi_threads_instance_join(wasi_threads);
                 }
 #endif
         }
