@@ -62,6 +62,19 @@ jobs:
         # how include works is not intuitive to me:
         # https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs#expanding-or-adding-matrix-configurations
         include:
+          - name: noname
+            os: ubuntu-20.04
+            compiler: gcc
+            arch: native
+            BUILD_TYPE: Release
+            TOYWASM_USE_SEPARATE_EXECUTE: ON
+            TOYWASM_USE_TAILCALL: ON
+            TOYWASM_ENABLE_TRACING: OFF
+            TOYWASM_USE_SMALL_CELLS: ON
+            TOYWASM_USE_SEPARATE_LOCALS: ON
+            MISC_FEATURES: OFF
+            TOYWASM_ENABLE_WASM_THREADS: OFF
+            TOYWASM_ENABLE_WASI_THREADS: OFF
           - name: ubuntu-20.04-amd64
             os: ubuntu-20.04
             compiler: clang
