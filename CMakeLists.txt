@@ -19,7 +19,7 @@ set(CMAKE_C_COMPILER_RANLIB ${BREW_RANLIB} CACHE FILEPATH "brew llvm ranlib" FOR
 endif()
 endif()
 
-project(toy-wasm LANGUAGES C)
+project(toywasm LANGUAGES C)
 
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED YES)
