@@ -83,6 +83,9 @@ if (USE_IPO)
 set_property(TARGET toywasm-lib-core PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 endif()
 set_property(TARGET toywasm-lib-core PROPERTY PUBLIC_HEADER ${lib_core_headers})
+if(TOYWASM_USE_SHORT_ENUMS)
+target_compile_options(toywasm-lib-core PUBLIC "-fshort-enums")
+endif()
 target_include_directories(toywasm-lib-core
                            INTERFACE
                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
