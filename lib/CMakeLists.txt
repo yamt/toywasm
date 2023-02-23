@@ -81,7 +81,16 @@ if (USE_IPO)
 # always use -flto=thin for clang.
 # cf. https://gitlab.kitware.com/cmake/cmake/-/issues/16808
 set_property(TARGET toywasm-lib-core PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
-endif()
+
+# Note:
+# clang-10 on ubuntu needs this to link IPO-using libraries.
+# clang-11 on ubuntu doesn't seem to need this.
+if (CMAKE_SYSTEM_NAME MATCHES "Linux")
+if (CMAKE_C_COMPILER_ID MATCHES "Clang")
+target_link_options(toywasm-lib-core INTERFACE "-fuse-ld=lld")
+endif() # Clang
+endif() # Linux
+endif() # USE_IPO
 set_property(TARGET toywasm-lib-core PROPERTY PUBLIC_HEADER ${lib_core_headers})
 if(TOYWASM_USE_SHORT_ENUMS)
 target_compile_options(toywasm-lib-core PUBLIC "-fshort-enums")
