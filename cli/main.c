@@ -148,7 +148,7 @@ print_usage()
 #if defined(TOYWASM_ENABLE_WASI)
         printf("\ttoywasm [OPTIONS] [--] <MODULE> [WASI-ARGS...]\n");
 #else
-        printf("\ttoywasm [OPTIONS] [--] <MODULE> [WASI-ARGS...]\n");
+        printf("\ttoywasm [OPTIONS] [--] <MODULE>\n");
 #endif
 
         printf("Options:\n");
