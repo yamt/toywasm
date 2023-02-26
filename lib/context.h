@@ -137,7 +137,6 @@ struct trap_info {
 
 struct sched;
 struct context;
-struct wasi_fdinfo;
 
 struct exec_context {
         /* Some cached info about the current frame. */
