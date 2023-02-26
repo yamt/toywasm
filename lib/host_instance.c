@@ -2,7 +2,9 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <stdlib.h>
+#include <string.h>
 
+#include "context.h"
 #include "host_instance.h"
 #include "instance.h"
 #include "type.h"
@@ -116,4 +118,32 @@ host_func_dump_params(const struct functype *ft, const struct cell *params)
                 xlog_trace("param[%" PRIu32 "] = %016" PRIu64, i, val.u.i64);
 #endif
         }
+}
+
+int
+host_func_copyin(struct exec_context *ctx, void *hostaddr, uint32_t wasmaddr,
+                 size_t len)
+{
+        void *p;
+        int ret;
+        ret = memory_getptr(ctx, 0, wasmaddr, 0, len, &p);
+        if (ret != 0) {
+                return ret;
+        }
+        memcpy(hostaddr, p, len);
+        return 0;
+}
+
+int
+host_func_copyout(struct exec_context *ctx, const void *hostaddr,
+                  uint32_t wasmaddr, size_t len)
+{
+        void *p;
+        int ret;
+        ret = memory_getptr(ctx, 0, wasmaddr, 0, len, &p);
+        if (ret != 0) {
+                return ret;
+        }
+        memcpy(p, hostaddr, len);
+        return 0;
 }

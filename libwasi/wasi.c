@@ -210,34 +210,6 @@ fdinfo_is_prestat(const struct wasi_fdinfo *fdinfo)
         return fdinfo->hostfd == -1 && fdinfo->prestat_path != NULL;
 }
 
-int
-wasi_copyin(struct exec_context *ctx, void *hostaddr, uint32_t wasmaddr,
-            size_t len)
-{
-        void *p;
-        int ret;
-        ret = memory_getptr(ctx, 0, wasmaddr, 0, len, &p);
-        if (ret != 0) {
-                return ret;
-        }
-        memcpy(hostaddr, p, len);
-        return 0;
-}
-
-int
-wasi_copyout(struct exec_context *ctx, const void *hostaddr, uint32_t wasmaddr,
-             size_t len)
-{
-        void *p;
-        int ret;
-        ret = memory_getptr(ctx, 0, wasmaddr, 0, len, &p);
-        if (ret != 0) {
-                return ret;
-        }
-        memcpy(p, hostaddr, len);
-        return 0;
-}
-
 static int
 wasi_copyin_iovec(struct exec_context *ctx, uint32_t iov_uaddr,
                   uint32_t iov_count, struct iovec **resultp, int *usererrorp)

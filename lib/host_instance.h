@@ -40,3 +40,7 @@ int import_object_create_for_host_funcs(const struct host_module *hm, size_t n,
 
 void host_func_dump_params(const struct functype *ft,
                            const struct cell *params);
+int host_func_copyout(struct exec_context *ctx, const void *hostaddr,
+                      uint32_t wasmaddr, size_t len);
+int host_func_copyin(struct exec_context *ctx, void *hostaddr,
+                     uint32_t wasmaddr, size_t len);
