@@ -119,7 +119,6 @@ struct jump_cache {
 
 struct trap_info {
         enum trapid trapid;
-        uint32_t exit_code; /* wasi */
 };
 
 /*

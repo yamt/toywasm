@@ -908,7 +908,10 @@ toywasm_repl_invoke(struct repl_state *state, const char *modname,
         if (ret == ETOYWASMTRAP) {
                 assert(trap != NULL);
                 if (trap->trapid == TRAP_VOLUNTARY_EXIT) {
-                        uint32_t exit_code = trap->exit_code;
+                        struct wasi_instance *wasi = state->wasi;
+                        /* Note: TRAP_VOLUNTARY_EXIT is only used by wasi */
+                        assert(wasi != NULL);
+                        uint32_t exit_code = wasi_instance_exit_code(wasi);
                         xlog_trace("voluntary exit (%" PRIu32 ")", exit_code);
                         if (exitcodep != NULL) {
                                 *exitcodep = exit_code;

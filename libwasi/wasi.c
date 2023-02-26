@@ -106,6 +106,8 @@ struct wasi_instance {
         char *const *argv;
         int nenvs;
         char *const *envs;
+
+        uint32_t exit_code;
 };
 
 #if defined(__wasi__)
@@ -1047,9 +1049,12 @@ wasi_proc_exit(struct exec_context *ctx, struct host_instance *hi,
                struct cell *results)
 {
         WASI_TRACE;
+        struct wasi_instance *wasi = (void *)hi;
         HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t code = HOST_FUNC_PARAM(ft, params, 0, i32);
-        ctx->trap.exit_code = code;
+        toywasm_mutex_lock(&wasi->lock);
+        wasi->exit_code = code;
+        toywasm_mutex_unlock(&wasi->lock);
         return trap_with_id(ctx, TRAP_VOLUNTARY_EXIT,
                             "proc_exit with %" PRIu32, code);
 }
@@ -3718,6 +3723,16 @@ int
 wasi_instance_prestat_add_mapdir(struct wasi_instance *wasi, const char *path)
 {
         return wasi_instance_prestat_add_common(wasi, path, true);
+}
+
+uint32_t
+wasi_instance_exit_code(struct wasi_instance *wasi)
+{
+        uint32_t exit_code;
+        toywasm_mutex_lock(&wasi->lock);
+        exit_code = wasi->exit_code;
+        toywasm_mutex_unlock(&wasi->lock);
+        return exit_code;
 }
 
 void
