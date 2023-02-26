@@ -20,7 +20,9 @@ endif()
 include(cmake/ToywasmConfig.cmake)
 
 add_subdirectory(lib)
+if(TOYWASM_ENABLE_WASI)
 add_subdirectory(libwasi)
+endif()
 
 # cli
 
@@ -30,7 +32,7 @@ set(cli_sources
 )
 
 add_executable(toywasm-cli ${cli_sources})
-target_link_libraries(toywasm-cli toywasm-lib-core toywasm-lib-wasi m)
+target_link_libraries(toywasm-cli toywasm-lib-core $<$<BOOL:${TOYWASM_ENABLE_WASI}>:toywasm-lib-wasi> m)
 set_target_properties(toywasm-cli PROPERTIES OUTPUT_NAME toywasm)
 
 add_test(NAME toywasm-cli-simple-module COMMAND
@@ -88,6 +90,7 @@ set_tests_properties(toywasm-cli-wasm3-spec-test-threads PROPERTIES ENVIRONMENT 
 set_tests_properties(toywasm-cli-wasm3-spec-test-threads PROPERTIES LABELS "spec")
 endif()
 
+if(TOYWASM_ENABLE_WASI)
 add_test(NAME toywasm-cli-wasi-testsuite
 	COMMAND ./test/run-wasi-testsuite.sh
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -115,6 +118,7 @@ add_test(NAME toywasm-cli-ffmpeg
 )
 set_tests_properties(toywasm-cli-ffmpeg PROPERTIES ENVIRONMENT "${TEST_ENV}")
 set_tests_properties(toywasm-cli-ffmpeg PROPERTIES LABELS "slow")
+endif() # TOYWASM_ENABLE_WASI
 
 if(NOT TOYWASM_ENABLE_WASM_MULTI_MEMORY)
 add_test(NAME toywasm-cli-wasm3-spec-test-disable-optimizations
@@ -127,12 +131,14 @@ set_tests_properties(toywasm-cli-wasm3-spec-test-disable-optimizations PROPERTIE
 set_tests_properties(toywasm-cli-wasm3-spec-test-disable-optimizations PROPERTIES LABELS "spec")
 endif()
 
+if(TOYWASM_ENABLE_WASI)
 add_test(NAME toywasm-cli-wasm3-wasi-test
 	COMMAND ./test/run-wasm3-wasi-test.sh --exec "${CMAKE_BINARY_DIR}/toywasm --wasi --wasi-dir ." --separate-args --timeout 1200
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 set_tests_properties(toywasm-cli-wasm3-wasi-test PROPERTIES ENVIRONMENT "${TEST_ENV}")
 set_tests_properties(toywasm-cli-wasm3-wasi-test PROPERTIES LABELS "slow")
+endif() # TOYWASM_ENABLE_WASI
 
 # sample wasm files
 

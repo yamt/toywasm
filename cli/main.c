@@ -107,6 +107,7 @@ const struct option longopts[] = {
                 NULL,
                 opt_version,
         },
+#if defined(TOYWASM_ENABLE_WASI)
         {
                 "wasi",
                 no_argument,
@@ -131,6 +132,7 @@ const struct option longopts[] = {
                 NULL,
                 opt_wasi_env,
         },
+#endif
         {
                 NULL,
                 0,
@@ -143,7 +145,11 @@ static void
 print_usage()
 {
         printf("Usage:\n");
-        printf("\ttoywasm [OPTIONS] [--] <MODULE> [ARGS...]\n");
+#if defined(TOYWASM_ENABLE_WASI)
+        printf("\ttoywasm [OPTIONS] [--] <MODULE> [WASI-ARGS...]\n");
+#else
+        printf("\ttoywasm [OPTIONS] [--] <MODULE> [WASI-ARGS...]\n");
+#endif
 
         printf("Options:\n");
         const struct option *opt = longopts;
@@ -167,8 +173,10 @@ int
 main(int argc, char *const *argv)
 {
         struct repl_state *state;
+#if defined(TOYWASM_ENABLE_WASI)
         int nenvs = 0;
         char **envs = NULL;
+#endif
         int ret;
         int longidx;
         bool do_repl = false;
@@ -239,6 +247,7 @@ main(int argc, char *const *argv)
                         toywasm_repl_print_version();
                         might_need_help = false;
                         break;
+#if defined(TOYWASM_ENABLE_WASI)
                 case opt_wasi:
                         ret = toywasm_repl_load_wasi(state);
                         if (ret != 0) {
@@ -272,6 +281,7 @@ main(int argc, char *const *argv)
                                 goto fail;
                         }
                         break;
+#endif
                 default:
                         print_usage();
                         exit(0);
@@ -293,10 +303,12 @@ main(int argc, char *const *argv)
                 }
                 exit(0);
         }
+#if defined(TOYWASM_ENABLE_WASI)
         ret = toywasm_repl_set_wasi_args(state, argc, argv);
         if (ret != 0 && ret != EPROTO) {
                 goto fail;
         }
+#endif
         const char *filename = argv[0];
         ret = toywasm_repl_load(state, NULL, filename);
         if (ret != 0) {
@@ -324,10 +336,14 @@ main(int argc, char *const *argv)
                 xlog_error("invoke failed with %d", ret);
                 goto fail;
         }
+#if defined(TOYWASM_ENABLE_WASI)
         exit_status = wasi_exit_code;
+#endif
 fail:
         toywasm_repl_reset(state);
+#if defined(TOYWASM_ENABLE_WASI)
         free(envs);
+#endif
         free(state);
         exit(exit_status);
 }

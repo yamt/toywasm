@@ -32,7 +32,9 @@
 #include "toywasm_version.h"
 #include "type.h"
 #include "usched.h"
+#if defined(TOYWASM_ENABLE_WASI)
 #include "wasi.h"
+#endif
 #if defined(TOYWASM_ENABLE_WASI_THREADS)
 #include "wasi_threads.h"
 #endif
@@ -186,17 +188,20 @@ toywasm_repl_reset(struct repl_state *state)
                 n--;
         }
 #endif
+#if defined(TOYWASM_ENABLE_WASI)
         if (state->wasi != NULL) {
                 wasi_instance_destroy(state->wasi);
                 state->wasi = NULL;
                 n--;
         }
+#endif
         assert(n == 0);
 }
 
 int
 toywasm_repl_load_wasi(struct repl_state *state)
 {
+#if defined(TOYWASM_ENABLE_WASI)
         if (state->wasi != NULL) {
                 xlog_error("wasi is already loaded");
                 return EPROTO;
@@ -213,6 +218,7 @@ toywasm_repl_load_wasi(struct repl_state *state)
         }
         im->next = state->imports;
         state->imports = im;
+#endif
 #if defined(TOYWASM_ENABLE_WASI_THREADS)
         assert(state->wasi_threads == NULL);
         ret = wasi_threads_instance_create(&state->wasi_threads);
@@ -238,14 +244,17 @@ undo_wasi:
         state->imports = im->next;
         import_object_destroy(im);
 #endif
+#if defined(TOYWASM_ENABLE_WASI)
 undo_wasi_create:
         wasi_instance_destroy(state->wasi);
         state->wasi = NULL;
 fail:
         xlog_error("failed to load wasi");
         return ret;
+#endif
 }
 
+#if defined(TOYWASM_ENABLE_WASI)
 int
 toywasm_repl_set_wasi_args(struct repl_state *state, int argc,
                            char *const *argv)
@@ -286,6 +295,7 @@ toywasm_repl_set_wasi_prestat_mapdir(struct repl_state *state,
         }
         return wasi_instance_prestat_add_mapdir(state->wasi, path);
 }
+#endif
 
 int
 find_mod(struct repl_state *state, const char *modname,
@@ -907,6 +917,7 @@ toywasm_repl_invoke(struct repl_state *state, const char *modname,
 
         if (ret == ETOYWASMTRAP) {
                 assert(trap != NULL);
+#if defined(TOYWASM_ENABLE_WASI)
                 if (trap->trapid == TRAP_VOLUNTARY_EXIT) {
                         struct wasi_instance *wasi = state->wasi;
                         /* Note: TRAP_VOLUNTARY_EXIT is only used by wasi */
@@ -922,6 +933,7 @@ toywasm_repl_invoke(struct repl_state *state, const char *modname,
                         exec_context_clear(ctx);
                         goto fail;
                 }
+#endif
                 print_trap(ctx, trap);
         }
         exec_context_clear(ctx);
