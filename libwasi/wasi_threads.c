@@ -14,7 +14,6 @@
 #include "cluster.h"
 #include "context.h"
 #include "endian.h"
-#include "host_instance.h"
 #include "idalloc.h"
 #include "instance.h"
 #include "lock.h"

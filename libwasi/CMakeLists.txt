@@ -2,6 +2,7 @@
 
 set(lib_wasi_sources
 	"wasi.c"
+	"wasi_fdtable.c"
 )
 
 if(TOYWASM_ENABLE_WASI_THREADS)

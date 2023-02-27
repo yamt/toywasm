@@ -1,3 +1,51 @@
+#include <dirent.h> /* DIR */
+#include <stdbool.h>
+#include <stdint.h>
+
+#include "host_instance.h"
+#include "lock.h"
+#include "wasi_abi.h"
+#include "xlog.h"
+
+struct wasi_fdinfo {
+        /*
+         * - directories added by wasi_instance_prestat_add
+         *   prestat_path != NULL
+         *   hostfd == -1 (for now)
+         *
+         * - files opened by user
+         *   prestat_path != NULL (DIR)
+         *   prestat_path == NULL (!DIR)
+         *   hostfd != -1
+         *
+         * - closed descriptors (EBADF)
+         *   prestat_path == NULL
+         *   hostfd == -1
+         */
+        char *prestat_path;
+        char *wasm_path; /* NULL means same as prestat_path */
+        int hostfd;
+        DIR *dir;
+        uint32_t refcount;
+        uint32_t blocking;
+};
+
+struct wasi_instance {
+        struct host_instance hi;
+
+        TOYWASM_MUTEX_DEFINE(lock);
+        TOYWASM_CV_DEFINE(cv);
+        VEC(, struct wasi_fdinfo *)
+        fdtable GUARDED_VAR(lock); /* indexed by wasi fd */
+
+        int argc;
+        char *const *argv;
+        int nenvs;
+        char *const *envs;
+
+        uint32_t exit_code;
+};
+
 #define WASI_HOST_FUNC(NAME, TYPE)                                            \
         {                                                                     \
                 .name = NAME_FROM_CSTR_LITERAL(#NAME), .type = TYPE,          \
@@ -26,3 +74,31 @@ uint32_t wasi_convert_errno(int host_errno);
 
 #define wasi_copyout(c, h, w, l) host_func_copyout(c, h, w, l)
 #define wasi_copyin(c, h, w, l) host_func_copyin(c, h, w, l)
+
+struct exec_context;
+bool wasi_fdinfo_is_prestat(const struct wasi_fdinfo *fdinfo);
+bool wasi_fdinfo_unused(struct wasi_fdinfo *fdinfo);
+struct wasi_fdinfo *wasi_fdinfo_alloc(void);
+void wasi_fd_affix(struct wasi_instance *wasi, uint32_t wasifd,
+                   struct wasi_fdinfo *fdinfo) REQUIRES(wasi->lock);
+int wasi_fd_lookup_locked(struct wasi_instance *wasi, uint32_t wasifd,
+                          struct wasi_fdinfo **infop) REQUIRES(wasi->lock);
+int wasi_fd_lookup(struct wasi_instance *wasi, uint32_t wasifd,
+                   struct wasi_fdinfo **infop);
+void wasi_fdinfo_release(struct wasi_instance *wasi,
+                         struct wasi_fdinfo *fdinfo);
+int wasi_fdinfo_close(struct wasi_fdinfo *fdinfo);
+int wasi_fd_lookup_locked_for_close(struct exec_context *ctx,
+                                    struct wasi_instance *wasi,
+                                    uint32_t wasifd,
+                                    struct wasi_fdinfo **fdinfop, int *retp)
+        REQUIRES(wasi->lock);
+int wasi_hostfd_lookup(struct wasi_instance *wasi, uint32_t wasifd,
+                       int *hostfdp, struct wasi_fdinfo **fdinfop);
+int wasi_fdtable_expand(struct wasi_instance *wasi, uint32_t maxfd)
+        REQUIRES(wasi->lock);
+void wasi_fdtable_free(struct wasi_instance *wasi);
+int wasi_fd_alloc(struct wasi_instance *wasi, uint32_t *wasifdp)
+        REQUIRES(wasi->lock);
+int wasi_fd_add(struct wasi_instance *wasi, int hostfd, char *path,
+                uint16_t fdflags, uint32_t *wasifdp);
