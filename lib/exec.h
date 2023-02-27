@@ -2,9 +2,12 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+struct cell;
 struct expr;
 struct exec_context;
+struct instance;
 struct funcinst;
+struct localtype;
 struct resulttype;
 struct val;
 enum valtype;
