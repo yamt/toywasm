@@ -22,7 +22,7 @@ TOYWASM=${TOYWASM:-toywasm}
 
 FILTER_OPTIONS="--exclude-filter test/wasi-testsuite-skip.json"
 if ${TOYWASM} --version | grep -F "sizeof(void *) = 4"; then
-    FILTER_OPTIONS="${FILTER_OPTIONS} --exclude-filter test/wasi-testsuite-skip-32bit.json"
+    FILTER_OPTIONS="${FILTER_OPTIONS} test/wasi-testsuite-skip-32bit.json"
 fi
 
 TESTS="${TESTS} assemblyscript/testsuite/"
