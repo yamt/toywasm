@@ -64,7 +64,8 @@ for w in *.wasm; do
     fi
     echo "=== ${w}"
     TMP=$(mktemp -d)
-    if run_wasi_test; then
+    # Note: poll_oneoff_stdio behaves differently on the condition on stdin
+    if true | run_wasi_test; then
         if grep "^${w%%.wasm}$" ${BLACKLIST}; then
             echo "=== ${w} succeeded (unexpected)"
             UNEXPECTED_SUCCESS=$((UNEXPECTED_SUCCESS + 1))
