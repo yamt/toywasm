@@ -4,9 +4,9 @@ set -e
 
 THIS_DIR=$(cd $(dirname $0) && pwd -P)
 
-EXE=${1:-${THIS_DIR}/build/toywasm --wasi}
+EXE=${1:-${THIS_DIR}/../build/toywasm --wasi}
 
-WASM_DIR="${THIS_DIR}/.wasmtime-wasi-tests-bin"
+WASM_DIR="${THIS_DIR}/../.wasmtime-wasi-tests-bin"
 fetch_test_bin()
 {
     URL=https://github.com/yamt/wasmtime/releases/download/wasi-tests-bin-20221012/wasmtime-wasi-tests-bin.tgz
