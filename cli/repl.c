@@ -424,15 +424,18 @@ repl_load_from_buf(struct repl_state *state, const char *modname,
 
         struct import_object *imports = state->imports;
 #if defined(TOYWASM_ENABLE_WASI_THREADS)
-        /* create matching shared memory automatically */
-        struct import_object *imo;
-        ret = create_satisfying_shared_memories(mod->module, &imo);
-        if (ret != 0) {
-                goto fail;
+        if (state->wasi_threads != NULL) {
+                assert(mod->extra_import == NULL);
+                /* create matching shared memory automatically */
+                struct import_object *imo;
+                ret = create_satisfying_shared_memories(mod->module, &imo);
+                if (ret != 0) {
+                        goto fail;
+                }
+                mod->extra_import = imo;
+                imo->next = imports;
+                imports = imo;
         }
-        mod->extra_import = imo;
-        imo->next = imports;
-        imports = imo;
 #endif
 
         struct report report;
