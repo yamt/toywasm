@@ -1,5 +1,8 @@
 {
     "WASI C tests": {
         "fdopendir-with-access": "qemu issue: https://gitlab.com/qemu-project/qemu/-/issues/263"
+    },
+    "WASI Rust tests": {
+        "fd_readdir": "qemu issue: https://gitlab.com/qemu-project/qemu/-/issues/263"
     }
 }
