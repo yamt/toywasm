@@ -1035,11 +1035,18 @@ wasi_fd_read(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         ssize_t n;
+
+        /* hack for tty. see the comment in wasi_instance_create. */
+        if ((fcntl(hostfd, F_GETFL, 0) & O_NONBLOCK) == 0) {
+                ret = EAGAIN;
+                goto tty_hack;
+        }
 retry:
         n = readv(hostfd, hostiov, iov_count);
         if (n == -1) {
                 ret = errno;
                 assert(ret > 0);
+tty_hack:
                 if (emulate_blocking(ctx, fdinfo, POLLIN, ret, &host_ret,
                                      &ret)) {
                         goto retry;
