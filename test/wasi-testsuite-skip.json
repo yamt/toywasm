@@ -1,0 +1,7 @@
+{
+    "WASI Rust tests": {
+        "fd_filestat_get": "https://github.com/WebAssembly/wasi-testsuite/pull/59",
+        "fd_filestat_set": "intentional limitations due to the use of legacy (non openat family) functions.",
+        "fd_flags_set": "rights system not implemented."
+    }
+}

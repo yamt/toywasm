@@ -6,8 +6,8 @@ DIR=.wasi-testsuite
 
 fetch() {
     REPO=https://github.com/WebAssembly/wasi-testsuite
-    # prod/testsuite-base branch
-    REF=c484b7f846aaa4049d42adaea1ae041b307e3471
+    # prod/testsuite-all branch
+    REF=3bea9da753ed200eb6a80607cd04d8f74e14732c
     mkdir "${DIR}"
     git -C "${DIR}" init
     git -C "${DIR}" fetch --depth 1 ${REPO} ${REF}
@@ -20,16 +20,23 @@ fi
 
 TOYWASM=${TOYWASM:-toywasm}
 
-FILTER_OPTIONS=
+FILTER_OPTIONS="--exclude-filter test/wasi-testsuite-skip.json"
 if ${TOYWASM} --version | grep -F "sizeof(void *) = 4"; then
     FILTER_OPTIONS="${FILTER_OPTIONS} --exclude-filter test/wasi-testsuite-skip-32bit.json"
 fi
+
+TESTS="${TESTS} assemblyscript/testsuite/"
+TESTS="${TESTS} c/testsuite/"
+TESTS="${TESTS} rust/testsuite/"
+
+for t in ${TESTS}; do
+    TESTDIRS="${TESTDIRS} ${DIR}/tests/${t}"
+done
 
 virtualenv venv
 . ./venv/bin/activate
 python3 -m pip install -r ${DIR}/test-runner/requirements.txt
 python3 ${DIR}/test-runner/wasi_test_runner.py \
--t ${DIR}/tests/assemblyscript/testsuite/ \
-${DIR}/tests/c/testsuite/ \
+-t ${TESTDIRS} \
 ${FILTER_OPTIONS} \
 -r test/wasi-testsuite-adapter.py
