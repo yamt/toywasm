@@ -776,6 +776,8 @@ unescape(char *p0, size_t *lenp)
 /*
  * an instance_execute_func wrapper with wasi-threads handling.
  * REVISIT: move to lib
+ *
+ * the returned trap is owned by either exec_context or wasi_threads_instance.
  */
 static int
 exec_func(struct exec_context *ctx, uint32_t funcidx,
