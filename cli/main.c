@@ -355,8 +355,8 @@ main(int argc, char *const *argv)
                  * (Also, see the comment in libwasi wasi_proc_exit.)
                  *
                  * Thus, if we make toywasm return 128+SIGABRT on a trap
-                 * and if you run toywasm on wasmtime, the exit code 134
-                 * will cause a trap and it makes wasmtime exit with 1.
+                 * and if you run toywasm on wasmtime, wasmtime rejects
+                 * toywasm's exit code and exits with 1.
                  *
                  * Probably the idea to represent both of wasi exit code
                  * and other exit reasons like a trap with a single exit
