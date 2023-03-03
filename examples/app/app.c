@@ -42,5 +42,6 @@ main(int argc, char **argv)
                     m->nimportedfuncs);
         xlog_printf("module %s contains %" PRIu32 " functions\n", filename,
                     m->nfuncs);
+        module_print_stats(m);
         exit(0);
 }
