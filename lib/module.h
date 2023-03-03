@@ -11,3 +11,4 @@ int module_find_export(struct module *m, const struct name *name,
                        uint32_t type, uint32_t *idxp);
 int module_find_export_func(struct module *m, const struct name *name,
                             uint32_t *funcidxp);
+void module_print_stats(const struct module *m);

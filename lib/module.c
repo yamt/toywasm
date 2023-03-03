@@ -19,6 +19,7 @@
 #include "leb128.h"
 #include "load_context.h"
 #include "module.h"
+#include "nbio.h"
 #include "report.h"
 #include "type.h"
 #include "util.h"
@@ -1817,4 +1818,74 @@ load_context_clear(struct load_context *ctx)
 {
         report_clear(&ctx->report);
         bitmap_free(&ctx->refs);
+}
+
+#if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
+static size_t
+resulttype_overhead(const struct resulttype *rt)
+{
+        size_t sz = 0;
+        sz += sizeof(rt->cellidx);
+        if (rt->cellidx.cellidxes != NULL) {
+                sz += rt->ntypes * sizeof(*rt->cellidx.cellidxes);
+        }
+        return sz;
+}
+#endif
+
+void
+module_print_stats(const struct module *m)
+{
+        nbio_printf("=== module memory usage statistics ===\n");
+        uint32_t i;
+        size_t jump_table_size = 0;
+#if defined(TOYWASM_ENABLE_WRITER)
+        size_t code_size = 0;
+#endif
+        size_t type_annotation_size = 0;
+        size_t localtype_cellidx_size = 0;
+        size_t resulttype_cellidx_size = 0;
+        for (i = 0; i < m->nfuncs; i++) {
+                const struct func *func = &m->funcs[i];
+                const struct expr *e = &func->e;
+                const struct expr_exec_info *ei = &e->ei;
+                jump_table_size += sizeof(ei->jumps);
+                jump_table_size += sizeof(ei->njumps);
+                jump_table_size += ei->njumps * sizeof(*ei->jumps);
+#if defined(TOYWASM_ENABLE_WRITER)
+                code_size += e->end - e->start;
+#endif
+#if defined(TOYWASM_USE_SMALL_CELLS)
+                const struct type_annotations *a = &ei->type_annotations;
+                type_annotation_size += sizeof(*a);
+                type_annotation_size += a->ntypes * sizeof(*a->types);
+#endif
+#if defined(TOYWASM_USE_LOCALTYPE_CELLIDX)
+                const struct localtype *lt = &func->localtype;
+                localtype_cellidx_size += sizeof(lt->cellidx);
+                if (lt->cellidx.cellidxes != NULL) {
+                        localtype_cellidx_size +=
+                                lt->nlocals * sizeof(*lt->cellidx.cellidxes);
+                }
+#endif
+        }
+#if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
+        for (i = 0; i < m->ntypes; i++) {
+                const struct functype *ft = &m->types[i];
+                resulttype_cellidx_size += resulttype_overhead(&ft->parameter);
+                resulttype_cellidx_size += resulttype_overhead(&ft->result);
+        }
+#endif
+#if defined(TOYWASM_ENABLE_WRITER)
+        nbio_printf("%30s %12zu bytes\n", "wasm instructions to annotate",
+                    code_size);
+#endif
+        nbio_printf("%30s %12zu bytes\n", "jump table overhead",
+                    jump_table_size);
+        nbio_printf("%30s %12zu bytes\n", "type annotation overhead",
+                    type_annotation_size);
+        nbio_printf("%30s %12zu bytes\n", "local type cell idx overhead",
+                    localtype_cellidx_size);
+        nbio_printf("%30s %12zu bytes\n", "result type cell idx overhead",
+                    resulttype_cellidx_size);
 }
