@@ -1131,11 +1131,8 @@ repl_options_init(struct repl_options *opts)
 {
         opts->prompt = "toywasm";
         opts->print_stats = false;
-        opts->load_options.generate_jump_table = true;
-        opts->load_options.generate_localtype_cellidx = true;
-        opts->load_options.generate_resulttype_cellidx = true;
-        opts->exec_options.max_frames = UINT32_MAX;
-        opts->exec_options.max_stackcells = UINT32_MAX;
+        load_options_set_defaults(&opts->load_options);
+        exec_options_set_defaults(&opts->exec_options);
 }
 
 void
