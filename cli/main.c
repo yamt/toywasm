@@ -142,7 +142,7 @@ const struct option longopts[] = {
 };
 
 static void
-print_usage()
+print_usage(void)
 {
         printf("Usage:\n");
 #if defined(TOYWASM_ENABLE_WASI)
