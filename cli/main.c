@@ -334,6 +334,34 @@ main(int argc, char *const *argv)
                                   false);
         if (ret != 0) {
                 xlog_error("invoke failed with %d", ret);
+                /*
+                 * REVISIT: should we use a distinguishable exit code
+                 * for ETOYWASMTRAP?
+                 *
+                 * Note: the exit code used for a "unreachable"
+                 * trap varies among runtimes:
+                 *
+                 *   toywasm   1
+                 *   wasm3     1
+                 *   wamr      1
+                 *   wasmer    128+SIGABRT on unix
+                 *   wasmtime  128+SIGABRT on unix
+                 *   wazero    0 (!)
+                 *   wasmi_cli 1
+                 *
+                 * Note: wasmtime traps when wasi proc_exit is
+                 * called with exit code >=126. in this case,
+                 * wasmtime exits with 1.
+                 * (Also, see the comment in libwasi wasi_proc_exit.)
+                 *
+                 * Thus, if we make toywasm return 128+SIGABRT on a trap
+                 * and if you run toywasm on wasmtime, the exit code 134
+                 * will cause a trap and it makes wasmtime exit with 1.
+                 *
+                 * Probably the idea to represent both of wasi exit code
+                 * and other exit reasons like a trap with a single exit
+                 * code is broken by design.
+                 */
                 goto fail;
         }
 #if defined(TOYWASM_ENABLE_WASI)
