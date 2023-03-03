@@ -14,4 +14,7 @@ struct exec_options {
         uint32_t max_frames;
         uint32_t max_stackcells;
 };
+
+void load_options_set_defaults(struct load_options *opts);
+void exec_options_set_defaults(struct exec_options *opts);
 #endif /* !defined(_OPTIONS_H) */

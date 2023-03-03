@@ -18,6 +18,7 @@ set(lib_core_sources
 	"list.c"
 	"module.c"
 	"nbio.c"
+	"options.c"
 	"report.c"
 	"shared_memory.c"
 	"timeutil.c"
