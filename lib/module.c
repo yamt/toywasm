@@ -1852,7 +1852,9 @@ module_print_stats(const struct module *m)
                 const struct expr_exec_info *ei = &e->ei;
                 jump_table_size += sizeof(ei->jumps);
                 jump_table_size += sizeof(ei->njumps);
-                jump_table_size += ei->njumps * sizeof(*ei->jumps);
+                if (ei->jumps != NULL) {
+                        jump_table_size += ei->njumps * sizeof(*ei->jumps);
+                }
 #if defined(TOYWASM_ENABLE_WRITER)
                 code_size += e->end - e->start;
 #endif
