@@ -1811,6 +1811,7 @@ load_context_init(struct load_context *ctx)
 {
         memset(ctx, 0, sizeof(*ctx));
         report_init(&ctx->report);
+        load_options_set_defaults(&ctx->options);
 }
 
 void

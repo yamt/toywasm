@@ -1203,9 +1203,8 @@ exec_context_init(struct exec_context *ctx, struct instance *inst)
         ctx->instance = inst;
         report_init(&ctx->report0);
         ctx->report = &ctx->report0;
-        ctx->options.max_frames = UINT32_MAX;
-        ctx->options.max_stackcells = UINT32_MAX;
         ctx->restart_type = RESTART_NONE;
+        exec_options_set_defaults(&ctx->options);
 }
 
 void
