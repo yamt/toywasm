@@ -7,3 +7,6 @@
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
 #include "insn_impl_threads.h"
 #endif
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+#include "insn_impl_eh.h"
+#endif

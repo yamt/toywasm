@@ -667,6 +667,9 @@ const struct exec_instruction_desc exec_instructions[] = {
 #if defined(TOYWASM_ENABLE_WASM_TAILCALL)
 #include "insn_list_tailcall.h"
 #endif /* defined(TOYWASM_ENABLE_WASM_TAILCALL) */
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+#include "insn_list_eh.h"
+#endif /* defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING) */
 };
 
 #undef INSTRUCTION
@@ -704,6 +707,9 @@ const struct instruction_desc instructions[] = {
 #if defined(TOYWASM_ENABLE_WASM_TAILCALL)
 #include "insn_list_tailcall.h"
 #endif /* defined(TOYWASM_ENABLE_WASM_TAILCALL) */
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+#include "insn_list_eh.h"
+#endif /* defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING) */
 };
 
 const size_t instructions_size = ARRAYCOUNT(instructions);
