@@ -593,6 +593,9 @@ const static struct section {
         SECTION(export),    SECTION(start),  SECTION(element),
         SECTION(datacount), SECTION(code),   SECTION(data),
 };
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+#warning notyet
+#endif
 
 static void
 module_write1(struct writer *w, const struct module *m)
