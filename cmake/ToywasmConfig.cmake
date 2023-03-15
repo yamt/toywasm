@@ -126,6 +126,7 @@ option(TOYWASM_ENABLE_WRITER "Enable module writer" ON)
 option(TOYWASM_ENABLE_WASM_SIMD "Enable SIMD" ON)
 
 # enable each wasm proposals.
+option(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING "Enable exception-handling proposal" OFF)
 option(TOYWASM_ENABLE_WASM_EXTENDED_CONST "Enable extended-const proposal" OFF)
 option(TOYWASM_ENABLE_WASM_MULTI_MEMORY "Enable multi-memory proposal" OFF)
 option(TOYWASM_ENABLE_WASM_TAILCALL "Enable WASM tail-call proposal" OFF)
