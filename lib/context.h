@@ -14,8 +14,12 @@ enum ctrlframe_op {
         FRAME_OP_LOOP = 0x03,
         FRAME_OP_IF = 0x04,
         FRAME_OP_ELSE = 0x05,
+        FRAME_OP_TRY = 0x06,
+        FRAME_OP_CATCH = 0x07,
+        FRAME_OP_CATCH_ALL = 0x19,
 
         FRAME_OP_END = 0x0b,
+        FRAME_OP_DELEGATE = 0x18,
 
         /* pseudo op */
         FRAME_OP_EMPTY_ELSE = 0xfe,
