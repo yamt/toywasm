@@ -1553,6 +1553,71 @@ fail:
         return ret;
 }
 
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+static int
+read_tag(const uint8_t **pp, const uint8_t *ep, uint32_t idx, struct tag *tag,
+         void *vctx)
+{
+        struct load_context *ctx = vctx;
+        const uint8_t *p = *pp;
+        uint32_t type;
+        uint32_t typeidx;
+        int ret;
+
+        ret = read_leb_u32(&p, ep, &type);
+        if (ret != 0) {
+                goto fail;
+        }
+        if (type != TAG_TYPE_exception) {
+                ret = EINVAL;
+                goto fail;
+        }
+        ret = read_leb_u32(&p, ep, &typeidx);
+        if (ret != 0) {
+                goto fail;
+        }
+        if (typeidx >= m->ntypes) {
+                ret = EINVAL;
+                goto fail;
+        }
+        const struct functype *ft = m->types[typeidx];
+        if (ft->results.ntypes > 0) {
+                ret = EINVAL;
+                goto fail;
+        }
+        tag->typeidx = typeidx;
+        ret = 0;
+        *pp = p;
+        return 0;
+fail:
+        return ret;
+}
+
+static void
+clear_tag(struct tag *tag)
+{
+}
+
+static int
+read_tag_section(const uint8_t **pp, const uint8_t *ep,
+                 struct load_context *ctx)
+{
+        struct module *m = ctx->module;
+        const uint8_t *p = *pp;
+        int ret;
+
+        ret = read_vec_with_ctx(&p, ep, sizeof(*m->tags), read_tag, clear_tag,
+                                ctx, &m->ntags, &m->tags);
+        if (ret != 0) {
+                goto fail;
+        }
+        ret = 0;
+        *pp = p;
+fail:
+        return ret;
+}
+#endif /* defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING) */
+
 static int
 read_custom_section(const uint8_t **pp, const uint8_t *ep,
                     struct load_context *ctx)
@@ -1594,9 +1659,12 @@ struct section_type {
 static const struct section_type section_types[] = {
         SECTION(custom, 0),     SECTION(type, 1),   SECTION(import, 2),
         SECTION(function, 3),   SECTION(table, 4),  SECTION(memory, 5),
-        SECTION(global, 6),     SECTION(export, 7), SECTION(start, 8),
-        SECTION(element, 9),    SECTION(code, 11),  SECTION(data, 12),
-        SECTION(datacount, 10),
+        SECTION(global, 7),     SECTION(export, 8), SECTION(start, 9),
+        SECTION(element, 10),   SECTION(code, 12),  SECTION(data, 13),
+        SECTION(datacount, 11),
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+        SECTION(tag, 6),
+#endif
 };
 
 static const struct section_type *

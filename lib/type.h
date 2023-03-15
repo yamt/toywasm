@@ -225,6 +225,7 @@ enum importtype {
         IMPORT_TABLE = 0x01,
         IMPORT_MEMORY = 0x02,
         IMPORT_GLOBAL = 0x03,
+        IMPORT_TAG = 0x04,
 };
 
 struct importdesc {
@@ -242,6 +243,7 @@ enum exporttype {
         EXPORT_TABLE = 0x01,
         EXPORT_MEMORY = 0x02,
         EXPORT_GLOBAL = 0x03,
+        EXPORT_TAG = 0x04,
 };
 
 struct exportdesc {
@@ -291,6 +293,14 @@ struct data {
         struct expr offset;
 };
 
+enum tag_type {
+        TAG_TYPE_exception = 0,
+};
+
+struct tag {
+        uint32_t typeidx;
+};
+
 enum section_id {
         SECTION_ID_custom = 0,
         SECTION_ID_type,
@@ -305,6 +315,7 @@ enum section_id {
         SECTION_ID_code,
         SECTION_ID_data,
         SECTION_ID_datacount,
+        SECTION_ID_tag,
 };
 
 /*
@@ -357,6 +368,11 @@ struct module {
 
         uint32_t ndatas;
         struct data *datas;
+
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+        uint32_t ntags;
+        struct tag *tags;
+#endif
 
         bool has_start;
         uint32_t start;
