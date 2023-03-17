@@ -451,6 +451,38 @@ instance_create_no_init(const struct module *m, struct instance **instp,
                 }
                 VEC_ELEM(inst->tables, i) = tinst;
         }
+
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+        uint32_t ntags = m->nimportedtags + m->ntags;
+        ret = VEC_RESIZE(inst->tags, ntags);
+        if (ret != 0) {
+                goto fail;
+        }
+        for (i = 0; i < ntables; i++) {
+                struct taginst *tinst;
+                const struct tag *tt = module_tag(m, i);
+                if (i < m->nimportedtags) {
+                        const struct import_object_entry *e;
+                        ret = find_import_entry(m, IMPORT_TAG, i, imports,
+                                                check_tabletype, tt, &e,
+                                                report);
+                        if (ret != 0) {
+                                goto fail;
+                        }
+                        assert(e->type == IMPORT_TAG);
+                        tinst = e->u.tag;
+                        assert(tinst != NULL);
+                } else {
+                        tinst = zalloc(sizeof(*tinst));
+                        if (tinst == NULL) {
+                                ret = ENOMEM;
+                                goto fail;
+                        }
+                        tinst->tag = tt;
+                }
+                VEC_ELEM(inst->tags, i) = tinst;
+        }
+#endif /* defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING) */
         ret = bitmap_alloc(&inst->data_dropped, m->ndatas);
         if (ret != 0) {
                 goto fail;
@@ -582,6 +614,16 @@ instance_destroy(struct instance *inst)
                 table_instance_destroy(*tp);
         }
         VEC_FREE(inst->tables);
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+        struct taginst **tagp;
+        VEC_FOREACH(tagp, inst->tags) {
+                if (i < m->nimportedtags) {
+                        continue;
+                }
+                free(*tp);
+        }
+#endif
+        VEC_FREE(inst->tags);
         bitmap_free(&inst->data_dropped);
         bitmap_free(&inst->elem_dropped);
         free(inst);

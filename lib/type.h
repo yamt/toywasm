@@ -493,12 +493,19 @@ struct tableinst {
         const struct tabletype *type;
 };
 
+struct taginst {
+        const struct tag *tag;
+};
+
 struct instance {
         const struct module *module;
         VEC(, struct funcinst *) funcs;
         VEC(, struct meminst *) mems;
         VEC(, struct tableinst *) tables;
         VEC(, struct globalinst *) globals;
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+        VEC(, struct taginst *) tags;
+#endif
 
         /*
          * Track which data/element has been dropped. It's unfortunate
