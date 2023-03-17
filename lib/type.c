@@ -152,6 +152,13 @@ module_globaltype(const struct module *m, uint32_t idx)
         return &m->globals[idx - m->nimportedglobals].type;
 }
 
+const struct tag *
+module_tag(const struct module *m, uint32_t idx)
+{
+        assert(idx >= m->nimportedtags);
+        return &m->tags[idx - m->nimportedtags];
+}
+
 const struct functype *
 funcinst_functype(const struct funcinst *fi)
 {
