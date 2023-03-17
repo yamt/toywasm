@@ -579,6 +579,7 @@ const struct memtype *module_memtype(const struct module *m, uint32_t idx);
 const struct tabletype *module_tabletype(const struct module *m, uint32_t idx);
 const struct globaltype *module_globaltype(const struct module *m,
                                            uint32_t idx);
+const struct tag *module_tag(const struct module *m, uint32_t idx);
 
 const struct functype *funcinst_functype(const struct funcinst *fi);
 const struct func *funcinst_func(const struct funcinst *fi);
