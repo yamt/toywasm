@@ -220,6 +220,10 @@ struct tabletype {
         struct limits lim;
 };
 
+struct tag {
+        uint32_t typeidx;
+};
+
 enum importtype {
         IMPORT_FUNC = 0x00,
         IMPORT_TABLE = 0x01,
@@ -235,6 +239,7 @@ struct importdesc {
                 struct memtype memtype;
                 struct tabletype tabletype;
                 struct globaltype globaltype;
+                struct tag tag;
         } u;
 };
 
@@ -295,10 +300,6 @@ struct data {
 
 enum tag_type {
         TAG_TYPE_exception = 0,
-};
-
-struct tag {
-        uint32_t typeidx;
 };
 
 enum section_id {
@@ -363,16 +364,17 @@ struct module {
         uint32_t nglobals;
         struct global *globals;
 
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+        uint32_t nimportedtags;
+        uint32_t ntags;
+        struct tag *tags;
+#endif
+
         uint32_t nelems;
         struct element *elems;
 
         uint32_t ndatas;
         struct data *datas;
-
-#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
-        uint32_t ntags;
-        struct tag *tags;
-#endif
 
         bool has_start;
         uint32_t start;

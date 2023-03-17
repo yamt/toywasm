@@ -545,6 +545,15 @@ read_importdesc(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
                 }
                 m->nimportedglobals++;
                 break;
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+        case 0x03: /* tag */
+                ret = read_tag(&p, ep, &desc->u.tag);
+                if (ret != 0) {
+                        goto fail;
+                }
+                m->nimportedtags++;
+                break;
+#endif
         default:
                 xlog_trace("unknown import desc type %u", u8);
                 ret = EINVAL;
@@ -575,6 +584,9 @@ read_exportdesc(const uint8_t **pp, const uint8_t *ep, struct exportdesc *desc,
         case 0x01: /* tableidx */
         case 0x02: /* memidx */
         case 0x03: /* globalidx */
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+        case 0x04: /* tag */
+#endif
                 desc->type = u8;
                 ret = read_leb_u32(&p, ep, &desc->idx);
                 if (ret != 0) {
@@ -615,6 +627,14 @@ read_exportdesc(const uint8_t **pp, const uint8_t *ep, struct exportdesc *desc,
                         goto fail;
                 }
                 break;
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+        case EXPORT_TAG:
+                if (desc->idx >= m->nimportedtags + m->ntags) {
+                        ret = EINVAL;
+                        goto fail;
+                }
+                break;
+#enidf
         }
         *pp = p;
         return 0;
