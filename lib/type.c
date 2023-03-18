@@ -152,6 +152,7 @@ module_globaltype(const struct module *m, uint32_t idx)
         return &m->globals[idx - m->nimportedglobals].type;
 }
 
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
 const struct functype *
 module_tagtype(const struct module *m, uint32_t idx)
 {
@@ -165,6 +166,7 @@ module_tagtype(const struct module *m, uint32_t idx)
         assert(functypeidx < m->ntypes);
         return &m->types[functypeidx];
 }
+#endif
 
 const struct functype *
 funcinst_functype(const struct funcinst *fi)
@@ -176,11 +178,13 @@ funcinst_functype(const struct funcinst *fi)
                                fi->u.wasm.funcidx);
 }
 
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
 const struct functype *
 taginst_functype(const struct taginst *ti)
 {
         return module_tagtype(ti->module, ti->funcidx);
 }
+#endif
 
 int
 compare_resulttype(const struct resulttype *a, const struct resulttype *b)

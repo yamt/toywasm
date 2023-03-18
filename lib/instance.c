@@ -163,6 +163,7 @@ check_globaltype(const struct import_object_entry *e, const void *vp)
         return 0;
 }
 
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
 static int
 check_tagtype(const struct import_object_entry *e, const void *vp)
 {
@@ -175,6 +176,7 @@ check_tagtype(const struct import_object_entry *e, const void *vp)
         }
         return 0;
 }
+#endif
 
 int
 memory_instance_create(struct meminst **mip,
@@ -595,8 +597,8 @@ instance_destroy(struct instance *inst)
                 }
                 free(*tp);
         }
-#endif
         VEC_FREE(inst->tags);
+#endif
         bitmap_free(&inst->data_dropped);
         bitmap_free(&inst->elem_dropped);
         free(inst);

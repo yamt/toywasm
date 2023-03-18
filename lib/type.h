@@ -229,7 +229,9 @@ enum importtype {
         IMPORT_TABLE = 0x01,
         IMPORT_MEMORY = 0x02,
         IMPORT_GLOBAL = 0x03,
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
         IMPORT_TAG = 0x04,
+#endif
 };
 
 struct importdesc {
@@ -248,7 +250,9 @@ enum exporttype {
         EXPORT_TABLE = 0x01,
         EXPORT_MEMORY = 0x02,
         EXPORT_GLOBAL = 0x03,
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
         EXPORT_TAG = 0x04,
+#endif
 };
 
 struct exportdesc {

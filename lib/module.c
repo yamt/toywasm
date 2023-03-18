@@ -634,7 +634,7 @@ read_exportdesc(const uint8_t **pp, const uint8_t *ep, struct exportdesc *desc,
                         goto fail;
                 }
                 break;
-#enidf
+#endif
         }
         *pp = p;
         return 0;
