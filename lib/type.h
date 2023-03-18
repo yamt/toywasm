@@ -276,7 +276,9 @@ enum externtype {
         EXTERNTYPE_TABLE = 0x01,
         EXTERNTYPE_MEMORY = 0x02,
         EXTERNTYPE_GLOBAL = 0x03,
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
         EXTERNTYPE_TAG = 0x04,
+#endif
 };
 
 struct importdesc {
