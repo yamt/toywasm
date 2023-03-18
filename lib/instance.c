@@ -163,6 +163,19 @@ check_globaltype(const struct import_object_entry *e, const void *vp)
         return 0;
 }
 
+static int
+check_tagtype(const struct import_object_entry *e, const void *vp)
+{
+        const struct functype *ft = vp;
+        assert(e->type == IMPORT_TAG);
+        const struct taginst *tag_imported = e->u.tag;
+        const struct functype *ft_imported = taginst_functype(tag_imported);
+        if (!compare_functype(ft, ft_imported)) {
+                return EINVAL;
+        }
+        return 0;
+}
+
 int
 memory_instance_create(struct meminst **mip,
                        const struct memtype *mt) NO_THREAD_SAFETY_ANALYSIS
@@ -417,12 +430,11 @@ instance_create_no_init(const struct module *m, struct instance **instp,
         }
         for (i = 0; i < ntables; i++) {
                 struct taginst *tinst;
-                const struct tag *tt = module_tag(m, i);
+                const struct functype *ft = module_tagtype(m, i);
                 if (i < m->nimportedtags) {
                         const struct import_object_entry *e;
                         ret = find_import_entry(m, IMPORT_TAG, i, imports,
-                                                check_tabletype, tt, &e,
-                                                report);
+                                                check_tagtype, ft, &e, report);
                         if (ret != 0) {
                                 goto fail;
                         }
@@ -435,7 +447,8 @@ instance_create_no_init(const struct module *m, struct instance **instp,
                                 ret = ENOMEM;
                                 goto fail;
                         }
-                        tinst->tag = tt;
+                        tinst->module = m;
+                        tinst->tagidx = i;
                 }
                 VEC_ELEM(inst->tags, i) = tinst;
         }
