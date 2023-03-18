@@ -443,7 +443,7 @@ struct tableinst {
 };
 
 /*
- * Tag identity
+ * A note about tag identity
  *
  * Consider:
  * 1. A module (M) defines a tag (T) and exports it as E-T.
@@ -451,7 +451,7 @@ struct tableinst {
  *
  * Now, should M1:E-T and M2:E-T be considered to be different tags
  * when finding a matching catch block?
- * I guess it should. Because I think instances from a shared module
+ * I guess it should. Because I think instances from a module
  * should behave the same as ones from two identical modules.
  */
 struct taginst {
