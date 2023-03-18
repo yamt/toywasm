@@ -495,8 +495,21 @@ struct tableinst {
         const struct tabletype *type;
 };
 
+/*
+ * Tag identity
+ *
+ * Consider:
+ * 1. A module (M) defines a tag (T) and exports it as E-T.
+ * 2. The module is instantiated twice. (M1 and M2)
+ *
+ * Now, should M1:E-T and M2:E-T be considered to be different tags
+ * when finding a matching catch block?
+ * I guess it should. Because I think instances from a shared module
+ * should behave the same as ones from two identical modules.
+ */
 struct taginst {
-        const struct tag *tag;
+        const struct module *module;
+        uint32_t tagidx;
 };
 
 struct instance {
@@ -581,9 +594,10 @@ const struct memtype *module_memtype(const struct module *m, uint32_t idx);
 const struct tabletype *module_tabletype(const struct module *m, uint32_t idx);
 const struct globaltype *module_globaltype(const struct module *m,
                                            uint32_t idx);
-const struct tag *module_tag(const struct module *m, uint32_t idx);
+const struct functype *module_tagtype(const struct module *m, uint32_t idx);
 
 const struct functype *funcinst_functype(const struct funcinst *fi);
+const struct functype *taginst_functype(const struct taginst *ti);
 const struct func *funcinst_func(const struct funcinst *fi);
 
 int functype_from_string(const char *p, struct functype **resultp);
