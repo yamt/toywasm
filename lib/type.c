@@ -182,7 +182,7 @@ funcinst_functype(const struct funcinst *fi)
 const struct functype *
 taginst_functype(const struct taginst *ti)
 {
-        return module_tagtype(ti->module, ti->funcidx);
+        return module_tagtype(ti->module, ti->tagidx);
 }
 #endif
 

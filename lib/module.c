@@ -499,6 +499,48 @@ fail:
         return ret;
 }
 
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+static int
+read_tag(const uint8_t **pp, const uint8_t *ep, uint32_t idx, struct tag *tag,
+         void *vctx)
+{
+        struct load_context *ctx = vctx;
+        const uint8_t *p = *pp;
+        uint32_t type;
+        uint32_t typeidx;
+        int ret;
+
+        ret = read_leb_u32(&p, ep, &type);
+        if (ret != 0) {
+                goto fail;
+        }
+        if (type != TAG_TYPE_exception) {
+                ret = EINVAL;
+                goto fail;
+        }
+        ret = read_leb_u32(&p, ep, &typeidx);
+        if (ret != 0) {
+                goto fail;
+        }
+        const struct module *m = ctx->module;
+        if (typeidx >= m->ntypes) {
+                ret = EINVAL;
+                goto fail;
+        }
+        const struct functype *ft = &m->types[typeidx];
+        if (ft->result.ntypes > 0) {
+                ret = EINVAL;
+                goto fail;
+        }
+        tag->typeidx = typeidx;
+        ret = 0;
+        *pp = p;
+        return 0;
+fail:
+        return ret;
+}
+#endif
+
 static int
 read_importdesc(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
                 struct importdesc *desc, struct load_context *ctx)
@@ -546,8 +588,8 @@ read_importdesc(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
                 m->nimportedglobals++;
                 break;
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
-        case 0x03: /* tag */
-                ret = read_tag(&p, ep, &desc->u.tag);
+        case 0x04: /* tag */
+                ret = read_tag(&p, ep, 0, &desc->u.tag, ctx);
                 if (ret != 0) {
                         goto fail;
                 }
@@ -1574,45 +1616,6 @@ fail:
 }
 
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
-static int
-read_tag(const uint8_t **pp, const uint8_t *ep, uint32_t idx, struct tag *tag,
-         void *vctx)
-{
-        struct load_context *ctx = vctx;
-        const uint8_t *p = *pp;
-        uint32_t type;
-        uint32_t typeidx;
-        int ret;
-
-        ret = read_leb_u32(&p, ep, &type);
-        if (ret != 0) {
-                goto fail;
-        }
-        if (type != TAG_TYPE_exception) {
-                ret = EINVAL;
-                goto fail;
-        }
-        ret = read_leb_u32(&p, ep, &typeidx);
-        if (ret != 0) {
-                goto fail;
-        }
-        if (typeidx >= m->ntypes) {
-                ret = EINVAL;
-                goto fail;
-        }
-        const struct functype *ft = m->types[typeidx];
-        if (ft->results.ntypes > 0) {
-                ret = EINVAL;
-                goto fail;
-        }
-        tag->typeidx = typeidx;
-        ret = 0;
-        *pp = p;
-        return 0;
-fail:
-        return ret;
-}
-
 static void
 clear_tag(struct tag *tag)
 {

@@ -45,6 +45,7 @@ INSN_IMPL(catch)
 {
         int ret;
 
+        LOAD_PC;
         READ_LEB_U32(excidx);
         if (EXECUTING) {
                 /* equivalent of "br 0" */
@@ -78,13 +79,17 @@ INSN_IMPL(catch)
                         return ret;
                 }
         }
+        SAVE_PC;
         INSN_SUCCESS_RETURN;
+fail:
+        INSN_FAIL;
 }
 
 INSN_IMPL(delegate)
 {
         int ret;
 
+        LOAD_PC;
         READ_LEB_U32(labelidx);
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
@@ -126,5 +131,8 @@ INSN_IMPL(delegate)
                         return ret;
                 }
         }
+        SAVE_PC;
         INSN_SUCCESS;
+fail:
+        INSN_FAIL;
 }

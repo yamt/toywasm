@@ -487,6 +487,7 @@ struct import_object_entry {
                 struct meminst *mem;
                 struct tableinst *table;
                 struct globalinst *global;
+                struct taginst *tag;
         } u;
 };
 
