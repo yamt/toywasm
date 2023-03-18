@@ -430,7 +430,7 @@ instance_create_no_init(const struct module *m, struct instance **instp,
         if (ret != 0) {
                 goto fail;
         }
-        for (i = 0; i < ntables; i++) {
+        for (i = 0; i < ntags; i++) {
                 struct taginst *tinst;
                 const struct functype *ft = module_tagtype(m, i);
                 if (i < m->nimportedtags) {
