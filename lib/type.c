@@ -174,11 +174,18 @@ module_globaltype(const struct module *m, uint32_t idx)
         return &m->globals[idx - m->nimportedglobals].type;
 }
 
-const struct tag *
-module_tag(const struct module *m, uint32_t idx)
+const struct functype *
+module_tagtype(const struct module *m, uint32_t idx)
 {
-        assert(idx >= m->nimportedtags);
-        return &m->tags[idx - m->nimportedtags];
+        const struct tag *tag;
+        if (idx < m->nimportedfuncs) {
+                tag = &module_find_importdesc(m, IMPORT_TAG, idx)->u.tag;
+        } else {
+                tag = &m->tags[idx - m->nimportedfuncs];
+        }
+        uint32_t functypeidx = tag->typeidx;
+        assert(functypeidx < m->ntypes);
+        return &m->types[functypeidx];
 }
 
 const struct functype *
@@ -189,6 +196,12 @@ funcinst_functype(const struct funcinst *fi)
         }
         return module_functype(fi->u.wasm.instance->module,
                                fi->u.wasm.funcidx);
+}
+
+const struct functype *
+taginst_functype(const struct taginst *ti)
+{
+        return module_tagtype(ti->module, ti->funcidx);
 }
 
 int
