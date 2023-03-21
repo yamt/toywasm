@@ -2,8 +2,8 @@
 
 INSTRUCTION(0x06, "try", try, 0)
 INSTRUCTION(0x07, "catch", catch, 0)
-#if 0
 INSTRUCTION(0x08, "throw", throw, 0)
+#if 0
 INSTRUCTION(0x09, "rethrow", rethrow, 0)
 #endif
 INSTRUCTION(0x18, "delegate", delegate, 0)
