@@ -85,6 +85,38 @@ fail:
         INSN_FAIL;
 }
 
+INSN_IMPL(throw)
+{
+        int ret;
+
+        LOAD_PC;
+        READ_LEB_U32(excidx);
+        if (EXECUTING) {
+                return ENOTSUP;
+        } else if (VALIDATING) {
+                struct validation_context *vctx = VCTX;
+                const struct module *m = vctx->module;
+                const struct functype *ft;
+                const struct resulttype *rt;
+                if (excidx >= m->nimportedtags + m->ntags) {
+                        ret = validation_failure(
+                                vctx, "out of range tag %" PRIu32, excidx);
+                        goto fail;
+                }
+                ft = module_tagtype(m, excidx);
+                rt = &ft->parameter;
+                ret = pop_valtypes(rt, vctx);
+                if (ret != 0) {
+                        goto fail;
+                }
+                mark_unreachable(vctx);
+        }
+        SAVE_PC;
+        INSN_SUCCESS_RETURN;
+fail:
+        INSN_FAIL;
+}
+
 INSN_IMPL(delegate)
 {
         int ret;
