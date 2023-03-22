@@ -87,7 +87,7 @@ add_test(NAME toywasm-cli-wasm3-spec-test-threads
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 set_tests_properties(toywasm-cli-wasm3-spec-test-threads PROPERTIES ENVIRONMENT "${TEST_ENV}")
-set_tests_properties(toywasm-cli-wasm3-spec-test-threads PROPERTIES LABELS "spec")
+set_tests_properties(toywasm-cli-wasm3-spec-test-threads PROPERTIES LABELS "spec:wasm-threads")
 endif()
 
 if(TOYWASM_ENABLE_WASI)
