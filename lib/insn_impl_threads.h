@@ -1,3 +1,7 @@
+
+#define CMPXCHG(p, op, n) atomic_compare_exchange_strong(p, op, n)
+#define FENCE() atomic_thread_fence(memory_order_seq_cst)
+
 #define ATOMIC_WAIT(NAME, BITS)                                               \
         INSN_IMPL(NAME)                                                       \
         {                                                                     \
@@ -45,16 +49,16 @@ fail:                                                                         \
                 POP_VAL(TYPE_i32, i);                                         \
                 struct val val_c;                                             \
                 if (EXECUTING) {                                              \
-                        void *datap;                                          \
-                        struct toywasm_mutex *lock;                           \
+                        void *vp;                                             \
                         ret = memory_atomic_getptr(                           \
                                 ECTX, memarg.memidx, val_i.u.i32,             \
-                                memarg.offset, MEM / 8, &datap, &lock);       \
+                                memarg.offset, MEM / 8, &vp, NULL);           \
                         if (ret != 0) {                                       \
                                 goto fail;                                    \
                         }                                                     \
-                        val_c.u.i##STACK = CAST le##MEM##_decode(datap);      \
-                        memory_atomic_unlock(lock);                           \
+                        _Atomic uint##MEM##_t *p = vp;                        \
+                        uint##STACK##_t v = le##MEM##_to_host(*p);            \
+                        val_c.u.i##STACK = CAST v;                            \
                 }                                                             \
                 PUSH_VAL(TYPE_##I_OR_F##STACK, c);                            \
                 SAVE_PC;                                                      \
@@ -75,16 +79,16 @@ fail:                                                                         \
                 POP_VAL(TYPE_##I_OR_F##STACK, v);                             \
                 POP_VAL(TYPE_i32, i);                                         \
                 if (EXECUTING) {                                              \
-                        void *datap;                                          \
-                        struct toywasm_mutex *lock;                           \
+                        void *vp;                                             \
                         ret = memory_atomic_getptr(                           \
                                 ECTX, memarg.memidx, val_i.u.i32,             \
-                                memarg.offset, MEM / 8, &datap, &lock);       \
+                                memarg.offset, MEM / 8, &vp, NULL);           \
                         if (ret != 0) {                                       \
                                 goto fail;                                    \
                         }                                                     \
-                        le##MEM##_encode(datap, CAST val_v.u.i##STACK);       \
-                        memory_atomic_unlock(lock);                           \
+                        uint##STACK##_t v = CAST val_v.u.i##STACK;            \
+                        _Atomic uint##MEM##_t *p = vp;                        \
+                        *p = host_to_le##MEM(v);                              \
                 }                                                             \
                 SAVE_PC;                                                      \
                 INSN_SUCCESS;                                                 \
@@ -105,19 +109,25 @@ fail:                                                                         \
                 POP_VAL(TYPE_i32, i);                                         \
                 struct val val_readv;                                         \
                 if (EXECUTING) {                                              \
-                        void *datap;                                          \
-                        struct toywasm_mutex *lock;                           \
+                        void *vp;                                             \
                         ret = memory_atomic_getptr(                           \
                                 ECTX, memarg.memidx, val_i.u.i32,             \
-                                memarg.offset, MEM / 8, &datap, &lock);       \
+                                memarg.offset, MEM / 8, &vp, NULL);           \
                         if (ret != 0) {                                       \
                                 goto fail;                                    \
                         }                                                     \
-                        uint##STACK##_t tmp = le##MEM##_decode(datap);        \
-                        val_readv.u.i##STACK = tmp;                           \
-                        tmp = OP(STACK, tmp, val_v.u.i##STACK);               \
-                        le##MEM##_encode(datap, tmp);                         \
-                        memory_atomic_unlock(lock);                           \
+                        _Atomic uint##MEM##_t *p = vp;                        \
+                        uint##MEM##_t old_le;                                 \
+                        uint##STACK##_t old_h;                                \
+                        uint##MEM##_t new_le;                                 \
+                        do {                                                  \
+                                old_le = *p;                                  \
+                                old_h = le##MEM##_to_host(old_le);            \
+                                uint##STACK##_t new_h =                       \
+                                        OP(STACK, old_h, val_v.u.i##STACK);   \
+                                new_le = host_to_le##MEM(new_h);              \
+                        } while (!CMPXCHG(p, &old_le, new_le));               \
+                        val_readv.u.i##STACK = old_h;                         \
                 }                                                             \
                 PUSH_VAL(TYPE_i##STACK, readv);                               \
                 SAVE_PC;                                                      \
@@ -140,21 +150,28 @@ fail:                                                                         \
                 POP_VAL(TYPE_i32, i);                                         \
                 struct val val_readv;                                         \
                 if (EXECUTING) {                                              \
-                        void *datap;                                          \
-                        struct toywasm_mutex *lock;                           \
+                        void *vp;                                             \
                         ret = memory_atomic_getptr(                           \
                                 ECTX, memarg.memidx, val_i.u.i32,             \
-                                memarg.offset, MEM / 8, &datap, &lock);       \
+                                memarg.offset, MEM / 8, &vp, NULL);           \
                         if (ret != 0) {                                       \
                                 goto fail;                                    \
                         }                                                     \
-                        uint##STACK##_t tmp = le##MEM##_decode(datap);        \
-                        val_readv.u.i##STACK = tmp;                           \
-                        if (tmp == val_expected.u.i##STACK) {                 \
-                                le##MEM##_encode(datap,                       \
-                                                 val_replacement.u.i##STACK); \
+                        _Atomic uint##MEM##_t *p = vp;                        \
+                        uint##MEM##_t truncated = val_expected.u.i##STACK;    \
+                        uint##MEM##_t read_le;                                \
+                        if (truncated == val_expected.u.i##STACK) {           \
+                                uint##MEM##_t expected_le =                   \
+                                        host_to_le##MEM(truncated);           \
+                                uint##MEM##_t replacement_le =                \
+                                        host_to_le##MEM(                      \
+                                                val_replacement.u.i##STACK);  \
+                                CMPXCHG(p, &expected_le, replacement_le);     \
+                                read_le = expected_le;                        \
+                        } else {                                              \
+                                read_le = *p;                                 \
                         }                                                     \
-                        memory_atomic_unlock(lock);                           \
+                        val_readv.u.i##STACK = le##MEM##_to_host(read_le);    \
                 }                                                             \
                 PUSH_VAL(TYPE_i##STACK, readv);                               \
                 SAVE_PC;                                                      \
@@ -205,11 +222,7 @@ INSN_IMPL(atomic_fence)
         CHECK_RET(ret);
         CHECK(zero == 0);
         if (EXECUTING) {
-                /*
-                 * is it better to use stdatomic
-                 * atomic_thread_fence(memory_order_seq_cst) ?
-                 */
-                __sync_synchronize();
+                FENCE();
         }
         SAVE_PC;
         INSN_SUCCESS;
