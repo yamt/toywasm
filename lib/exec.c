@@ -125,7 +125,7 @@ memory_atomic_getptr(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
         struct meminst *meminst = VEC_ELEM(inst->mems, memidx);
         struct shared_meminst *shared = meminst->shared;
         struct toywasm_mutex *lock = NULL;
-        if (shared != NULL) {
+        if (shared != NULL && lockp != NULL) {
                 lock = atomics_mutex_getptr(&shared->tab, ptr + offset);
                 toywasm_mutex_lock(lock);
         }
@@ -139,7 +139,9 @@ memory_atomic_getptr(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
                                    "unaligned atomic");
                 goto fail;
         }
-        *lockp = lock;
+        if (lockp != NULL) {
+                *lockp = lock;
+        }
         return 0;
 fail:
         memory_atomic_unlock(lock);
@@ -1417,9 +1419,9 @@ memory_wait(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
 retry:;
         uint64_t prev;
         if (is64) {
-                prev = *(uint64_t *)p;
+                prev = *(_Atomic uint64_t *)p;
         } else {
-                prev = *(uint32_t *)p;
+                prev = *(_Atomic uint32_t *)p;
         }
         xlog_trace("%s: addr=0x%" PRIx32 " offset=0x%" PRIx32
                    " actual=%" PRIu64 " expected %" PRIu64,
