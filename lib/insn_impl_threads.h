@@ -136,6 +136,22 @@ fail:                                                                         \
                 INSN_FAIL;                                                    \
         }
 
+/*
+ * Consider a mutex implementation which uses an atomic opcode
+ * (eg. x86 `cmpxchg`) to acquire a mutex and release it with a non-atomic
+ * opcode. (eg. x86 `mov`) On x86, it just works.
+ * However, on wasm, such a mutex implementation is considered broken.
+ * It might or might not work, depending on the runtimes. Especially for
+ * lock-based implmentations of atomic opcodes, where non-atomic store
+ * (eg. `i32.store`) is not expected to honor the lock.
+ * cf. https://github.com/WebAssembly/threads/issues/197
+ *
+ * Note: This particalar implementation uses C11 atomics to implement
+ * atomic opcodes and ordinary assignments (eg. le32_encode) for
+ * non-atomic opcodes. The latter might not be even a single assignment
+ * at C level.
+ */
+
 #define ATOMIC_RMW_CMPXCHG(NAME, MEM, STACK)                                  \
         INSN_IMPL(NAME)                                                       \
         {                                                                     \
