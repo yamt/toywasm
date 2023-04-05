@@ -395,7 +395,8 @@ struct funcinst {
 
 struct meminst {
         uint8_t *data;
-        uint32_t size_in_pages; /* overrides type->min */
+        /* Note: memory_getptr2 reads size_in_pages w/o locks */
+        _Atomic uint32_t size_in_pages; /* overrides type->min */
         uint32_t allocated;
         const struct memtype *type;
 
