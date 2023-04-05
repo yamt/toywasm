@@ -221,7 +221,7 @@ A few observations with
   work exactly that way. Even WAMR "classic" interpreter replaces
   some critical instructions in-place.
 
-  While toywasm maps wasm modules read-only and never modifies it in-place,
+  While toywasm maps wasm modules read-only and never modifies them in-place,
   it still generates a few types of offline annotations on the bytecode
   to avoid being too slow. While they are smaller than a full translation,
   you might consider them a kind of translation:
