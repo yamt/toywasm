@@ -31,13 +31,15 @@ define(`repeat',`_repeat(1,$1,``$2'')')dnl
 
     ;;; 4^7 - 1
     ;;; = 16383
-repeat(16383,`
+ifdef(`NUM1',,`define(`NUM1',16383)')
+repeat(NUM1,`
     (call $add4 (local.get $i (local.tee $i (i32.load))) (local.get $i (local.tee $i (i32.load))) (local.get $i (local.tee $i (i32.load))) (local.get $i (local.tee $i (i32.load))))')
 
     ;;; 4^6 + ... + 4^0
     ;;; = (4^(6+1)-1)/3
     ;;; = 5461
-repeat(5461,`
+ifdef(`NUM2',,`define(`NUM2',16383)')
+repeat(NUM2,`
     call $add4')
   )
   (func (export "_start")
