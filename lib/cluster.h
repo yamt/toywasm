@@ -1,7 +1,14 @@
 #include <stdatomic.h>
+#include <stdbool.h>
 #include <stdint.h>
 
 #include "lock.h"
+
+enum suspend_state {
+        SUSPEND_STATE_NONE = 0,
+        SUSPEND_STATE_STOPPING,
+        SUSPEND_STATE_RESUMING,
+};
 
 /*
  * a group of instances.
@@ -12,6 +19,11 @@ struct cluster {
         TOYWASM_CV_DEFINE(cv);
         uint32_t nrunners;
         atomic_uint interrupt;
+
+        /* suspend */
+        _Atomic enum suspend_state suspend_state;
+        uint32_t nparked;
+        TOYWASM_CV_DEFINE(stop_cv);
 };
 
 void cluster_init(struct cluster *c);

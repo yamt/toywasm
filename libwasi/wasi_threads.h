@@ -36,6 +36,7 @@ void wasi_threads_instance_join(struct wasi_threads_instance *inst);
 
 const atomic_uint *
 wasi_threads_interrupt_pointer(struct wasi_threads_instance *inst);
+struct cluster *wasi_threads_cluster(struct wasi_threads_instance *inst);
 
 struct trap_info;
 void wasi_threads_propagate_trap(struct wasi_threads_instance *wasi,

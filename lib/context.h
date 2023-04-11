@@ -128,8 +128,8 @@ struct trap_info {
 #define ETOYWASMTRAP -1
 #define ETOYWASMRESTART -2
 
-#if defined(TOYWASM_USE_USER_SCHED)
-/* use shorter interval for userlang thread */
+/* use shorter interval for userland thread */
+#if defined(TOYWASM_USE_USER_SCHED) || !defined(TOYWASM_PREALLOC_SHARED_MEMORY)
 #define CHECK_INTERRUPT_INTERVAL_MS 50
 #else
 #define CHECK_INTERRUPT_INTERVAL_MS 300
@@ -169,6 +169,7 @@ struct exec_context {
 
         /* check_interrupt() */
         const atomic_uint *intrp;
+        struct cluster *cluster;
 
         /* scheduler */
         struct sched *sched;
