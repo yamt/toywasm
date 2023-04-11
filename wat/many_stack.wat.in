@@ -22,6 +22,17 @@
 ;;     :
 ;;     :
 ;;     :
+;;
+;; % m4 -D NUM1=1023 -D NUM2=341 many_stack.wat.in | wat2wasm -o many_stack5.wasm -
+;; % toywasm --print-stats many_stack5.wasm
+;; === execution statistics ===
+;; operand stack 1027 (4108 bytes)
+;; locals 5 (20 bytes)
+;; labels 0 (0 bytes)
+;; frames 3 (96 bytes)
+;;     :
+;;     :
+;;     :
 
 
 define(`_repeat',`ifelse(eval($1<=$2),1,`$3`'$0(incr($1),$2,`$3')')')dnl
