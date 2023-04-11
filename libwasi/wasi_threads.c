@@ -18,6 +18,7 @@
 #include "instance.h"
 #include "lock.h"
 #include "module.h"
+#include "suspend.h"
 #include "type.h"
 #include "usched.h"
 #include "wasi_impl.h"
@@ -171,6 +172,12 @@ wasi_threads_interrupt_pointer(struct wasi_threads_instance *inst)
         return &inst->cluster.interrupt;
 }
 
+struct cluster *
+wasi_threads_cluster(struct wasi_threads_instance *inst)
+{
+        return &inst->cluster;
+}
+
 const struct trap_info *
 wasi_threads_instance_get_trap(struct wasi_threads_instance *wasi)
 {
@@ -219,6 +226,7 @@ exec_thread_start_func(struct exec_context *ctx, const struct thread_arg *arg)
 
         /* XXX should inherit exec_options from the parent? */
         ctx->intrp = wasi_threads_interrupt_pointer(wasi);
+        ctx->cluster = wasi_threads_cluster(wasi);
 #if defined(TOYWASM_USE_USER_SCHED)
         ctx->sched = wasi_threads_sched(wasi);
 #endif
@@ -321,6 +329,7 @@ runner(void *vp)
 
         ret = exec_thread_start_func(ctx, arg);
         while (ret == ETOYWASMRESTART) {
+                suspend_parked(ctx->cluster);
                 xlog_trace("%s: restarting execution\n", __func__);
                 ret = instance_execute_continue(ctx);
         }

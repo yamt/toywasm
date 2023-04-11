@@ -10,6 +10,7 @@
 #include "instance.h"
 #include "module.h"
 #include "shared_memory_impl.h"
+#include "suspend.h"
 #include "type.h"
 #include "util.h"
 #include "xlog.h"
@@ -176,7 +177,11 @@ memory_instance_create(struct meminst **mip,
         }
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
         if ((mt->flags & MEMTYPE_FLAG_SHARED) != 0) {
+#if defined(TOYWASM_PREALLOC_SHARED_MEMORY)
                 uint32_t need_in_pages = mt->lim.max;
+#else
+                uint32_t need_in_pages = mt->lim.min;
+#endif /* defined(TOYWASM_PREALLOC_SHARED_MEMORY) */
                 uint64_t need_in_bytes = need_in_pages * WASM_PAGE_SIZE;
                 if (need_in_bytes > UINT32_MAX) {
                         free(mp);
@@ -483,6 +488,9 @@ instance_create_execute_init(struct instance *inst, struct exec_context *ctx)
                         xlog_trace("%s: restarting execution of the start "
                                    "function\n",
                                    __func__);
+#if defined(TOYWASM_ENABLE_WASM_THREADS)
+                        suspend_parked(ctx->cluster);
+#endif
                         ret = exec_expr_continue(ctx);
                 }
                 if (ret != 0) {

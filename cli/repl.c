@@ -29,6 +29,7 @@
 #include "nbio.h"
 #include "repl.h"
 #include "report.h"
+#include "suspend.h"
 #include "toywasm_version.h"
 #include "type.h"
 #include "usched.h"
@@ -790,6 +791,7 @@ exec_func(struct exec_context *ctx, uint32_t funcidx,
         struct wasi_threads_instance *wasi_threads = state->wasi_threads;
         if (wasi_threads != NULL) {
                 ctx->intrp = wasi_threads_interrupt_pointer(wasi_threads);
+                ctx->cluster = wasi_threads_cluster(wasi_threads);
 #if defined(TOYWASM_USE_USER_SCHED)
                 ctx->sched = wasi_threads_sched(wasi_threads);
 #endif
@@ -797,6 +799,9 @@ exec_func(struct exec_context *ctx, uint32_t funcidx,
 #endif
         ret = instance_execute_func(ctx, funcidx, ptype, rtype, param, result);
         while (ret == ETOYWASMRESTART) {
+#if defined(TOYWASM_ENABLE_WASM_THREADS)
+                suspend_parked(ctx->cluster);
+#endif
                 xlog_trace("%s: restarting execution\n", __func__);
 #if defined(TOYWASM_USE_USER_SCHED)
                 struct sched *sched = ctx->sched;

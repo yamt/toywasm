@@ -15,6 +15,7 @@
 #include "nbio.h"
 #include "platform.h"
 #include "shared_memory_impl.h"
+#include "suspend.h"
 #include "timeutil.h"
 #include "type.h"
 #include "usched.h"
@@ -857,6 +858,14 @@ check_interrupt(struct exec_context *ctx)
                 return trap_with_id(ctx, TRAP_VOLUNTARY_THREAD_EXIT,
                                     "interrupt");
         }
+#if defined(TOYWASM_ENABLE_WASM_THREADS)
+        if (ctx->cluster != NULL) {
+                int ret = suspend_check_interrupt(ctx->cluster);
+                if (ret != 0) {
+                        return ret;
+                }
+        }
+#endif /* defined(TOYWASM_ENABLE_WASM_THREADS) */
 #if defined(TOYWASM_USE_USER_SCHED)
         if (ctx->sched != NULL && sched_need_resched(ctx->sched)) {
                 xlog_trace("%s: need resched ctx %p", __func__, ctx);
@@ -1321,10 +1330,16 @@ memory_grow(struct exec_context *ctx, uint32_t memidx, uint32_t sz)
         const struct module *m = inst->module;
         assert(memidx < m->nimportedmems + m->nmems);
         struct meminst *mi = VEC_ELEM(inst->mems, memidx);
+        const struct memtype *mt = mi->type;
+        const struct limits *lim = &mt->lim;
         memory_lock(mi);
-        uint32_t orig_size = mi->size_in_pages;
+        uint32_t orig_size;
+#if defined(TOYWASM_ENABLE_WASM_THREADS) &&                                   \
+        !defined(TOYWASM_PREALLOC_SHARED_MEMORY)
+retry:
+#endif /* !defined(TOYWASM_PREALLOC_SHARED_MEMORY) */
+        orig_size = mi->size_in_pages;
         uint64_t new_size = (uint64_t)orig_size + sz;
-        const struct limits *lim = &mi->type->lim;
         assert(lim->max <= WASM_MAX_PAGES);
         if (new_size > lim->max) {
                 memory_unlock(mi);
@@ -1332,6 +1347,32 @@ memory_grow(struct exec_context *ctx, uint32_t memidx, uint32_t sz)
         }
         xlog_trace("memory grow %" PRIu32 " -> %" PRIu32, mi->size_in_pages,
                    (uint32_t)new_size);
+#if defined(TOYWASM_ENABLE_WASM_THREADS) &&                                   \
+        !defined(TOYWASM_PREALLOC_SHARED_MEMORY)
+        if (new_size != orig_size && mi->shared != NULL) {
+                struct cluster *c = ctx->cluster;
+                int ret;
+                assert(c != NULL);
+                memory_unlock(mi);
+                suspend_threads(c);
+                memory_lock(mi);
+                if (mi->size_in_pages != orig_size) {
+                        goto retry;
+                }
+                uint64_t need = new_size * WASM_PAGE_SIZE;
+                assert(need > mi->allocated);
+                ret = resize_array((void **)&mi->data, 1, need);
+                if (ret == 0) {
+                        mi->allocated = need;
+                }
+                resume_threads(c);
+                if (ret != 0) {
+                        memory_unlock(mi);
+                        xlog_trace("%s: realloc failed", __func__);
+                        return (uint32_t)-1; /* fail */
+                }
+        }
+#endif /* !defined(TOYWASM_PREALLOC_SHARED_MEMORY) */
         mi->size_in_pages = new_size;
         memory_unlock(mi);
         return orig_size; /* success */

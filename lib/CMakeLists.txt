@@ -33,6 +33,7 @@ set(lib_core_sources
 if(TOYWASM_ENABLE_WASM_THREADS)
 list(APPEND lib_core_sources
 	"cluster.c"
+	"suspend.c"
 	"waitlist.c")
 if(TOYWASM_USE_USER_SCHED)
 list(APPEND lib_core_sources
