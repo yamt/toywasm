@@ -49,7 +49,7 @@ repeat(NUM1,`
     ;;; 4^6 + ... + 4^0
     ;;; = (4^(6+1)-1)/3
     ;;; = 5461
-ifdef(`NUM2',,`define(`NUM2',16383)')
+ifdef(`NUM2',,`define(`NUM2',5461)')
 repeat(NUM2,`
     call $add4')
   )
