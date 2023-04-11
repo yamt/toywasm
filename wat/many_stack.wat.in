@@ -27,7 +27,7 @@ define(`repeat',`_repeat(1,$1,``$2'')')dnl
     i32.add
   )
   (func $func (export "func") (param $i i32) (result i32)
-    local.get $i 
+    local.get $i
 
     ;;; 4^7 - 1
     ;;; = 16383
