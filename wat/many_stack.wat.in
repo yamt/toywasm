@@ -1,8 +1,8 @@
 ;; Consume operand stack a lot within a function, similarly
 ;; to ../wast/many_locals.wast.in.
 ;;
-;; % m4 many_stack.wat.in | wat2wasm -o many_stack.wasm -
-;; % toywasm --print-stats many_stack.wasm
+;; % m4 many_stack.wat.in | wat2wasm -o many_stack7.wasm -
+;; % toywasm --print-stats many_stack7.wasm
 ;; === execution statistics ===
 ;; operand stack 16387 (65548 bytes)
 ;; locals 5 (20 bytes)
