@@ -7,7 +7,9 @@
 #include <string.h>
 #include <time.h>
 
+#include "context.h"
 #include "lock.h"
+#include "timeutil.h"
 
 #if defined(USE_PTHREAD)
 #include <pthread.h>
@@ -134,10 +136,21 @@ waiter_block(struct waiter_list *l, struct toywasm_mutex *lock,
              struct waiter *w, const struct timespec *abstimeout)
         REQUIRES(lock)
 {
+        assert(abstimeout != NULL);
         int ret = 0;
         while (!w->woken) {
                 ret = toywasm_cv_timedwait(&w->cv, lock, abstimeout);
                 if (ret == ETIMEDOUT) {
+#if defined(TOYWASM_USE_USER_SCHED)
+                        struct timespec now;
+                        ret = timespec_now(CLOCK_REALTIME, &now);
+                        if (ret != 0) {
+                                break;
+                        }
+                        if (timespec_cmp(&now, abstimeout) < 0) {
+                                ret = ETOYWASMRESTART;
+                        }
+#endif
                         if (w->woken) {
                                 xlog_trace("%s: ignoring timeout", __func__);
                                 ret = 0;

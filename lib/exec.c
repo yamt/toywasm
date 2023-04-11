@@ -1431,15 +1431,6 @@ retry:;
         } else {
                 ret = check_interrupt(ctx);
                 if (ret != 0) {
-                        if (ret == ETOYWASMRESTART) {
-                                if (abstimeout != NULL) {
-                                        assert(abstimeout ==
-                                               &ctx->restart_u.timer
-                                                        .abstimeout);
-                                        ctx->restart_type = RESTART_TIMER;
-                                }
-                                STAT_INC(ctx->stats.atomic_wait_restart);
-                        }
                         goto fail;
                 }
                 struct timespec next_abstimeout;
@@ -1469,10 +1460,19 @@ retry:;
                                 goto retry;
                         }
                         *resultp = 2; /* timed out */
+                } else {
+                        goto fail;
                 }
         }
         ret = 0;
 fail:
+        if (ret == ETOYWASMRESTART) {
+                if (abstimeout != NULL) {
+                        assert(abstimeout == &ctx->restart_u.timer.abstimeout);
+                        ctx->restart_type = RESTART_TIMER;
+                }
+                STAT_INC(ctx->stats.atomic_wait_restart);
+        }
         memory_atomic_unlock(lock);
         if (ret == 0) {
                 xlog_trace("%s: returning %d result %d", __func__, ret,
