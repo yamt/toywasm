@@ -1,0 +1,55 @@
+;; Use many parameters and results
+
+define(`_repeat',`ifelse(eval($1<=$2),1,`$3`'$0(incr($1),$2,`$3')')')dnl
+define(`repeat',`_repeat(1,$1,``$2'')')dnl
+
+define(`_for',`ifelse(eval($2<$3),1,`pushdef(`$1',$2)$4`'popdef(`$1')`'$0($1,incr($2),$3,`$4')')')dnl
+define(`for',`_for($1,$2,$3,`$4')')dnl
+
+;; wamrc: 64
+;; https://github.com/bytecodealliance/wasm-micro-runtime/blob/a2d4744a2b2c587eacca66c357dc2e88925fcadd/core/iwasm/compilation/aot_emit_function.c#L708-L712
+;;
+;; wamr also has various limits around UINT16_MAX / INT16_MAX.
+;;
+;; wasmtime: 1000
+;; https://github.com/bytecodealliance/wasm-tools/blob/5e8639a37260cdc1aab196f5ae5c7ae6427c214f/crates/wasmparser/src/limits.rs#L29-L30
+ifdef(`NUM',,`define(`NUM',65535)')
+
+define(`INPUT',100000)
+dnl (INPUT + NUM - 1) + (INPUT + NUM - 2) + ... + (INPUT + 0)
+dnl = INPUT * NUM + NUM * (NUM - 1) / 2
+dnl = 100000 * 65535 + 65535 * (65535 - 1) / 2
+dnl = 8700885345
+dnl = 110950753 (32-bit truncation)
+dnl Note: m4 eval is based on signed 32-bit, which is
+dnl not enough for large NUM.
+define(`EXPECTED',`syscmd(echo "(INPUT * NUM + NUM * (NUM - 1) / 2) % 4294967296" | bc)')
+
+(module
+  (func $add_many_params (export "add_many_params") (param repeat(NUM, i32 )) (result i32)
+for(`X', 0, NUM, `
+    local.get X')
+repeat(decr(NUM), `
+    i32.add')
+  )
+  (func $return_many_results (export "return_many_results") (param i32) (result repeat(NUM, i32 ))
+for(`X', 0, NUM, `
+    (i32.add (i32.const X) (local.get 0))')
+  )
+  (func $test (export "test") (param i32) (result i32)
+    local.get 0
+    call $return_many_results
+    call $add_many_params
+  )
+  (func (export "_start")
+    i32.const EXPECTED
+    i32.const INPUT
+    call $test
+    block (param i32 i32)
+      i32.eq
+      br_if 0
+      unreachable
+    end
+  )
+  (memory (export "memory") 1)
+)
