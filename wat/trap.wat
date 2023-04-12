@@ -4,7 +4,7 @@
 ;; wasm3     1
 ;; wamr      1
 ;; wasmtime  134  128+SIGABRT
-;; wasmre    134  i guess it's same as wasmtime
+;; wasmer    134  i guess it's same as wasmtime
 ;; wazero    0    bug?
 ;; wasmi_cli 1
 
