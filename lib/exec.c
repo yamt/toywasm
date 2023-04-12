@@ -1350,6 +1350,16 @@ retry:
 #if defined(TOYWASM_ENABLE_WASM_THREADS) &&                                   \
         !defined(TOYWASM_PREALLOC_SHARED_MEMORY)
         if (new_size != orig_size && mi->shared != NULL) {
+                /*
+                 * reallocate the shared memory.
+                 * suspend all other threads to ensure that no one is
+                 * accessing the shared memory.
+                 *
+                 * REVISIT: doing this on every memory.grow is a bit
+                 * expensive.
+                 * maybe we can mitigate it by alloctating a bit more
+                 * than requested.
+                 */
                 struct cluster *c = ctx->cluster;
                 int ret;
                 assert(c != NULL);
