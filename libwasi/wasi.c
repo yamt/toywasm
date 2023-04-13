@@ -3284,6 +3284,8 @@ wasi_instance_create(struct wasi_instance **instp) NO_THREAD_SAFETY_ANALYSIS
                 }
                 ret = set_nonblocking(i, true, NULL);
                 if (ret != 0) {
+                        xlog_error("set_nonblocking failed on fd %d with %d",
+                                   i, ret);
                         goto fail;
                 }
         }
