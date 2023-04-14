@@ -12,6 +12,7 @@ static void
 parked(struct cluster *c) REQUIRES(c->lock)
 {
         c->nparked++;
+        assert(c->nrunners > c->nparked);
         xlog_trace("%s: parked %" PRIu32 " / %" PRIu32, __func__, c->nparked,
                    c->nrunners);
         if (c->nrunners == c->nparked + 1) {
@@ -23,7 +24,9 @@ parked(struct cluster *c) REQUIRES(c->lock)
         xlog_trace("%s: parked %" PRIu32 " / %" PRIu32, __func__, c->nparked,
                    c->nrunners);
         assert(c->nparked > 0);
+        assert(c->nrunners > c->nparked);
         c->nparked--;
+        assert(c->nrunners != c->nparked + 1);
         assert(c->suspend_state == SUSPEND_STATE_RESUMING);
         if (c->nparked == 0) {
                 c->suspend_state = SUSPEND_STATE_NONE;
