@@ -38,17 +38,21 @@ cluster_add_thread(struct cluster *c)
         /* XXX should park on SUSPEND_STATE_STOPPING? */
         assert(c->nrunners < UINT32_MAX);
         c->nrunners++;
+        assert(c->nrunners > c->nparked);
+        assert(c->suspend_state != SUSPEND_STATE_STOPPING ||
+               c->nrunners > c->nparked + 1);
 }
 
 void
 cluster_remove_thread(struct cluster *c)
 {
         assert(c->nrunners > 0);
+        assert(c->nrunners > c->nparked);
         c->nrunners--;
         if (c->nrunners == 0) {
                 toywasm_cv_signal(&c->cv, &c->lock);
         }
         if (c->suspend_state == SUSPEND_STATE_STOPPING) {
-                toywasm_cv_signal(&c->stop_cv, &c->lock);
+                toywasm_cv_broadcast(&c->stop_cv, &c->lock);
         }
 }
