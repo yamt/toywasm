@@ -72,8 +72,8 @@ struct wasi_instance {
 
 uint32_t wasi_convert_errno(int host_errno);
 
-#define wasi_copyout(c, h, w, l) host_func_copyout(c, h, w, l)
-#define wasi_copyin(c, h, w, l) host_func_copyin(c, h, w, l)
+#define wasi_copyout(c, h, w, l, a) host_func_copyout(c, h, w, l, a)
+#define wasi_copyin(c, h, w, l, a) host_func_copyin(c, h, w, l, a)
 
 struct exec_context;
 bool wasi_fdinfo_is_prestat(const struct wasi_fdinfo *fdinfo);

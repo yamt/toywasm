@@ -120,12 +120,38 @@ host_func_dump_params(const struct functype *ft, const struct cell *params)
         }
 }
 
+/*
+ * Trap on unaligned pointers in a host call.
+ *
+ * Note: This is a relatively new requirement.
+ * cf. https://github.com/WebAssembly/WASI/pull/523
+ *
+ * Open question: Is this appropriate for non-WASI host calls?
+ */
+int
+host_func_check_align(struct exec_context *ctx, uint32_t wasmaddr,
+                      size_t align)
+{
+        assert(align != 0);
+        if ((wasmaddr & (align - 1)) == 0) {
+                return 0;
+        }
+        return trap_with_id(ctx, TRAP_UNALIGNED_MEMORY_ACCESS,
+                            "unaligned access to address %" PRIx32
+                            " in a host call (expected alignment %" PRIu32 ")",
+                            wasmaddr, (uint32_t)align);
+}
+
 int
 host_func_copyin(struct exec_context *ctx, void *hostaddr, uint32_t wasmaddr,
-                 size_t len)
+                 size_t len, size_t align)
 {
         void *p;
         int ret;
+        ret = host_func_check_align(ctx, wasmaddr, align);
+        if (ret != 0) {
+                return ret;
+        }
         ret = memory_getptr(ctx, 0, wasmaddr, 0, len, &p);
         if (ret != 0) {
                 return ret;
@@ -136,10 +162,14 @@ host_func_copyin(struct exec_context *ctx, void *hostaddr, uint32_t wasmaddr,
 
 int
 host_func_copyout(struct exec_context *ctx, const void *hostaddr,
-                  uint32_t wasmaddr, size_t len)
+                  uint32_t wasmaddr, size_t len, size_t align)
 {
         void *p;
         int ret;
+        ret = host_func_check_align(ctx, wasmaddr, align);
+        if (ret != 0) {
+                return ret;
+        }
         ret = memory_getptr(ctx, 0, wasmaddr, 0, len, &p);
         if (ret != 0) {
                 return ret;

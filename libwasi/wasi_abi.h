@@ -1,7 +1,13 @@
+
+#define WASI_U16_ALIGN 2
+#define WASI_U32_ALIGN 4
+#define WASI_U64_ALIGN 8
+
 struct wasi_iov {
         uint32_t iov_base;
         uint32_t iov_len;
 };
+#define WASI_IOV_ALIGN WASI_U32_ALIGN
 
 #define WASI_FILETYPE_UNKNOWN 0
 #define WASI_FILETYPE_BLOCK_DEVICE 1
@@ -78,6 +84,7 @@ struct wasi_fdstat {
         uint64_t fs_rights_inheriting;
 };
 _Static_assert(sizeof(struct wasi_fdstat) == 24, "wasi_fdstat");
+#define WASI_FDSTAT_ALIGN WASI_U64_ALIGN
 
 struct wasi_fd_prestat {
         uint8_t type;
@@ -85,6 +92,7 @@ struct wasi_fd_prestat {
         uint32_t dir_name_len;
 };
 _Static_assert(sizeof(struct wasi_fd_prestat) == 8, "wasi_fd_prestat");
+#define WASI_PRESTAT_ALIGN WASI_U32_ALIGN
 
 #define WASI_PREOPEN_TYPE_DIR 0
 
@@ -100,6 +108,7 @@ struct wasi_filestat {
         uint64_t ctim;
 };
 _Static_assert(sizeof(struct wasi_filestat) == 64, "wasi_filestat");
+#define WASI_FILESTAT_ALIGN WASI_U64_ALIGN
 
 #define WASI_CLOCK_ID_REALTIME 0
 #define WASI_CLOCK_ID_MONOTONIC 1
@@ -133,6 +142,7 @@ struct wasi_subscription {
         } u;
 };
 _Static_assert(sizeof(struct wasi_subscription) == 48, "wasi_subscription");
+#define WASI_SUBSCRIPTION_ALIGN WASI_U64_ALIGN
 
 #define WASI_EVENTTYPE_CLOCK 0
 #define WASI_EVENTTYPE_FD_READ 1
@@ -148,6 +158,7 @@ struct wasi_event {
         uint16_t rwflags; /* WASI_EVENTRWFLAG_ */
 };
 _Static_assert(sizeof(struct wasi_event) == 32, "wasi_event");
+#define WASI_EVENT_ALIGN WASI_U64_ALIGN
 
 #define WASI_DIRCOOKIE_START 0
 
@@ -158,3 +169,4 @@ struct wasi_dirent {
         uint8_t d_type;
 };
 _Static_assert(sizeof(struct wasi_dirent) == 24, "wasi_dirent");
+#define WASI_DIRENT_ALIGN WASI_U64_ALIGN
