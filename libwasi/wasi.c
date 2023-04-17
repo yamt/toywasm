@@ -880,7 +880,7 @@ wasi_fd_close(struct exec_context *ctx, struct host_instance *hi,
                 toywasm_mutex_unlock(&wasi->lock);
                 goto fail;
         }
-        if (fdinfo->hostfd == -1) {
+        if (wasi_fdinfo_unused(fdinfo)) {
                 toywasm_mutex_unlock(&wasi->lock);
                 ret = EBADF;
                 goto fail;
@@ -1576,11 +1576,7 @@ wasi_fd_renumber(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail_locked;
         }
-        if (wasi_fdinfo_is_prestat(fdinfo_from)) {
-                ret = ENOTSUP;
-                goto fail_locked;
-        }
-        if (fdinfo_from->hostfd == -1) {
+        if (!wasi_fdinfo_is_prestat(fdinfo_from) && fdinfo_from->hostfd == -1) {
                 ret = EBADF;
                 goto fail_locked;
         }

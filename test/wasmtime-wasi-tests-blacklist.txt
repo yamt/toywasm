@@ -20,3 +20,6 @@ interesting_paths
 # Note: wasmtime behavior is intentional:
 # https://github.com/bytecodealliance/wasmtime/commit/b84c4d748826837fb532fa64bf32ac6b50690d77
 poll_oneoff_files
+
+# https://github.com/WebAssembly/WASI/pull/522
+close_preopen

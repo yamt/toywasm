@@ -153,10 +153,6 @@ retry:
         if (ret != 0) {
                 goto fail;
         }
-        if (wasi_fdinfo_is_prestat(fdinfo)) {
-                ret = ENOTSUP;
-                goto fail;
-        }
 
         /*
          * it should have at least two references for
