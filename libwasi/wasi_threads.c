@@ -481,7 +481,7 @@ wasi_thread_spawn(struct exec_context *ctx, struct host_instance *hi,
                 r.is_error = 0;
                 le32_encode(&r.u.tid, tid);
         }
-        return wasi_copyout(ctx, &r, retp, sizeof(r));
+        return wasi_copyout(ctx, &r, retp, sizeof(r), WASI_U32_ALIGN);
 }
 
 static int
