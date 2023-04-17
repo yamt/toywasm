@@ -65,7 +65,7 @@ for w in *.wasm; do
     echo "=== ${w}"
     TMP=$(mktemp -d)
     # Note: poll_oneoff_stdio behaves differently on the condition on stdin
-    if true | run_wasi_test; then
+    if python3 ${THIS_DIR}/pipe.py | run_wasi_test; then
         if grep "^${w%%.wasm}$" ${BLACKLIST}; then
             echo "=== ${w} succeeded (unexpected)"
             UNEXPECTED_SUCCESS=$((UNEXPECTED_SUCCESS + 1))
