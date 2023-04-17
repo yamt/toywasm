@@ -36,6 +36,7 @@ done
 virtualenv venv
 . ./venv/bin/activate
 python3 -m pip install -r ${DIR}/test-runner/requirements.txt
+python3 test/pipe.py |
 python3 ${DIR}/test-runner/wasi_test_runner.py \
 -t ${TESTDIRS} \
 ${FILTER_OPTIONS} \
