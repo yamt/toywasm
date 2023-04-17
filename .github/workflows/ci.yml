@@ -263,7 +263,7 @@ jobs:
       if: matrix.arch != 'native'
       env:
         ARCH: ${{matrix.arch}}
-        EXTRA_CMAKE_OPTIONS: ${{env.extra_cmake_options}} -DTOYWASM_TARBALL_SUFFIX=-${{matrix.name}}
+        EXTRA_CMAKE_OPTIONS: -G Ninja ${{env.extra_cmake_options}} -DTOYWASM_TARBALL_SUFFIX=-${{matrix.name}}
       run: |
         sudo -E ./cross/cross-setup.sh
         ./cross/cross-cmake-configure.sh
@@ -271,7 +271,7 @@ jobs:
     - name: cmake configure (native)
       if: matrix.arch == 'native'
       env:
-        EXTRA_CMAKE_OPTIONS: ${{env.extra_cmake_options}} -DTOYWASM_TARBALL_SUFFIX=-${{matrix.name}}
+        EXTRA_CMAKE_OPTIONS: -G Ninja ${{env.extra_cmake_options}} -DTOYWASM_TARBALL_SUFFIX=-${{matrix.name}}
       run: |
         cmake -B ${{env.builddir}} ${EXTRA_CMAKE_OPTIONS}
 
@@ -355,7 +355,7 @@ jobs:
     - name: Build and test
       env:
         # Note: we don't care about tarball suffix for native build here.
-        EXTRA_CMAKE_OPTIONS: -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/dist -DTOYWASM_TARBALL_SUFFIX=-${{matrix.name}} ${{matrix.extra}}
+        EXTRA_CMAKE_OPTIONS: -G Ninja -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/dist -DTOYWASM_TARBALL_SUFFIX=-${{matrix.name}} ${{matrix.extra}}
       run: ./wasm-on-wasm.sh
 
     - name: Install
