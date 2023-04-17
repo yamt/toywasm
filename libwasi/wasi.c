@@ -1576,7 +1576,8 @@ wasi_fd_renumber(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail_locked;
         }
-        if (!wasi_fdinfo_is_prestat(fdinfo_from) && fdinfo_from->hostfd == -1) {
+        if (!wasi_fdinfo_is_prestat(fdinfo_from) &&
+            fdinfo_from->hostfd == -1) {
                 ret = EBADF;
                 goto fail_locked;
         }
