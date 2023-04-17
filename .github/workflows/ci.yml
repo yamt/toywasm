@@ -235,7 +235,7 @@ jobs:
 
     - name: Install dependencies (ubuntu)
       if: startsWith(matrix.os, 'ubuntu-')
-      run: sudo apt-get update && sudo apt-get install -y pax virtualenv
+      run: sudo apt-get update && sudo apt-get install -y pax virtualenv ninja-build
 
     - name: Install dependencies (ubuntu native)
       # for cross build, cross-setup.sh takes care of the toolchain
@@ -248,6 +248,7 @@ jobs:
         brew install wabt
         brew install cmocka
         brew install virtualenv
+        brew install ninja
 
     - uses: actions/checkout@v3
       with:
@@ -346,7 +347,7 @@ jobs:
     steps:
     - name: Install dependencies (ubuntu)
       if: startsWith(matrix.os, 'ubuntu-')
-      run: sudo apt-get update && sudo apt-get install -y pax
+      run: sudo apt-get update && sudo apt-get install -y pax ninja-build
 
     - uses: actions/checkout@v3
       with:
