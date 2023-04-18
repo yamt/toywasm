@@ -3300,6 +3300,9 @@ wasi_instance_create(struct wasi_instance **instp) NO_THREAD_SAFETY_ANALYSIS
                          * tty is often shared with other processes.
                          * making such files non blocking breaks other
                          * processes.
+                         * eg. when you run a shell command like
+                         * "toywasm | more", the tty is toywasm's stdin
+                         * and also more's stdout.
                          */
                         continue;
                 }
