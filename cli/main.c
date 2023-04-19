@@ -141,6 +141,18 @@ static const struct option longopts[] = {
         },
 };
 
+static const char *opt_metavars[] = {
+        [opt_invoke] = "FUNCTION[ FUNCTION_ARGS...]",
+        [opt_load] = "MODULE_PATH",
+        [opt_wasi_env] = "NAME=VAR",
+        [opt_wasi_dir] = "DIR",
+        [opt_wasi_mapdir] = "GUEST_DIR::HOST_DIR",
+        [opt_trace] = "LEVEL",
+        [opt_repl_prompt] = "STRING",
+        [opt_max_frames] = "NUMBER_OF_FRAMES",
+        [opt_max_stack_cells] = "NUMBER_OF_CELLS",
+};
+
 static void
 print_usage(void)
 {
@@ -154,19 +166,32 @@ print_usage(void)
         printf("Options:\n");
         const struct option *opt = longopts;
         while (opt->name != NULL) {
+                const char *metavar = NULL;
+                if (opt->val < ARRAYCOUNT(opt_metavars)) {
+                        metavar = opt_metavars[opt->val];
+                }
+                if (metavar == NULL) {
+                        metavar = "ARG";
+                }
                 switch (opt->has_arg) {
                 case no_argument:
                         printf("\t--%s\n", opt->name);
                         break;
                 case required_argument:
-                        printf("\t--%s ARG\n", opt->name);
+                        printf("\t--%s %s\n", opt->name, metavar);
                         break;
                 case optional_argument:
-                        printf("\t--%s [ARG]\n", opt->name);
+                        printf("\t--%s [%s]\n", opt->name, metavar);
                         break;
                 }
                 opt++;
         }
+        printf("Examples:\n");
+#if defined(TOYWASM_ENABLE_WASI)
+        printf("\tRun a wasi module\n\t\ttoywasm --wasi module\n");
+#endif
+        printf("\tLoad a module and invoke its function\n\t\ttoywasm --load "
+               "module --invoke \"func arg1 arg2\"\n");
 }
 
 int
