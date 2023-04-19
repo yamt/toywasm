@@ -34,7 +34,7 @@ enum longopt {
         opt_wasi_env,
 };
 
-const struct option longopts[] = {
+static const struct option longopts[] = {
         {
                 "disable-jump-table",
                 no_argument,
