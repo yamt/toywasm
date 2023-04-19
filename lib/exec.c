@@ -1442,15 +1442,13 @@ memory_wait(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
         /*
          * Note: it's important to always consume restart_abstimeout.
          */
-        const struct timespec *abstimeout;
+        const struct timespec *abstimeout = NULL;
         assert(ctx->restart_type == RESTART_NONE ||
                ctx->restart_type == RESTART_TIMER);
         if (ctx->restart_type == RESTART_TIMER) {
                 abstimeout = &ctx->restart_u.timer.abstimeout;
                 ctx->restart_type = RESTART_NONE;
-        } else if (timeout_ns < 0) {
-                abstimeout = NULL;
-        } else {
+        } else if (timeout_ns >= 0) {
                 ret = abstime_from_reltime_ns(CLOCK_REALTIME,
                                               &ctx->restart_u.timer.abstimeout,
                                               timeout_ns);
