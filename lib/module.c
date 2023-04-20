@@ -155,7 +155,10 @@ read_resulttype(const uint8_t **pp, const uint8_t *ep, struct resulttype *rt,
             ctx->options.generate_resulttype_cellidx) {
                 ret = populate_resulttype_cellidx(rt);
                 if (ret != 0) {
-                        goto fail;
+                        /* this failure is not critical. let's ignore. */
+                        xlog_error("populate_resulttype_cellidx failed with "
+                                   "%d. It can cause very slow execution.",
+                                   ret);
                 }
         }
 #endif
@@ -853,8 +856,11 @@ read_locals(const uint8_t **pp, const uint8_t *ep, struct func *func,
         if (lt->nlocals > 0 && ctx->options.generate_localtype_cellidx) {
                 ret = populate_localtype_cellidx(lt);
                 if (ret != 0) {
+                        /* this failure is not critical. let's ignore. */
+                        xlog_error("populate_localtype_cellidx failed with "
+                                   "%d. It can cause very slow execution.",
+                                   ret);
                         lt->localchunks = NULL;
-                        goto fail;
                 }
         }
 #endif
