@@ -56,8 +56,8 @@ fail:                                                                         \
                         if (ret != 0) {                                       \
                                 goto fail;                                    \
                         }                                                     \
-                        _Atomic uint##MEM##_t *p = vp;                        \
-                        uint##STACK##_t v = le##MEM##_to_host(*p);            \
+                        _Atomic uint##MEM##_t *ap = vp;                       \
+                        uint##STACK##_t v = le##MEM##_to_host(*ap);           \
                         val_c.u.i##STACK = CAST v;                            \
                 }                                                             \
                 PUSH_VAL(TYPE_##I_OR_F##STACK, c);                            \
@@ -87,8 +87,8 @@ fail:                                                                         \
                                 goto fail;                                    \
                         }                                                     \
                         uint##STACK##_t v = CAST val_v.u.i##STACK;            \
-                        _Atomic uint##MEM##_t *p = vp;                        \
-                        *p = host_to_le##MEM(v);                              \
+                        _Atomic uint##MEM##_t *ap = vp;                       \
+                        *ap = host_to_le##MEM(v);                             \
                 }                                                             \
                 SAVE_PC;                                                      \
                 INSN_SUCCESS;                                                 \
@@ -116,17 +116,17 @@ fail:                                                                         \
                         if (ret != 0) {                                       \
                                 goto fail;                                    \
                         }                                                     \
-                        _Atomic uint##MEM##_t *p = vp;                        \
+                        _Atomic uint##MEM##_t *ap = vp;                       \
                         uint##MEM##_t old_le;                                 \
                         uint##STACK##_t old_h;                                \
                         uint##MEM##_t new_le;                                 \
                         do {                                                  \
-                                old_le = *p;                                  \
+                                old_le = *ap;                                 \
                                 old_h = le##MEM##_to_host(old_le);            \
                                 uint##STACK##_t new_h =                       \
                                         OP(STACK, old_h, val_v.u.i##STACK);   \
                                 new_le = host_to_le##MEM(new_h);              \
-                        } while (!CMPXCHG(p, &old_le, new_le));               \
+                        } while (!CMPXCHG(ap, &old_le, new_le));              \
                         val_readv.u.i##STACK = old_h;                         \
                 }                                                             \
                 PUSH_VAL(TYPE_i##STACK, readv);                               \
@@ -173,7 +173,7 @@ fail:                                                                         \
                         if (ret != 0) {                                       \
                                 goto fail;                                    \
                         }                                                     \
-                        _Atomic uint##MEM##_t *p = vp;                        \
+                        _Atomic uint##MEM##_t *ap = vp;                       \
                         uint##MEM##_t truncated = val_expected.u.i##STACK;    \
                         uint##MEM##_t read_le;                                \
                         if (truncated == val_expected.u.i##STACK) {           \
@@ -182,10 +182,10 @@ fail:                                                                         \
                                 uint##MEM##_t replacement_le =                \
                                         host_to_le##MEM(                      \
                                                 val_replacement.u.i##STACK);  \
-                                CMPXCHG(p, &expected_le, replacement_le);     \
+                                CMPXCHG(ap, &expected_le, replacement_le);    \
                                 read_le = expected_le;                        \
                         } else {                                              \
-                                read_le = *p;                                 \
+                                read_le = *ap;                                \
                         }                                                     \
                         val_readv.u.i##STACK = le##MEM##_to_host(read_le);    \
                 }                                                             \
