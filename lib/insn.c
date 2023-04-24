@@ -271,9 +271,9 @@ ctz64(uint64_t v)
         if (v == 0) {
                 return 64;
         }
-        uint32_t low = v;
+        uint32_t low = (uint32_t)v;
         if (low == 0) {
-                return 32 + __builtin_ctz(v >> 32);
+                return 32 + __builtin_ctz((uint32_t)(v >> 32));
         }
         return __builtin_ctz(low);
 }
