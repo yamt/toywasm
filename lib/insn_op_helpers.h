@@ -47,8 +47,10 @@
 #define SHR_S(N, a, b) ((int##N##_t)a >> (b % N))
 #define SHR_U(N, a, b) (a >> (b % N))
 #define SHL(N, a, b) (a << (b % N))
-#define ROTL(N, a, b) ((a << (b % N)) | (a >> (N - (b % N))))
-#define ROTR(N, a, b) ((a >> (b % N)) | (a << (N - (b % N))))
+#define ROTL(N, a, b)                                                         \
+        ((b % N) == 0 ? a : ((a << (b % N)) | (a >> (N - (b % N)))))
+#define ROTR(N, a, b)                                                         \
+        ((b % N) == 0 ? a : ((a >> (b % N)) | (a << (N - (b % N)))))
 
 #define FDIV(N, a, b) ((a) / (b))
 
