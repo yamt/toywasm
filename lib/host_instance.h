@@ -9,9 +9,14 @@ struct host_func {
 };
 
 #define HOST_FUNC_CONVERT_PARAMS(FT, PARAMS)                                  \
-        struct val converted_params[(FT)->parameter.ntypes];                  \
-        vals_from_cells(converted_params, (PARAMS), &(FT)->parameter);
+        struct val *converted_params =                                        \
+                calloc((FT)->parameter.ntypes, sizeof(*converted_params));    \
+        if (converted_params == NULL) {                                       \
+                return ENOMEM;                                                \
+        }                                                                     \
+        vals_from_cells(converted_params, (PARAMS), &(FT)->parameter)
 #define HOST_FUNC_PARAM(FT, PARAMS, IDX, TYPE) converted_params[IDX].u.TYPE
+#define HOST_FUNC_FREE_CONVERTED_PARAMS() free(converted_params)
 
 #define HOST_FUNC_RESULT_SET(FT, RESULTS, IDX, TYPE, V)                       \
         do {                                                                  \
