@@ -115,6 +115,22 @@ if(CMAKE_C_COMPILER_ID MATCHES "Clang")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wthread-safety")
 endif()
 
+if(NOT DEFINED USE_UBSAN)
+set(USE_UBSAN ON)
+endif()
+if(USE_UBSAN)
+set(UBSAN_FLAGS "-fsanitize=alignment -fno-sanitize-recover=alignment")
+set(UBSAN_FLAGS "-fsanitize=undefined -fno-sanitize-recover=undefined")
+set(UBSAN_FLAGS "${UBSAN_FLAGS} -fsanitize=integer -fno-sanitize-recover=integer")
+#
+set(UBSAN_FLAGS "${UBSAN_FLAGS} -fno-sanitize=unsigned-shift-base")
+set(UBSAN_FLAGS "${UBSAN_FLAGS} -fno-sanitize=unsigned-integer-overflow")
+# we use NULL+0 in some places. often with VEC_NEXELEM.
+set(UBSAN_FLAGS "${UBSAN_FLAGS} -fno-sanitize=pointer-overflow")
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} ${UBSAN_FLAGS}")
+set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} ${UBSAN_FLAGS}")
+endif()
+
 if(NOT DEFINED USE_ASAN)
 set(USE_ASAN ON)
 endif()
@@ -160,6 +176,7 @@ message(STATUS "USE_IPO: ${USE_IPO}")
 message(STATUS "USE_ASAN: ${USE_ASAN}")
 message(STATUS "USE_LSAN: ${USE_LSAN}")
 message(STATUS "USE_TSAN: ${USE_TSAN}")
+message(STATUS "USE_UBSAN: ${USE_UBSAN}")
 
 find_package(Git REQUIRED)
 execute_process(
