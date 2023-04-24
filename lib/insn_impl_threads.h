@@ -122,10 +122,12 @@ fail:                                                                         \
                         uint##MEM##_t new_le;                                 \
                         do {                                                  \
                                 old_le = *ap;                                 \
-                                old_h = le##MEM##_to_host(old_le);            \
+                                old_h = (uint##STACK##_t)le##MEM##_to_host(   \
+                                        old_le);                              \
                                 uint##STACK##_t new_h =                       \
                                         OP(STACK, old_h, val_v.u.i##STACK);   \
-                                new_le = host_to_le##MEM(new_h);              \
+                                new_le = host_to_le##MEM(                     \
+                                        (uint##MEM##_t)new_h);                \
                         } while (!CMPXCHG(ap, &old_le, new_le));              \
                         val_readv.u.i##STACK = old_h;                         \
                 }                                                             \
