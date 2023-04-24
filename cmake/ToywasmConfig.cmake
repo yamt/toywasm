@@ -65,6 +65,7 @@ endif()
 endif()
 
 if(NOT DEFINED USE_TSAN)
+# Off by default because it's incompatible with ASAN and LSAN
 set(USE_TSAN OFF)
 endif()
 # TOYWASM_ENABLE_WASM_THREADS might require pthread
