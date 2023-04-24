@@ -123,9 +123,12 @@ if(USE_UBSAN)
 set(UBSAN_FLAGS "-fsanitize=alignment -fno-sanitize-recover=alignment")
 set(UBSAN_FLAGS "-fsanitize=undefined -fno-sanitize-recover=undefined")
 set(UBSAN_FLAGS "${UBSAN_FLAGS} -fsanitize=integer -fno-sanitize-recover=integer")
-#
+# unsigned-shift-base: not an undefined behavior. used in leb128 etc.
 set(UBSAN_FLAGS "${UBSAN_FLAGS} -fno-sanitize=unsigned-shift-base")
+# unsigned-integer-overflow: not an undefined behavior. used in leb128 etc.
 set(UBSAN_FLAGS "${UBSAN_FLAGS} -fno-sanitize=unsigned-integer-overflow")
+# implicit-integer-sign-change: we relies on it for a lot of opcodes.
+set(UBSAN_FLAGS "${UBSAN_FLAGS} -fno-sanitize=implicit-integer-sign-change")
 # we use NULL+0 in some places. often with VEC_NEXELEM.
 set(UBSAN_FLAGS "${UBSAN_FLAGS} -fno-sanitize=pointer-overflow")
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} ${UBSAN_FLAGS}")
