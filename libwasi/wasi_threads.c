@@ -453,6 +453,7 @@ wasi_thread_spawn_old(struct exec_context *ctx, struct host_instance *hi,
                 xlog_trace("%s succeeded tid %u", __func__, tid);
         }
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, result);
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return 0;
 }
 
@@ -481,6 +482,7 @@ wasi_thread_spawn(struct exec_context *ctx, struct host_instance *hi,
                 r.is_error = 0;
                 le32_encode(&r.u.tid, tid);
         }
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return wasi_copyout(ctx, &r, retp, sizeof(r), WASI_U32_ALIGN);
 }
 

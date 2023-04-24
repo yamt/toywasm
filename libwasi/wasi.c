@@ -741,6 +741,7 @@ wasi_proc_exit(struct exec_context *ctx, struct host_instance *hi,
         toywasm_mutex_lock(&wasi->lock);
         wasi->exit_code = code;
         toywasm_mutex_unlock(&wasi->lock);
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return trap_with_id(ctx, TRAP_VOLUNTARY_EXIT,
                             "proc_exit with %" PRIu32, code);
 }
@@ -774,6 +775,7 @@ wasi_fd_advise(struct exec_context *ctx, struct host_instance *hi,
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return 0;
 }
 
@@ -810,6 +812,7 @@ wasi_fd_allocate(struct exec_context *ctx, struct host_instance *hi,
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return 0;
 }
 
@@ -843,6 +846,7 @@ wasi_fd_filestat_set_size(struct exec_context *ctx, struct host_instance *hi,
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return 0;
 }
 
@@ -903,6 +907,7 @@ fail:
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
         }
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return host_ret;
 }
 
@@ -964,6 +969,7 @@ fail:
                                      wasi_convert_errno(ret));
         }
         free(hostiov);
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return host_ret;
 }
 
@@ -1026,6 +1032,7 @@ fail:
                                      wasi_convert_errno(ret));
         }
         free(hostiov);
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return host_ret;
 }
 
@@ -1094,6 +1101,7 @@ fail:
                                      wasi_convert_errno(ret));
         }
         free(hostiov);
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return host_ret;
 }
 
@@ -1156,6 +1164,7 @@ fail:
                                      wasi_convert_errno(ret));
         }
         free(hostiov);
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return host_ret;
 }
 
@@ -1268,6 +1277,7 @@ fail:
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
         }
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return host_ret;
 }
 
@@ -1329,6 +1339,7 @@ fail:
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
         }
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return host_ret;
 }
 
@@ -1353,6 +1364,7 @@ wasi_fd_fdstat_set_flags(struct exec_context *ctx, struct host_instance *hi,
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return 0;
 }
 
@@ -1379,6 +1391,7 @@ wasi_fd_fdstat_set_rights(struct exec_context *ctx, struct host_instance *hi,
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return 0;
 }
 
@@ -1447,6 +1460,7 @@ fail:
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
         }
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return host_ret;
 }
 
@@ -1483,6 +1497,7 @@ fail:
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
         }
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return host_ret;
 }
 
@@ -1511,6 +1526,7 @@ wasi_fd_sync(struct exec_context *ctx, struct host_instance *hi,
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return 0;
 }
 
@@ -1543,6 +1559,7 @@ wasi_fd_datasync(struct exec_context *ctx, struct host_instance *hi,
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return 0;
 }
 #endif
@@ -1618,6 +1635,7 @@ fail:
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
         }
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return host_ret;
 fail_locked:
         toywasm_mutex_unlock(&wasi->lock);
@@ -1659,6 +1677,7 @@ fail:
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
         }
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return host_ret;
 }
 
@@ -1695,6 +1714,7 @@ wasi_fd_filestat_set_times(struct exec_context *ctx, struct host_instance *hi,
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return 0;
 }
 
@@ -1735,6 +1755,7 @@ fail:
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
         }
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return host_ret;
 }
 
@@ -1781,6 +1802,7 @@ fail:
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
         }
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return host_ret;
 }
 
@@ -2022,6 +2044,7 @@ fail:
         } else {
                 xlog_trace("%s: restarting", __func__);
         }
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return host_ret;
 }
 
@@ -2056,6 +2079,7 @@ fail:
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
         }
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return host_ret;
 }
 
@@ -2093,6 +2117,7 @@ fail:
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
         }
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return host_ret;
 }
 
@@ -2125,6 +2150,7 @@ fail:
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
         }
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return host_ret;
 }
 
@@ -2169,6 +2195,7 @@ fail:
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
         }
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return host_ret;
 }
 
@@ -2258,6 +2285,7 @@ wasi_random_get(struct exec_context *ctx, struct host_instance *hi,
 #endif
 fail:
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return 0;
 }
 
@@ -2398,6 +2426,7 @@ fail:
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
         }
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return host_ret;
 }
 
@@ -2435,6 +2464,7 @@ fail:
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
         }
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return host_ret;
 }
 
@@ -2472,6 +2502,7 @@ fail:
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
         }
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return host_ret;
 }
 
@@ -2509,6 +2540,7 @@ fail:
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
         }
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return host_ret;
 }
 
@@ -2560,6 +2592,7 @@ fail:
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
         }
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return host_ret;
 }
 
@@ -2639,6 +2672,7 @@ fail:
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
         }
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return host_ret;
 }
 
@@ -2699,6 +2733,7 @@ fail:
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
         }
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return host_ret;
 }
 
@@ -2749,6 +2784,7 @@ fail:
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
         }
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return host_ret;
 }
 
@@ -2797,6 +2833,7 @@ fail:
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
         }
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return host_ret;
 }
 
@@ -2853,6 +2890,7 @@ fail:
         }
         free(hostpath);
         free(wasmpath);
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return host_ret;
 }
 
@@ -2960,6 +2998,7 @@ fail:
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
         }
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return host_ret;
 }
 
@@ -3079,6 +3118,7 @@ fail:
                                      wasi_convert_errno(ret));
         }
         free(hostiov);
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return host_ret;
 }
 
@@ -3154,6 +3194,7 @@ fail:
                                      wasi_convert_errno(ret));
         }
         free(hostiov);
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return host_ret;
 }
 
@@ -3197,6 +3238,7 @@ wasi_sock_shutdown(struct exec_context *ctx, struct host_instance *hi,
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return 0;
 }
 
