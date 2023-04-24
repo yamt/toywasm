@@ -176,14 +176,17 @@ fail:                                                                         \
                                 goto fail;                                    \
                         }                                                     \
                         _Atomic uint##MEM##_t *ap = vp;                       \
-                        uint##MEM##_t truncated = val_expected.u.i##STACK;    \
+                        uint##MEM##_t truncated =                             \
+                                (uint##MEM##_t)val_expected.u.i##STACK;       \
                         uint##MEM##_t read_le;                                \
                         if (truncated == val_expected.u.i##STACK) {           \
                                 uint##MEM##_t expected_le =                   \
                                         host_to_le##MEM(truncated);           \
                                 uint##MEM##_t replacement_le =                \
                                         host_to_le##MEM(                      \
-                                                val_replacement.u.i##STACK);  \
+                                                (uint##MEM##_t)               \
+                                                        val_replacement.u     \
+                                                                .i##STACK);   \
                                 CMPXCHG(ap, &expected_le, replacement_le);    \
                                 read_le = expected_le;                        \
                         } else {                                              \
