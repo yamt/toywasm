@@ -1391,7 +1391,7 @@ wasi_fd_seek(struct exec_context *ctx, struct host_instance *hi,
         struct wasi_instance *wasi = (void *)hi;
         HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
-        int64_t offset = HOST_FUNC_PARAM(ft, params, 1, i64);
+        int64_t offset = (int64_t)HOST_FUNC_PARAM(ft, params, 1, i64);
         uint32_t whence = HOST_FUNC_PARAM(ft, params, 2, i32);
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 3, i32);
         struct wasi_fdinfo *fdinfo = NULL;
