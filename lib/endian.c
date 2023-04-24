@@ -68,8 +68,8 @@ host_to_le16(uint16_t v)
                 uint8_t u8[2];
                 uint16_t u16;
         } u;
-        u.u8[0] = v;
-        u.u8[1] = v >> 8;
+        u.u8[0] = (uint8_t)v;
+        u.u8[1] = (uint8_t)(v >> 8);
         return u.u16;
 }
 
@@ -80,8 +80,8 @@ host_to_le32(uint32_t v)
                 uint16_t u16[2];
                 uint32_t u32;
         } u;
-        u.u16[0] = host_to_le16(v);
-        u.u16[1] = host_to_le16(v >> 16);
+        u.u16[0] = host_to_le16((uint16_t)v);
+        u.u16[1] = host_to_le16((uint16_t)(v >> 16));
         return u.u32;
 }
 
@@ -92,8 +92,8 @@ host_to_le64(uint64_t v)
                 uint32_t u32[2];
                 uint64_t u64;
         } u;
-        u.u32[0] = host_to_le32(v);
-        u.u32[1] = host_to_le32(v >> 32);
+        u.u32[0] = host_to_le32((uint32_t)v);
+        u.u32[1] = host_to_le32((uint32_t)(v >> 32));
         return u.u64;
 }
 
