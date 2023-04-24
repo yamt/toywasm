@@ -85,8 +85,9 @@ read_leb(const uint8_t **pp, const uint8_t *ep, unsigned int bits,
                                 if ((bits_left = bits - shift) < 7) {
                                         if (is_signed) {
                                                 uint8_t mask =
-                                                        ((unsigned int)-1)
-                                                        << (bits_left - 1);
+                                                        (uint8_t)(((unsigned int)-1)
+                                                                  << (bits_left -
+                                                                      1));
                                                 if (is_minus) {
                                                         if ((((~v) & 0x7f) &
                                                              mask) != 0) {
@@ -99,8 +100,8 @@ read_leb(const uint8_t **pp, const uint8_t *ep, unsigned int bits,
                                                 }
                                         } else {
                                                 uint8_t mask =
-                                                        ((unsigned int)-1)
-                                                        << bits_left;
+                                                        (uint8_t)(((unsigned int)-1)
+                                                                  << bits_left);
                                                 if ((v & mask) != 0) {
                                                         return E2BIG;
                                                 }
@@ -146,7 +147,7 @@ read_leb_i32(const uint8_t **pp, const uint8_t *ep, uint32_t *resultp)
         if (ret != 0) {
                 return ret;
         }
-        *resultp = r;
+        *resultp = (uint32_t)r;
         return 0;
 }
 
@@ -161,7 +162,7 @@ read_leb_u32(const uint8_t **pp, const uint8_t *ep, uint32_t *resultp)
                 return ret;
         }
         assert(r <= UINT32_MAX);
-        *resultp = r;
+        *resultp = (uint32_t)r;
         return 0;
 }
 
@@ -268,7 +269,7 @@ read_leb_u32_nocheck(const uint8_t **pp)
         ret = read_leb(pp, NULL, 32, false, &r);
         assert(ret == 0);
         assert(r <= UINT32_MAX);
-        return r;
+        return (uint32_t)r;
 }
 
 uint32_t
@@ -283,7 +284,7 @@ read_leb_i32_nocheck(const uint8_t **pp)
          */
         ret = read_leb(pp, NULL, 32, true, &r);
         assert(ret == 0);
-        return r;
+        return (uint32_t)r;
 }
 
 uint64_t
