@@ -20,7 +20,7 @@
                         struct exec_context *ectx = ECTX;                     \
                         uint32_t address = val_address.u.i32;                 \
                         uint64_t expected = val_expected.u.i##BITS;           \
-                        int64_t timeout_ns = val_timeout_ns.u.i64;            \
+                        int64_t timeout_ns = (int64_t)val_timeout_ns.u.i64;   \
                         uint32_t result;                                      \
                         ret = memory_wait(ectx, memarg.memidx, address,       \
                                           memarg.offset, expected, &result,   \
