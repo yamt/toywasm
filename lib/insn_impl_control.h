@@ -351,9 +351,13 @@ INSN_IMPL(br_table)
                         l = vec_count;
                 }
                 uint32_t idx;
-                do {
+                while (true) {
                         idx = read_leb_u32_nocheck(&p);
-                } while (l-- > 0);
+                        if (l == 0) {
+                                break;
+                        }
+                        l--;
+                }
                 ectx->event_u.branch.index = idx;
                 ectx->event_u.branch.goto_else = false;
                 ectx->event = EXEC_EVENT_BRANCH;
