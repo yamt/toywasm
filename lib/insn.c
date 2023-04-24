@@ -281,7 +281,7 @@ ctz64(uint64_t v)
 static uint64_t
 wasm_popcount64(uint64_t v)
 {
-        return wasm_popcount(v) + wasm_popcount(v >> 32);
+        return wasm_popcount((uint32_t)v) + wasm_popcount((uint32_t)(v >> 32));
 }
 
 static int
