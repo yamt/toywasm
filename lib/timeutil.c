@@ -57,7 +57,11 @@ timespec_add(const struct timespec *a, const struct timespec *b,
                 c->tv_nsec -= 1000000000;
                 ovfl = 1;
         }
-        c->tv_sec = a->tv_sec + b->tv_sec + ovfl;
+        /*
+         * XXX the following casts are to avoid signed integer overflow
+         * where time_t is signed
+         */
+        c->tv_sec = (time_t)((uintmax_t)a->tv_sec + b->tv_sec + ovfl);
         if (timespec_cmp(c, a) < 0) {
                 return EOVERFLOW;
         }
