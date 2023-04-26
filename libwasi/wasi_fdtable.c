@@ -231,6 +231,7 @@ wasi_fdtable_free(struct wasi_instance *wasi) NO_THREAD_SAFETY_ANALYSIS
                 if (fdinfo == NULL) {
                         continue;
                 }
+                assert(fdinfo->refcount == 1);
 #if defined(TOYWASM_ENABLE_TRACING)
                 int hostfd = fdinfo->hostfd;
 #endif

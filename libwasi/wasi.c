@@ -3309,19 +3309,23 @@ const struct host_func wasi_funcs[] = {
         WASI_HOST_FUNC(sock_shutdown, "(ii)i"),
 };
 
-int
-wasi_instance_create(struct wasi_instance **instp) NO_THREAD_SAFETY_ANALYSIS
+static int
+wasi_instance_add_hostfd(struct wasi_instance *inst, uint32_t wasmfd,
+                         int hostfd)
 {
-        struct wasi_instance *inst;
-
-        inst = zalloc(sizeof(*inst));
-        if (inst == NULL) {
-                return ENOMEM;
-        }
-        /* TODO configurable */
-        uint32_t nfds = 3;
-        int ret = wasi_fdtable_expand(inst, nfds - 1);
+        struct wasi_fdinfo *fdinfo = NULL;
+        int ret;
+        toywasm_mutex_lock(&inst->lock);
+        ret = wasi_fdtable_expand(inst, wasmfd);
         if (ret != 0) {
+                goto fail;
+        }
+        ret = wasi_fd_lookup_locked(inst, wasmfd, &fdinfo);
+        if (ret != 0) {
+                goto fail;
+        }
+        if (!wasi_fdinfo_unused(fdinfo)) {
+                ret = EBUSY;
                 goto fail;
         }
 
@@ -3332,59 +3336,84 @@ wasi_instance_create(struct wasi_instance **instp) NO_THREAD_SAFETY_ANALYSIS
          * XXX should restore when we are done
          * XXX this affects other programs sharing files.
          *     (eg. shell pipelines)
+         *
+         * a fragile hack:
+         *
+         * tty is often shared with other processes.
+         * making such files non blocking breaks other
+         * processes.
+         * eg. when you run a shell command like
+         * "toywasm | more", the tty is toywasm's stdin
+         * and also more's stdout.
          */
-        uint32_t i;
-        for (i = 0; i < nfds; i++) {
-                if (isatty(i)) {
-                        /*
-                         * a fragile hack:
-                         *
-                         * tty is often shared with other processes.
-                         * making such files non blocking breaks other
-                         * processes.
-                         * eg. when you run a shell command like
-                         * "toywasm | more", the tty is toywasm's stdin
-                         * and also more's stdout.
-                         */
-                        continue;
-                }
-                ret = set_nonblocking(i, true, NULL);
+        if (!isatty(hostfd)) {
+                ret = set_nonblocking(hostfd, true, NULL);
                 if (ret != 0) {
                         xlog_error("set_nonblocking failed on fd %d with %d",
-                                   i, ret);
+                                   hostfd, ret);
                         goto fail;
                 }
         }
 
+        int dupfd;
+#if defined(__wasi__) /* wasi has no dup */
+        dupfd = hostfd;
+#else
+        dupfd = dup(hostfd);
+#endif
+        assert(fdinfo->hostfd == -1);
+        fdinfo->hostfd = dupfd;
+        if (dupfd == -1) {
+                xlog_trace("failed to dup: wasm fd %" PRIu32
+                           " host fd %u with errno %d",
+                           wasmfd, hostfd, errno);
+        }
+        ret = 0;
+fail:
+        toywasm_mutex_unlock(&inst->lock);
+        wasi_fdinfo_release(inst, fdinfo);
+        return ret;
+}
+
+static int
+wasi_instance_populate_stdio_with_hostfd(struct wasi_instance *inst)
+{
+        uint32_t nfds = 3;
+        uint32_t i;
+        int ret;
         for (i = 0; i < nfds; i++) {
-                struct wasi_fdinfo *fdinfo;
-                fdinfo = wasi_fdinfo_alloc();
-                if (fdinfo == NULL) {
-                        ret = ENOMEM;
+                ret = wasi_instance_add_hostfd(inst, i, i);
+                if (ret != 0) {
+                        xlog_error("wasi_instance_add_hostfd failed on fd %d "
+                                   "with %d",
+                                   i, ret);
                         goto fail;
                 }
-                int hostfd;
-#if defined(__wasi__) /* wasi has no dup */
-                hostfd = i;
-#else
-                hostfd = dup(i);
-#endif
-                assert(fdinfo->hostfd == -1);
-                fdinfo->hostfd = hostfd;
-                wasi_fd_affix(inst, i, fdinfo);
-                if (hostfd == -1) {
-                        xlog_trace("failed to dup: wasm fd %" PRIu32
-                                   " host fd %u with errno %d",
-                                   i, (int)i, errno);
-                }
+        }
+        ret = 0;
+fail:
+        return ret;
+}
+
+int
+wasi_instance_create(struct wasi_instance **instp) NO_THREAD_SAFETY_ANALYSIS
+{
+        struct wasi_instance *inst;
+
+        inst = zalloc(sizeof(*inst));
+        if (inst == NULL) {
+                return ENOMEM;
         }
         toywasm_mutex_init(&inst->lock);
         toywasm_cv_init(&inst->cv);
+        int ret = wasi_instance_populate_stdio_with_hostfd(inst);
+        if (ret != 0) {
+                goto fail;
+        }
         *instp = inst;
         return 0;
 fail:
-        wasi_fdtable_free(inst);
-        free(inst);
+        wasi_instance_destroy(inst);
         return ret;
 }
 
