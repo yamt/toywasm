@@ -88,8 +88,12 @@ do_trap:
                         ", meminst size %" PRIu32,
                         memidx, ptr, offset, size, meminst->size_in_pages);
         }
-        /* REVISIT thread */
         if (need > meminst->allocated) {
+                /*
+                 * Note: shared memories do never come here because
+                 * we handle their growth in memory_grow.
+                 */
+                assert((meminst->type->flags & MEMTYPE_FLAG_SHARED) == 0);
                 int ret = resize_array((void **)&meminst->data, 1, need);
                 if (ret != 0) {
                         return ret;
@@ -1347,6 +1351,10 @@ retry:
         }
         xlog_trace("memory grow %" PRIu32 " -> %" PRIu32, mi->size_in_pages,
                    (uint32_t)new_size);
+        /*
+         * Note: for non-shared memories, we defer the actual reallocation
+         * to memory_getptr2. (mainly to allow sub-page usage.)
+         */
 #if defined(TOYWASM_ENABLE_WASM_THREADS) &&                                   \
         !defined(TOYWASM_PREALLOC_SHARED_MEMORY)
         if (new_size != orig_size && mi->shared != NULL) {
