@@ -236,13 +236,13 @@ main(int argc, char *const *argv)
                         if (ret != 0) {
                                 goto fail;
                         }
-                        might_need_help = false;
                         break;
                 case opt_load:
                         ret = toywasm_repl_load(state, NULL, optarg);
                         if (ret != 0) {
                                 goto fail;
                         }
+                        might_need_help = false;
                         break;
                 case opt_max_frames:
                         opts->exec_options.max_frames = atoi(optarg);
