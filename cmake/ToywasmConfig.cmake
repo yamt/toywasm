@@ -84,7 +84,21 @@ if(CMAKE_C_COMPILER_TARGET MATCHES "wasm")
 # https://reviews.llvm.org/D130053
 # https://llvm.org/docs/LangRef.html#thread-local-storage-models
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ftls-model=local-exec")
-set(WASM_MAX_MEMORY 67108864)
+# Note about WASM_MAX_MEMORY:
+# * the spec requires shared memory have an explicit max-memory limit.
+# * 65536 pages specified below is the largest value allowed by the
+#   spec. Because it's difficult/impossible to make a build-time estimation
+#   of memory consumption for an intepreter, we simply specify the largest
+#   possible value.
+# * While toywasm with TOYWASM_PREALLOC_SHARED_MEMORY=OFF can handle
+#   dynamic on-demand (on memory.grow) allocation of shared memory,
+#   some runtimes (eg. WAMR as of writing this) simply commits the max size
+#   of shared memory on module instantiation to simplify the implementation.
+#   If you intend to run this module on such runtimes, it's probably safer
+#   to use a smaller WASM_MAX_MEMORY.
+if(NOT DEFINED WASM_MAX_MEMORY)
+set(WASM_MAX_MEMORY 4294967296)  # 65536 pages
+endif()
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--max-memory=${WASM_MAX_MEMORY}")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--import-memory")
 # require LLVM >=16
