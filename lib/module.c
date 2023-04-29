@@ -144,8 +144,9 @@ read_resulttype(const uint8_t **pp, const uint8_t *ep, struct resulttype *rt,
 #if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
         rt->cellidx.cellidxes = NULL;
 #endif
-        ret = read_vec(&p, ep, sizeof(*rt->types), (void *)read_valtype, NULL,
-                       &rt->ntypes, (void *)&rt->types);
+        ret = read_vec(&p, ep, sizeof(*rt->types),
+                       (read_elem_func_t)read_valtype, NULL, &rt->ntypes,
+                       (void *)&rt->types);
         if (ret != 0) {
                 goto fail;
         }
@@ -1003,8 +1004,9 @@ read_table_section(const uint8_t **pp, const uint8_t *ep,
         const uint8_t *p = *pp;
         int ret;
 
-        ret = read_vec(&p, ep, sizeof(*m->tables), (void *)read_tabletype,
-                       NULL, &m->ntables, (void *)&m->tables);
+        ret = read_vec(&p, ep, sizeof(*m->tables),
+                       (read_elem_func_t)read_tabletype, NULL, &m->ntables,
+                       (void *)&m->tables);
         if (ret != 0) {
                 goto fail;
         }

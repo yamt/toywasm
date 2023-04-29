@@ -77,8 +77,9 @@ int
 read_vec_u32(const uint8_t **pp, const uint8_t *ep, uint32_t *countp,
              uint32_t **resultp)
 {
-        return read_vec(pp, ep, sizeof(uint32_t), (void *)read_leb_u32, NULL,
-                        countp, (void *)resultp);
+        return read_vec(pp, ep, sizeof(uint32_t),
+                        (read_elem_func_t)read_leb_u32, NULL, countp,
+                        (void *)resultp);
 }
 
 /*
