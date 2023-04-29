@@ -357,7 +357,8 @@ wasi_thread_spawn_common(struct exec_context *ctx,
          */
         if (wasi->module != ctx->instance->module) {
                 xlog_trace("%s: module mismatch: %p != %p", __func__,
-                           wasi->module, ctx->instance->module);
+                           (const void *)wasi->module,
+                           (const void *)ctx->instance->module);
                 ret = EPROTO;
                 goto fail;
         }

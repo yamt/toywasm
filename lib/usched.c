@@ -19,7 +19,7 @@
 void
 sched_enqueue(struct sched *sched, struct exec_context *ctx)
 {
-        xlog_trace("%s: enqueueing ctx %p", __func__, ctx);
+        xlog_trace("%s: enqueueing ctx %p", __func__, (void *)ctx);
         assert(sched == ctx->sched);
         LIST_INSERT_TAIL(&sched->runq, ctx, rq);
 }
@@ -35,7 +35,7 @@ sched_run(struct sched *sched, struct exec_context *caller)
         while ((ctx = LIST_FIRST(q)) != NULL) {
                 int ret;
                 LIST_REMOVE(q, ctx, rq);
-                xlog_trace("%s: running ctx %p", __func__, ctx);
+                xlog_trace("%s: running ctx %p", __func__, (void *)ctx);
                 ret = abstime_from_reltime_ms(
                         CLOCK_MONOTONIC, &sched->next_resched, RR_INTERVAL_MS);
                 if (ret != 0) {
@@ -51,11 +51,12 @@ sched_run(struct sched *sched, struct exec_context *caller)
                  */
                 ret = instance_execute_continue(ctx);
                 if (ret == ETOYWASMRESTART) {
-                        xlog_trace("%s: re-enqueueing ctx %p", __func__, ctx);
+                        xlog_trace("%s: re-enqueueing ctx %p", __func__,
+                                   (void *)ctx);
                         LIST_INSERT_TAIL(q, ctx, rq);
                         continue;
                 }
-                xlog_trace("%s: finishing ctx %p", __func__, ctx);
+                xlog_trace("%s: finishing ctx %p", __func__, (void *)ctx);
                 ctx->exec_ret = ret;
                 if (ctx == caller) {
                         break;
