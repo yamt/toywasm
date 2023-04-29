@@ -1,0 +1,54 @@
+;; % m4 large_memory.wat.in | wat2wasm -o large_memory.wasm -
+;; % m4 -DSHARED large_memory.wat.in | wat2wasm --enable-threads -o large_shared_memory.wasm -
+
+define(STORE,
+    i32.const $1
+    i32.const $2
+    i32.store)
+
+define(CHECK,
+    i32.const $1
+    i32.load
+    i32.const $2
+    i32.ne
+    if
+      unreachable
+    end)
+
+(module
+  (func (export "_start")
+    i32.const 65536
+    memory.grow
+    i32.const -1
+    i32.eq
+    if
+      unreachable
+    end
+
+    i32.const 1
+    memory.grow  ;; should fail
+    i32.const -1
+    i32.ne
+    if
+      unreachable
+    end
+
+    CHECK(0x0000_0000, 0x0000_0000)
+    CHECK(0x8000_0000, 0x0000_0000)
+    CHECK(0xffff_fff0, 0x0000_0000)
+    CHECK(0xffff_fffc, 0x0000_0000)
+
+    STORE(0x0000_0000, 0xdead_beef)
+    STORE(0x8000_0000, 0xbadd_cafe)
+    STORE(0xffff_fff0, 0x9abc_def0)
+    STORE(0xffff_fffc, 0x1234_5678)
+
+    CHECK(0x0000_0000, 0xdead_beef)
+    CHECK(0x8000_0000, 0xbadd_cafe)
+    CHECK(0xffff_fff0, 0x9abc_def0)
+    CHECK(0xffff_fffc, 0x1234_5678)
+  )
+ifdef(`SHARED',
+  (memory (export "memory") 0 65536 shared),
+  (memory (export "memory") 0))
+)
