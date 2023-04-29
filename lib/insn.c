@@ -590,57 +590,12 @@ static const char *
 instruction_name(const struct exec_instruction_desc *exec_table, uint32_t op);
 #endif /* defined(TOYWASM_ENABLE_TRACING_INSN) */
 
-static exec_func_t
-fetch_multibyte_opcode(const uint8_t **pp, struct exec_context *ctx,
-                       const struct exec_instruction_desc *table)
-{
-#if !(defined(TOYWASM_USE_SEPARATE_EXECUTE) && defined(TOYWASM_USE_TAILCALL))
-        assert(ctx->p + 1 == *pp);
-#endif
-        assert(ctx->event == EXEC_EVENT_NONE);
-        assert(ctx->frames.lsize > 0);
-#if defined(TOYWASM_ENABLE_TRACING_INSN)
-        uint32_t pc = ptr2pc(ctx->instance->module, *pp);
-#endif
-        uint32_t op = read_leb_u32_nocheck(pp);
-        const struct exec_instruction_desc *desc = &table[op];
-        xlog_trace_insn("exec %06" PRIx32 ": %s (2nd byte %02" PRIx32 ")", pc,
-                        instruction_name(table, op), op);
-        return desc->fetch_exec;
-}
-
-const static struct exec_instruction_desc exec_instructions_fc[];
-
-static int
-fetch_exec_next_insn_fc(const uint8_t *p, struct cell *stack,
-                        struct exec_context *ctx)
-{
-#if defined(TOYWASM_USE_TAILCALL)
-        __musttail
-#endif
-                return fetch_multibyte_opcode(&p, ctx, exec_instructions_fc)(
-                        p, stack, ctx);
-}
-
+static int fetch_exec_next_insn_fc(const uint8_t *p, struct cell *stack,
+                                   struct exec_context *ctx);
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
-const static struct exec_instruction_desc exec_instructions_fe[];
-
-/*
- * XXX duplicate of fetch_exec_next_insn_fc.
- * it isn't obvious to me how i can clean this up preserving tailcall.
- * while a macro can do, i'm not sure if i like it.
- */
-static int
-fetch_exec_next_insn_fe(const uint8_t *p, struct cell *stack,
-                        struct exec_context *ctx)
-{
-#if defined(TOYWASM_USE_TAILCALL)
-        __musttail
+static int fetch_exec_next_insn_fe(const uint8_t *p, struct cell *stack,
+                                   struct exec_context *ctx);
 #endif
-                return fetch_multibyte_opcode(&p, ctx, exec_instructions_fe)(
-                        p, stack, ctx);
-}
-#endif /* defined(TOYWASM_ENABLE_WASM_THREADS) */
 
 #define INSTRUCTION(b, n, f, FLAGS)                                           \
         [b] = {                                                               \
@@ -671,6 +626,54 @@ const struct exec_instruction_desc exec_instructions[] = {
 
 #undef INSTRUCTION
 #undef INSTRUCTION_INDIRECT
+
+static exec_func_t
+fetch_multibyte_opcode(const uint8_t **pp, struct exec_context *ctx,
+                       const struct exec_instruction_desc *table)
+{
+#if !(defined(TOYWASM_USE_SEPARATE_EXECUTE) && defined(TOYWASM_USE_TAILCALL))
+        assert(ctx->p + 1 == *pp);
+#endif
+        assert(ctx->event == EXEC_EVENT_NONE);
+        assert(ctx->frames.lsize > 0);
+#if defined(TOYWASM_ENABLE_TRACING_INSN)
+        uint32_t pc = ptr2pc(ctx->instance->module, *pp);
+#endif
+        uint32_t op = read_leb_u32_nocheck(pp);
+        const struct exec_instruction_desc *desc = &table[op];
+        xlog_trace_insn("exec %06" PRIx32 ": %s (2nd byte %02" PRIx32 ")", pc,
+                        instruction_name(table, op), op);
+        return desc->fetch_exec;
+}
+
+static int
+fetch_exec_next_insn_fc(const uint8_t *p, struct cell *stack,
+                        struct exec_context *ctx)
+{
+#if defined(TOYWASM_USE_TAILCALL)
+        __musttail
+#endif
+                return fetch_multibyte_opcode(&p, ctx, exec_instructions_fc)(
+                        p, stack, ctx);
+}
+
+#if defined(TOYWASM_ENABLE_WASM_THREADS)
+/*
+ * XXX duplicate of fetch_exec_next_insn_fc.
+ * it isn't obvious to me how i can clean this up preserving tailcall.
+ * while a macro can do, i'm not sure if i like it.
+ */
+static int
+fetch_exec_next_insn_fe(const uint8_t *p, struct cell *stack,
+                        struct exec_context *ctx)
+{
+#if defined(TOYWASM_USE_TAILCALL)
+        __musttail
+#endif
+                return fetch_multibyte_opcode(&p, ctx, exec_instructions_fe)(
+                        p, stack, ctx);
+}
+#endif /* defined(TOYWASM_ENABLE_WASM_THREADS) */
 
 #endif /* defined(TOYWASM_USE_SEPARATE_EXECUTE) */
 
