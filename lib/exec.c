@@ -872,7 +872,7 @@ check_interrupt(struct exec_context *ctx)
 #endif /* defined(TOYWASM_ENABLE_WASM_THREADS) */
 #if defined(TOYWASM_USE_USER_SCHED)
         if (ctx->sched != NULL && sched_need_resched(ctx->sched)) {
-                xlog_trace("%s: need resched ctx %p", __func__, ctx);
+                xlog_trace("%s: need resched ctx %p", __func__, (void *)ctx);
                 return ETOYWASMRESTART;
         }
 #else /* defined(TOYWASM_USE_USER_SCHED) */
