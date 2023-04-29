@@ -682,12 +682,27 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
                 STAT_INC(ctx->stats.branch);
         }
         if (ctx->labels.lsize - labelidx == frame->labelidx) {
-                /* exit the function */
+                /*
+                 * Exit the function.
+                 */
                 xlog_trace_insn("do_branch: exiting function");
                 frame_exit(ctx);
                 height = frame->height;
                 arity = frame->nresults;
         } else {
+                /*
+                 * Jump to a label.
+                 *
+                 * Note: This is a bit complicated because we use
+                 * EXEC_EVENT_BRANCH for "if" opcode and "if" might or
+                 * might not have "else".
+                 * If an "if" has "else", the "stay_in_block" logic is
+                 * used. In that case, we should keep the label intact.
+                 * Otherwise, it's same as "br 0".
+                 *
+                 * Note: While the jump table is useful for forward jump,
+                 * it isn't for backward jump. (loop)
+                 */
                 const struct label *l = &VEC_ELEM(
                         ctx->labels, ctx->labels.lsize - labelidx - 1);
                 uint32_t blockpc = l->pc;
