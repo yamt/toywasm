@@ -69,6 +69,7 @@ set(lib_core_headers
 	"type.h"
 	"usched.h"
 	"util.h"
+	"valtype.h"
 	"vec.h"
 	"xlog.h"
 	"${CMAKE_BINARY_DIR}/toywasm_config.h"
