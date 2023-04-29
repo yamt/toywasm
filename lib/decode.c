@@ -110,7 +110,7 @@ _read_vec_with_ctx_impl(const uint8_t **pp, const uint8_t *ep,
         if (ret != 0) {
                 goto fail;
         }
-        void *a = (*resultp) + orig_count * elem_size;
+        uint8_t *a = (uint8_t *)(*resultp) + orig_count * elem_size;
         uint32_t i;
         for (i = 0; i < vec_count; i++) {
                 ret = read_elem(&p, ep, i, a + i * elem_size, ctx);
