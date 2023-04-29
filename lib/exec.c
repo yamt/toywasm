@@ -705,10 +705,22 @@ block_exit(struct exec_context *ctx, uint32_t blockpc, bool goto_else,
          */
 
         /*
+         * parse the block op to check
+         * - if it's a "loop"
+         * - blocktype
+         */
+        const struct module *m = ctx->instance->module;
+        const uint8_t *blockp = pc2ptr(m, blockpc);
+        const uint8_t *p = blockp;
+        uint8_t op = *p++;
+        assert(op == FRAME_OP_LOOP || op == FRAME_OP_IF ||
+               op == FRAME_OP_BLOCK);
+
+        /*
          * do a jump. (w/ jump table)
          */
         const struct expr_exec_info *ei = ctx->ei;
-        if (ei->jumps != NULL) {
+        if (op != FRAME_OP_LOOP && ei->jumps != NULL) {
                 xlog_trace_insn("jump w/ table");
                 bool stay_in_block = false;
                 const struct jump *jump;
@@ -729,45 +741,31 @@ block_exit(struct exec_context *ctx, uint32_t blockpc, bool goto_else,
                 }
         }
 
-        /*
-         * parse the block op to check
-         * - if it's a "loop"
-         * - blocktype
-         */
-        const struct module *m = ctx->instance->module;
-        const uint8_t *blockp = pc2ptr(m, blockpc);
-        const uint8_t *p = blockp;
-        uint8_t op = *p++;
-        assert(op == FRAME_OP_LOOP || op == FRAME_OP_IF ||
-               op == FRAME_OP_BLOCK);
         int64_t blocktype = read_leb_s33_nocheck(&p);
 
         /*
          * do a jump. (w/o jump table)
          */
-        if (ei->jumps == NULL) {
+        if (op != FRAME_OP_LOOP && ei->jumps == NULL) {
                 xlog_trace_insn("jump w/o table");
-                if (op == FRAME_OP_LOOP) {
-                        ctx->p = blockp;
-                } else {
-                        /*
-                         * The only way to find out the jump target is
-                         * to parse every instructions. This is expensive.
-                         *
-                         * REVISIT: skipping LEBs can be optimized better
-                         * than the current code.
-                         */
-                        bool stay_in_block = skip_expr(&p, goto_else);
-                        ctx->p = p;
-                        if (stay_in_block) {
-                                return true;
-                        }
+                /*
+                 * The only way to find out the jump target is
+                 * to parse every instructions. This is expensive.
+                 *
+                 * REVISIT: skipping LEBs can be optimized better
+                 * than the current code.
+                 */
+                bool stay_in_block = skip_expr(&p, goto_else);
+                ctx->p = p;
+                if (stay_in_block) {
+                        return true;
                 }
         }
         uint32_t arity;
         uint32_t param_arity;
         get_arity_for_blocktype(m, blocktype, &param_arity, &arity);
         if (op == FRAME_OP_LOOP) {
+                ctx->p = blockp;
                 arity = param_arity;
         }
         *param_arityp = param_arity;
