@@ -4,7 +4,8 @@ include(cmake/HomebrewLLVM.cmake)
 
 project(toywasm LANGUAGES C)
 
-set(CMAKE_C_STANDARD 99)
+# We use C11 features like _Atomic, _Static_assert
+set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED YES)
 set(CMAKE_C_EXTENSIONS NO)
 # we need timespec (199309L), flockfile (199506L), etc
