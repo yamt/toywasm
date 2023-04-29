@@ -702,6 +702,8 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
                  *
                  * Note: While the jump table is useful for forward jump,
                  * it isn't for backward jump. (loop)
+                 * For a random wasm modules I happened to have, it seems
+                 * 5-10% of jump table entries are for "loop".
                  */
                 const struct label *l = &VEC_ELEM(
                         ctx->labels, ctx->labels.lsize - labelidx - 1);
