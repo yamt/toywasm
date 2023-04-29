@@ -2276,7 +2276,7 @@ wasi_random_get(struct exec_context *ctx, struct host_instance *hi,
                         }
                         break;
                 }
-                p += ssz;
+                p = (uint8_t *)p + ssz;
                 buflen -= ssz;
         }
 #else
