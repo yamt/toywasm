@@ -2252,10 +2252,10 @@ wasi_random_get(struct exec_context *ctx, struct host_instance *hi,
         HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t buf = HOST_FUNC_PARAM(ft, params, 0, i32);
         uint32_t buflen = HOST_FUNC_PARAM(ft, params, 1, i32);
-        int ret;
+        int ret = 0;
         void *p;
-        ret = memory_getptr(ctx, 0, buf, 0, buflen, &p);
-        if (ret != 0) {
+        int host_ret = memory_getptr(ctx, 0, buf, 0, buflen, &p);
+        if (host_ret != 0) {
                 goto fail;
         }
 #if defined(__GLIBC__) || defined(__NuttX__)
@@ -2284,9 +2284,12 @@ wasi_random_get(struct exec_context *ctx, struct host_instance *hi,
         ret = 0;
 #endif
 fail:
-        HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
+        if (host_ret == 0) {
+                HOST_FUNC_RESULT_SET(ft, results, 0, i32,
+                                     wasi_convert_errno(ret));
+        }
         HOST_FUNC_FREE_CONVERTED_PARAMS();
-        return 0;
+        return host_ret;
 }
 
 static int
