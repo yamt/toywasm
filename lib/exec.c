@@ -69,16 +69,23 @@ memory_getptr2(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
                 goto do_trap;
         }
         uint32_t ea = ptr + offset;
-        if (size > UINT32_MAX - ea) {
+        if (__predict_false(size == 0)) {
+                /*
+                 * a zero-length access still needs address check.
+                 * this can be either from host functions or
+                 * bulk instructions like memory.copy.
+                 */
+                if (ea > 0 &&
+                    (ea - 1) / WASM_PAGE_SIZE >= meminst->size_in_pages) {
+                        goto do_trap;
+                }
+                goto success;
+        }
+        if (size - 1 > UINT32_MAX - ea) {
                 goto do_trap;
         }
-        uint32_t need = ea + size;
-        xlog_trace_insn("memory access: at %04" PRIx32 " %08" PRIx32
-                        " + %08" PRIx32 ", size %" PRIu32
-                        ", meminst size %" PRIu32,
-                        memidx, ptr, offset, size, meminst->size_in_pages);
-        uint32_t need_in_pages =
-                ((uint64_t)need + WASM_PAGE_SIZE - 1) / WASM_PAGE_SIZE;
+        uint32_t last_byte = ea + (size - 1);
+        uint32_t need_in_pages = last_byte / WASM_PAGE_SIZE + 1;
         if (need_in_pages > meminst->size_in_pages) {
 do_trap:
                 return trap_with_id(
@@ -88,13 +95,23 @@ do_trap:
                         ", meminst size %" PRIu32,
                         memidx, ptr, offset, size, meminst->size_in_pages);
         }
-        if (need > meminst->allocated) {
+        xlog_trace_insn("memory access: at %04" PRIx32 " %08" PRIx32
+                        " + %08" PRIx32 ", size %" PRIu32
+                        ", meminst size %" PRIu32,
+                        memidx, ptr, offset, size, meminst->size_in_pages);
+        if (last_byte >= meminst->allocated) {
                 /*
                  * Note: shared memories do never come here because
                  * we handle their growth in memory_grow.
                  */
                 assert((meminst->type->flags & MEMTYPE_FLAG_SHARED) == 0);
-                int ret = resize_array((void **)&meminst->data, 1, need);
+#if SIZE_MAX <= UINT32_MAX
+                if (last_byte >= SIZE_MAX) {
+                        goto do_trap;
+                }
+#endif
+                size_t need = (size_t)last_byte + 1;
+                int ret = resize_array((void **)&meminst->data, need, 1);
                 if (ret != 0) {
                         return ret;
                 }
@@ -108,6 +125,7 @@ do_trap:
                        need - meminst->allocated);
                 meminst->allocated = need;
         }
+success:
         *pp = meminst->data + ea;
         return 0;
 }
@@ -1338,59 +1356,80 @@ memory_grow(struct exec_context *ctx, uint32_t memidx, uint32_t sz)
         const struct limits *lim = &mt->lim;
         memory_lock(mi);
         uint32_t orig_size;
-#if defined(TOYWASM_ENABLE_WASM_THREADS) &&                                   \
-        !defined(TOYWASM_PREALLOC_SHARED_MEMORY)
+#if defined(TOYWASM_ENABLE_WASM_THREADS)
 retry:
-#endif /* !defined(TOYWASM_PREALLOC_SHARED_MEMORY) */
+#endif
         orig_size = mi->size_in_pages;
-        uint64_t new_size = (uint64_t)orig_size + sz;
+        uint32_t new_size = orig_size + sz;
         assert(lim->max <= WASM_MAX_PAGES);
         if (new_size > lim->max) {
                 memory_unlock(mi);
                 return (uint32_t)-1; /* fail */
         }
         xlog_trace("memory grow %" PRIu32 " -> %" PRIu32, mi->size_in_pages,
-                   (uint32_t)new_size);
-        /*
-         * Note: for non-shared memories, we defer the actual reallocation
-         * to memory_getptr2. (mainly to allow sub-page usage.)
-         */
-#if defined(TOYWASM_ENABLE_WASM_THREADS) &&                                   \
-        !defined(TOYWASM_PREALLOC_SHARED_MEMORY)
-        if (new_size != orig_size && mi->shared != NULL) {
-                /*
-                 * reallocate the shared memory.
-                 * suspend all other threads to ensure that no one is
-                 * accessing the shared memory.
-                 *
-                 * REVISIT: doing this on every memory.grow is a bit
-                 * expensive.
-                 * maybe we can mitigate it by alloctating a bit more
-                 * than requested.
-                 */
+                   new_size);
+        bool do_realloc = new_size != orig_size;
+#if defined(TOYWASM_ENABLE_WASM_THREADS)
+        const bool shared = mi->shared != NULL;
+        if (shared) {
+#if defined(TOYWASM_PREALLOC_SHARED_MEMORY)
+                do_realloc = false;
+#endif
+        } else
+#endif /* defined(TOYWASM_ENABLE_WASM_THREADS) */
+                if (new_size < 4) {
+                        /*
+                         * Note: for small non-shared memories, we defer the
+                         * actual reallocation to memory_getptr2. (mainly to
+                         * allow sub-page usage.)
+                         */
+                        do_realloc = false;
+                }
+
+        if (do_realloc) {
+#if defined(TOYWASM_ENABLE_WASM_THREADS)
                 struct cluster *c = ctx->cluster;
+                if (shared && c != NULL) {
+                        /*
+                         * suspend all other threads to ensure that no one is
+                         * accessing the shared memory.
+                         *
+                         * REVISIT: doing this on every memory.grow is a bit
+                         * expensive.
+                         * maybe we can mitigate it by alloctating a bit more
+                         * than requested.
+                         */
+                        memory_unlock(mi);
+                        suspend_threads(c);
+                        memory_lock(mi);
+                        if (mi->size_in_pages != orig_size) {
+                                goto retry;
+                        }
+                        assert((mi->allocated % WASM_PAGE_SIZE) == 0);
+                }
+#endif /* defined(TOYWASM_ENABLE_WASM_THREADS) */
+                assert(new_size > mi->allocated / WASM_PAGE_SIZE);
                 int ret;
-                assert(c != NULL);
-                memory_unlock(mi);
-                suspend_threads(c);
-                memory_lock(mi);
-                if (mi->size_in_pages != orig_size) {
-                        goto retry;
-                }
-                uint64_t need = new_size * WASM_PAGE_SIZE;
-                assert(need > mi->allocated);
-                ret = resize_array((void **)&mi->data, 1, need);
+                ret = resize_array((void **)&mi->data, WASM_PAGE_SIZE,
+                                   new_size);
                 if (ret == 0) {
-                        mi->allocated = need;
+                        /*
+                         * Note: overflow check is already done in
+                         * resize_array
+                         */
+                        mi->allocated = (size_t)new_size * WASM_PAGE_SIZE;
                 }
-                resume_threads(c);
+#if defined(TOYWASM_ENABLE_WASM_THREADS)
+                if (shared && c != NULL) {
+                        resume_threads(c);
+                }
+#endif /* defined(TOYWASM_ENABLE_WASM_THREADS) */
                 if (ret != 0) {
                         memory_unlock(mi);
                         xlog_trace("%s: realloc failed", __func__);
                         return (uint32_t)-1; /* fail */
                 }
         }
-#endif /* !defined(TOYWASM_PREALLOC_SHARED_MEMORY) */
         mi->size_in_pages = new_size;
         memory_unlock(mi);
         return orig_size; /* success */

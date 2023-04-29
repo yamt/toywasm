@@ -183,7 +183,7 @@ memory_instance_create(struct meminst **mip,
                 uint32_t need_in_pages = mt->lim.min;
 #endif /* defined(TOYWASM_PREALLOC_SHARED_MEMORY) */
                 uint64_t need_in_bytes = need_in_pages * WASM_PAGE_SIZE;
-                if (need_in_bytes > UINT32_MAX) {
+                if (need_in_bytes > SIZE_MAX) {
                         free(mp);
                         ret = EOVERFLOW;
                         goto fail;
@@ -194,12 +194,14 @@ memory_instance_create(struct meminst **mip,
                         ret = ENOMEM;
                         goto fail;
                 }
-                mp->data = zalloc(need_in_bytes);
-                if (mp->data == NULL) {
-                        free(mp->shared);
-                        free(mp);
-                        ret = ENOMEM;
-                        goto fail;
+                if (need_in_bytes > 0) {
+                        mp->data = zalloc(need_in_bytes);
+                        if (mp->data == NULL) {
+                                free(mp->shared);
+                                free(mp);
+                                ret = ENOMEM;
+                                goto fail;
+                        }
                 }
                 mp->allocated = need_in_bytes;
                 waiter_list_table_init(&mp->shared->tab);
