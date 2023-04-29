@@ -26,7 +26,7 @@ resulttype_alloc0(uint32_t ntypes, struct resulttype **resultp)
                 return ENOMEM;
         }
         p->ntypes = ntypes;
-        p->types = (void *)p + sizeof(*p);
+        p->types = (void *)(p + 1);
         p->is_static = false;
 #if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
         p->cellidx.cellidxes = NULL;

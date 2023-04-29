@@ -22,7 +22,7 @@ _vec_resize(void *vec, size_t elem_size, uint32_t new_elem_count)
                 v->psize = new_elem_count;
         }
         if (new_elem_count > v->lsize) {
-                memset(v->p + v->lsize * elem_size, 0,
+                memset((uint8_t *)v->p + v->lsize * elem_size, 0,
                        (new_elem_count - v->lsize) * elem_size);
         }
         v->lsize = new_elem_count;
