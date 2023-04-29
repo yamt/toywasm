@@ -437,13 +437,13 @@ UNOP(f32_trunc, f, 32, truncf)
 UNOP(f32_nearest, f, 32, rintf)
 UNOP(f32_sqrt, f, 32, sqrtf)
 
-BINOP(f32_add, f, 32, ADD);
-BINOP(f32_sub, f, 32, SUB);
-BINOP(f32_mul, f, 32, MUL);
-BINOP(f32_div, f, 32, FDIV);
-BINOP(f32_max, f, 32, FMAX32);
-BINOP(f32_min, f, 32, FMIN32);
-BINOP(f32_copysign, f, 32, FCOPYSIGN32);
+BINOP(f32_add, f, 32, ADD)
+BINOP(f32_sub, f, 32, SUB)
+BINOP(f32_mul, f, 32, MUL)
+BINOP(f32_div, f, 32, FDIV)
+BINOP(f32_max, f, 32, FMAX32)
+BINOP(f32_min, f, 32, FMIN32)
+BINOP(f32_copysign, f, 32, FCOPYSIGN32)
 
 UNOP(f64_abs, f, 64, fabs)
 UNOP(f64_neg, f, 64, -)
@@ -453,13 +453,13 @@ UNOP(f64_trunc, f, 64, trunc)
 UNOP(f64_nearest, f, 64, rint)
 UNOP(f64_sqrt, f, 64, sqrt)
 
-BINOP(f64_add, f, 64, ADD);
-BINOP(f64_sub, f, 64, SUB);
-BINOP(f64_mul, f, 64, MUL);
-BINOP(f64_div, f, 64, FDIV);
-BINOP(f64_max, f, 64, FMAX64);
-BINOP(f64_min, f, 64, FMIN64);
-BINOP(f64_copysign, f, 64, FCOPYSIGN64);
+BINOP(f64_add, f, 64, ADD)
+BINOP(f64_sub, f, 64, SUB)
+BINOP(f64_mul, f, 64, MUL)
+BINOP(f64_div, f, 64, FDIV)
+BINOP(f64_max, f, 64, FMAX64)
+BINOP(f64_min, f, 64, FMIN64)
+BINOP(f64_copysign, f, 64, FCOPYSIGN64)
 
 EXTENDOP(i32_wrap_i64, i64, i32, (uint32_t))
 
