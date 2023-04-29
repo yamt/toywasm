@@ -58,12 +58,12 @@ void toywasm_cv_signal(pthread_cond_t *cv, struct toywasm_mutex *lock)
 void toywasm_cv_broadcast(pthread_cond_t *cv, struct toywasm_mutex *lock)
         REQUIRES(lock);
 #else /* defined(USE_PTHREAD) */
-#define TOYWASM_MUTEX_DEFINE(name)
+#define TOYWASM_MUTEX_DEFINE(name) _Static_assert(1, "suppress -Wextra-semi")
 #define toywasm_mutex_init(a)
 #define toywasm_mutex_destroy(a)
 #define toywasm_mutex_lock(a)
 #define toywasm_mutex_unlock(a)
-#define TOYWASM_CV_DEFINE(name)
+#define TOYWASM_CV_DEFINE(name) _Static_assert(1, "suppress -Wextra-semi")
 #define toywasm_cv_init(a)
 #define toywasm_cv_destroy(a)
 #define toywasm_cv_timedwait(a, lk, abs) ETIMEDOUT
