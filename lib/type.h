@@ -17,25 +17,6 @@
 #define WASM_PAGE_SIZE 65536
 #define WASM_MAX_PAGES 65536
 
-enum valtype {
-        /* numtype */
-        TYPE_i32 = 0x7f,
-        TYPE_i64 = 0x7e,
-        TYPE_f32 = 0x7d,
-        TYPE_f64 = 0x7c,
-
-        /* vectype */
-        TYPE_v128 = 0x7b,
-
-        /* reftype */
-        TYPE_FUNCREF = 0x70,
-        TYPE_EXTERNREF = 0x6f,
-
-        /* a pseudo type for validation logic */
-        TYPE_ANYREF = 0xfe, /* any reftype */
-        TYPE_UNKNOWN = 0xff,
-};
-
 struct jump {
         uint32_t pc;
         uint32_t targetpc;

@@ -2,6 +2,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "valtype.h"
+
 struct cell;
 struct expr;
 struct exec_context;
@@ -10,7 +12,6 @@ struct funcinst;
 struct localtype;
 struct resulttype;
 struct val;
-enum valtype;
 
 int exec_expr(uint32_t funcidx, const struct expr *expr,
               const struct localtype *localtype,
