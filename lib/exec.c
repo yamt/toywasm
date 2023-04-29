@@ -111,6 +111,7 @@ do_trap:
                 }
 #endif
                 size_t need = (size_t)last_byte + 1;
+                assert(need > meminst->allocated);
                 int ret = resize_array((void **)&meminst->data, need, 1);
                 if (ret != 0) {
                         return ret;
@@ -1416,7 +1417,12 @@ retry:
                          * Note: overflow check is already done in
                          * resize_array
                          */
-                        mi->allocated = (size_t)new_size * WASM_PAGE_SIZE;
+                        size_t new_allocated =
+                                (size_t)new_size * WASM_PAGE_SIZE;
+                        assert(new_allocated > mi->allocated);
+                        memset(mi->data + mi->allocated, 0,
+                               new_allocated - mi->allocated);
+                        mi->allocated = new_allocated;
                 }
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
                 if (shared && c != NULL) {
