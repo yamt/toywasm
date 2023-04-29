@@ -6,8 +6,8 @@
 #include "toywasm_config.h"
 
 #include "platform.h"
+#include "valtype.h"
 
-enum valtype;
 struct localtype;
 struct resulttype;
 struct funcframe;

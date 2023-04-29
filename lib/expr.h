@@ -1,7 +1,8 @@
 #include <stdint.h>
 
+#include "valtype.h"
+
 struct expr;
-enum valtype;
 struct resulttype;
 struct localchunk;
 struct load_context;

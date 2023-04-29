@@ -1,4 +1,4 @@
-enum valtype;
+#include "valtype.h"
 
 struct ctrlframe {
         enum ctrlframe_op op;
