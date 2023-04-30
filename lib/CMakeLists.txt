@@ -16,6 +16,7 @@ set(lib_core_sources
 	"instance.c"
 	"leb128.c"
 	"list.c"
+	"load_context.c"
 	"module.c"
 	"nbio.c"
 	"options.c"

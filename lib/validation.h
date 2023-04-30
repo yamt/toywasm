@@ -80,6 +80,7 @@ int validation_failure(struct validation_context *ctx, const char *fmt, ...)
         __attribute__((__format__(__printf__, 2, 3)));
 struct resulttype *returntype(struct validation_context *ctx);
 void validation_context_init(struct validation_context *ctx);
+void validation_context_reuse(struct validation_context *ctx);
 void validation_context_clear(struct validation_context *ctx);
 void ctrlframe_clear(struct ctrlframe *cframe);
 int target_label_types(struct validation_context *ctx, uint32_t labelidx,

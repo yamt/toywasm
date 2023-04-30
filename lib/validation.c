@@ -286,13 +286,20 @@ validation_context_init(struct validation_context *ctx)
 }
 
 void
-validation_context_clear(struct validation_context *ctx)
+validation_context_reuse(struct validation_context *ctx)
 {
         struct ctrlframe *cframe;
-
         VEC_FOREACH(cframe, ctx->cframes) {
                 ctrlframe_clear(cframe);
         }
+        ctx->cframes.lsize = 0;
+        ctx->valtypes.lsize = 0;
+}
+
+void
+validation_context_clear(struct validation_context *ctx)
+{
+        validation_context_reuse(ctx);
         VEC_FREE(ctx->cframes);
         VEC_FREE(ctx->valtypes);
         free(ctx->locals);
