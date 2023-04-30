@@ -1814,21 +1814,6 @@ module_destroy(struct module *m)
         free(m);
 }
 
-void
-load_context_init(struct load_context *ctx)
-{
-        memset(ctx, 0, sizeof(*ctx));
-        report_init(&ctx->report);
-        load_options_set_defaults(&ctx->options);
-}
-
-void
-load_context_clear(struct load_context *ctx)
-{
-        report_clear(&ctx->report);
-        bitmap_free(&ctx->refs);
-}
-
 #if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
 static size_t
 resulttype_overhead(const struct resulttype *rt)

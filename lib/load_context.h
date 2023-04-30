@@ -12,6 +12,7 @@ struct load_context {
         bool has_datacount;
         uint32_t ndatas_in_datacount;
         struct load_options options;
+        struct validation_context *vctx;
 };
 
 void load_context_init(struct load_context *ctx);

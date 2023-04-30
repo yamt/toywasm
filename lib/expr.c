@@ -79,15 +79,22 @@ read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
         const uint8_t *p = *pp;
         struct context ctx0;
         struct context *ctx = &ctx0;
-        struct validation_context vctx0;
-        struct validation_context *vctx = &vctx0;
         int ret;
 
-        memset(ctx, 0, sizeof(*ctx));
+        struct validation_context *vctx = lctx->vctx;
+        if (vctx == NULL) {
+                vctx = malloc(sizeof(*vctx));
+                if (vctx == NULL) {
+                        return ENOMEM;
+                }
+                validation_context_init(vctx);
+                lctx->vctx = vctx;
+        } else {
+                validation_context_reuse(vctx);
+        }
         ctx->validation = vctx;
 
         assert(lctx->module != NULL);
-        validation_context_init(vctx);
         vctx->report = &lctx->report;
         vctx->refs = &lctx->refs;
         vctx->const_expr = const_expr;
@@ -176,11 +183,9 @@ read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
                    ", cells %" PRIu32,
                    expr->end - expr->start, ei->njumps * sizeof(*ei->jumps),
                    ei->maxlabels, ei->maxcells);
-        validation_context_clear(vctx);
         return 0;
 fail:
         free(ei->jumps);
-        validation_context_clear(vctx);
         return ret;
 }
 
