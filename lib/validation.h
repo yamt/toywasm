@@ -1,4 +1,5 @@
 #include "valtype.h"
+#include "vec.h"
 
 struct ctrlframe {
         enum ctrlframe_op op;
@@ -19,8 +20,7 @@ struct validation_context {
 
         /* operand stack */
 
-        enum valtype *valtypes;
-        uint32_t nvaltypes;
+        VEC(, enum valtype) valtypes;
         uint32_t ncells;
 
         struct module *module;

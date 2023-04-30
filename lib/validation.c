@@ -16,20 +16,18 @@
 int
 push_valtype(enum valtype type, struct validation_context *ctx)
 {
-        uint32_t nsize = ctx->nvaltypes + 1;
+        uint32_t nsize = ctx->valtypes.lsize + 1;
         int ret;
 
         assert(type != TYPE_ANYREF);
         if (nsize == 0) {
                 return EOVERFLOW;
         }
-        ret = resize_array((void **)&ctx->valtypes, sizeof(*ctx->valtypes),
-                           nsize);
+        ret = VEC_PREALLOC(ctx->valtypes, nsize);
         if (ret != 0) {
                 return ret;
         }
-        ctx->valtypes[ctx->nvaltypes] = type;
-        ctx->nvaltypes = nsize;
+        *VEC_PUSH(ctx->valtypes) = type;
         assert(ctx->cframes != NULL);
         assert(ctx->ncframes > 0);
         const struct ctrlframe *cframe = &ctx->cframes[ctx->ncframes - 1];
@@ -51,9 +49,9 @@ pop_valtype(enum valtype expected_type, enum valtype *typep,
         assert(ctx->cframes != NULL);
         assert(ctx->ncframes > 0);
         cframe = &ctx->cframes[ctx->ncframes - 1];
-        assert(ctx->nvaltypes >= cframe->height);
+        assert(ctx->valtypes.lsize >= cframe->height);
         assert(ctx->ncells >= cframe->height_cell);
-        if (ctx->nvaltypes == cframe->height) {
+        if (ctx->valtypes.lsize == cframe->height) {
                 assert(ctx->ncells == cframe->height_cell);
                 if (cframe->unreachable) {
                         *typep = TYPE_UNKNOWN;
@@ -61,8 +59,7 @@ pop_valtype(enum valtype expected_type, enum valtype *typep,
                 }
                 return EINVAL;
         }
-        ctx->nvaltypes--;
-        enum valtype t = ctx->valtypes[ctx->nvaltypes];
+        enum valtype t = *VEC_POP(ctx->valtypes);
         assert(t != TYPE_ANYREF);
         if (!cframe->unreachable) {
                 uint32_t csz = valtype_cellsize(t);
@@ -123,10 +120,10 @@ pop_valtypes(const struct resulttype *types, struct validation_context *ctx)
 int
 peek_valtypes(const struct resulttype *types, struct validation_context *ctx)
 {
-        uint32_t saved_height = ctx->nvaltypes;
+        uint32_t saved_height = ctx->valtypes.lsize;
         uint32_t saved_ncells = ctx->ncells;
         int ret = pop_valtypes(types, ctx);
-        ctx->nvaltypes = saved_height;
+        ctx->valtypes.lsize = saved_height;
         ctx->ncells = saved_ncells;
         return ret;
 }
@@ -192,7 +189,7 @@ push_ctrlframe(uint32_t pc, enum ctrlframe_op op, uint32_t jumpslot,
         cframe->start_types = start_types;
         cframe->end_types = end_types;
         cframe->unreachable = false;
-        cframe->height = ctx->nvaltypes;
+        cframe->height = ctx->valtypes.lsize;
         cframe->height_cell = ctx->ncells;
         ctx->ncframes++;
         if (ctx->ncframes > ei->maxlabels) {
@@ -234,12 +231,12 @@ pop_ctrlframe(uint32_t pc, bool is_else, struct ctrlframe *cframep,
         if (ret != 0) {
                 return EINVAL;
         }
-        if (ctx->nvaltypes != cframe->height) {
+        if (ctx->valtypes.lsize != cframe->height) {
                 return validation_failure(ctx,
                                           "unexpected stack height after "
                                           "popping cframe: %" PRIu32
                                           " != %" PRIu32,
-                                          ctx->nvaltypes, cframe->height);
+                                          ctx->valtypes.lsize, cframe->height);
         }
         assert(ctx->ncells == cframe->height_cell);
         *cframep = *cframe;
@@ -251,7 +248,7 @@ void
 mark_unreachable(struct validation_context *ctx)
 {
         struct ctrlframe *cframe = &ctx->cframes[ctx->ncframes - 1];
-        ctx->nvaltypes = cframe->height;
+        ctx->valtypes.lsize = cframe->height;
         ctx->ncells = cframe->height_cell;
         cframe->unreachable = true;
 }
@@ -296,7 +293,7 @@ validation_context_clear(struct validation_context *ctx)
                 ctrlframe_clear(&ctx->cframes[i]);
         }
         free(ctx->cframes);
-        free(ctx->valtypes);
+        VEC_FREE(ctx->valtypes);
         free(ctx->locals);
 }
 
