@@ -136,7 +136,7 @@ read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
                 }
                 xlog_trace_insn("inst %06" PRIx32 " %s", pc, desc->name);
 #if defined(TOYWASM_ENABLE_TRACING_INSN)
-                uint32_t orig_n = vctx->nvaltypes;
+                uint32_t orig_n = vctx->valtypes.lsize;
 #endif
                 if (const_expr && (desc->flags & INSN_FLAG_CONST) == 0) {
                         ret = validation_failure(vctx,
@@ -154,10 +154,10 @@ read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
                 if (vctx->ncframes == 0) {
                         break;
                 }
-                xlog_trace_insn("inst %s %u %u: %u -> %u", desc->name,
-                                vctx->ncframes,
+                xlog_trace_insn("inst %s %u %u: %" PRIu32 " -> %" PRIu32,
+                                desc->name, vctx->ncframes,
                                 vctx->cframes[vctx->ncframes - 1].height,
-                                orig_n, vctx->nvaltypes);
+                                orig_n, vctx->valtypes.lsize);
         }
 #if defined(TOYWASM_ENABLE_TRACING_INSN)
         for (i = 0; i < ei->njumps; i++) {
