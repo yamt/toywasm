@@ -15,8 +15,7 @@ struct ctrlframe {
 
 struct validation_context {
         /* ctrl frames */
-        struct ctrlframe *cframes;
-        uint32_t ncframes;
+        VEC(, struct ctrlframe) cframes;
 
         /* operand stack */
 

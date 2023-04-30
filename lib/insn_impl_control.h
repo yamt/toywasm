@@ -234,7 +234,7 @@ INSN_IMPL(end)
                         }
                 }
                 assert((cframe.op == FRAME_OP_INVOKE) ==
-                       (vctx->ncframes == 0));
+                       (vctx->cframes.lsize == 0));
                 if (cframe.op == FRAME_OP_INVOKE) {
                         ctrlframe_clear(&cframe);
                 } else {

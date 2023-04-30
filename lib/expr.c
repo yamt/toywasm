@@ -151,13 +151,14 @@ read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
                                 goto fail;
                         }
                 }
-                if (vctx->ncframes == 0) {
+                if (vctx->cframes.lsize == 0) {
                         break;
                 }
-                xlog_trace_insn("inst %s %u %u: %" PRIu32 " -> %" PRIu32,
-                                desc->name, vctx->ncframes,
-                                vctx->cframes[vctx->ncframes - 1].height,
-                                orig_n, vctx->valtypes.lsize);
+                xlog_trace_insn("inst %s %" PRIu32 " %" PRIu32 ": %" PRIu32
+                                " -> %" PRIu32,
+                                desc->name, vctx->cframes.lsize,
+                                VEC_LASTELEM(vctx->cframes).height, orig_n,
+                                vctx->valtypes.lsize);
         }
 #if defined(TOYWASM_ENABLE_TRACING_INSN)
         for (i = 0; i < ei->njumps; i++) {
