@@ -28,9 +28,8 @@ push_valtype(enum valtype type, struct validation_context *ctx)
                 return ret;
         }
         *VEC_PUSH(ctx->valtypes) = type;
-        assert(ctx->cframes != NULL);
-        assert(ctx->ncframes > 0);
-        const struct ctrlframe *cframe = &ctx->cframes[ctx->ncframes - 1];
+        assert(ctx->cframes.lsize > 0);
+        const struct ctrlframe *cframe = &VEC_LASTELEM(ctx->cframes);
         if (!cframe->unreachable) {
                 ctx->ncells += valtype_cellsize(type);
                 if (ctx->ncells > ctx->ei->maxcells) {
@@ -46,9 +45,8 @@ pop_valtype(enum valtype expected_type, enum valtype *typep,
 {
         const struct ctrlframe *cframe;
 
-        assert(ctx->cframes != NULL);
-        assert(ctx->ncframes > 0);
-        cframe = &ctx->cframes[ctx->ncframes - 1];
+        assert(ctx->cframes.lsize > 0);
+        cframe = &VEC_LASTELEM(ctx->cframes);
         assert(ctx->valtypes.lsize >= cframe->height);
         assert(ctx->ncells >= cframe->height_cell);
         if (ctx->valtypes.lsize == cframe->height) {
@@ -163,8 +161,11 @@ push_ctrlframe(uint32_t pc, enum ctrlframe_op op, uint32_t jumpslot,
                         return ret;
                 }
         }
-        ret = resize_array((void **)&ctx->cframes, sizeof(*ctx->cframes),
-                           ctx->ncframes + 1);
+        uint32_t nsize = ctx->cframes.lsize + 1;
+        if (nsize == 0) {
+                return EOVERFLOW;
+        }
+        ret = VEC_PREALLOC(ctx->cframes, nsize);
         if (ret != 0) {
                 return ret;
         }
@@ -183,7 +184,7 @@ push_ctrlframe(uint32_t pc, enum ctrlframe_op op, uint32_t jumpslot,
                         ei->jumps[jumpslot + 1].targetpc = 0;
                 }
         }
-        cframe = &ctx->cframes[ctx->ncframes];
+        cframe = VEC_PUSH(ctx->cframes);
         cframe->op = op;
         cframe->jumpslot = jumpslot;
         cframe->start_types = start_types;
@@ -191,9 +192,9 @@ push_ctrlframe(uint32_t pc, enum ctrlframe_op op, uint32_t jumpslot,
         cframe->unreachable = false;
         cframe->height = ctx->valtypes.lsize;
         cframe->height_cell = ctx->ncells;
-        ctx->ncframes++;
-        if (ctx->ncframes > ei->maxlabels) {
-                ei->maxlabels = ctx->ncframes;
+        assert(nsize == ctx->cframes.lsize);
+        if (ctx->cframes.lsize > ei->maxlabels) {
+                ei->maxlabels = ctx->cframes.lsize;
         }
         if (start_types == NULL) {
                 return 0;
@@ -208,10 +209,10 @@ pop_ctrlframe(uint32_t pc, bool is_else, struct ctrlframe *cframep,
         struct ctrlframe *cframe;
         int ret;
 
-        if (ctx->ncframes == 0) {
+        if (ctx->cframes.lsize == 0) {
                 return EINVAL;
         }
-        cframe = &ctx->cframes[ctx->ncframes - 1];
+        cframe = &VEC_LASTELEM(ctx->cframes);
         if (is_else && cframe->op != FRAME_OP_IF) {
                 return validation_failure(ctx, "if-else mismatch");
         }
@@ -240,14 +241,14 @@ pop_ctrlframe(uint32_t pc, bool is_else, struct ctrlframe *cframep,
         }
         assert(ctx->ncells == cframe->height_cell);
         *cframep = *cframe;
-        ctx->ncframes--;
+        ctx->cframes.lsize--;
         return 0;
 }
 
 void
 mark_unreachable(struct validation_context *ctx)
 {
-        struct ctrlframe *cframe = &ctx->cframes[ctx->ncframes - 1];
+        struct ctrlframe *cframe = &VEC_LASTELEM(ctx->cframes);
         ctx->valtypes.lsize = cframe->height;
         ctx->ncells = cframe->height_cell;
         cframe->unreachable = true;
@@ -275,7 +276,7 @@ validation_failure(struct validation_context *ctx, const char *fmt, ...)
 struct resulttype *
 returntype(struct validation_context *ctx)
 {
-        return ctx->cframes[0].end_types;
+        return VEC_ELEM(ctx->cframes, 0).end_types;
 }
 
 void
@@ -287,12 +288,12 @@ validation_context_init(struct validation_context *ctx)
 void
 validation_context_clear(struct validation_context *ctx)
 {
-        uint32_t i;
+        struct ctrlframe *cframe;
 
-        for (i = 0; i < ctx->ncframes; i++) {
-                ctrlframe_clear(&ctx->cframes[i]);
+        VEC_FOREACH(cframe, ctx->cframes) {
+                ctrlframe_clear(cframe);
         }
-        free(ctx->cframes);
+        VEC_FREE(ctx->cframes);
         VEC_FREE(ctx->valtypes);
         free(ctx->locals);
 }
@@ -308,10 +309,11 @@ int
 target_label_types(struct validation_context *ctx, uint32_t labelidx,
                    const struct resulttype **rtp)
 {
-        if (labelidx >= ctx->ncframes) {
+        if (labelidx >= ctx->cframes.lsize) {
                 return EINVAL;
         }
-        struct ctrlframe *cframe = &ctx->cframes[ctx->ncframes - labelidx - 1];
+        struct ctrlframe *cframe =
+                &VEC_ELEM(ctx->cframes, ctx->cframes.lsize - labelidx - 1);
         const struct resulttype *rt = label_types(cframe);
         *rtp = rt;
         return 0;
@@ -322,7 +324,7 @@ record_type_annotation(struct validation_context *vctx, const uint8_t *p,
                        enum valtype t)
 {
 #if defined(TOYWASM_USE_SMALL_CELLS)
-        const struct ctrlframe *cframe = &vctx->cframes[vctx->ncframes - 1];
+        const struct ctrlframe *cframe = &VEC_LASTELEM(vctx->cframes);
         if (cframe->unreachable) {
                 assert(is_valtype(t) || t == TYPE_UNKNOWN);
                 return 0;
