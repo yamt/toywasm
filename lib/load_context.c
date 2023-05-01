@@ -19,6 +19,8 @@ load_context_clear(struct load_context *ctx)
 {
         report_clear(&ctx->report);
         bitmap_free(&ctx->refs);
-        validation_context_clear(ctx->vctx);
-        free(ctx->vctx);
+        if (ctx->vctx != NULL) {
+                validation_context_clear(ctx->vctx);
+                free(ctx->vctx);
+        }
 }

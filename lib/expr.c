@@ -89,8 +89,6 @@ read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
                 }
                 validation_context_init(vctx);
                 lctx->vctx = vctx;
-        } else {
-                validation_context_reuse(vctx);
         }
         ctx->validation = vctx;
 
@@ -183,8 +181,10 @@ read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
                    ", cells %" PRIu32,
                    expr->end - expr->start, ei->njumps * sizeof(*ei->jumps),
                    ei->maxlabels, ei->maxcells);
+        validation_context_reuse(vctx);
         return 0;
 fail:
+        validation_context_reuse(vctx);
         free(ei->jumps);
         return ret;
 }
