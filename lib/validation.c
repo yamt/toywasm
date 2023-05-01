@@ -295,6 +295,7 @@ validation_context_reuse(struct validation_context *ctx)
         ctx->cframes.lsize = 0;
         ctx->valtypes.lsize = 0;
         ctx->ncells = 0;
+        ctx->locals.lsize = 0;
 }
 
 void
@@ -303,7 +304,7 @@ validation_context_clear(struct validation_context *ctx)
         validation_context_reuse(ctx);
         VEC_FREE(ctx->cframes);
         VEC_FREE(ctx->valtypes);
-        free(ctx->locals);
+        VEC_FREE(ctx->locals);
 }
 
 void

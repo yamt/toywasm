@@ -25,8 +25,7 @@ struct validation_context {
         struct module *module;
         struct expr_exec_info *ei;
 
-        uint32_t nlocals;
-        enum valtype *locals;
+        VEC(, enum valtype) locals;
 
         bool const_expr;
 

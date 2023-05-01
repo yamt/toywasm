@@ -92,8 +92,8 @@ INSN_IMPL(local_get)
                 local_get(ectx, localidx, STACK, &csz);
                 STACK_ADJ(csz);
         } else if (VALIDATING) {
-                CHECK(localidx < VCTX->nlocals);
-                PUSH_VAL(VCTX->locals[localidx], c);
+                CHECK(localidx < VCTX->locals.lsize);
+                PUSH_VAL(VEC_ELEM(VCTX->locals, localidx), c);
         }
         SAVE_PC;
         INSN_SUCCESS;
@@ -108,7 +108,7 @@ INSN_IMPL(local_set)
         LOAD_PC;
         READ_LEB_U32(localidx);
         if (VALIDATING) {
-                CHECK(localidx < VCTX->nlocals);
+                CHECK(localidx < VCTX->locals.lsize);
         }
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
@@ -116,7 +116,7 @@ INSN_IMPL(local_set)
                 local_set(ectx, localidx, STACK, &csz);
                 STACK_ADJ(-(int32_t)csz);
         } else {
-                POP_VAL(VCTX->locals[localidx], a);
+                POP_VAL(VEC_ELEM(VCTX->locals, localidx), a);
         }
         SAVE_PC;
         INSN_SUCCESS;
@@ -131,15 +131,15 @@ INSN_IMPL(local_tee)
         LOAD_PC;
         READ_LEB_U32(localidx);
         if (VALIDATING) {
-                CHECK(localidx < VCTX->nlocals);
+                CHECK(localidx < VCTX->locals.lsize);
         }
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
                 uint32_t csz;
                 local_set(ectx, localidx, STACK, &csz);
         } else {
-                POP_VAL(VCTX->locals[localidx], a);
-                PUSH_VAL(VCTX->locals[localidx], a);
+                POP_VAL(VEC_ELEM(VCTX->locals, localidx), a);
+                PUSH_VAL(VEC_ELEM(VCTX->locals, localidx), a);
         }
         SAVE_PC;
         INSN_SUCCESS;
