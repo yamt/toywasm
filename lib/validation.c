@@ -294,6 +294,7 @@ validation_context_reuse(struct validation_context *ctx)
         }
         ctx->cframes.lsize = 0;
         ctx->valtypes.lsize = 0;
+        ctx->ncells = 0;
 }
 
 void
