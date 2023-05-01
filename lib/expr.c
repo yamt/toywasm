@@ -91,6 +91,7 @@ read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
                 lctx->vctx = vctx;
         }
         ctx->validation = vctx;
+        ctx->exec = NULL;
 
         assert(lctx->module != NULL);
         vctx->report = &lctx->report;
