@@ -104,23 +104,24 @@ read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
         vctx->ei = ei = &expr->ei;
         memset(ei, 0, sizeof(*ei));
 
-        vctx->nlocals = parameter_types->ntypes + nlocals;
-        ret = ARRAY_RESIZE(vctx->locals, vctx->nlocals);
+        uint32_t lsize = parameter_types->ntypes + nlocals;
+        ret = VEC_PREALLOC(vctx->locals, lsize);
         if (ret != 0) {
                 goto fail;
         }
         uint32_t i;
         for (i = 0; i < parameter_types->ntypes; i++) {
-                vctx->locals[i] = parameter_types->types[i];
+                VEC_ELEM(vctx->locals, i) = parameter_types->types[i];
         }
         const struct localchunk *ch = locals;
         for (i = 0; i < nlocals; i += ch->n, ch++) {
                 uint32_t j;
                 for (j = 0; j < ch->n; j++) {
-                        vctx->locals[parameter_types->ntypes + i + j] =
-                                ch->type;
+                        VEC_ELEM(vctx->locals,
+                                 parameter_types->ntypes + i + j) = ch->type;
                 }
         }
+        vctx->locals.lsize = lsize;
 
         expr->start = p;
 
