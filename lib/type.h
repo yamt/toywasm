@@ -69,12 +69,16 @@ struct localcellidx {
          * Note: 16-bit offsets are used to save memory consumption.
          * If we use 32-bit here, it can spoil TOYWASM_USE_SMALL_CELLS
          * too badly.
+         * Note: if a function has too many locals which can not be
+         * represented with 16-bit, we simply give up using this structure
+         * for the function and fallback to the slower method.
          *
          * The use of 16-bit offsets here imposes an implementation limit
-         * on the number of locals.
+         * on the number of locals which can use this structure.
          * While there seems to be no such a limit in the spec itself,
          * it seems that it's common to have similar limits to ease
-         * implementations. For examples,
+         * implementations. Many of them are even hard limits without
+         * any fallback. For examples,
          *
          * wasm-micro-runtime: UINT16_MAX cells
          * https://github.com/bytecodealliance/wasm-micro-runtime/blob/b5eea934cfaef5208a7bb4c9813699697d352fe1/core/iwasm/interpreter/wasm_loader.c#L1990
