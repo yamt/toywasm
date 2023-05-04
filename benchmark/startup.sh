@@ -6,7 +6,8 @@ run() {
     printf "$1,"
     shift
     OUTPUT=$(mktemp)
-    /usr/bin/time -l $@ ../ffmpeg.wasm -version > ${OUTPUT} 2>&1
+    # ffmpeg binary downloaded by ../test/run-ffmpeg.sh
+    /usr/bin/time -l $@ ../.ffmpeg/ffmpeg.wasm -version > ${OUTPUT} 2>&1
 
     # sanity checks
     grep -F "ffmpeg version" ${OUTPUT} > /dev/null
