@@ -1,0 +1,13 @@
+toywasm (default),0.17,0.16,0.00,41832448
+toywasm (annotations disabled),0.15,0.15,0.00,37523456
+wasm3 (default),0.02,0.01,0.01,35139584
+wasm3 (lazy compilation disabled),0.33,0.29,0.03,135020544
+wasm-micro-runtime (classic intepreter),0.17,0.15,0.01,36433920
+wasm-micro-runtime (fast interpreter),0.71,0.68,0.03,98394112
+wasmi,0.35,0.30,0.04,124002304
+wazero (intepreter),1.00,1.19,0.16,643641344
+wasm-micro-runtime (fast jit),0.54,1.63,0.07,74752000
+wasmer (first run),3.98,35.08,1.64,562180096
+wasmer (cached),0.18,0.09,0.09,299167744
+wasmtime (first run),5.22,41.94,1.68,399011840
+wasmtime (cached),0.26,0.19,0.07,217440256
