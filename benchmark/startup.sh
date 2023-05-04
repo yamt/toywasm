@@ -7,6 +7,11 @@ run() {
     shift
     OUTPUT=$(mktemp)
     /usr/bin/time -l $@ ../ffmpeg.wasm -version > ${OUTPUT} 2>&1
+
+    # sanity checks
+    grep -F "ffmpeg version" ${OUTPUT} > /dev/null
+    grep -v "(Unrecognized|usage)" ${OUTPUT} > /dev/null
+
     grep -E "(real.*user.*sys|maximum resident set size)" ${OUTPUT} | \
     sed \
     -e 's/ *\([0-9][\.0-9]*\) real *\([0-9][\.0-9]*\) user *\([0-9][\.0-9]*\) sys */\1,\2,\3,/' \
