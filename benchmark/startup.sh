@@ -33,6 +33,7 @@ run "wasm-micro-runtime (classic intepreter)" iwasm.classic
 run "wasm-micro-runtime (fast interpreter)" iwasm.fast
 run "wasmi" "wasmi_cli --"
 run "wazero (intepreter)" "wazero run -interpreter --"
+run "wasmedge (intepreter)" "wasmedge --"
 
 run "wasm-micro-runtime (fast jit)" "iwasm.fast-jit --jit-codecache-size=100000000"
 run "wasmer (first run)" "wasmer run --"
