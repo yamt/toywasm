@@ -1,13 +1,14 @@
-toywasm (default),0.17,0.16,0.00,41832448
-toywasm (annotations disabled),0.15,0.15,0.00,37523456
-wasm3 (default),0.02,0.01,0.01,35139584
-wasm3 (lazy compilation disabled),0.33,0.29,0.03,135020544
-wasm-micro-runtime (classic intepreter),0.17,0.15,0.01,36433920
-wasm-micro-runtime (fast interpreter),0.71,0.68,0.03,98394112
-wasmi,0.35,0.30,0.04,124002304
-wazero (intepreter),1.00,1.19,0.16,643641344
-wasm-micro-runtime (fast jit),0.54,1.63,0.07,74752000
-wasmer (first run),3.98,35.08,1.64,562180096
-wasmer (cached),0.18,0.09,0.09,299167744
-wasmtime (first run),5.22,41.94,1.68,399011840
-wasmtime (cached),0.26,0.19,0.07,217440256
+toywasm (default),0.17,0.16,0.00,40697856
+toywasm (annotations disabled),0.15,0.14,0.00,38903808
+wasm3 (default),0.02,0.01,0.01,35209216
+wasm3 (lazy compilation disabled),0.33,0.29,0.02,135110656
+wasm-micro-runtime (classic intepreter),0.16,0.15,0.01,36392960
+wasm-micro-runtime (fast interpreter),0.72,0.69,0.03,98553856
+wasmi,0.34,0.29,0.04,155348992
+wazero (intepreter),0.97,0.98,0.16,643481600
+wasmedge (intepreter),0.69,0.51,0.17,599146496
+wasm-micro-runtime (fast jit),0.43,1.20,0.05,66473984
+wasmer (first run),4.55,40.90,1.88,573501440
+wasmer (cached),0.19,0.09,0.09,299208704
+wasmtime (first run),5.67,45.12,1.77,410017792
+wasmtime (cached),0.27,0.19,0.07,217444352
