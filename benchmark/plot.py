@@ -22,6 +22,7 @@ df.plot.barh(
     ax=ax1,
 )
 ax1.ticklabel_format(useMathText=True, axis="x")
+ax1.legend(loc="lower right")
 
 df.plot.barh(
     x=0,
@@ -32,6 +33,7 @@ df.plot.barh(
     ax=ax2,
 )
 ax2.set_xlim([0, 1.5])
+ax2.legend(loc="upper right")
 
 plt.title("ffmpeg.wasm -version")
 plt.tight_layout()
