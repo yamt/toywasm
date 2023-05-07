@@ -29,7 +29,7 @@ run "toywasm (default)" "../b/toywasm --wasi --"
 run "toywasm (no annotations)" "../b/toywasm --disable-jump-table --disable-localtype-cellidx --disable-resulttype-cellidx --wasi --"
 run "wasm3 (default)" wasm3
 run "wasm3 (no lazy)" wasm3 --compile
-run "wamr (classic intep)" iwasm.classic
+run "wamr (classic interp)" iwasm.classic
 run "wamr (fast interp)" iwasm.fast
 run "wasmi" "wasmi_cli --"
 run "wazero (interp)" "wazero run -interpreter --"
