@@ -24,13 +24,15 @@ print the `-version` message)
   cf. [Overhead of the annotations (ffmpeg)](../README.md#ffmpeg)
 
 * The default wasm3 performs best. However,
-  it's mainly because of its lazy compilation and validation.
-  Without it, it has certain compilation overhead as shown in
-  `wasm3 (lazy compilation disabled)`.
+  it's mainly because of its lazy compilation/validation.
+  Without it, it has certain compilation/validation overhead as shown in
+  the `wasm3 (no lazy)` row.
 
-  Note: While lazy compiltation/validation is explicitly allowed by the spec,
-  it's a bit controversial feature and thus many of runtimes don't implement
-  it. Specifically, toywasm intentionally doesn't implement it because it
+  Note: While lazy validation is
+  [explicitly allowed by the spec](https://webassembly.github.io/spec/core/appendix/implementation.html#validation),
+  it's a bit [controversial](https://github.com/WebAssembly/design/issues/1464)
+  and thus many of runtimes don't implement it.
+  Specifically, toywasm intentionally doesn't implement it because it
   complicates shared modules.
 
 * WAMR fast-jit also uses a lazy compilation strategy by default.
