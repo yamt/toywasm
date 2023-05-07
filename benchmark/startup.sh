@@ -26,17 +26,17 @@ wasmer cache clean 2> /dev/null
 rm -rf ~/Library/Caches/BytecodeAlliance.wasmtime
 
 run "toywasm (default)" "../b/toywasm --wasi --"
-run "toywasm (annotations disabled)" "../b/toywasm --disable-jump-table --disable-localtype-cellidx --disable-resulttype-cellidx --wasi --"
+run "toywasm (no annotations)" "../b/toywasm --disable-jump-table --disable-localtype-cellidx --disable-resulttype-cellidx --wasi --"
 run "wasm3 (default)" wasm3
-run "wasm3 (lazy compilation disabled)" wasm3 --compile
-run "wasm-micro-runtime (classic intepreter)" iwasm.classic
-run "wasm-micro-runtime (fast interpreter)" iwasm.fast
+run "wasm3 (no lazy)" wasm3 --compile
+run "wamr (classic intep)" iwasm.classic
+run "wamr (fast interp)" iwasm.fast
 run "wasmi" "wasmi_cli --"
-run "wazero (intepreter)" "wazero run -interpreter --"
-run "wasmedge (intepreter)" "wasmedge --"
+run "wazero (interp)" "wazero run -interpreter --"
+run "wasmedge (interp)" "wasmedge --"
 
-run "wasm-micro-runtime (fast jit)" "iwasm.fast-jit --jit-codecache-size=100000000"
-run "wasm-micro-runtime (fast jit w/o lazy compilation)" "iwasm.fast-jit-nolazy --jit-codecache-size=100000000"
+run "wamr (fast jit)" "iwasm.fast-jit --jit-codecache-size=100000000"
+run "wamr (fast jit no lazy)" "iwasm.fast-jit-nolazy --jit-codecache-size=100000000"
 run "wasmer (first run)" "wasmer run --"
 run "wasmer (cached)" "wasmer run --"
 run "wasmtime (first run)" "wasmtime run --"
