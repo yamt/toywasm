@@ -40,7 +40,7 @@ print the `-version` message)
   advertized.
   It also uses a lazy compilation strategy by default.
   Unlike wasm3, it doesn't defer the validation though. Disabling
-  the lazy compilation (`WASM_ENABLE_LAZY_JIT=0`) doesn't make a much
+  the lazy compilation (`-DWAMR_BUILD_LAZY_JIT=0`) doesn't make a much
   difference as I expected. I'm not sure why.
 
 * Toywasm's annotations have small but measurable overheads.
