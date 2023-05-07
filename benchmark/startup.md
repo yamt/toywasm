@@ -29,11 +29,11 @@ print the `-version` message)
   `wasm3 (lazy compilation disabled)`.
 
   Note: While lazy compiltation/validation is explicitly allowed by the spec,
-  it's a bit contreversial feature and thus many of runtimes don't implement
-  it. Toywasm intentionally doesn't implement it because it complicates
-  shared modules.
+  it's a bit controversial feature and thus many of runtimes don't implement
+  it. Specifically, toywasm intentionally doesn't implement it because it
+  complicates shared modules.
 
-* WAMR fast-jit also uses a lazy compilation strategy by defaulst.
+* WAMR fast-jit also uses a lazy compilation strategy by default.
   Unlike wasm3, it doesn't defer the validation though. Disabling
   the lazy compilation (`WASM_ENABLE_LAZY_JIT=0`) doesn't make much
   difference as I expeceted. I'm not sure why.
