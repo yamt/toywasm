@@ -21,6 +21,7 @@ print the `-version` message)
 ## Observations
 
 * Toywasm's annotations have small but measurable overheads.
+  cf. [Overhead of the annotations (ffmpeg)](../startup-bench#ffmpeg)
 
 * The default wasm3 performs best. However,
   it's mainly because of its lazy compilation and validation.
