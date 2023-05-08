@@ -26,13 +26,16 @@ dnl not enough for large NUM.
 define(`EXPECTED',`syscmd(echo "(INPUT * NUM + NUM * (NUM - 1) / 2) % 4294967296" | bc)')
 
 (module
-  (func $add_many_params (export "add_many_params") (param repeat(NUM, i32 )) (result i32)
+  (type $add_many_params_type (func (param repeat(NUM, i32 )) (result i32)))
+  (type $return_many_results_type (func (param i32) (result repeat(NUM, i32 ))))
+
+  (func $add_many_params (export "add_many_params") (type $add_many_params_type)
 for(`X', 0, NUM, `
     local.get X')
 repeat(decr(NUM), `
     i32.add')
   )
-  (func $return_many_results (export "return_many_results") (param i32) (result repeat(NUM, i32 ))
+  (func $return_many_results (export "return_many_results") (type $return_many_results_type)
 for(`X', 0, NUM, `
     (i32.add (i32.const X) (local.get 0))')
   )
@@ -40,6 +43,13 @@ for(`X', 0, NUM, `
     local.get 0
     call $return_many_results
     call $add_many_params
+  )
+  (func $test_indirect (export "test_indirect") (param i32) (result i32)
+    local.get 0
+    i32.const 1
+    call_indirect (type $return_many_results_type)
+    i32.const 0
+    call_indirect (type $add_many_params_type)
   )
   (func (export "_start")
     i32.const EXPECTED
@@ -50,6 +60,16 @@ for(`X', 0, NUM, `
       br_if 0
       unreachable
     end
+    i32.const EXPECTED
+    i32.const INPUT
+    call $test_indirect
+    block (param i32 i32)
+      i32.eq
+      br_if 0
+      unreachable
+    end
   )
   (memory (export "memory") 1)
+  (table 2 2 funcref)
+  (elem (i32.const 0) func $add_many_params $return_many_results)
 )
