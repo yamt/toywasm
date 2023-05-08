@@ -45,7 +45,9 @@ if (CMAKE_C_COMPILER_ID MATCHES "Clang")
 # lld doesn't seem to support s390
 # ld.lld: error: unknown emulation: elf64_s390
 # https://github.com/llvm/llvm-project/blob/93b7bdcda7072581ef3f5ceaae8c4f0d549a0845/lld/ELF/Driver.cpp#L142-L166
-if(NOT TRIPLET MATCHES "s390")
+#
+# lld doesn't seem to support riscv relaxizations
+if(NOT TRIPLET MATCHES "s390" AND NOT TRIPLET MATCHES "riscv")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=lld")
 else()
 set(USE_IPO OFF)
