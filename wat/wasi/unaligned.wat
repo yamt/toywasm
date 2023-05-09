@@ -30,7 +30,7 @@
   )
   (memory (export "memory") 1)
 
-  ;; iov_base = 0x100, iov_len = 6
-  (data (i32.const 2) "\00\01\00\00\06\00\00\00")
-  (data (i32.const 0x100) "hello\n")
+  ;; iov_base = 0x100, iov_len = 36
+  (data (i32.const 2) "\00\01\00\00\24\00\00\00")
+  (data (i32.const 0x100) "this message should not be printed.\n")
 )
