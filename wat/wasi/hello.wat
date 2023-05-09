@@ -4,7 +4,7 @@
   (func $fd_write (import "wasi_snapshot_preview1" "fd_write") (param i32 i32 i32 i32) (result i32))
   (func $proc_exit (import "wasi_snapshot_preview1" "proc_exit") (param i32))
   (func (export "_start")
-    i32.const 1 
+    i32.const 1
     i32.const 0
     i32.const 1
     i32.const 0
