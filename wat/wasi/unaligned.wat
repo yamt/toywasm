@@ -1,7 +1,7 @@
 ;; unaligned wasi structures should cause a trap.
 ;; cf. https://github.com/WebAssembly/WASI/pull/523
 ;;
-;; toywasm   trap
+;; toywasm   trap     cf. https://github.com/yamt/toywasm/pull/13
 ;; wasm3     no trap
 ;; wamr      no trap
 ;; wasmtime  trap
