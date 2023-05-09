@@ -3348,6 +3348,12 @@ wasi_instance_add_hostfd(struct wasi_instance *inst, uint32_t wasmfd,
          * eg. when you run a shell command like
          * "toywasm | more", the tty is toywasm's stdin
          * and also more's stdout.
+         *
+         * IMO, it's a design mistake (or at least a compromise)
+         * to control non-blocking with fcntl(). It should be
+         * a per-operation flag instead. eg. MSG_DONTWAIT.
+         * Unfortunately, not all operations/platforms have
+         * flags like that.
          */
         if (!isatty(hostfd)) {
                 ret = set_nonblocking(hostfd, true, NULL);
