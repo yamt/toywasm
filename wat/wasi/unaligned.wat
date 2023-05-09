@@ -8,6 +8,7 @@
 ;; wasmer    no trap
 ;; wazero    no trap
 ;; wasmi_cli trap
+;; wasmedge  no trap
 
 ;; % toywasm --wasi unaligned.wasm
 ;; Error: [trap] unknown (18): unaligned access to address 2 in a host call (expected alignment 4)

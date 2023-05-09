@@ -13,6 +13,7 @@
 ;; wasmer    exit with 21 (WASI_ERRNO_FAULT)  wasmer 3.2.1 exits with 78?
 ;; wazero    exit with 21 (WASI_ERRNO_FAULT)
 ;; wasmi_cli exit with 21 (WASI_ERRNO_FAULT)
+;; wasmedge  "[2023-05-10 00:18:16.516] [error] 32" what does this mean?
 
 (module
   (func $fd_write (import "wasi_snapshot_preview1" "fd_write") (param i32 i32 i32 i32) (result i32))

@@ -7,6 +7,7 @@
 ;; wasmer    134  i guess it's same as wasmtime
 ;; wazero    1    cf. https://github.com/tetratelabs/wazero/issues/1360
 ;; wasmi_cli 1
+;; wasmedge  134
 
 (module
   (func (export "_start")
