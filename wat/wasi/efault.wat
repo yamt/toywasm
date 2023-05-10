@@ -6,14 +6,15 @@
 ;; wasm3, wasm-micro-runtime: "out of bounds memory access" trap
 ;; wasmer, wasmtime: exit with 21 (WASI_ERRNO_FAULT)
 
-;; toywasm   trap  cf. https://github.com/yamt/toywasm/pull/2
-;; wasm3     trap
-;; wamr      trap
-;; wasmtime  exit with 21 (WASI_ERRNO_FAULT)
-;; wasmer    exit with 21 (WASI_ERRNO_FAULT)  wasmer 3.2.1 exits with 78?
-;; wazero    exit with 21 (WASI_ERRNO_FAULT)
-;; wasmi_cli exit with 21 (WASI_ERRNO_FAULT)
-;; wasmedge  "[2023-05-10 00:18:16.516] [error] 32" what does this mean?
+;; toywasm    trap  cf. https://github.com/yamt/toywasm/pull/2
+;; wasm3      trap
+;; wamr       trap
+;; wasmtime   exit with 21 (WASI_ERRNO_FAULT)
+;; old wasmer exit with 21 (WASI_ERRNO_FAULT)
+;; wasmer     exit with 78 (memviolation, wasmer dialect of WASI)
+;; wazero     exit with 21 (WASI_ERRNO_FAULT)
+;; wasmi_cli  exit with 21 (WASI_ERRNO_FAULT)
+;; wasmedge   exit with 21 (WASI_ERRNO_FAULT)
 
 (module
   (func $fd_write (import "wasi_snapshot_preview1" "fd_write") (param i32 i32 i32 i32) (result i32))
