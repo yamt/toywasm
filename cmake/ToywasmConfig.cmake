@@ -1,4 +1,6 @@
-set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type")
+if(NOT CMAKE_BUILD_TYPE)
+set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
+endif()
 option(TOYWASM_USE_SEPARATE_EXECUTE "Use separate execute callback" ON)
 option(TOYWASM_USE_TAILCALL "Use tailcall" ON)
 option(TOYWASM_USE_SHORT_ENUMS "Use -fshort-enum" ON)
