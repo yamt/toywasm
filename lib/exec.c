@@ -894,6 +894,7 @@ check_interrupt(struct exec_context *ctx)
          */
         if (ctx->intrp != NULL && *ctx->intrp != 0) {
                 xlog_trace("get interrupt");
+                STAT_INC(ctx->stats.interrupt_exit);
                 return trap_with_id(ctx, TRAP_VOLUNTARY_THREAD_EXIT,
                                     "interrupt");
         }
@@ -901,6 +902,7 @@ check_interrupt(struct exec_context *ctx)
         if (ctx->cluster != NULL) {
                 int ret = suspend_check_interrupt(ctx->cluster);
                 if (ret != 0) {
+                        STAT_INC(ctx->stats.interrupt_suspend);
                         return ret;
                 }
         }
@@ -908,6 +910,7 @@ check_interrupt(struct exec_context *ctx)
 #if defined(TOYWASM_USE_USER_SCHED)
         if (ctx->sched != NULL && sched_need_resched(ctx->sched)) {
                 xlog_trace("%s: need resched ctx %p", __func__, (void *)ctx);
+                STAT_INC(ctx->stats.interrupt_usched);
                 return ETOYWASMRESTART;
         }
 #else /* defined(TOYWASM_USE_USER_SCHED) */
@@ -924,6 +927,7 @@ check_interrupt(struct exec_context *ctx)
         static int x = 0;
         x++;
         if ((x % 10) == 0) {
+                STAT_INC(ctx->stats.interrupt_debug);
                 return ETOYWASMRESTART;
         }
 #endif
@@ -1304,6 +1308,10 @@ exec_context_print_stats(struct exec_context *ctx)
         STAT_PRINT(type_annotation_lookup1);
         STAT_PRINT(type_annotation_lookup2);
         STAT_PRINT(type_annotation_lookup3);
+        STAT_PRINT(interrupt_exit);
+        STAT_PRINT(interrupt_suspend);
+        STAT_PRINT(interrupt_usched);
+        STAT_PRINT(interrupt_debug);
         STAT_PRINT(exec_loop_restart);
         STAT_PRINT(call_restart);
         STAT_PRINT(tail_call_restart);

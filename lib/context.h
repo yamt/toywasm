@@ -102,6 +102,10 @@ struct exec_stat {
         uint64_t type_annotation_lookup1;
         uint64_t type_annotation_lookup2;
         uint64_t type_annotation_lookup3;
+        uint64_t interrupt_exit;
+        uint64_t interrupt_suspend;
+        uint64_t interrupt_usched;
+        uint64_t interrupt_debug;
         uint64_t exec_loop_restart;
         uint64_t call_restart;
         uint64_t tail_call_restart;
