@@ -87,6 +87,12 @@ sched_need_resched(struct sched *sched)
                 return false;
         }
 
+        /*
+         * REVISIT:
+         * On a very slow environment, this can be always true.
+         * We should somehow ensure threads making a progress.
+         */
+
         ret = timespec_now(CLOCK_MONOTONIC, &now);
         if (ret != 0) {
                 /* XXX what to do? */
