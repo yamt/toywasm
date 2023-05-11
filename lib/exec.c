@@ -61,7 +61,9 @@ memory_getptr2(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
 {
         struct instance *inst = ctx->instance;
         struct meminst *meminst = VEC_ELEM(inst->mems, memidx);
-        if (offset > UINT32_MAX - ptr) {
+        assert(meminst->allocated <=
+               (uint64_t)meminst->size_in_pages * WASM_PAGE_SIZE);
+        if (__predict_false(offset > UINT32_MAX - ptr)) {
                 /*
                  * i failed to find this in the spec.
                  * but some of spec tests seem to test this.
@@ -85,21 +87,18 @@ memory_getptr2(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
                 goto do_trap;
         }
         uint32_t last_byte = ea + (size - 1);
-        uint32_t need_in_pages = last_byte / WASM_PAGE_SIZE + 1;
-        if (need_in_pages > meminst->size_in_pages) {
+        if (__predict_false(last_byte >= meminst->allocated)) {
+                uint32_t need_in_pages = last_byte / WASM_PAGE_SIZE + 1;
+                if (need_in_pages > meminst->size_in_pages) {
 do_trap:
-                return trap_with_id(
-                        ctx, TRAP_OUT_OF_BOUNDS_MEMORY_ACCESS,
-                        "invalid memory access at %04" PRIx32 " %08" PRIx32
-                        " + %08" PRIx32 ", size %" PRIu32
-                        ", meminst size %" PRIu32,
-                        memidx, ptr, offset, size, meminst->size_in_pages);
-        }
-        xlog_trace_insn("memory access: at %04" PRIx32 " %08" PRIx32
-                        " + %08" PRIx32 ", size %" PRIu32
-                        ", meminst size %" PRIu32,
-                        memidx, ptr, offset, size, meminst->size_in_pages);
-        if (last_byte >= meminst->allocated) {
+                        return trap_with_id(
+                                ctx, TRAP_OUT_OF_BOUNDS_MEMORY_ACCESS,
+                                "invalid memory access at %04" PRIx32
+                                " %08" PRIx32 " + %08" PRIx32 ", size %" PRIu32
+                                ", meminst size %" PRIu32,
+                                memidx, ptr, offset, size,
+                                meminst->size_in_pages);
+                }
                 /*
                  * Note: shared memories do never come here because
                  * we handle their growth in memory_grow.
@@ -126,6 +125,10 @@ do_trap:
                 meminst->allocated = need;
         }
 success:
+        xlog_trace_insn("memory access: at %04" PRIx32 " %08" PRIx32
+                        " + %08" PRIx32 ", size %" PRIu32
+                        ", meminst size %" PRIu32,
+                        memidx, ptr, offset, size, meminst->size_in_pages);
         *pp = meminst->data + ea;
         return 0;
 }
