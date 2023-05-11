@@ -1,6 +1,8 @@
 ;; % m4 large_memory.wat.in | wat2wasm -o large_memory.wasm -
 ;; % m4 -DSHARED large_memory.wat.in | wat2wasm --enable-threads -o large_shared_memory.wasm -
 
+;; note: for wamr, disable app heap. eg. "iwasm --heap-size=0"
+
 define(STORE,
     i32.const $1
     i32.const $2
