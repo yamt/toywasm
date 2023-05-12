@@ -190,6 +190,7 @@ push_ctrlframe(uint32_t pc, enum ctrlframe_op op, uint32_t jumpslot,
         cframe->start_types = start_types;
         cframe->end_types = end_types;
         cframe->unreachable = false;
+        cframe->seen = false;
         cframe->height = ctx->valtypes.lsize;
         cframe->height_cell = ctx->ncells;
         assert(nsize == ctx->cframes.lsize);
@@ -224,8 +225,12 @@ pop_ctrlframe(uint32_t pc, bool is_else, struct ctrlframe *cframep,
                 assert(jump->targetpc == 0);
                 if (cframe->op == FRAME_OP_LOOP) {
                         jump->targetpc = jump->pc;
-                } else {
+                } else if (cframe->seen || (cframe->op == FRAME_OP_IF ||
+                                            cframe->op == FRAME_OP_ELSE)) {
                         jump->targetpc = pc;
+                } else {
+                        ctx->can_shrink_jump_table = true;
+                        jump->targetpc = JUMP_TABLE_INVALID_PC;
                 }
         }
         ret = pop_valtypes(cframe->end_types, ctx);
@@ -296,6 +301,7 @@ validation_context_reuse(struct validation_context *ctx)
         ctx->valtypes.lsize = 0;
         ctx->ncells = 0;
         ctx->locals.lsize = 0;
+        ctx->can_shrink_jump_table = false;
 }
 
 void
@@ -324,6 +330,7 @@ target_label_types(struct validation_context *ctx, uint32_t labelidx,
         struct ctrlframe *cframe =
                 &VEC_ELEM(ctx->cframes, ctx->cframes.lsize - labelidx - 1);
         const struct resulttype *rt = label_types(cframe);
+        cframe->seen = true;
         *rtp = rt;
         return 0;
 }

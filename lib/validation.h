@@ -11,6 +11,7 @@ struct ctrlframe {
         uint32_t height;
         uint32_t height_cell;
         bool unreachable;
+        bool seen;
 };
 
 struct validation_context {
@@ -28,6 +29,7 @@ struct validation_context {
         VEC(, enum valtype) locals;
 
         bool const_expr;
+        bool can_shrink_jump_table;
 
         bool has_datacount;
         uint32_t ndatas_in_datacount;
