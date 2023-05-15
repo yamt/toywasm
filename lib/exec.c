@@ -897,8 +897,6 @@ restart_insn(struct exec_context *ctx)
 #endif
 }
 
-#define CHECK_INTERVAL 1000
-
 int
 check_interrupt(struct exec_context *ctx)
 {
@@ -952,6 +950,34 @@ check_interrupt(struct exec_context *ctx)
         return 0;
 }
 
+#define CHECK_INTERVAL_MAX UINT32_MAX
+#define CHECK_INTERVAL_DEFAULT 1000
+#define CHECK_INTERVAL_MIN 1
+
+static void
+adjust_check_interval(struct exec_context *ctx, const struct timespec *now,
+                      const struct timespec *last)
+{
+        struct timespec diff;
+        timespec_sub(now, last, &diff);
+        uint64_t diff_ms = timespec_to_ms(&diff);
+        uint32_t check_interval = ctx->check_interval;
+        if (diff_ms < CHECK_INTERRUPT_INTERVAL_MS / 2) {
+                if (check_interval <= CHECK_INTERVAL_MAX / 2) {
+                        check_interval *= 2;
+                } else {
+                        check_interval = CHECK_INTERVAL_MAX;
+                }
+        } else if (diff_ms / 2 > CHECK_INTERRUPT_INTERVAL_MS) {
+                check_interval /= 2;
+                if (check_interval < CHECK_INTERVAL_MIN) {
+                        check_interval = CHECK_INTERVAL_MIN;
+                }
+        }
+        xlog_trace("check_interval %" PRIu32, check_interval);
+        ctx->check_interval = check_interval;
+}
+
 int
 exec_expr(uint32_t funcidx, const struct expr *expr,
           const struct localtype *localtype,
@@ -979,7 +1005,10 @@ exec_expr(uint32_t funcidx, const struct expr *expr,
 int
 exec_expr_continue(struct exec_context *ctx)
 {
-        uint32_t n = 0;
+        struct timespec last;
+        bool has_last = false;
+        uint32_t n = ctx->check_interval;
+        assert(n > 0);
         while (true) {
                 int ret;
                 switch (ctx->event) {
@@ -1043,9 +1072,8 @@ exec_expr_continue(struct exec_context *ctx)
                 if (ctx->frames.lsize == 0) {
                         break;
                 }
-                n++;
-                if (__predict_false(n > CHECK_INTERVAL)) {
-                        n = 0;
+                n--;
+                if (__predict_false(n == 0)) {
                         ret = check_interrupt(ctx);
                         if (ret != 0) {
                                 if (IS_RESTARTABLE(ret)) {
@@ -1053,6 +1081,18 @@ exec_expr_continue(struct exec_context *ctx)
                                 }
                                 return ret;
                         }
+                        struct timespec now;
+                        ret = timespec_now(CLOCK_MONOTONIC, &now);
+                        if (ret != 0) {
+                                return ret;
+                        }
+                        if (has_last) {
+                                adjust_check_interval(ctx, &now, &last);
+                        }
+                        last = now;
+                        has_last = true;
+                        n = ctx->check_interval;
+                        assert(n > 0);
                 }
                 struct cell *stack = &VEC_NEXTELEM(ctx->stack);
                 ret = fetch_exec_next_insn(ctx->p, stack, ctx);
@@ -1275,6 +1315,7 @@ exec_context_init(struct exec_context *ctx, struct instance *inst)
         report_init(&ctx->report0);
         ctx->report = &ctx->report0;
         ctx->restart_type = RESTART_NONE;
+        ctx->check_interval = CHECK_INTERVAL_DEFAULT;
         exec_options_set_defaults(&ctx->options);
 }
 

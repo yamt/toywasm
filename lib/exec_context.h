@@ -198,6 +198,7 @@ struct exec_context {
         struct cluster *cluster;
         unsigned int user_intr_delay_count;
         unsigned int user_intr_delay;
+        uint32_t check_interval;
 
         /* scheduler */
         struct sched *sched;
