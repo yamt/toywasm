@@ -622,6 +622,10 @@ instruction_name(const struct exec_instruction_desc *exec_table, uint32_t op);
 
 static int fetch_exec_next_insn_fc(const uint8_t *p, struct cell *stack,
                                    struct exec_context *ctx);
+#if defined(TOYWASM_ENABLE_WASM_SIMD)
+static int fetch_exec_next_insn_fd(const uint8_t *p, struct cell *stack,
+                                   struct exec_context *ctx);
+#endif
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
 static int fetch_exec_next_insn_fe(const uint8_t *p, struct cell *stack,
                                    struct exec_context *ctx);
@@ -640,6 +644,12 @@ static int fetch_exec_next_insn_fe(const uint8_t *p, struct cell *stack,
 const static struct exec_instruction_desc exec_instructions_fc[] = {
 #include "insn_list_fc.h"
 };
+
+#if defined(TOYWASM_ENABLE_WASM_SIMD)
+const static struct exec_instruction_desc exec_instructions_fd[] = {
+#include "insn_list_simd.h"
+};
+#endif
 
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
 const static struct exec_instruction_desc exec_instructions_fe[] = {
@@ -687,6 +697,19 @@ fetch_exec_next_insn_fc(const uint8_t *p, struct cell *stack,
                         p, stack, ctx);
 }
 
+#if defined(TOYWASM_ENABLE_WASM_SIMD)
+static int
+fetch_exec_next_insn_fd(const uint8_t *p, struct cell *stack,
+                        struct exec_context *ctx)
+{
+#if defined(TOYWASM_USE_TAILCALL)
+        __musttail
+#endif
+                return fetch_multibyte_opcode(&p, ctx, exec_instructions_fd)(
+                        p, stack, ctx);
+}
+#endif /* defined(TOYWASM_ENABLE_WASM_SIMD) */
+
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
 /*
  * XXX duplicate of fetch_exec_next_insn_fc.
@@ -726,6 +749,12 @@ const static struct instruction_desc instructions_fc[] = {
 #include "insn_list_fc.h"
 };
 
+#if defined(TOYWASM_ENABLE_WASM_SIMD)
+const static struct instruction_desc instructions_fd[] = {
+#include "insn_list_simd.h"
+};
+#endif
+
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
 const static struct instruction_desc instructions_fe[] = {
 #include "insn_list_threads.h"
@@ -751,6 +780,10 @@ instruction_name(const struct exec_instruction_desc *exec_table, uint32_t op)
                 table = instructions;
         } else if (exec_table == exec_instructions_fc) {
                 table = instructions_fc;
+#if defined(TOYWASM_ENABLE_WASM_SIMD)
+        } else if (exec_table == exec_instructions_fd) {
+                table = instructions_fd;
+#endif /* defined(TOYWASM_ENABLE_WASM_SIMD) */
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
         } else if (exec_table == exec_instructions_fe) {
                 table = instructions_fe;
