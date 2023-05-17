@@ -301,12 +301,12 @@ INSTRUCTION(0x55, "v128.load16_lane", v128_load16_lane, 0)
 INSTRUCTION(0x56, "v128.load32_lane", v128_load32_lane, 0)
 INSTRUCTION(0x57, "v128.load64_lane", v128_load64_lane, 0)
 
-#if 0
 INSTRUCTION(0x58, "v128.store8_lane", v128_store8_lane, 0)
 INSTRUCTION(0x59, "v128.store16_lane", v128_store16_lane, 0)
 INSTRUCTION(0x5a, "v128.store32_lane", v128_store32_lane, 0)
 INSTRUCTION(0x5b, "v128.store64_lane", v128_store64_lane, 0)
 
+#if 0
 INSTRUCTION(0xd6, "i64x2.eq", i64x2_eq, 0)
 INSTRUCTION(0xd7, "i64x2.ne", i64x2_ne, 0)
 INSTRUCTION(0xd8, "i64x2.lt_s", i64x2_lt_s, 0)
