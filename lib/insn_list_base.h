@@ -210,6 +210,9 @@ INSTRUCTION(0xd1, "ref.is_null", ref_is_null, 0)
 INSTRUCTION(0xd2, "ref.func", ref_func, INSN_FLAG_CONST)
 
 INSTRUCTION_INDIRECT(0xfc, fc)
+#if defined(TOYWASM_ENABLE_WASM_SIMD)
+INSTRUCTION_INDIRECT(0xfd, fd)
+#endif
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
 INSTRUCTION_INDIRECT(0xfe, fe)
 #endif
