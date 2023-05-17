@@ -69,6 +69,8 @@ fail:                                                                         \
         }
 
 #define SIMD_STOREOP(NAME, MEM, STACK_TYPE, CP)                               \
+        SIMD_STOREOP_LANE(NAME, MEM, 128, 1, STACK_TYPE, CP)
+#define SIMD_STOREOP_LANE(NAME, MEM, LS, NL, STACK_TYPE, CP)                  \
         INSN_IMPL(NAME)                                                       \
         {                                                                     \
                 const struct module *m = MODULE;                              \
@@ -79,6 +81,7 @@ fail:                                                                         \
                 CHECK(memarg.memidx < m->nimportedmems + m->nmems);           \
                 CHECK(1 <= (MEM / 8) >>                                       \
                       memarg.align); /* 2 ** align <= N / 8 */                \
+                READ_LANEIDX##NL(lane);                                       \
                 POP_VAL(TYPE_##STACK_TYPE, v);                                \
                 POP_VAL(TYPE_i32, i);                                         \
                 if (EXECUTING) {                                              \
@@ -88,7 +91,7 @@ fail:                                                                         \
                         if (ret != 0) {                                       \
                                 goto fail;                                    \
                         }                                                     \
-                        CP(datap, &val_v.u.STACK_TYPE);                       \
+                        CP(datap, &LANEPTR##LS(&val_v)[lane]);                \
                 }                                                             \
                 SAVE_PC;                                                      \
                 INSN_SUCCESS;                                                 \
@@ -205,3 +208,8 @@ SIMD_LOADOP_LANE(v128_load8_lane, 8, 8, 16, v128, COPYBITS8)
 SIMD_LOADOP_LANE(v128_load16_lane, 16, 16, 8, v128, COPYBITS16)
 SIMD_LOADOP_LANE(v128_load32_lane, 32, 32, 4, v128, COPYBITS32)
 SIMD_LOADOP_LANE(v128_load64_lane, 64, 64, 2, v128, COPYBITS64)
+
+SIMD_STOREOP_LANE(v128_store8_lane, 8, 8, 16, v128, COPYBITS8)
+SIMD_STOREOP_LANE(v128_store16_lane, 16, 16, 8, v128, COPYBITS16)
+SIMD_STOREOP_LANE(v128_store32_lane, 32, 32, 4, v128, COPYBITS32)
+SIMD_STOREOP_LANE(v128_store64_lane, 64, 64, 2, v128, COPYBITS64)
