@@ -38,7 +38,22 @@ stack_push_val(const struct exec_context *ctx, const struct val *val,
 {
         assert(ctx->stack.p <= *stackp);
         assert(*stackp + csz <= ctx->stack.p + ctx->stack.psize);
-        xlog_trace_insn("stack push %016" PRIx64, val->u.i64);
+        switch (csz) {
+        case 1:
+                xlog_trace_insn("stack push %08" PRIx32, val->u.i32);
+                break;
+        case 2:
+                xlog_trace_insn("stack push %016" PRIx64, val->u.i64);
+                break;
+        case 4:
+                /* Note: val->u.v128 is in little-endian */
+                xlog_trace_insn("stack push %016" PRIx64 " %016" PRIx64,
+                                le64_to_host(val->u.v128.i64[1]),
+                                le64_to_host(val->u.v128.i64[0]));
+                break;
+        default:
+                assert(false);
+        }
         val_to_cells(val, *stackp, csz);
         *stackp += csz;
 }
@@ -51,7 +66,22 @@ stack_pop_val(const struct exec_context *ctx, struct val *val,
         assert(*stackp <= ctx->stack.p + ctx->stack.psize);
         *stackp -= csz;
         val_from_cells(val, *stackp, csz);
-        xlog_trace_insn("stack pop  %016" PRIx64, val->u.i64);
+        switch (csz) {
+        case 1:
+                xlog_trace_insn("stack pop  %08" PRIx32, val->u.i32);
+                break;
+        case 2:
+                xlog_trace_insn("stack pop  %016" PRIx64, val->u.i64);
+                break;
+        case 4:
+                /* Note: val->u.v128 is in little-endian */
+                xlog_trace_insn("stack pop  %016" PRIx64 " %016" PRIx64,
+                                le64_to_host(val->u.v128.i64[1]),
+                                le64_to_host(val->u.v128.i64[0]));
+                break;
+        default:
+                assert(false);
+        }
 }
 #endif
 

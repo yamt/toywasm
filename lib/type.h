@@ -107,6 +107,29 @@ struct funcref {
         struct funcinst *func;
 };
 
+union v128 {
+        /*
+         * i8[0]   bit 0..7
+         * i8[1]   bit 8..15
+         *   :
+         * i8[N]   bit N*8 .. (N+1)*8-1
+         *   :
+         * i8[15]  bit 120..127
+         *
+         * i16[0]  bit 0..15 (little endian)
+         *
+         * this union uses the same representation as linear memory
+         *
+         * see also: the comment about type-punning in endian.c
+         */
+        uint8_t i8[16];
+        uint16_t i16[8];
+        uint32_t i32[4];
+        uint64_t i64[2];
+        float f32[4];
+        double f64[2];
+};
+
 /*
  * a value on operand stack, locals, etc.
  *
@@ -115,20 +138,35 @@ struct funcref {
  */
 struct val {
         union {
+                /*
+                 * Note: v128 is in little endian.
+                 * others are host endian.
+                 */
                 uint32_t i32;
                 uint64_t i64;
                 float f32;
                 double f64;
+#if defined(TOYWASM_ENABLE_WASM_SIMD)
+                union v128 v128;
+#endif
                 struct funcref funcref;
                 void *externref;
 #if defined(TOYWASM_USE_SMALL_CELLS)
+#if defined(TOYWASM_ENABLE_WASM_SIMD)
+                struct cell cells[4];
+#else
                 struct cell cells[2];
+#endif
 #else
                 struct cell cells[1];
 #endif
         } u;
 };
+#if defined(TOYWASM_ENABLE_WASM_SIMD)
+_Static_assert(sizeof(struct val) == 16, "struct val");
+#else
 _Static_assert(sizeof(struct val) == 8, "struct val");
+#endif
 
 struct localchunk {
         enum valtype type;
