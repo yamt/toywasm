@@ -20,6 +20,11 @@ valtype_cellsize(enum valtype t)
         case TYPE_f64:
                 sz = 2;
                 break;
+#if defined(TOYWASM_ENABLE_WASM_SIMD)
+        case TYPE_v128:
+                sz = 4;
+                break;
+#endif
         case TYPE_FUNCREF:
         case TYPE_EXTERNREF:
                 sz = sizeof(void *) / sizeof(struct cell);
@@ -174,14 +179,22 @@ frame_locals_cellidx(struct exec_context *ctx, uint32_t localidx,
 void
 val_to_cells(const struct val *val, struct cell *cells, uint32_t ncells)
 {
+#if defined(TOYWASM_ENABLE_WASM_SIMD)
+        assert(ncells == 1 || ncells == 2 || ncells == 4 || ncells == 8);
+#else
         assert(ncells == 1 || ncells == 2 || ncells == 4);
+#endif
         cells_copy(cells, val->u.cells, ncells);
 }
 
 void
 val_from_cells(struct val *val, const struct cell *cells, uint32_t ncells)
 {
+#if defined(TOYWASM_ENABLE_WASM_SIMD)
+        assert(ncells == 1 || ncells == 2 || ncells == 4 || ncells == 8);
+#else
         assert(ncells == 1 || ncells == 2 || ncells == 4);
+#endif
         cells_copy(val->u.cells, cells, ncells);
 }
 
