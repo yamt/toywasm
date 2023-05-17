@@ -102,8 +102,6 @@ fail:                                                                         \
 #define SIMD_CONSTOP(NAME)                                                    \
         INSN_IMPL(NAME)                                                       \
         {                                                                     \
-                const struct module *m = MODULE;                              \
-                struct memarg memarg;                                         \
                 int ret;                                                      \
                 LOAD_PC;                                                      \
                 if (VALIDATING) {                                             \
