@@ -36,6 +36,34 @@ fail:                                                                         \
                 INSN_FAIL;                                                    \
         }
 
+#define SIMD_STOREOP(NAME, MEM, STACK_TYPE, CP)                               \
+        INSN_IMPL(NAME)                                                       \
+        {                                                                     \
+                const struct module *m = MODULE;                              \
+                struct memarg memarg;                                         \
+                int ret;                                                      \
+                LOAD_PC;                                                      \
+                READ_MEMARG(&memarg);                                         \
+                CHECK(memarg.memidx < m->nimportedmems + m->nmems);           \
+                CHECK(1 <= (MEM / 8) >>                                       \
+                      memarg.align); /* 2 ** align <= N / 8 */                \
+                POP_VAL(TYPE_##STACK_TYPE, v);                                \
+                POP_VAL(TYPE_i32, i);                                         \
+                if (EXECUTING) {                                              \
+                        void *datap;                                          \
+                        ret = memory_getptr(ECTX, memarg.memidx, val_i.u.i32, \
+                                            memarg.offset, MEM / 8, &datap);  \
+                        if (ret != 0) {                                       \
+                                goto fail;                                    \
+                        }                                                     \
+                        CP(datap, &val_v.u.STACK_TYPE);                       \
+                }                                                             \
+                SAVE_PC;                                                      \
+                INSN_SUCCESS;                                                 \
+fail:                                                                         \
+                INSN_FAIL;                                                    \
+        }
+
 #define CP_V128(a, b) memcpy(a, b, 128 / 8)
 
 #define EXTEND_s(B, S) (int##B##_t)(S)
@@ -108,3 +136,5 @@ SIMD_LOADOP(v128_load64_splat, 64, v128, SPLAT_64)
 
 SIMD_LOADOP(v128_load32_zero, 32, v128, ZERO32)
 SIMD_LOADOP(v128_load64_zero, 64, v128, ZERO64)
+
+SIMD_STOREOP(v128_store, 128, v128, CP_V128)
