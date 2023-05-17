@@ -60,9 +60,7 @@ INSN_IMPL(select_t)
         LOAD_PC;
         READ_LEB_U32(vec_count);
         CHECK(vec_count == 1);
-        uint8_t u8;
-        ret = read_u8(&p, ep, &u8);
-        CHECK_RET(ret);
+        READ_U8(u8);
         enum valtype t = u8;
         CHECK(is_valtype(t));
         POP_VAL(TYPE_i32, cond);
@@ -503,9 +501,7 @@ INSN_IMPL(ref_null)
 {
         int ret;
         LOAD_PC;
-        uint8_t u8;
-        ret = read_u8(&p, ep, &u8);
-        CHECK_RET(ret);
+        READ_U8(u8);
         enum valtype type = u8;
         CHECK(is_reftype(type));
         struct val val_null;

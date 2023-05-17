@@ -126,3 +126,5 @@
 #define READ_LEB_I64(VAR)                                                     \
         READ_IMM(uint64_t, VAR, read_leb_i64(&p, ep, &VAR),                   \
                  read_leb_i64_nocheck(&p))
+
+#define READ_U8(VAR) READ_IMM(uint8_t, VAR, read_u8(&p, ep, &VAR), *p++)
