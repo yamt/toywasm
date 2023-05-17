@@ -20,10 +20,10 @@ INSTRUCTION(0x08, "v128.load16_splat", v128_load16_splat, 0)
 INSTRUCTION(0x09, "v128.load32_splat", v128_load32_splat, 0)
 INSTRUCTION(0x0a, "v128.load64_splat", v128_load64_splat, 0)
 
-#if 0
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#store */
 INSTRUCTION(0x0b, "v128.store", v128_store, 0)
 
+#if 0
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#constant */
 INSTRUCTION(0x0c, "v128.const", v128_const, 0)
 
