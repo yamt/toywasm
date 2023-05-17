@@ -293,6 +293,7 @@ INSTRUCTION(0xdf, "i64x2.extmul_high_i32x4_u", i64x2_extmul_high_i32x4_u, 0)
 INSTRUCTION(0x82, "i16x8.q15mulr_sat_s", i16x8_q15mulr_sat_s, 0)
 
 INSTRUCTION(0x53, "v128.any_true", v128_any_true, 0)
+#endif
 
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#load-lane */
 INSTRUCTION(0x54, "v128.load8_lane", v128_load8_lane, 0)
@@ -300,6 +301,7 @@ INSTRUCTION(0x55, "v128.load16_lane", v128_load16_lane, 0)
 INSTRUCTION(0x56, "v128.load32_lane", v128_load32_lane, 0)
 INSTRUCTION(0x57, "v128.load64_lane", v128_load64_lane, 0)
 
+#if 0
 INSTRUCTION(0x58, "v128.store8_lane", v128_store8_lane, 0)
 INSTRUCTION(0x59, "v128.store16_lane", v128_store16_lane, 0)
 INSTRUCTION(0x5a, "v128.store32_lane", v128_store32_lane, 0)
