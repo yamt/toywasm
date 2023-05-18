@@ -120,6 +120,26 @@ fail:                                                                         \
                 INSN_FAIL;                                                    \
         }
 
+#define SIMD_REPLACEOP_LANE(NAME, I_OR_F, STACK, LS, NL, CP)                  \
+        INSN_IMPL(NAME)                                                       \
+        {                                                                     \
+                int ret;                                                      \
+                LOAD_PC;                                                      \
+                READ_LANEIDX##NL(lane);                                       \
+                POP_VAL(TYPE_##I_OR_F##STACK, x);                             \
+                POP_VAL(TYPE_v128, v);                                        \
+                if (EXECUTING) {                                              \
+                        uint##LS##_t le;                                      \
+                        le##LS##_encode(&le, val_x.u.i##STACK);               \
+                        CP(&LANEPTR##LS(&val_v)[lane], &le);                  \
+                }                                                             \
+                PUSH_VAL(TYPE_v128, v);                                       \
+                SAVE_PC;                                                      \
+                INSN_SUCCESS;                                                 \
+fail:                                                                         \
+                INSN_FAIL;                                                    \
+        }
+
 #define SIMD_CONSTOP(NAME)                                                    \
         INSN_IMPL(NAME)                                                       \
         {                                                                     \
@@ -242,3 +262,10 @@ SIMD_EXTRACTOP_LANE(i32x4_extract_lane, noop, i, 32, 32, 4, COPYBITS32)
 SIMD_EXTRACTOP_LANE(i64x2_extract_lane, noop, i, 64, 64, 2, COPYBITS64)
 SIMD_EXTRACTOP_LANE(f32x4_extract_lane, noop, f, 32, 32, 4, COPYBITS32)
 SIMD_EXTRACTOP_LANE(f64x2_extract_lane, noop, f, 64, 64, 2, COPYBITS64)
+
+SIMD_REPLACEOP_LANE(i8x16_replace_lane, i, 32, 8, 16, COPYBITS8)
+SIMD_REPLACEOP_LANE(i16x8_replace_lane, i, 32, 16, 8, COPYBITS16)
+SIMD_REPLACEOP_LANE(i32x4_replace_lane, i, 32, 32, 4, COPYBITS32)
+SIMD_REPLACEOP_LANE(i64x2_replace_lane, i, 64, 64, 2, COPYBITS64)
+SIMD_REPLACEOP_LANE(f32x4_replace_lane, f, 32, 32, 4, COPYBITS32)
+SIMD_REPLACEOP_LANE(f64x2_replace_lane, f, 64, 64, 2, COPYBITS64)
