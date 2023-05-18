@@ -40,28 +40,40 @@ INSTRUCTION(0x11, "i32x4.splat", i32x4_splat, 0)
 INSTRUCTION(0x12, "i64x2.splat", i64x2_splat, 0)
 INSTRUCTION(0x13, "f32x4.splat", f32x4_splat, 0)
 INSTRUCTION(0x14, "f64x2.splat", f64x2_splat, 0)
+#endif
 
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#extract-lane-as-a-scalar */
 INSTRUCTION(0x15, "i8x16.extract_lane_s", i8x16_extract_lane_s, 0)
 INSTRUCTION(0x16, "i8x16.extract_lane_u", i8x16_extract_lane_u, 0)
 
+#if 0
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#replace-lane-value */
 INSTRUCTION(0x17, "i8x16.replace_lane", i8x16_replace_lane, 0)
+#endif
 
 INSTRUCTION(0x18, "i16x8.extract_lane_s", i16x8_extract_lane_s, 0)
 INSTRUCTION(0x19, "i16x8.extract_lane_u", i16x8_extract_lane_u, 0)
+#if 0
 INSTRUCTION(0x1a, "i16x8.replace_lane", i16x8_replace_lane, 0)
+#endif
 
 INSTRUCTION(0x1b, "i32x4.extract_lane", i32x4_extract_lane, 0)
+#if 0
 INSTRUCTION(0x1c, "i32x4.replace_lane", i32x4_replace_lane, 0)
+#endif
 
 INSTRUCTION(0x1d, "i64x2.extract_lane", i64x2_extract_lane, 0)
+#if 0
 INSTRUCTION(0x1e, "i64x2.replace_lane", i64x2_replace_lane, 0)
+#endif
 
 INSTRUCTION(0x1f, "f32x4.extract_lane", f32x4_extract_lane, 0)
+#if 0
 INSTRUCTION(0x20, "f32x4.replace_lane", f32x4_replace_lane, 0)
+#endif
 
 INSTRUCTION(0x21, "f64x2.extract_lane", f64x2_extract_lane, 0)
+#if 0
 INSTRUCTION(0x22, "f64x2.replace_lane", f64x2_replace_lane, 0)
 
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#comparisons */

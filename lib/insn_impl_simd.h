@@ -99,6 +99,27 @@ fail:                                                                         \
                 INSN_FAIL;                                                    \
         }
 
+#define SIMD_EXTRACTOP_LANE(NAME, SIGN, I_OR_F, STACK, LS, NL, CP)            \
+        INSN_IMPL(NAME)                                                       \
+        {                                                                     \
+                int ret;                                                      \
+                LOAD_PC;                                                      \
+                READ_LANEIDX##NL(lane);                                       \
+                POP_VAL(TYPE_v128, v);                                        \
+                struct val val_c;                                             \
+                if (EXECUTING) {                                              \
+                        uint##LS##_t le;                                      \
+                        CP(&le, &LANEPTR##LS(&val_v)[lane]);                  \
+                        val_c.u.i##STACK =                                    \
+                                EXTEND_##SIGN(LS, le##LS##_decode(&le));      \
+                }                                                             \
+                PUSH_VAL(TYPE_##I_OR_F##STACK, c);                            \
+                SAVE_PC;                                                      \
+                INSN_SUCCESS;                                                 \
+fail:                                                                         \
+                INSN_FAIL;                                                    \
+        }
+
 #define SIMD_CONSTOP(NAME)                                                    \
         INSN_IMPL(NAME)                                                       \
         {                                                                     \
@@ -129,6 +150,7 @@ fail:                                                                         \
 
 #define EXTEND_s(B, S) (int##B##_t)(S)
 #define EXTEND_u(B, S) (uint##B##_t)(S)
+#define EXTEND_noop(B, S) (S)
 
 #define EXTEND1(S_OR_U, BDST, BSRC, a, b, I)                                  \
         le##BDST##_encode(                                                    \
@@ -211,3 +233,12 @@ SIMD_STOREOP_LANE(v128_store8_lane, 8, 8, 16, v128, COPYBITS8)
 SIMD_STOREOP_LANE(v128_store16_lane, 16, 16, 8, v128, COPYBITS16)
 SIMD_STOREOP_LANE(v128_store32_lane, 32, 32, 4, v128, COPYBITS32)
 SIMD_STOREOP_LANE(v128_store64_lane, 64, 64, 2, v128, COPYBITS64)
+
+SIMD_EXTRACTOP_LANE(i8x16_extract_lane_s, s, i, 32, 8, 16, COPYBITS8)
+SIMD_EXTRACTOP_LANE(i8x16_extract_lane_u, u, i, 32, 8, 16, COPYBITS8)
+SIMD_EXTRACTOP_LANE(i16x8_extract_lane_s, s, i, 32, 16, 8, COPYBITS16)
+SIMD_EXTRACTOP_LANE(i16x8_extract_lane_u, u, i, 32, 16, 8, COPYBITS16)
+SIMD_EXTRACTOP_LANE(i32x4_extract_lane, noop, i, 32, 32, 4, COPYBITS32)
+SIMD_EXTRACTOP_LANE(i64x2_extract_lane, noop, i, 64, 64, 2, COPYBITS64)
+SIMD_EXTRACTOP_LANE(f32x4_extract_lane, noop, f, 32, 32, 4, COPYBITS32)
+SIMD_EXTRACTOP_LANE(f64x2_extract_lane, noop, f, 64, 64, 2, COPYBITS64)
