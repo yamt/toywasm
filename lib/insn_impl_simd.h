@@ -161,6 +161,59 @@ fail:                                                                         \
                 INSN_FAIL;                                                    \
         }
 
+#define SIMD_UNARYOP(NAME, OP)                                                \
+        INSN_IMPL(NAME)                                                       \
+        {                                                                     \
+                int ret;                                                      \
+                LOAD_PC;                                                      \
+                POP_VAL(TYPE_v128, a);                                        \
+                struct val val_c;                                             \
+                if (EXECUTING) {                                              \
+                        OP(&val_c, &val_a);                                   \
+                }                                                             \
+                PUSH_VAL(TYPE_v128, c);                                       \
+                SAVE_PC;                                                      \
+                INSN_SUCCESS;                                                 \
+fail:                                                                         \
+                INSN_FAIL;                                                    \
+        }
+
+#define SIMD_BINOP(NAME, OP)                                                  \
+        INSN_IMPL(NAME)                                                       \
+        {                                                                     \
+                int ret;                                                      \
+                LOAD_PC;                                                      \
+                POP_VAL(TYPE_v128, b);                                        \
+                POP_VAL(TYPE_v128, a);                                        \
+                struct val val_c;                                             \
+                if (EXECUTING) {                                              \
+                        OP(&val_c, &val_a, &val_b);                           \
+                }                                                             \
+                PUSH_VAL(TYPE_v128, c);                                       \
+                SAVE_PC;                                                      \
+                INSN_SUCCESS;                                                 \
+fail:                                                                         \
+                INSN_FAIL;                                                    \
+        }
+
+#define SIMD_SHIFTOP(NAME, OP)                                                \
+        INSN_IMPL(NAME)                                                       \
+        {                                                                     \
+                int ret;                                                      \
+                LOAD_PC;                                                      \
+                POP_VAL(TYPE_i32, b);                                         \
+                POP_VAL(TYPE_v128, a);                                        \
+                struct val val_c;                                             \
+                if (EXECUTING) {                                              \
+                        OP(&val_c, &val_a, &val_b);                           \
+                }                                                             \
+                PUSH_VAL(TYPE_v128, c);                                       \
+                SAVE_PC;                                                      \
+                INSN_SUCCESS;                                                 \
+fail:                                                                         \
+                INSN_FAIL;                                                    \
+        }
+
 #define COPYBITS(a, b, n) memcpy(a, b, n / 8)
 #define COPYBITS8(a, b) COPYBITS(a, b, 8)
 #define COPYBITS16(a, b) COPYBITS(a, b, 16)
@@ -172,46 +225,53 @@ fail:                                                                         \
 #define EXTEND_u(B, S) (uint##B##_t)(S)
 #define EXTEND_noop(B, S) (S)
 
-#define EXTEND1(S_OR_U, BDST, BSRC, a, b, I)                                  \
+#define _EXTEND1(S_OR_U, BDST, BSRC, a, b, I)                                 \
         le##BDST##_encode(                                                    \
                 &(a)->i##BDST[I],                                             \
                 EXTEND_##S_OR_U(BSRC, le##BSRC##_decode(&((                   \
                                               const uint##BSRC##_t *)b)[I])))
 
-#define EXTEND1_8_s(a, b, I) EXTEND1(s, 16, 8, a, b, I)
-#define EXTEND1_8_u(a, b, I) EXTEND1(u, 16, 8, a, b, I)
-#define EXTEND1_16_s(a, b, I) EXTEND1(s, 32, 16, a, b, I)
-#define EXTEND1_16_u(a, b, I) EXTEND1(u, 32, 16, a, b, I)
-#define EXTEND1_32_s(a, b, I) EXTEND1(s, 64, 32, a, b, I)
-#define EXTEND1_32_u(a, b, I) EXTEND1(u, 64, 32, a, b, I)
+#define EXTEND1(S_OR_U, BDST, BSRC, a, b, I)                                  \
+        _EXTEND1(S_OR_U, BDST, BSRC, a, b, I)
 
-#define EXTEND_8x8_s(a, b) FOREACH_LANES(8, a, b, EXTEND1_8_s)
-#define EXTEND_8x8_u(a, b) FOREACH_LANES(8, a, b, EXTEND1_8_u)
-#define EXTEND_16x4_s(a, b) FOREACH_LANES(4, a, b, EXTEND1_16_s)
-#define EXTEND_16x4_u(a, b) FOREACH_LANES(4, a, b, EXTEND1_16_u)
-#define EXTEND_32x2_s(a, b) FOREACH_LANES(2, a, b, EXTEND1_32_s)
-#define EXTEND_32x2_u(a, b) FOREACH_LANES(2, a, b, EXTEND1_32_u)
+#define DBL8 16
+#define DBL16 32
+#define DBL32 64
+
+#define HALF16 8
+#define HALF32 16
+#define HALF64 32
+
+#define EXTEND1_s(LS, a, b, I) EXTEND1(s, LS, HALF##LS, a, b, I)
+#define EXTEND1_u(LS, a, b, I) EXTEND1(u, LS, HALF##LS, a, b, I)
+
+#define EXTEND_8x8_s(a, b) FOREACH_LANES(16, a, b, EXTEND1_s)
+#define EXTEND_8x8_u(a, b) FOREACH_LANES(16, a, b, EXTEND1_u)
+#define EXTEND_16x4_s(a, b) FOREACH_LANES(32, a, b, EXTEND1_s)
+#define EXTEND_16x4_u(a, b) FOREACH_LANES(32, a, b, EXTEND1_u)
+#define EXTEND_32x2_s(a, b) FOREACH_LANES(64, a, b, EXTEND1_s)
+#define EXTEND_32x2_u(a, b) FOREACH_LANES(64, a, b, EXTEND1_u)
 
 #define SPLAT1(LS, D, S, I) le##LS##_encode(&(D)->i##LS[I], S)
 
-#define SPLAT1_8(D, S, I) SPLAT1(8, D, S, I)
-#define SPLAT1_16(D, S, I) SPLAT1(16, D, S, I)
-#define SPLAT1_32(D, S, I) SPLAT1(32, D, S, I)
-#define SPLAT1_64(D, S, I) SPLAT1(64, D, S, I)
+#define SPLAT_8(D, S) FOREACH_LANES(8, D, *(const uint8_t *)S, SPLAT1)
+#define SPLAT_16(D, S) FOREACH_LANES(16, D, *(const uint16_t *)S, SPLAT1)
+#define SPLAT_32(D, S) FOREACH_LANES(32, D, *(const uint32_t *)S, SPLAT1)
+#define SPLAT_64(D, S) FOREACH_LANES(64, D, *(const uint64_t *)S, SPLAT1)
 
-#define SPLAT_8(D, S) FOREACH_LANES(128 / 8, D, *(const uint8_t *)S, SPLAT1_8)
-#define SPLAT_16(D, S)                                                        \
-        FOREACH_LANES(128 / 16, D, *(const uint16_t *)S, SPLAT1_16)
-#define SPLAT_32(D, S)                                                        \
-        FOREACH_LANES(128 / 32, D, *(const uint32_t *)S, SPLAT1_32)
-#define SPLAT_64(D, S)                                                        \
-        FOREACH_LANES(128 / 64, D, *(const uint64_t *)S, SPLAT1_64)
-
-#define FOREACH_LANES(NL, D, S, OP)                                           \
+#define FOREACH_LANES(LS, D, S, OP)                                           \
         do {                                                                  \
                 unsigned int _i;                                              \
-                for (_i = 0; _i < NL; _i++) {                                 \
-                        OP(D, S, _i);                                         \
+                for (_i = 0; _i < 128 / LS; _i++) {                           \
+                        OP(LS, D, S, _i);                                     \
+                }                                                             \
+        } while (0)
+
+#define FOREACH_LANES3(LS, D, S, x, OP)                                       \
+        do {                                                                  \
+                unsigned int _i;                                              \
+                for (_i = 0; _i < 128 / LS; _i++) {                           \
+                        OP(LS, D, S, x, _i);                                  \
                 }                                                             \
         } while (0)
 
@@ -269,3 +329,45 @@ SIMD_REPLACEOP_LANE(i32x4_replace_lane, i, 32, 32, 4, COPYBITS32)
 SIMD_REPLACEOP_LANE(i64x2_replace_lane, i, 64, 64, 2, COPYBITS64)
 SIMD_REPLACEOP_LANE(f32x4_replace_lane, f, 32, 32, 4, COPYBITS32)
 SIMD_REPLACEOP_LANE(f64x2_replace_lane, f, 64, 64, 2, COPYBITS64)
+
+#define MIN(a, b) ((a > b) ? b : a)
+
+#define SHL1(LS, a, b, c, I)                                                  \
+        LANEPTR##LS(a)[I] =                                                   \
+                (uint##LS##_t)(LANEPTR##LS(b)[I] << MIN((c)->u.i32, LS))
+#define SHR_s1(LS, a, b, c, I)                                                \
+        LANEPTR##LS(a)[I] = (uint##LS##_t)((int##LS##_t)LANEPTR##LS(b)[I] >>  \
+                                           MIN((c)->u.i32, LS))
+#define SHR_u1(LS, a, b, c, I)                                                \
+        LANEPTR##LS(a)[I] = (LANEPTR##LS(b)[I] >> MIN((c)->u.i32, LS))
+
+#define SHL_8(a, b, c) FOREACH_LANES3(8, a, b, c, SHL1)
+#define SHL_16(a, b, c) FOREACH_LANES3(16, a, b, c, SHL1)
+#define SHL_32(a, b, c) FOREACH_LANES3(32, a, b, c, SHL1)
+#define SHL_64(a, b, c) FOREACH_LANES3(64, a, b, c, SHL1)
+
+#define SHR_s_8(a, b, c) FOREACH_LANES3(8, a, b, c, SHR_s1)
+#define SHR_s_16(a, b, c) FOREACH_LANES3(16, a, b, c, SHR_s1)
+#define SHR_s_32(a, b, c) FOREACH_LANES3(32, a, b, c, SHR_s1)
+#define SHR_s_64(a, b, c) FOREACH_LANES3(64, a, b, c, SHR_s1)
+
+#define SHR_u_8(a, b, c) FOREACH_LANES3(8, a, b, c, SHR_u1)
+#define SHR_u_16(a, b, c) FOREACH_LANES3(16, a, b, c, SHR_u1)
+#define SHR_u_32(a, b, c) FOREACH_LANES3(32, a, b, c, SHR_u1)
+#define SHR_u_64(a, b, c) FOREACH_LANES3(64, a, b, c, SHR_u1)
+
+SIMD_SHIFTOP(i8x16_shl, SHL_8)
+SIMD_SHIFTOP(i8x16_shr_s, SHR_s_8)
+SIMD_SHIFTOP(i8x16_shr_u, SHR_u_8)
+
+SIMD_SHIFTOP(i16x8_shl, SHL_16)
+SIMD_SHIFTOP(i16x8_shr_s, SHR_s_16)
+SIMD_SHIFTOP(i16x8_shr_u, SHR_u_16)
+
+SIMD_SHIFTOP(i32x4_shl, SHL_32)
+SIMD_SHIFTOP(i32x4_shr_s, SHR_s_32)
+SIMD_SHIFTOP(i32x4_shr_u, SHR_u_32)
+
+SIMD_SHIFTOP(i64x2_shl, SHL_64)
+SIMD_SHIFTOP(i64x2_shr_s, SHR_s_64)
+SIMD_SHIFTOP(i64x2_shr_u, SHR_u_64)
