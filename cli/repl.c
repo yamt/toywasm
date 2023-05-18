@@ -21,6 +21,7 @@
 #include <string.h>
 
 #include "context.h"
+#include "endian.h"
 #include "fileio.h"
 #include "instance.h"
 #include "load_context.h"
@@ -598,6 +599,24 @@ fail:
 }
 
 int
+parse_v128(const char *s, struct val *result)
+{
+        uint64_t upper;
+        uint64_t lower;
+        int ret;
+        if (strlen(s) != 32) {
+                return EINVAL;
+        }
+        ret = sscanf(s, "%016" SCNx64 "%016" SCNx64, &upper, &lower);
+        if (ret != 2) {
+                return EINVAL;
+        }
+        le64_encode(&result->u.v128.i64[1], upper);
+        le64_encode(&result->u.v128.i64[0], lower);
+        return 0;
+}
+
+int
 arg_conv(enum valtype type, const char *s, struct val *result)
 {
         uintmax_t u;
@@ -620,6 +639,9 @@ arg_conv(enum valtype type, const char *s, struct val *result)
                 if (ret == 0) {
                         result->u.i64 = u;
                 }
+                break;
+        case TYPE_v128:
+                ret = parse_v128(s, result);
                 break;
         case TYPE_FUNCREF:
                 ret = str_to_ptr(s, 0, &u);
@@ -677,6 +699,11 @@ repl_print_result(const struct resulttype *rt, const struct val *vals)
                         break;
                 case TYPE_f64:
                         nbio_printf("%s%" PRIu64 ":f64", sep, val->u.i64);
+                        break;
+                case TYPE_v128:
+                        nbio_printf("%s%016" PRIx64 "%016" PRIx64 ":v128", sep,
+                                    le64_decode(&val->u.v128.i64[1]),
+                                    le64_decode(&val->u.v128.i64[0]));
                         break;
                 case TYPE_FUNCREF:
                         if (val->u.funcref.func == NULL) {
