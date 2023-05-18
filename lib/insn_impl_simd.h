@@ -330,16 +330,14 @@ SIMD_REPLACEOP_LANE(i64x2_replace_lane, i, 64, 64, 2, COPYBITS64)
 SIMD_REPLACEOP_LANE(f32x4_replace_lane, f, 32, 32, 4, COPYBITS32)
 SIMD_REPLACEOP_LANE(f64x2_replace_lane, f, 64, 64, 2, COPYBITS64)
 
-#define MIN(a, b) ((a > b) ? b : a)
-
 #define SHL1(LS, a, b, c, I)                                                  \
         LANEPTR##LS(a)[I] =                                                   \
-                (uint##LS##_t)(LANEPTR##LS(b)[I] << MIN((c)->u.i32, LS))
+                (uint##LS##_t)(LANEPTR##LS(b)[I] << ((c)->u.i32 % LS))
 #define SHR_s1(LS, a, b, c, I)                                                \
         LANEPTR##LS(a)[I] = (uint##LS##_t)((int##LS##_t)LANEPTR##LS(b)[I] >>  \
-                                           MIN((c)->u.i32, LS))
+                                           ((c)->u.i32 % LS))
 #define SHR_u1(LS, a, b, c, I)                                                \
-        LANEPTR##LS(a)[I] = (LANEPTR##LS(b)[I] >> MIN((c)->u.i32, LS))
+        LANEPTR##LS(a)[I] = (LANEPTR##LS(b)[I] >> ((c)->u.i32 % LS))
 
 #define SHL_8(a, b, c) FOREACH_LANES3(8, a, b, c, SHL1)
 #define SHL_16(a, b, c) FOREACH_LANES3(16, a, b, c, SHL1)
