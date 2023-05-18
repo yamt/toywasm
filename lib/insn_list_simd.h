@@ -131,9 +131,11 @@ INSTRUCTION(0x64, "i8x16.bitmask", i8x16_bitmask, 0)
 INSTRUCTION(0x65, "i8x16.narrow_i16x8_s", i8x16_narrow_i16x8_s, 0)
 INSTRUCTION(0x66, "i8x16.narrow_i16x8_u", i8x16_narrow_i16x8_u, 0)
 
+#endif
 INSTRUCTION(0x6b, "i8x16.shl", i8x16_shl, 0)
 INSTRUCTION(0x6c, "i8x16.shr_s", i8x16_shr_s, 0)
 INSTRUCTION(0x6d, "i8x16.shr_u", i8x16_shr_u, 0)
+#if 0
 INSTRUCTION(0x6e, "i8x16.add", i8x16_add, 0)
 INSTRUCTION(0x6f, "i8x16.add_sat_s", i8x16_add_sat_s, 0)
 INSTRUCTION(0x70, "i8x16.add_sat_u", i8x16_add_sat_u, 0)
@@ -162,9 +164,11 @@ INSTRUCTION(0x88, "i16x8.extend_high_i8x16_s", i16x8_extend_high_i8x16_s, 0)
 INSTRUCTION(0x89, "i16x8.extend_low_i8x16_u", i16x8_extend_low_i8x16_u, 0)
 INSTRUCTION(0x8a, "i16x8.extend_high_i8x16_u", i16x8_extend_high_i8x16_u, 0)
 
+#endif
 INSTRUCTION(0x8b, "i16x8.shl", i16x8_shl, 0)
 INSTRUCTION(0x8c, "i16x8.shr_s", i16x8_shr_s, 0)
 INSTRUCTION(0x8d, "i16x8.shr_u", i16x8_shr_u, 0)
+#if 0
 INSTRUCTION(0x8e, "i16x8.add", i16x8_add, 0)
 INSTRUCTION(0x8f, "i16x8.add_sat_s", i16x8_add_sat_s, 0)
 INSTRUCTION(0x90, "i16x8.add_sat_u", i16x8_add_sat_u, 0)
@@ -190,9 +194,11 @@ INSTRUCTION(0xa8, "i32x4.extend_high_i16x8_s", i32x4_extend_high_i16x8_s, 0)
 INSTRUCTION(0xa9, "i32x4.extend_low_i16x8_u", i32x4_extend_low_i16x8_u, 0)
 INSTRUCTION(0xaa, "i32x4.extend_high_i16x8_u", i32x4_extend_high_i16x8_u, 0)
 
+#endif
 INSTRUCTION(0xab, "i32x4.shl", i32x4_shl, 0)
 INSTRUCTION(0xac, "i32x4.shr_s", i32x4_shr_s, 0)
 INSTRUCTION(0xad, "i32x4.shr_u", i32x4_shr_u, 0)
+#if 0
 INSTRUCTION(0xae, "i32x4.add", i32x4_add, 0)
 
 INSTRUCTION(0xb1, "i32x4.sub", i32x4_sub, 0)
@@ -217,9 +223,11 @@ INSTRUCTION(0xc8, "i64x2.extend_high_i32x4_s", i64x2_extend_high_i32x4_s, 0)
 INSTRUCTION(0xc9, "i64x2.extend_low_i32x4_u", i64x2_extend_low_i32x4_u, 0)
 INSTRUCTION(0xca, "i64x2.extend_high_i32x4_u", i64x2_extend_high_i32x4_u, 0)
 
+#endif
 INSTRUCTION(0xcb, "i64x2.shl", i64x2_shl, 0)
 INSTRUCTION(0xcc, "i64x2.shr_s", i64x2_shr_s, 0)
 INSTRUCTION(0xcd, "i64x2.shr_u", i64x2_shr_u, 0)
+#if 0
 INSTRUCTION(0xce, "i64x2.add", i64x2_add, 0)
 
 INSTRUCTION(0xd1, "i64x2.sub", i64x2_sub, 0)
