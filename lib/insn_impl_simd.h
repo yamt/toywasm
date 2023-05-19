@@ -476,3 +476,18 @@ SIMD_BOOLOP(i8x16_bitmask, 0, BITMASK_8x16)
 SIMD_BOOLOP(i16x8_bitmask, 0, BITMASK_16x8)
 SIMD_BOOLOP(i32x4_bitmask, 0, BITMASK_32x4)
 SIMD_BOOLOP(i64x2_bitmask, 0, BITMASK_64x2)
+
+#define LANE_OP3(LS, a, b, c, I, OP)                                          \
+        LANEPTR##LS(a)[I] = OP(LS, LANEPTR##LS(b)[I], LANEPTR##LS(c)[I])
+
+#define ADD1(LS, a, b, c, I) LANE_OP3(LS, a, b, c, I, ADD)
+
+#define ADD_8x16(a, b, c) FOREACH_LANES3(8, a, b, c, ADD1)
+#define ADD_16x8(a, b, c) FOREACH_LANES3(16, a, b, c, ADD1)
+#define ADD_32x4(a, b, c) FOREACH_LANES3(32, a, b, c, ADD1)
+#define ADD_64x2(a, b, c) FOREACH_LANES3(64, a, b, c, ADD1)
+
+SIMD_OP2(i8x16_add, ADD_8x16)
+SIMD_OP2(i16x8_add, ADD_16x8)
+SIMD_OP2(i32x4_add, ADD_32x4)
+SIMD_OP2(i64x2_add, ADD_64x2)
