@@ -7,7 +7,7 @@ WASM3_DIR=.wasm3
 fetch_wasm3()
 {
     REPO=https://github.com/yamt/wasm3
-    REF=6d7abdcda765cb19d507ebcf2a1069d69d4199fc
+    REF=cf0d19c6d687b702667c105c6036cd4d8aa18678
     mkdir "${WASM3_DIR}"
     git -C "${WASM3_DIR}" init
     git -C "${WASM3_DIR}" fetch --depth 1 ${REPO} ${REF}
