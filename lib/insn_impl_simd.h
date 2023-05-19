@@ -161,7 +161,26 @@ fail:                                                                         \
                 INSN_FAIL;                                                    \
         }
 
-#define SIMD_UNARYOP(NAME, OP)                                                \
+#define SIMD_BOOLOP(NAME, INIT, OP)                                           \
+        INSN_IMPL(NAME)                                                       \
+        {                                                                     \
+                int ret;                                                      \
+                LOAD_PC;                                                      \
+                POP_VAL(TYPE_v128, a);                                        \
+                struct val val_result;                                        \
+                if (EXECUTING) {                                              \
+                        uint32_t r = INIT;                                    \
+                        OP(r, &val_a);                                        \
+                        val_result.u.i32 = r;                                 \
+                }                                                             \
+                PUSH_VAL(TYPE_i32, result);                                   \
+                SAVE_PC;                                                      \
+                INSN_SUCCESS;                                                 \
+fail:                                                                         \
+                INSN_FAIL;                                                    \
+        }
+
+#define SIMD_OP1(NAME, OP)                                                    \
         INSN_IMPL(NAME)                                                       \
         {                                                                     \
                 int ret;                                                      \
@@ -178,7 +197,7 @@ fail:                                                                         \
                 INSN_FAIL;                                                    \
         }
 
-#define SIMD_BINOP(NAME, OP)                                                  \
+#define SIMD_OP2(NAME, OP)                                                    \
         INSN_IMPL(NAME)                                                       \
         {                                                                     \
                 int ret;                                                      \
@@ -190,6 +209,25 @@ fail:                                                                         \
                         OP(&val_c, &val_a, &val_b);                           \
                 }                                                             \
                 PUSH_VAL(TYPE_v128, c);                                       \
+                SAVE_PC;                                                      \
+                INSN_SUCCESS;                                                 \
+fail:                                                                         \
+                INSN_FAIL;                                                    \
+        }
+
+#define SIMD_OP3(NAME, OP)                                                    \
+        INSN_IMPL(NAME)                                                       \
+        {                                                                     \
+                int ret;                                                      \
+                LOAD_PC;                                                      \
+                POP_VAL(TYPE_v128, c);                                        \
+                POP_VAL(TYPE_v128, b);                                        \
+                POP_VAL(TYPE_v128, a);                                        \
+                struct val val_r;                                             \
+                if (EXECUTING) {                                              \
+                        OP(&val_r, &val_a, &val_b, &val_c);                   \
+                }                                                             \
+                PUSH_VAL(TYPE_v128, r);                                       \
                 SAVE_PC;                                                      \
                 INSN_SUCCESS;                                                 \
 fail:                                                                         \
@@ -369,3 +407,72 @@ SIMD_SHIFTOP(i32x4_shr_u, SHR_u_32)
 SIMD_SHIFTOP(i64x2_shl, SHL_64)
 SIMD_SHIFTOP(i64x2_shr_s, SHR_s_64)
 SIMD_SHIFTOP(i64x2_shr_u, SHR_u_64)
+
+#define V128_OP1(a, b, OP)                                                    \
+        do {                                                                  \
+                (a)->u.v128.i64[1] = OP(64, (b)->u.v128.i64[1]);              \
+                (a)->u.v128.i64[0] = OP(64, (b)->u.v128.i64[0]);              \
+        } while (0)
+
+#define V128_OP2(a, b, c, OP)                                                 \
+        do {                                                                  \
+                (a)->u.v128.i64[1] =                                          \
+                        OP(64, (b)->u.v128.i64[1], (c)->u.v128.i64[1]);       \
+                (a)->u.v128.i64[0] =                                          \
+                        OP(64, (b)->u.v128.i64[0], (c)->u.v128.i64[0]);       \
+        } while (0)
+
+#define V128_OP3(a, b, c, d, OP)                                              \
+        do {                                                                  \
+                (a)->u.v128.i64[1] =                                          \
+                        OP(64, (b)->u.v128.i64[1], (c)->u.v128.i64[1],        \
+                           (d)->u.v128.i64[1]);                               \
+                (a)->u.v128.i64[0] =                                          \
+                        OP(64, (b)->u.v128.i64[0], (c)->u.v128.i64[0],        \
+                           (d)->u.v128.i64[0]);                               \
+        } while (0)
+
+#define V128_NOT(a, b) V128_OP1(a, b, NOT)
+#define V128_AND(a, b, c) V128_OP2(a, b, c, AND)
+#define V128_AND(a, b, c) V128_OP2(a, b, c, AND)
+#define V128_OR(a, b, c) V128_OP2(a, b, c, OR)
+#define V128_XOR(a, b, c) V128_OP2(a, b, c, XOR)
+#define V128_ANDNOT(a, b, c) V128_OP2(a, b, c, ANDNOT)
+#define V128_BITSELECT(a, b, c, d) V128_OP3(a, b, c, d, BITSELECT)
+
+SIMD_OP1(v128_not, V128_NOT)
+SIMD_OP2(v128_and, V128_AND)
+SIMD_OP2(v128_or, V128_OR)
+SIMD_OP2(v128_xor, V128_XOR)
+SIMD_OP2(v128_andnot, V128_ANDNOT)
+SIMD_OP3(v128_bitselect, V128_BITSELECT)
+
+#define V128_ANY_TRUE(r, v)                                                   \
+        r = ((v)->u.v128.i64[0] != 0 || (v)->u.v128.i64[1] != 0)
+
+SIMD_BOOLOP(v128_any_true, 0, V128_ANY_TRUE)
+
+#define ALL_TRUE(LS, a, b, I) a &= (LANEPTR##LS(b)[I] != 0)
+
+#define ALL_TRUE_8x16(r, v) FOREACH_LANES(8, r, v, ALL_TRUE)
+#define ALL_TRUE_16x8(r, v) FOREACH_LANES(16, r, v, ALL_TRUE)
+#define ALL_TRUE_32x4(r, v) FOREACH_LANES(32, r, v, ALL_TRUE)
+#define ALL_TRUE_64x2(r, v) FOREACH_LANES(64, r, v, ALL_TRUE)
+
+SIMD_BOOLOP(i8x16_all_true, 1, ALL_TRUE_8x16)
+SIMD_BOOLOP(i16x8_all_true, 1, ALL_TRUE_16x8)
+SIMD_BOOLOP(i32x4_all_true, 1, ALL_TRUE_32x4)
+SIMD_BOOLOP(i64x2_all_true, 1, ALL_TRUE_64x2)
+
+#define BITMASK(LS, a, b, I)                                                  \
+        a |= (uint32_t)((int##LS##_t)LANEPTR##LS(b)[I] < 0) << I
+
+#define BITMASK_8x16(r, v) FOREACH_LANES(8, r, v, BITMASK)
+#define BITMASK_16x8(r, v) FOREACH_LANES(16, r, v, BITMASK)
+#define BITMASK_32x4(r, v) FOREACH_LANES(32, r, v, BITMASK)
+#define BITMASK_64x2(r, v) FOREACH_LANES(64, r, v, BITMASK)
+
+SIMD_BOOLOP(i8x16_bitmask, 0, BITMASK_8x16)
+SIMD_BOOLOP(i16x8_bitmask, 0, BITMASK_16x8)
+SIMD_BOOLOP(i32x4_bitmask, 0, BITMASK_32x4)
+SIMD_BOOLOP(i64x2_bitmask, 0, BITMASK_64x2)
