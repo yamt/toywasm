@@ -38,9 +38,14 @@
 #define REM_U(N, a, b) ((a) % (b))
 #define REM_S(N, a, b) (((int##N##_t)a) % ((int##N##_t)b))
 
+#define NOT(N, a) (~(a))
+
 #define AND(N, a, b) ((a) & (b))
 #define OR(N, a, b) ((a) | (b))
 #define XOR(N, a, b) ((a) ^ (b))
+#define ANDNOT(N, a, b) AND(N, a, NOT(N, b))
+
+#define BITSELECT(N, a, b, c) OR(N, AND(N, a, c), AND(N, b, NOT(N, c)))
 
 #define XCHG(N, a, b) (b)
 

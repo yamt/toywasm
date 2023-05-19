@@ -24,7 +24,7 @@ INSTRUCTION(0x0a, "v128.load64_splat", v128_load64_splat, 0)
 INSTRUCTION(0x0b, "v128.store", v128_store, 0)
 
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#constant */
-INSTRUCTION(0x0c, "v128.const", v128_const, 0)
+INSTRUCTION(0x0c, "v128.const", v128_const, INSN_FLAG_CONST)
 
 #if 0
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#shuffling-using-immediate-indices */
@@ -113,6 +113,7 @@ INSTRUCTION(0x49, "f64x2.lt", f64x2_lt, 0)
 INSTRUCTION(0x4a, "f64x2.gt", f64x2_gt, 0)
 INSTRUCTION(0x4b, "f64x2.le", f64x2_le, 0)
 INSTRUCTION(0x4c, "f64x2.ge", f64x2_ge, 0)
+#endif
 
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#bitwise-operations */
 INSTRUCTION(0x4d, "v128.not", v128_not, 0)
@@ -122,11 +123,14 @@ INSTRUCTION(0x50, "v128.or", v128_or, 0)
 INSTRUCTION(0x51, "v128.xor", v128_xor, 0)
 INSTRUCTION(0x52, "v128.bitselect", v128_bitselect, 0)
 
+#if 0
 INSTRUCTION(0x60, "i8x16.abs", i8x16_abs, 0)
 INSTRUCTION(0x61, "i8x16.neg", i8x16_neg, 0)
+#endif
 
 INSTRUCTION(0x63, "i8x16.all_true", i8x16_all_true, 0)
 INSTRUCTION(0x64, "i8x16.bitmask", i8x16_bitmask, 0)
+#if 0
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#integer-to-integer-narrowing */
 INSTRUCTION(0x65, "i8x16.narrow_i16x8_s", i8x16_narrow_i16x8_s, 0)
 INSTRUCTION(0x66, "i8x16.narrow_i16x8_u", i8x16_narrow_i16x8_u, 0)
@@ -153,9 +157,11 @@ INSTRUCTION(0x7b, "i8x16.avgr_u", i8x16_avgr_u, 0)
 
 INSTRUCTION(0x80, "i16x8.abs", i16x8_abs, 0)
 INSTRUCTION(0x81, "i16x8.neg", i16x8_neg, 0)
+#endif
 
 INSTRUCTION(0x83, "i16x8.all_true", i16x8_all_true, 0)
 INSTRUCTION(0x84, "i16x8.bitmask", i16x8_bitmask, 0)
+#if 0
 INSTRUCTION(0x85, "i16x8.narrow_i16x8_s", i16x8_narrow_i16x8_s, 0)
 INSTRUCTION(0x86, "i16x8.narrow_i16x8_u", i16x8_narrow_i16x8_u, 0)
 
@@ -185,10 +191,12 @@ INSTRUCTION(0x9b, "i16x8.avgr_u", i16x8_avgr_u, 0)
 
 INSTRUCTION(0xa0, "i32x4.abs", i32x4_abs, 0)
 INSTRUCTION(0xa1, "i32x4.neg", i32x4_neg, 0)
+#endif
 
 INSTRUCTION(0xa3, "i32x4.all_true", i32x4_all_true, 0)
 INSTRUCTION(0xa4, "i32x4.bitmask", i32x4_bitmask, 0)
 
+#if 0
 INSTRUCTION(0xa7, "i32x4.extend_low_i16x8_s", i32x4_extend_low_i16x8_s, 0)
 INSTRUCTION(0xa8, "i32x4.extend_high_i16x8_s", i32x4_extend_high_i16x8_s, 0)
 INSTRUCTION(0xa9, "i32x4.extend_low_i16x8_u", i32x4_extend_low_i16x8_u, 0)
@@ -215,9 +223,11 @@ INSTRUCTION(0xba, "i32x4.dot_i16x8_s", i32x4_dot_i16x8_s, 0)
 
 INSTRUCTION(0xc0, "i64x2.abs", i64x2_abs, 0)
 INSTRUCTION(0xc1, "i64x2.neg", i64x2_neg, 0)
+#endif
 
 INSTRUCTION(0xc4, "i64x2.bitmask", i64x2_bitmask, 0)
 
+#if 0
 INSTRUCTION(0xc7, "i64x2.extend_low_i32x4_s", i64x2_extend_low_i32x4_s, 0)
 INSTRUCTION(0xc8, "i64x2.extend_high_i32x4_s", i64x2_extend_high_i32x4_s, 0)
 INSTRUCTION(0xc9, "i64x2.extend_low_i32x4_u", i64x2_extend_low_i32x4_u, 0)
@@ -301,9 +311,9 @@ INSTRUCTION(0xdf, "i64x2.extmul_high_i32x4_u", i64x2_extmul_high_i32x4_u, 0)
 
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#saturating-integer-q-format-rounding-multiplication */
 INSTRUCTION(0x82, "i16x8.q15mulr_sat_s", i16x8_q15mulr_sat_s, 0)
+#endif
 
 INSTRUCTION(0x53, "v128.any_true", v128_any_true, 0)
-#endif
 
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#load-lane */
 INSTRUCTION(0x54, "v128.load8_lane", v128_load8_lane, 0)
@@ -323,9 +333,11 @@ INSTRUCTION(0xd8, "i64x2.lt_s", i64x2_lt_s, 0)
 INSTRUCTION(0xd9, "i64x2.gt_s", i64x2_gt_s, 0)
 INSTRUCTION(0xda, "i64x2.le_s", i64x2_le_s, 0)
 INSTRUCTION(0xdb, "i64x2.ge_s", i64x2_ge_s, 0)
+#endif
 
 INSTRUCTION(0xc3, "i64x2.all_true", i64x2_all_true, 0)
 
+#if 0
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#integer-to-double-precision-floating-point */
 INSTRUCTION(0xfe, "f64x2.convert_low_i32x4_s", f64x2_convert_low_i32x4_s, 0)
 INSTRUCTION(0xff, "f64x2.convert_low_i32x4_u", f64x2_convert_low_i32x4_u, 0)
