@@ -529,7 +529,7 @@ SIMD_OP1(f64x2_convert_low_i32x4_u, CONVERT_LOW_64_u)
 #define NARROW_SAT_u(LS, a)                                                   \
         ((a >= UINT##LS##_MAX) ? UINT##LS##_MAX : (a <= 0) ? 0 : a)
 
-#define __NARROW_s1(LS, LSSRC, a, b, c, I)                                    \
+#define NARROW1(s, LS, LSSRC, a, b, c, I)                                     \
         do {                                                                  \
                 int##LSSRC##_t _src;                                          \
                 if (I < 128 / LSSRC) {                                        \
@@ -538,25 +538,13 @@ SIMD_OP1(f64x2_convert_low_i32x4_u, CONVERT_LOW_64_u)
                         _src = (int##LSSRC##_t)LANEPTRi##LSSRC(               \
                                 c)[I - 128 / LSSRC];                          \
                 }                                                             \
-                LANEPTRi##LS(a)[I] = (uint##LS##_t)NARROW_SAT_s(LS, _src);    \
+                LANEPTRi##LS(a)[I] = (uint##LS##_t)NARROW_SAT_##s(LS, _src);  \
         } while (0)
 
-#define __NARROW_u1(LS, LSSRC, a, b, c, I)                                    \
-        do {                                                                  \
-                int##LSSRC##_t _src;                                          \
-                if (I < 128 / LSSRC) {                                        \
-                        _src = (int##LSSRC##_t)LANEPTRi##LSSRC(b)[I];         \
-                } else {                                                      \
-                        _src = (int##LSSRC##_t)LANEPTRi##LSSRC(               \
-                                c)[I - 128 / LSSRC];                          \
-                }                                                             \
-                LANEPTRi##LS(a)[I] = NARROW_SAT_u(LS, _src);                  \
-        } while (0)
-
-#define _NARROW_s1(LS, FROM, a, b, c, I) __NARROW_s1(LS, FROM, a, b, c, I)
+#define _NARROW_s1(LS, FROM, a, b, c, I) NARROW1(s, LS, FROM, a, b, c, I)
 #define NARROW_s1(LS, a, b, c, I) _NARROW_s1(LS, DBL##LS, a, b, c, I)
 
-#define _NARROW_u1(LS, FROM, a, b, c, I) __NARROW_u1(LS, FROM, a, b, c, I)
+#define _NARROW_u1(LS, FROM, a, b, c, I) NARROW1(u, LS, FROM, a, b, c, I)
 #define NARROW_u1(LS, a, b, c, I) _NARROW_u1(LS, DBL##LS, a, b, c, I)
 
 #define NARROW_8_s(a, b, c) FOREACH_LANES3(8, a, b, c, NARROW_s1)
