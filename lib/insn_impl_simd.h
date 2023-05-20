@@ -516,3 +516,46 @@ SIMD_OP1(f32x4_convert_i32x4_s, CONVERT_32_s)
 SIMD_OP1(f32x4_convert_i32x4_u, CONVERT_32_u)
 SIMD_OP1(f64x2_convert_low_i32x4_s, CONVERT_LOW_64_s)
 SIMD_OP1(f64x2_convert_low_i32x4_u, CONVERT_LOW_64_u)
+
+#define NARROW_SAT_s(LS, a)                                                   \
+        ((a >= INT##LS##_MAX)   ? INT##LS##_MAX                               \
+         : (a <= INT##LS##_MIN) ? INT##LS##_MIN                               \
+                                : a)
+
+#define __NARROW_s1(LS, FROM, a, b, c, I)                                     \
+        do {                                                                  \
+                if (I < 128 / LS / 2) {                                       \
+                        LANEPTRi##LS(a)[I] = NARROW_SAT_s(                    \
+                                LS, (int##FROM##_t)LANEPTRi##FROM(b)[I * 2]); \
+                } else {                                                      \
+                        LANEPTRi##LS(a)[I] = NARROW_SAT_s(                    \
+                                LS, (int##FROM##_t)LANEPTRi##FROM(            \
+                                            c)[(I - 128 / LS / 2) * 2]);      \
+                }                                                             \
+        } while (0)
+
+#define __NARROW_u1(LS, FROM, a, b, c, I)                                     \
+        do {                                                                  \
+                if (I < 128 / LS / 2) {                                       \
+                        LANEPTRi##LS(a)[I] = LANEPTRi##FROM(b)[I * 2];        \
+                } else {                                                      \
+                        LANEPTRi##LS(a)[I] =                                  \
+                                LANEPTRi##FROM(c)[(I - 128 / LS / 2) * 2];    \
+                }                                                             \
+        } while (0)
+
+#define _NARROW_s1(LS, FROM, a, b, c, I) __NARROW_s1(LS, FROM, a, b, c, I)
+#define NARROW_s1(LS, a, b, c, I) _NARROW_s1(LS, DBL##LS, a, b, c, I)
+
+#define _NARROW_u1(LS, FROM, a, b, c, I) __NARROW_u1(LS, FROM, a, b, c, I)
+#define NARROW_u1(LS, a, b, c, I) _NARROW_u1(LS, DBL##LS, a, b, c, I)
+
+#define NARROW_8_s(a, b, c) FOREACH_LANES3(8, a, b, c, NARROW_s1)
+#define NARROW_8_u(a, b, c) FOREACH_LANES3(8, a, b, c, NARROW_u1)
+#define NARROW_16_s(a, b, c) FOREACH_LANES3(16, a, b, c, NARROW_s1)
+#define NARROW_16_u(a, b, c) FOREACH_LANES3(16, a, b, c, NARROW_u1)
+
+SIMD_OP2(i8x16_narrow_i16x8_s, NARROW_8_s)
+SIMD_OP2(i8x16_narrow_i16x8_u, NARROW_8_u)
+SIMD_OP2(i16x8_narrow_i16x8_s, NARROW_16_s)
+SIMD_OP2(i16x8_narrow_i16x8_u, NARROW_16_u)
