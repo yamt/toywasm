@@ -484,7 +484,7 @@ SIMD_BOOLOP(i64x2_bitmask, 0, BITMASK_64x2)
                 OP(LS, LANEPTR##I_OR_F##LS(b)[I], LANEPTR##I_OR_F##LS(c)[I])
 
 #define ADD1(LS, a, b, c, I) LANE_OP3(i, LS, a, b, c, I, ADD)
-#define FADD1(LS, a, b, c, I) LANE_FOP3(f, LS, a, b, c, I, ADD)
+#define FADD1(LS, a, b, c, I) LANE_OP3(f, LS, a, b, c, I, ADD)
 
 #define ADD_8x16(a, b, c) FOREACH_LANES3(8, a, b, c, ADD1)
 #define ADD_16x8(a, b, c) FOREACH_LANES3(16, a, b, c, ADD1)
@@ -497,8 +497,8 @@ SIMD_OP2(i8x16_add, ADD_8x16)
 SIMD_OP2(i16x8_add, ADD_16x8)
 SIMD_OP2(i32x4_add, ADD_32x4)
 SIMD_OP2(i64x2_add, ADD_64x2)
-SIMD_OP2(f32x4_add, ADD_32x4)
-SIMD_OP2(f64x2_add, ADD_64x2)
+SIMD_OP2(f32x4_add, FADD_32x4)
+SIMD_OP2(f64x2_add, FADD_64x2)
 
 #define CONVERT_s1(LS, a, b, I)                                               \
         LANEPTRf##LS(a)[I] = (int##LS##_t)LANEPTRi##LS(b)[I]
