@@ -141,7 +141,9 @@ INSTRUCTION(0x6e, "i8x16.add", i8x16_add, 0)
 #if 0
 INSTRUCTION(0x6f, "i8x16.add_sat_s", i8x16_add_sat_s, 0)
 INSTRUCTION(0x70, "i8x16.add_sat_u", i8x16_add_sat_u, 0)
+#endif
 INSTRUCTION(0x71, "i8x16.sub", i8x16_sub, 0)
+#if 0
 INSTRUCTION(0x72, "i8x16.sub_sat_s", i8x16_sub_sat_s, 0)
 INSTRUCTION(0x73, "i8x16.sub_sat_u", i8x16_sub_sat_u, 0)
 
@@ -176,7 +178,9 @@ INSTRUCTION(0x8e, "i16x8.add", i16x8_add, 0)
 #if 0
 INSTRUCTION(0x8f, "i16x8.add_sat_s", i16x8_add_sat_s, 0)
 INSTRUCTION(0x90, "i16x8.add_sat_u", i16x8_add_sat_u, 0)
+#endif
 INSTRUCTION(0x91, "i16x8.sub", i16x8_sub, 0)
+#if 0
 INSTRUCTION(0x92, "i16x8.sub_sat_s", i16x8_sub_sat_s, 0)
 INSTRUCTION(0x93, "i16x8.sub_sat_u", i16x8_sub_sat_u, 0)
 
@@ -206,9 +210,9 @@ INSTRUCTION(0xac, "i32x4.shr_s", i32x4_shr_s, 0)
 INSTRUCTION(0xad, "i32x4.shr_u", i32x4_shr_u, 0)
 INSTRUCTION(0xae, "i32x4.add", i32x4_add, 0)
 
-#if 0
 INSTRUCTION(0xb1, "i32x4.sub", i32x4_sub, 0)
 
+#if 0
 INSTRUCTION(0xb5, "i32x4.mul", i32x4_mul, 0)
 
 INSTRUCTION(0xb6, "i32x4.min_s", i32x4_min_s, 0)
@@ -237,9 +241,9 @@ INSTRUCTION(0xcc, "i64x2.shr_s", i64x2_shr_s, 0)
 INSTRUCTION(0xcd, "i64x2.shr_u", i64x2_shr_u, 0)
 INSTRUCTION(0xce, "i64x2.add", i64x2_add, 0)
 
-#if 0
 INSTRUCTION(0xd1, "i64x2.sub", i64x2_sub, 0)
 
+#if 0
 INSTRUCTION(0xd5, "i64x2.mul", i64x2_mul, 0)
 
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#integer-dot-product */
@@ -260,8 +264,8 @@ INSTRUCTION(0xe1, "f32x4.neg", f32x4_neg, 0)
 INSTRUCTION(0xe3, "f32x4.sqrt", f32x4_sqrt, 0)
 #endif
 INSTRUCTION(0xe4, "f32x4.add", f32x4_add, 0)
-#if 0
 INSTRUCTION(0xe5, "f32x4.sub", f32x4_sub, 0)
+#if 0
 INSTRUCTION(0xe6, "f32x4.mul", f32x4_mul, 0)
 INSTRUCTION(0xe7, "f32x4.div", f32x4_div, 0)
 INSTRUCTION(0xe8, "f32x4.min", f32x4_min, 0)
@@ -274,8 +278,8 @@ INSTRUCTION(0xed, "f64x2.neg", f64x2_neg, 0)
 INSTRUCTION(0xef, "f64x2.sqrt", f64x2_sqrt, 0)
 #endif
 INSTRUCTION(0xf0, "f64x2.add", f64x2_add, 0)
-#if 0
 INSTRUCTION(0xf1, "f64x2.sub", f64x2_sub, 0)
+#if 0
 INSTRUCTION(0xf2, "f64x2.mul", f64x2_mul, 0)
 INSTRUCTION(0xf3, "f64x2.div", f64x2_div, 0)
 INSTRUCTION(0xf4, "f64x2.min", f64x2_min, 0)

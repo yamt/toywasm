@@ -500,6 +500,23 @@ SIMD_OP2(i64x2_add, ADD_64x2)
 SIMD_OP2(f32x4_add, FADD_32x4)
 SIMD_OP2(f64x2_add, FADD_64x2)
 
+#define SUB1(LS, a, b, c, I) LANE_OP3(i, LS, a, b, c, I, SUB)
+#define FSUB1(LS, a, b, c, I) LANE_OP3(f, LS, a, b, c, I, SUB)
+
+#define SUB_8x16(a, b, c) FOREACH_LANES3(8, a, b, c, SUB1)
+#define SUB_16x8(a, b, c) FOREACH_LANES3(16, a, b, c, SUB1)
+#define SUB_32x4(a, b, c) FOREACH_LANES3(32, a, b, c, SUB1)
+#define SUB_64x2(a, b, c) FOREACH_LANES3(64, a, b, c, SUB1)
+#define FSUB_32x4(a, b, c) FOREACH_LANES3(32, a, b, c, FSUB1)
+#define FSUB_64x2(a, b, c) FOREACH_LANES3(64, a, b, c, FSUB1)
+
+SIMD_OP2(i8x16_sub, SUB_8x16)
+SIMD_OP2(i16x8_sub, SUB_16x8)
+SIMD_OP2(i32x4_sub, SUB_32x4)
+SIMD_OP2(i64x2_sub, SUB_64x2)
+SIMD_OP2(f32x4_sub, FSUB_32x4)
+SIMD_OP2(f64x2_sub, FSUB_64x2)
+
 #define CONVERT_s1(LS, a, b, I)                                               \
         LANEPTRf##LS(a)[I] = (int##LS##_t)LANEPTRi##LS(b)[I]
 #define CONVERT_u1(LS, a, b, I) LANEPTRf##LS(a)[I] = LANEPTRi##LS(b)[I]
