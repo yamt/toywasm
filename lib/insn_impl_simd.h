@@ -10,11 +10,13 @@
  * Note: i128x1 is just for implementation convenience
  */
 
-#define LANEPTR128(val) (&(val)->u.v128)
-#define LANEPTR64(val) (val)->u.v128.i64
-#define LANEPTR32(val) (val)->u.v128.i32
-#define LANEPTR16(val) (val)->u.v128.i16
-#define LANEPTR8(val) (val)->u.v128.i8
+#define LANEPTRi128(val) (&(val)->u.v128)
+#define LANEPTRi64(val) (val)->u.v128.i64
+#define LANEPTRi32(val) (val)->u.v128.i32
+#define LANEPTRi16(val) (val)->u.v128.i16
+#define LANEPTRi8(val) (val)->u.v128.i8
+#define LANEPTRf64(val) (val)->u.v128.f64
+#define LANEPTRf32(val) (val)->u.v128.f32
 
 #define READ_LANEIDX1(VAR) const uint8_t VAR = 0
 #define READ_LANEIDX2(VAR) READ_LANEIDX(VAR, 2)
@@ -59,7 +61,7 @@
                         if (ret != 0) {                                       \
                                 goto fail;                                    \
                         }                                                     \
-                        CP(&LANEPTR##LS(&val_c)[lane], datap);                \
+                        CP(&LANEPTRi##LS(&val_c)[lane], datap);               \
                 }                                                             \
                 PUSH_VAL(TYPE_##STACK_TYPE, c);                               \
                 SAVE_PC;                                                      \
@@ -91,7 +93,7 @@ fail:                                                                         \
                         if (ret != 0) {                                       \
                                 goto fail;                                    \
                         }                                                     \
-                        CP(datap, &LANEPTR##LS(&val_v)[lane]);                \
+                        CP(datap, &LANEPTRi##LS(&val_v)[lane]);               \
                 }                                                             \
                 SAVE_PC;                                                      \
                 INSN_SUCCESS;                                                 \
@@ -109,7 +111,7 @@ fail:                                                                         \
                 struct val val_c;                                             \
                 if (EXECUTING) {                                              \
                         uint##LS##_t le;                                      \
-                        CP(&le, &LANEPTR##LS(&val_v)[lane]);                  \
+                        CP(&le, &LANEPTRi##LS(&val_v)[lane]);                 \
                         val_c.u.i##STACK =                                    \
                                 EXTEND_##SIGN(LS, le##LS##_decode(&le));      \
                 }                                                             \
@@ -131,7 +133,7 @@ fail:                                                                         \
                 if (EXECUTING) {                                              \
                         uint##LS##_t le;                                      \
                         le##LS##_encode(&le, val_x.u.i##STACK);               \
-                        CP(&LANEPTR##LS(&val_v)[lane], &le);                  \
+                        CP(&LANEPTRi##LS(&val_v)[lane], &le);                 \
                 }                                                             \
                 PUSH_VAL(TYPE_v128, v);                                       \
                 SAVE_PC;                                                      \
@@ -369,13 +371,13 @@ SIMD_REPLACEOP_LANE(f32x4_replace_lane, f, 32, 32, 4, COPYBITS32)
 SIMD_REPLACEOP_LANE(f64x2_replace_lane, f, 64, 64, 2, COPYBITS64)
 
 #define SHL1(LS, a, b, c, I)                                                  \
-        LANEPTR##LS(a)[I] =                                                   \
-                (uint##LS##_t)(LANEPTR##LS(b)[I] << ((c)->u.i32 % LS))
+        LANEPTRi##LS(a)[I] =                                                  \
+                (uint##LS##_t)(LANEPTRi##LS(b)[I] << ((c)->u.i32 % LS))
 #define SHR_s1(LS, a, b, c, I)                                                \
-        LANEPTR##LS(a)[I] = (uint##LS##_t)((int##LS##_t)LANEPTR##LS(b)[I] >>  \
-                                           ((c)->u.i32 % LS))
+        LANEPTRi##LS(a)[I] = (uint##LS##_t)(                                  \
+                (int##LS##_t)LANEPTRi##LS(b)[I] >> ((c)->u.i32 % LS))
 #define SHR_u1(LS, a, b, c, I)                                                \
-        LANEPTR##LS(a)[I] = (LANEPTR##LS(b)[I] >> ((c)->u.i32 % LS))
+        LANEPTRi##LS(a)[I] = (LANEPTRi##LS(b)[I] >> ((c)->u.i32 % LS))
 
 #define SHL_8(a, b, c) FOREACH_LANES3(8, a, b, c, SHL1)
 #define SHL_16(a, b, c) FOREACH_LANES3(16, a, b, c, SHL1)
@@ -452,7 +454,7 @@ SIMD_OP3(v128_bitselect, V128_BITSELECT)
 
 SIMD_BOOLOP(v128_any_true, 0, V128_ANY_TRUE)
 
-#define ALL_TRUE(LS, a, b, I) a &= (LANEPTR##LS(b)[I] != 0)
+#define ALL_TRUE(LS, a, b, I) a &= (LANEPTRi##LS(b)[I] != 0)
 
 #define ALL_TRUE_8x16(r, v) FOREACH_LANES(8, r, v, ALL_TRUE)
 #define ALL_TRUE_16x8(r, v) FOREACH_LANES(16, r, v, ALL_TRUE)
@@ -465,7 +467,7 @@ SIMD_BOOLOP(i32x4_all_true, 1, ALL_TRUE_32x4)
 SIMD_BOOLOP(i64x2_all_true, 1, ALL_TRUE_64x2)
 
 #define BITMASK(LS, a, b, I)                                                  \
-        a |= (uint32_t)((int##LS##_t)LANEPTR##LS(b)[I] < 0) << I
+        a |= (uint32_t)((int##LS##_t)LANEPTRi##LS(b)[I] < 0) << I
 
 #define BITMASK_8x16(r, v) FOREACH_LANES(8, r, v, BITMASK)
 #define BITMASK_16x8(r, v) FOREACH_LANES(16, r, v, BITMASK)
@@ -477,17 +479,23 @@ SIMD_BOOLOP(i16x8_bitmask, 0, BITMASK_16x8)
 SIMD_BOOLOP(i32x4_bitmask, 0, BITMASK_32x4)
 SIMD_BOOLOP(i64x2_bitmask, 0, BITMASK_64x2)
 
-#define LANE_OP3(LS, a, b, c, I, OP)                                          \
-        LANEPTR##LS(a)[I] = OP(LS, LANEPTR##LS(b)[I], LANEPTR##LS(c)[I])
+#define LANE_OP3(I_OR_F, LS, a, b, c, I, OP)                                  \
+        LANEPTR##I_OR_F##LS(a)[I] =                                           \
+                OP(LS, LANEPTR##I_OR_F##LS(b)[I], LANEPTR##I_OR_F##LS(c)[I])
 
-#define ADD1(LS, a, b, c, I) LANE_OP3(LS, a, b, c, I, ADD)
+#define ADD1(LS, a, b, c, I) LANE_OP3(i, LS, a, b, c, I, ADD)
+#define FADD1(LS, a, b, c, I) LANE_FOP3(f, LS, a, b, c, I, ADD)
 
 #define ADD_8x16(a, b, c) FOREACH_LANES3(8, a, b, c, ADD1)
 #define ADD_16x8(a, b, c) FOREACH_LANES3(16, a, b, c, ADD1)
 #define ADD_32x4(a, b, c) FOREACH_LANES3(32, a, b, c, ADD1)
 #define ADD_64x2(a, b, c) FOREACH_LANES3(64, a, b, c, ADD1)
+#define FADD_32x4(a, b, c) FOREACH_LANES3(32, a, b, c, FADD1)
+#define FADD_64x2(a, b, c) FOREACH_LANES3(64, a, b, c, FADD1)
 
 SIMD_OP2(i8x16_add, ADD_8x16)
 SIMD_OP2(i16x8_add, ADD_16x8)
 SIMD_OP2(i32x4_add, ADD_32x4)
 SIMD_OP2(i64x2_add, ADD_64x2)
+SIMD_OP2(f32x4_add, ADD_32x4)
+SIMD_OP2(f64x2_add, ADD_64x2)
