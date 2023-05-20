@@ -287,10 +287,10 @@ INSTRUCTION(0xf7, "f64x2.pmax", f64x2_pmax, 0)
 
 INSTRUCTION(0xf8, "i32x4.trunc_sat_f32x4_s", i32x4_trunc_sat_f32x4_s, 0)
 INSTRUCTION(0xf9, "i32x4.trunc_sat_f32x4_u", i32x4_trunc_sat_f32x4_u, 0)
+#endif
 
 INSTRUCTION(0xfa, "f32x4.convert_i32x4_s", f32x4_convert_i32x4_s, 0)
 INSTRUCTION(0xfb, "f32x4.convert_i32x4_u", f32x4_convert_i32x4_u, 0)
-#endif
 
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#load-and-zero-pad */
 INSTRUCTION(0x5c, "v128.load32_zero", v128_load32_zero, 0)
@@ -341,11 +341,11 @@ INSTRUCTION(0xdb, "i64x2.ge_s", i64x2_ge_s, 0)
 
 INSTRUCTION(0xc3, "i64x2.all_true", i64x2_all_true, 0)
 
-#if 0
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#integer-to-double-precision-floating-point */
 INSTRUCTION(0xfe, "f64x2.convert_low_i32x4_s", f64x2_convert_low_i32x4_s, 0)
 INSTRUCTION(0xff, "f64x2.convert_low_i32x4_u", f64x2_convert_low_i32x4_u, 0)
 
+#if 0
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#double-precision-floating-point-to-integer-with-saturation */
 INSTRUCTION(0xfc, "i32x4.trunc_sat_f64x2_s_zero", i32x4_trunc_sat_f64x2_s_zero, 0)
 INSTRUCTION(0xfd, "i32x4.trunc_sat_f64x2_u_zero", i32x4_trunc_sat_f64x2_u_zero, 0)
