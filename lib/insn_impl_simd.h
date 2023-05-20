@@ -517,31 +517,40 @@ SIMD_OP1(f32x4_convert_i32x4_u, CONVERT_32_u)
 SIMD_OP1(f64x2_convert_low_i32x4_s, CONVERT_LOW_64_s)
 SIMD_OP1(f64x2_convert_low_i32x4_u, CONVERT_LOW_64_u)
 
+/*
+ * Note: for narrowing ops, the input lanes are always interpreted signed.
+ */
+
 #define NARROW_SAT_s(LS, a)                                                   \
         ((a >= INT##LS##_MAX)   ? INT##LS##_MAX                               \
          : (a <= INT##LS##_MIN) ? INT##LS##_MIN                               \
                                 : a)
 
-#define __NARROW_s1(LS, FROM, a, b, c, I)                                     \
+#define NARROW_SAT_u(LS, a)                                                   \
+        ((a >= UINT##LS##_MAX) ? UINT##LS##_MAX : (a <= 0) ? 0 : a)
+
+#define __NARROW_s1(LS, LSSRC, a, b, c, I)                                    \
         do {                                                                  \
-                if (I < 128 / LS / 2) {                                       \
-                        LANEPTRi##LS(a)[I] = NARROW_SAT_s(                    \
-                                LS, (int##FROM##_t)LANEPTRi##FROM(b)[I * 2]); \
+                int##LSSRC##_t _src;                                          \
+                if (I < 128 / LSSRC) {                                        \
+                        _src = (int##LSSRC##_t)LANEPTRi##LSSRC(b)[I];         \
                 } else {                                                      \
-                        LANEPTRi##LS(a)[I] = NARROW_SAT_s(                    \
-                                LS, (int##FROM##_t)LANEPTRi##FROM(            \
-                                            c)[(I - 128 / LS / 2) * 2]);      \
+                        _src = (int##LSSRC##_t)LANEPTRi##LSSRC(               \
+                                c)[I - 128 / LSSRC];                          \
                 }                                                             \
+                LANEPTRi##LS(a)[I] = (uint##LS##_t)NARROW_SAT_s(LS, _src);    \
         } while (0)
 
-#define __NARROW_u1(LS, FROM, a, b, c, I)                                     \
+#define __NARROW_u1(LS, LSSRC, a, b, c, I)                                    \
         do {                                                                  \
-                if (I < 128 / LS / 2) {                                       \
-                        LANEPTRi##LS(a)[I] = LANEPTRi##FROM(b)[I * 2];        \
+                int##LSSRC##_t _src;                                          \
+                if (I < 128 / LSSRC) {                                        \
+                        _src = (int##LSSRC##_t)LANEPTRi##LSSRC(b)[I];         \
                 } else {                                                      \
-                        LANEPTRi##LS(a)[I] =                                  \
-                                LANEPTRi##FROM(c)[(I - 128 / LS / 2) * 2];    \
+                        _src = (int##LSSRC##_t)LANEPTRi##LSSRC(               \
+                                c)[I - 128 / LSSRC];                          \
                 }                                                             \
+                LANEPTRi##LS(a)[I] = NARROW_SAT_u(LS, _src);                  \
         } while (0)
 
 #define _NARROW_s1(LS, FROM, a, b, c, I) __NARROW_s1(LS, FROM, a, b, c, I)
