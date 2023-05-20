@@ -557,8 +557,8 @@ SIMD_OP1(f64x2_convert_low_i32x4_u, CONVERT_LOW_64_u)
 
 SIMD_OP2(i8x16_narrow_i16x8_s, NARROW_8_s)
 SIMD_OP2(i8x16_narrow_i16x8_u, NARROW_8_u)
-SIMD_OP2(i16x8_narrow_i16x8_s, NARROW_16_s)
-SIMD_OP2(i16x8_narrow_i16x8_u, NARROW_16_u)
+SIMD_OP2(i16x8_narrow_i32x4_s, NARROW_16_s)
+SIMD_OP2(i16x8_narrow_i32x4_u, NARROW_16_u)
 
 #define DEMOTE_32(a, b)                                                       \
         LANEPTRf32(a)[0] = LANEPTRf64(b)[0];                                  \
