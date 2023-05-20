@@ -499,3 +499,20 @@ SIMD_OP2(i32x4_add, ADD_32x4)
 SIMD_OP2(i64x2_add, ADD_64x2)
 SIMD_OP2(f32x4_add, ADD_32x4)
 SIMD_OP2(f64x2_add, ADD_64x2)
+
+#define CONVERT_s1(LS, a, b, I)                                               \
+        LANEPTRf##LS(a)[I] = (int##LS##_t)LANEPTRi##LS(b)[I]
+#define CONVERT_u1(LS, a, b, I) LANEPTRf##LS(a)[I] = LANEPTRi##LS(b)[I]
+#define CONVERT_LOW_s1(LS, a, b, I)                                           \
+        LANEPTRf##LS(a)[I] = (int##LS##_t)LANEPTRi##32(b)[I * 2]
+#define CONVERT_LOW_u1(LS, a, b, I) LANEPTRf##LS(a)[I] = LANEPTRi##32(b)[I * 2]
+
+#define CONVERT_32_s(a, b) FOREACH_LANES(32, a, b, CONVERT_s1)
+#define CONVERT_32_u(a, b) FOREACH_LANES(32, a, b, CONVERT_u1)
+#define CONVERT_LOW_64_s(a, b) FOREACH_LANES(64, a, b, CONVERT_LOW_s1)
+#define CONVERT_LOW_64_u(a, b) FOREACH_LANES(64, a, b, CONVERT_LOW_u1)
+
+SIMD_OP1(f32x4_convert_i32x4_s, CONVERT_32_s)
+SIMD_OP1(f32x4_convert_i32x4_u, CONVERT_32_u)
+SIMD_OP1(f64x2_convert_low_i32x4_s, CONVERT_LOW_64_s)
+SIMD_OP1(f64x2_convert_low_i32x4_u, CONVERT_LOW_64_u)
