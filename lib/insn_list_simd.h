@@ -159,8 +159,8 @@ INSTRUCTION(0x81, "i16x8.neg", i16x8_neg, 0)
 
 INSTRUCTION(0x83, "i16x8.all_true", i16x8_all_true, 0)
 INSTRUCTION(0x84, "i16x8.bitmask", i16x8_bitmask, 0)
-INSTRUCTION(0x85, "i16x8.narrow_i16x8_s", i16x8_narrow_i16x8_s, 0)
-INSTRUCTION(0x86, "i16x8.narrow_i16x8_u", i16x8_narrow_i16x8_u, 0)
+INSTRUCTION(0x85, "i16x8.narrow_i32x4_s", i16x8_narrow_i32x4_s, 0)
+INSTRUCTION(0x86, "i16x8.narrow_i32x4_u", i16x8_narrow_i32x4_u, 0)
 
 #if 0
 INSTRUCTION(0x87, "i16x8.extend_low_i8x16_s", i16x8_extend_low_i8x16_s, 0)
