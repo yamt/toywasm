@@ -164,13 +164,11 @@ INSTRUCTION(0x84, "i16x8.bitmask", i16x8_bitmask, 0)
 INSTRUCTION(0x85, "i16x8.narrow_i32x4_s", i16x8_narrow_i32x4_s, 0)
 INSTRUCTION(0x86, "i16x8.narrow_i32x4_u", i16x8_narrow_i32x4_u, 0)
 
-#if 0
 INSTRUCTION(0x87, "i16x8.extend_low_i8x16_s", i16x8_extend_low_i8x16_s, 0)
 INSTRUCTION(0x88, "i16x8.extend_high_i8x16_s", i16x8_extend_high_i8x16_s, 0)
 INSTRUCTION(0x89, "i16x8.extend_low_i8x16_u", i16x8_extend_low_i8x16_u, 0)
 INSTRUCTION(0x8a, "i16x8.extend_high_i8x16_u", i16x8_extend_high_i8x16_u, 0)
 
-#endif
 INSTRUCTION(0x8b, "i16x8.shl", i16x8_shl, 0)
 INSTRUCTION(0x8c, "i16x8.shr_s", i16x8_shr_s, 0)
 INSTRUCTION(0x8d, "i16x8.shr_u", i16x8_shr_u, 0)
@@ -198,13 +196,11 @@ INSTRUCTION(0xa1, "i32x4.neg", i32x4_neg, 0)
 INSTRUCTION(0xa3, "i32x4.all_true", i32x4_all_true, 0)
 INSTRUCTION(0xa4, "i32x4.bitmask", i32x4_bitmask, 0)
 
-#if 0
 INSTRUCTION(0xa7, "i32x4.extend_low_i16x8_s", i32x4_extend_low_i16x8_s, 0)
 INSTRUCTION(0xa8, "i32x4.extend_high_i16x8_s", i32x4_extend_high_i16x8_s, 0)
 INSTRUCTION(0xa9, "i32x4.extend_low_i16x8_u", i32x4_extend_low_i16x8_u, 0)
 INSTRUCTION(0xaa, "i32x4.extend_high_i16x8_u", i32x4_extend_high_i16x8_u, 0)
 
-#endif
 INSTRUCTION(0xab, "i32x4.shl", i32x4_shl, 0)
 INSTRUCTION(0xac, "i32x4.shr_s", i32x4_shr_s, 0)
 INSTRUCTION(0xad, "i32x4.shr_u", i32x4_shr_u, 0)
@@ -229,13 +225,11 @@ INSTRUCTION(0xc1, "i64x2.neg", i64x2_neg, 0)
 
 INSTRUCTION(0xc4, "i64x2.bitmask", i64x2_bitmask, 0)
 
-#if 0
 INSTRUCTION(0xc7, "i64x2.extend_low_i32x4_s", i64x2_extend_low_i32x4_s, 0)
 INSTRUCTION(0xc8, "i64x2.extend_high_i32x4_s", i64x2_extend_high_i32x4_s, 0)
 INSTRUCTION(0xc9, "i64x2.extend_low_i32x4_u", i64x2_extend_low_i32x4_u, 0)
 INSTRUCTION(0xca, "i64x2.extend_high_i32x4_u", i64x2_extend_high_i32x4_u, 0)
 
-#endif
 INSTRUCTION(0xcb, "i64x2.shl", i64x2_shl, 0)
 INSTRUCTION(0xcc, "i64x2.shr_s", i64x2_shr_s, 0)
 INSTRUCTION(0xcd, "i64x2.shr_u", i64x2_shr_u, 0)
