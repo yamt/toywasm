@@ -212,7 +212,6 @@ INSTRUCTION(0xae, "i32x4.add", i32x4_add, 0)
 
 INSTRUCTION(0xb1, "i32x4.sub", i32x4_sub, 0)
 
-#if 0
 INSTRUCTION(0xb5, "i32x4.mul", i32x4_mul, 0)
 
 INSTRUCTION(0xb6, "i32x4.min_s", i32x4_min_s, 0)
@@ -220,6 +219,7 @@ INSTRUCTION(0xb7, "i32x4.min_u", i32x4_min_u, 0)
 INSTRUCTION(0xb8, "i32x4.max_s", i32x4_max_s, 0)
 INSTRUCTION(0xb9, "i32x4.max_u", i32x4_max_u, 0)
 
+#if 0
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#integer-dot-product */
 INSTRUCTION(0xba, "i32x4.dot_i16x8_s", i32x4_dot_i16x8_s, 0)
 
@@ -243,9 +243,9 @@ INSTRUCTION(0xce, "i64x2.add", i64x2_add, 0)
 
 INSTRUCTION(0xd1, "i64x2.sub", i64x2_sub, 0)
 
-#if 0
 INSTRUCTION(0xd5, "i64x2.mul", i64x2_mul, 0)
 
+#if 0
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#integer-dot-product */
 INSTRUCTION(0xba, "i64x2.dot_i16x8_s", i64x2_dot_i16x8_s, 0)
 
@@ -265,7 +265,6 @@ INSTRUCTION(0xe3, "f32x4.sqrt", f32x4_sqrt, 0)
 #endif
 INSTRUCTION(0xe4, "f32x4.add", f32x4_add, 0)
 INSTRUCTION(0xe5, "f32x4.sub", f32x4_sub, 0)
-#if 0
 INSTRUCTION(0xe6, "f32x4.mul", f32x4_mul, 0)
 INSTRUCTION(0xe7, "f32x4.div", f32x4_div, 0)
 INSTRUCTION(0xe8, "f32x4.min", f32x4_min, 0)
@@ -273,13 +272,13 @@ INSTRUCTION(0xe9, "f32x4.max", f32x4_max, 0)
 INSTRUCTION(0xea, "f32x4.pmin", f32x4_pmin, 0)
 INSTRUCTION(0xeb, "f32x4.pmax", f32x4_pmax, 0)
 
+#if 0
 INSTRUCTION(0xec, "f64x2.abs", f64x2_abs, 0)
 INSTRUCTION(0xed, "f64x2.neg", f64x2_neg, 0)
 INSTRUCTION(0xef, "f64x2.sqrt", f64x2_sqrt, 0)
 #endif
 INSTRUCTION(0xf0, "f64x2.add", f64x2_add, 0)
 INSTRUCTION(0xf1, "f64x2.sub", f64x2_sub, 0)
-#if 0
 INSTRUCTION(0xf2, "f64x2.mul", f64x2_mul, 0)
 INSTRUCTION(0xf3, "f64x2.div", f64x2_div, 0)
 INSTRUCTION(0xf4, "f64x2.min", f64x2_min, 0)
@@ -287,6 +286,7 @@ INSTRUCTION(0xf5, "f64x2.max", f64x2_max, 0)
 INSTRUCTION(0xf6, "f64x2.pmin", f64x2_pmin, 0)
 INSTRUCTION(0xf7, "f64x2.pmax", f64x2_pmax, 0)
 
+#if 0
 INSTRUCTION(0xf8, "i32x4.trunc_sat_f32x4_s", i32x4_trunc_sat_f32x4_s, 0)
 INSTRUCTION(0xf9, "i32x4.trunc_sat_f32x4_u", i32x4_trunc_sat_f32x4_u, 0)
 #endif

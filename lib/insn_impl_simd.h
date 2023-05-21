@@ -517,6 +517,98 @@ SIMD_OP2(i64x2_sub, SUB_64x2)
 SIMD_OP2(f32x4_sub, FSUB_32x4)
 SIMD_OP2(f64x2_sub, FSUB_64x2)
 
+#define MUL1(LS, a, b, c, I) LANE_OP3(i, LS, a, b, c, I, MUL)
+#define FMUL1(LS, a, b, c, I) LANE_OP3(f, LS, a, b, c, I, MUL)
+
+#define MUL_8x16(a, b, c) FOREACH_LANES3(8, a, b, c, MUL1)
+#define MUL_16x8(a, b, c) FOREACH_LANES3(16, a, b, c, MUL1)
+#define MUL_32x4(a, b, c) FOREACH_LANES3(32, a, b, c, MUL1)
+#define MUL_64x2(a, b, c) FOREACH_LANES3(64, a, b, c, MUL1)
+#define FMUL_32x4(a, b, c) FOREACH_LANES3(32, a, b, c, FMUL1)
+#define FMUL_64x2(a, b, c) FOREACH_LANES3(64, a, b, c, FMUL1)
+
+SIMD_OP2(i8x16_mul, MUL_8x16)
+SIMD_OP2(i16x8_mul, MUL_16x8)
+SIMD_OP2(i32x4_mul, MUL_32x4)
+SIMD_OP2(i64x2_mul, MUL_64x2)
+SIMD_OP2(f32x4_mul, FMUL_32x4)
+SIMD_OP2(f64x2_mul, FMUL_64x2)
+
+#define FDIV1(LS, a, b, c, I) LANE_OP3(f, LS, a, b, c, I, FDIV)
+
+#define FDIV_32x4(a, b, c) FOREACH_LANES3(32, a, b, c, FDIV1)
+#define FDIV_64x2(a, b, c) FOREACH_LANES3(64, a, b, c, FDIV1)
+
+SIMD_OP2(f32x4_div, FDIV_32x4)
+SIMD_OP2(f64x2_div, FDIV_64x2)
+
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+#define MAX_s(N, a, b) MAX((int##N##_t)a, (int##N##_t)b)
+#define MAX_u(N, a, b) MAX((uint##N##_t)a, (uint##N##_t)b)
+
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+#define MIN_s(N, a, b) MIN((int##N##_t)a, (int##N##_t)b)
+#define MIN_u(N, a, b) MIN((uint##N##_t)a, (uint##N##_t)b)
+
+#define MAX_s1(LS, a, b, c, I) LANE_OP3(i, LS, a, b, c, I, MAX_s)
+#define MAX_u1(LS, a, b, c, I) LANE_OP3(i, LS, a, b, c, I, MAX_u)
+#define MIN_s1(LS, a, b, c, I) LANE_OP3(i, LS, a, b, c, I, MIN_s)
+#define MIN_u1(LS, a, b, c, I) LANE_OP3(i, LS, a, b, c, I, MIN_u)
+
+#define MAX_s_8x16(a, b, c) FOREACH_LANES3(8, a, b, c, MAX_s1)
+#define MAX_s_16x8(a, b, c) FOREACH_LANES3(16, a, b, c, MAX_s1)
+#define MAX_s_32x4(a, b, c) FOREACH_LANES3(32, a, b, c, MAX_s1)
+#define MAX_u_8x16(a, b, c) FOREACH_LANES3(8, a, b, c, MAX_u1)
+#define MAX_u_16x8(a, b, c) FOREACH_LANES3(16, a, b, c, MAX_u1)
+#define MAX_u_32x4(a, b, c) FOREACH_LANES3(32, a, b, c, MAX_u1)
+#define MIN_s_8x16(a, b, c) FOREACH_LANES3(8, a, b, c, MIN_s1)
+#define MIN_s_16x8(a, b, c) FOREACH_LANES3(16, a, b, c, MIN_s1)
+#define MIN_s_32x4(a, b, c) FOREACH_LANES3(32, a, b, c, MIN_s1)
+#define MIN_u_8x16(a, b, c) FOREACH_LANES3(8, a, b, c, MIN_u1)
+#define MIN_u_16x8(a, b, c) FOREACH_LANES3(16, a, b, c, MIN_u1)
+#define MIN_u_32x4(a, b, c) FOREACH_LANES3(32, a, b, c, MIN_u1)
+
+SIMD_OP2(i8x16_max_s, MAX_s_8x16)
+SIMD_OP2(i16x8_max_s, MAX_s_16x8)
+SIMD_OP2(i32x4_max_s, MAX_s_32x4)
+SIMD_OP2(i8x16_max_u, MAX_u_8x16)
+SIMD_OP2(i16x8_max_u, MAX_u_16x8)
+SIMD_OP2(i32x4_max_u, MAX_u_32x4)
+SIMD_OP2(i8x16_min_s, MIN_s_8x16)
+SIMD_OP2(i16x8_min_s, MIN_s_16x8)
+SIMD_OP2(i32x4_min_s, MIN_s_32x4)
+SIMD_OP2(i8x16_min_u, MIN_u_8x16)
+SIMD_OP2(i16x8_min_u, MIN_u_16x8)
+SIMD_OP2(i32x4_min_u, MIN_u_32x4)
+
+#define FMAX(N, a, b) fmax((a), (b))
+#define FMIN(N, a, b) fmax((a), (b))
+#define FPMAX(N, a, b) ((a) < (b) ? (b) : (a))
+#define FPMIN(N, a, b) ((b) < (a) ? (b) : (a))
+
+#define FMAX1(LS, a, b, c, I) LANE_OP3(f, LS, a, b, c, I, FMAX)
+#define FMIN1(LS, a, b, c, I) LANE_OP3(f, LS, a, b, c, I, FMIN)
+#define FPMAX1(LS, a, b, c, I) LANE_OP3(f, LS, a, b, c, I, FPMAX)
+#define FPMIN1(LS, a, b, c, I) LANE_OP3(f, LS, a, b, c, I, FPMIN)
+
+#define FMAX_32x4(a, b, c) FOREACH_LANES3(32, a, b, c, FMAX1)
+#define FMAX_64x2(a, b, c) FOREACH_LANES3(64, a, b, c, FMAX1)
+#define FMIN_32x4(a, b, c) FOREACH_LANES3(32, a, b, c, FMIN1)
+#define FMIN_64x2(a, b, c) FOREACH_LANES3(64, a, b, c, FMIN1)
+#define FPMAX_32x4(a, b, c) FOREACH_LANES3(32, a, b, c, FPMAX1)
+#define FPMAX_64x2(a, b, c) FOREACH_LANES3(64, a, b, c, FPMAX1)
+#define FPMIN_32x4(a, b, c) FOREACH_LANES3(32, a, b, c, FPMIN1)
+#define FPMIN_64x2(a, b, c) FOREACH_LANES3(64, a, b, c, FPMIN1)
+
+SIMD_OP2(f32x4_max, FMAX_32x4)
+SIMD_OP2(f64x2_max, FMAX_64x2)
+SIMD_OP2(f32x4_min, FMIN_32x4)
+SIMD_OP2(f64x2_min, FMIN_64x2)
+SIMD_OP2(f32x4_pmax, FPMAX_32x4)
+SIMD_OP2(f64x2_pmax, FPMAX_64x2)
+SIMD_OP2(f32x4_pmin, FPMIN_32x4)
+SIMD_OP2(f64x2_pmin, FPMIN_64x2)
+
 #define CONVERT_s1(LS, a, b, I)                                               \
         LANEPTRf##LS(a)[I] = (int##LS##_t)LANEPTRi##LS(b)[I]
 #define CONVERT_u1(LS, a, b, I) LANEPTRf##LS(a)[I] = LANEPTRi##LS(b)[I]
