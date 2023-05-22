@@ -179,12 +179,15 @@ INSTRUCTION(0x91, "i16x8.sub", i16x8_sub, 0)
 #if 0
 INSTRUCTION(0x92, "i16x8.sub_sat_s", i16x8_sub_sat_s, 0)
 INSTRUCTION(0x93, "i16x8.sub_sat_u", i16x8_sub_sat_u, 0)
+#endif
 
+INSTRUCTION(0x95, "i16x8.mul", i16x8_mul, 0)
 INSTRUCTION(0x96, "i16x8.min_s", i16x8_min_s, 0)
 INSTRUCTION(0x97, "i16x8.min_u", i16x8_min_u, 0)
 INSTRUCTION(0x98, "i16x8.max_s", i16x8_max_s, 0)
 INSTRUCTION(0x99, "i16x8.max_u", i16x8_max_u, 0)
 
+#if 0
 INSTRUCTION(0x9b, "i16x8.avgr_u", i16x8_avgr_u, 0)
 
 INSTRUCTION(0xa0, "i32x4.abs", i32x4_abs, 0)
