@@ -121,10 +121,8 @@ INSTRUCTION(0x50, "v128.or", v128_or, 0)
 INSTRUCTION(0x51, "v128.xor", v128_xor, 0)
 INSTRUCTION(0x52, "v128.bitselect", v128_bitselect, 0)
 
-#if 0
 INSTRUCTION(0x60, "i8x16.abs", i8x16_abs, 0)
 INSTRUCTION(0x61, "i8x16.neg", i8x16_neg, 0)
-#endif
 
 INSTRUCTION(0x63, "i8x16.all_true", i8x16_all_true, 0)
 INSTRUCTION(0x64, "i8x16.bitmask", i8x16_bitmask, 0)
@@ -154,10 +152,10 @@ INSTRUCTION(0x79, "i8x16.max_u", i8x16_max_u, 0)
 #if 0
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#lane-wise-integer-rounding-average */
 INSTRUCTION(0x7b, "i8x16.avgr_u", i8x16_avgr_u, 0)
+#endif
 
 INSTRUCTION(0x80, "i16x8.abs", i16x8_abs, 0)
 INSTRUCTION(0x81, "i16x8.neg", i16x8_neg, 0)
-#endif
 
 INSTRUCTION(0x83, "i16x8.all_true", i16x8_all_true, 0)
 INSTRUCTION(0x84, "i16x8.bitmask", i16x8_bitmask, 0)
@@ -191,10 +189,10 @@ INSTRUCTION(0x99, "i16x8.max_u", i16x8_max_u, 0)
 
 #if 0
 INSTRUCTION(0x9b, "i16x8.avgr_u", i16x8_avgr_u, 0)
+#endif
 
 INSTRUCTION(0xa0, "i32x4.abs", i32x4_abs, 0)
 INSTRUCTION(0xa1, "i32x4.neg", i32x4_neg, 0)
-#endif
 
 INSTRUCTION(0xa3, "i32x4.all_true", i32x4_all_true, 0)
 INSTRUCTION(0xa4, "i32x4.bitmask", i32x4_bitmask, 0)
@@ -221,10 +219,10 @@ INSTRUCTION(0xb9, "i32x4.max_u", i32x4_max_u, 0)
 #if 0
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#integer-dot-product */
 INSTRUCTION(0xba, "i32x4.dot_i16x8_s", i32x4_dot_i16x8_s, 0)
+#endif
 
 INSTRUCTION(0xc0, "i64x2.abs", i64x2_abs, 0)
 INSTRUCTION(0xc1, "i64x2.neg", i64x2_neg, 0)
-#endif
 
 INSTRUCTION(0xc4, "i64x2.bitmask", i64x2_bitmask, 0)
 
