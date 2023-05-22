@@ -252,11 +252,11 @@ INSTRUCTION(0x74, "f64x2.ceil", f64x2_ceil, 0)
 INSTRUCTION(0x75, "f64x2.floor", f64x2_floor, 0)
 INSTRUCTION(0x7a, "f64x2.trunc", f64x2_trunc, 0)
 INSTRUCTION(0x94, "f64x2.nearest", f64x2_nearest, 0)
+#endif
 
 INSTRUCTION(0xe0, "f32x4.abs", f32x4_abs, 0)
 INSTRUCTION(0xe1, "f32x4.neg", f32x4_neg, 0)
 INSTRUCTION(0xe3, "f32x4.sqrt", f32x4_sqrt, 0)
-#endif
 INSTRUCTION(0xe4, "f32x4.add", f32x4_add, 0)
 INSTRUCTION(0xe5, "f32x4.sub", f32x4_sub, 0)
 INSTRUCTION(0xe6, "f32x4.mul", f32x4_mul, 0)
@@ -266,11 +266,9 @@ INSTRUCTION(0xe9, "f32x4.max", f32x4_max, 0)
 INSTRUCTION(0xea, "f32x4.pmin", f32x4_pmin, 0)
 INSTRUCTION(0xeb, "f32x4.pmax", f32x4_pmax, 0)
 
-#if 0
 INSTRUCTION(0xec, "f64x2.abs", f64x2_abs, 0)
 INSTRUCTION(0xed, "f64x2.neg", f64x2_neg, 0)
 INSTRUCTION(0xef, "f64x2.sqrt", f64x2_sqrt, 0)
-#endif
 INSTRUCTION(0xf0, "f64x2.add", f64x2_add, 0)
 INSTRUCTION(0xf1, "f64x2.sub", f64x2_sub, 0)
 INSTRUCTION(0xf2, "f64x2.mul", f64x2_mul, 0)

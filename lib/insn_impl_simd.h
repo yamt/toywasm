@@ -479,6 +479,8 @@ SIMD_BOOLOP(i16x8_bitmask, 0, BITMASK_16x8)
 SIMD_BOOLOP(i32x4_bitmask, 0, BITMASK_32x4)
 SIMD_BOOLOP(i64x2_bitmask, 0, BITMASK_64x2)
 
+#define LANE_OP2(I_OR_F, LS, a, b, I, OP)                                     \
+        LANEPTR##I_OR_F##LS(a)[I] = OP(LS, LANEPTR##I_OR_F##LS(b)[I])
 #define LANE_OP3(I_OR_F, LS, a, b, c, I, OP)                                  \
         LANEPTR##I_OR_F##LS(a)[I] =                                           \
                 OP(LS, LANEPTR##I_OR_F##LS(b)[I], LANEPTR##I_OR_F##LS(c)[I])
@@ -612,6 +614,35 @@ SIMD_OP2(f32x4_pmax, FPMAX_32x4)
 SIMD_OP2(f64x2_pmax, FPMAX_64x2)
 SIMD_OP2(f32x4_pmin, FPMIN_32x4)
 SIMD_OP2(f64x2_pmin, FPMIN_64x2)
+
+#define FABS32(a) fabsf(a)
+#define FNEG32(a) (-(a))
+#define FSQRT32(a) sqrtf(a)
+#define FABS64(a) fabs(a)
+#define FNEG64(a) (-(a))
+#define FSQRT64(a) sqrt(a)
+
+#define FABS(N, a) FABS##N(a)
+#define FNEG(N, a) FNEG##N(a)
+#define FSQRT(N, a) FSQRT##N(a)
+
+#define FABS1(LS, a, b, I) LANE_OP2(f, LS, a, b, I, FABS)
+#define FNEG1(LS, a, b, I) LANE_OP2(f, LS, a, b, I, FNEG)
+#define FSQRT1(LS, a, b, I) LANE_OP2(f, LS, a, b, I, FSQRT)
+
+#define FABS_32(a, b) FOREACH_LANES(32, a, b, FABS1)
+#define FNEG_32(a, b) FOREACH_LANES(32, a, b, FNEG1)
+#define FSQRT_32(a, b) FOREACH_LANES(32, a, b, FSQRT1)
+#define FABS_64(a, b) FOREACH_LANES(64, a, b, FABS1)
+#define FNEG_64(a, b) FOREACH_LANES(64, a, b, FNEG1)
+#define FSQRT_64(a, b) FOREACH_LANES(64, a, b, FSQRT1)
+
+SIMD_OP1(f32x4_abs, FABS_32)
+SIMD_OP1(f32x4_neg, FNEG_32)
+SIMD_OP1(f32x4_sqrt, FSQRT_32)
+SIMD_OP1(f64x2_abs, FABS_64)
+SIMD_OP1(f64x2_neg, FNEG_64)
+SIMD_OP1(f64x2_sqrt, FSQRT_64)
 
 #define CONVERT_s1(LS, a, b, I)                                               \
         LANEPTRf##LS(a)[I] = (int##LS##_t)LANEPTRi##LS(b)[I]
