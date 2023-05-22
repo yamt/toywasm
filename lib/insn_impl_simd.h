@@ -306,9 +306,18 @@ fail:                                                                         \
                 &(a)->i##BDST[I],                                             \
                 EXTEND_##S_OR_U(BSRC, le##BSRC##_decode(&((                   \
                                               const uint##BSRC##_t *)b)[I])))
-
 #define EXTEND1(S_OR_U, BDST, BSRC, a, b, I)                                  \
         _EXTEND1(S_OR_U, BDST, BSRC, a, b, I)
+
+#define _EXTADD1(S_OR_U, BDST, BSRC, a, b, I)                                 \
+        le##BDST##_encode(                                                    \
+                &(a)[I],                                                      \
+                EXTEND_##S_OR_U(BSRC, le##BSRC##_decode(&(b)[I * 2])) +       \
+                        EXTEND_##S_OR_U(BSRC,                                 \
+                                        le##BSRC##_decode(&(b)[I * 2 + 1])))
+
+#define EXTADD1(S_OR_U, BDST, BSRC, a, b, I)                                  \
+        _EXTADD1(S_OR_U, BDST, BSRC, a, b, I)
 
 #define DBL8 16
 #define DBL16 32
@@ -321,12 +330,20 @@ fail:                                                                         \
 #define EXTEND1_s(LS, a, b, I) EXTEND1(s, LS, HALF##LS, a, b, I)
 #define EXTEND1_u(LS, a, b, I) EXTEND1(u, LS, HALF##LS, a, b, I)
 
+#define EXTADD1_s(LS, a, b, I) EXTADD1(u, LS, HALF##LS, a, b, I)
+#define EXTADD1_u(LS, a, b, I) EXTADD1(s, LS, HALF##LS, a, b, I)
+
 #define EXTEND_8x8_s(a, b) FOREACH_LANES(16, a, b, EXTEND1_s)
 #define EXTEND_8x8_u(a, b) FOREACH_LANES(16, a, b, EXTEND1_u)
 #define EXTEND_16x4_s(a, b) FOREACH_LANES(32, a, b, EXTEND1_s)
 #define EXTEND_16x4_u(a, b) FOREACH_LANES(32, a, b, EXTEND1_u)
 #define EXTEND_32x2_s(a, b) FOREACH_LANES(64, a, b, EXTEND1_s)
 #define EXTEND_32x2_u(a, b) FOREACH_LANES(64, a, b, EXTEND1_u)
+
+#define EXTADD_16x8_s(a, b) FOREACH_LANES(16, a, b, EXTADD1_s)
+#define EXTADD_16x8_u(a, b) FOREACH_LANES(16, a, b, EXTADD1_u)
+#define EXTADD_32x4_s(a, b) FOREACH_LANES(32, a, b, EXTADD1_s)
+#define EXTADD_32x4_u(a, b) FOREACH_LANES(32, a, b, EXTADD1_u)
 
 #define SPLAT1(LS, D, S, I) le##LS##_encode(&(D)->i##LS[I], S)
 
@@ -779,6 +796,11 @@ SIMD_OP1(f64x2_promote_low_f32x4, PROMOTE_LOW_64)
 #define EXTEND_LOW_64_u(a, b) EXTEND_32x2_u(LANEPTRi128(a), LANEPTRi32(b))
 #define EXTEND_HIGH_64_u(a, b) EXTEND_32x2_u(LANEPTRi128(a), &LANEPTRi32(b)[8])
 
+#define EXTADD_16_s(a, b) EXTADD_16x8_s(LANEPTRi16(a), LANEPTRi8(b))
+#define EXTADD_16_u(a, b) EXTADD_16x8_u(LANEPTRi16(a), LANEPTRi8(b))
+#define EXTADD_32_s(a, b) EXTADD_32x4_s(LANEPTRi32(a), LANEPTRi16(b))
+#define EXTADD_32_u(a, b) EXTADD_32x4_u(LANEPTRi32(a), LANEPTRi16(b))
+
 SIMD_OP1(i16x8_extend_low_i8x16_s, EXTEND_LOW_16_s)
 SIMD_OP1(i16x8_extend_high_i8x16_s, EXTEND_HIGH_16_s)
 SIMD_OP1(i16x8_extend_low_i8x16_u, EXTEND_LOW_16_u)
@@ -791,6 +813,11 @@ SIMD_OP1(i64x2_extend_low_i32x4_s, EXTEND_LOW_64_s)
 SIMD_OP1(i64x2_extend_high_i32x4_s, EXTEND_LOW_64_s)
 SIMD_OP1(i64x2_extend_low_i32x4_u, EXTEND_LOW_64_u)
 SIMD_OP1(i64x2_extend_high_i32x4_u, EXTEND_LOW_64_u)
+
+SIMD_OP1(i16x8_extadd_pairwise_i8x16_s, EXTADD_16_s)
+SIMD_OP1(i16x8_extadd_pairwise_i8x16_u, EXTADD_16_u)
+SIMD_OP1(i32x4_extadd_pairwise_i16x8_s, EXTADD_32_s)
+SIMD_OP1(i32x4_extadd_pairwise_i16x8_u, EXTADD_32_u)
 
 #define CMP_LANE(I_OR_F, LS, a, b, c, I, CAST, OP)                            \
         LANEPTRi##LS(a)[I] = (CAST LANEPTR##I_OR_F##LS(                       \

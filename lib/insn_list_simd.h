@@ -348,6 +348,7 @@ INSTRUCTION(0x5f, "f64x2.promote_low_f32x4", f64x2_promote_low_f32x4, 0)
 #if 0
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#lane-wise-population-count */
 INSTRUCTION(0x62, "i8x16.popcnt", i8x16_popcnt, 0)
+#endif
 
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#extended-pairwise-integer-addition */
 INSTRUCTION(0x7c, "i16x8.extadd_pairwise_i8x16_s", i16x8_extadd_pairwise_i8x16_s, 0)
@@ -355,7 +356,5 @@ INSTRUCTION(0x7d, "i16x8.extadd_pairwise_i8x16_u", i16x8_extadd_pairwise_i8x16_u
 
 INSTRUCTION(0x7e, "i32x4.extadd_pairwise_i16x8_s", i32x4_extadd_pairwise_i16x8_s, 0)
 INSTRUCTION(0x7f, "i32x4.extadd_pairwise_i16x8_u", i32x4_extadd_pairwise_i16x8_u, 0)
-
-#endif
 
 /* clang-format on */
