@@ -870,6 +870,9 @@ SIMD_FOREACH_LANES_OP2(i64x2_ge_s, i, 64, GE_S)
 #define LANE_OP1(I_OR_F, LS, a, b, I, OP)                                     \
         LANEPTR##I_OR_F##LS(a)[I] = OP(LANEPTR##I_OR_F##LS(b)[I])
 
+#define LANE_OP1_LS(I_OR_F, LS, a, b, I, OP)                                  \
+        LANEPTR##I_OR_F##LS(a)[I] = OP(LS, LANEPTR##I_OR_F##LS(b)[I])
+
 #define LANE_CEILF(I_OR_F, LS, a, b, I) LANE_OP1(I_OR_F, LS, a, b, I, ceilf)
 #define LANE_TRUNCF(I_OR_F, LS, a, b, I) LANE_OP1(I_OR_F, LS, a, b, I, truncf)
 #define LANE_FLOORF(I_OR_F, LS, a, b, I) LANE_OP1(I_OR_F, LS, a, b, I, floorf)
@@ -880,6 +883,12 @@ SIMD_FOREACH_LANES_OP2(i64x2_ge_s, i, 64, GE_S)
 #define LANE_FLOOR(I_OR_F, LS, a, b, I) LANE_OP1(I_OR_F, LS, a, b, I, floor)
 #define LANE_NEAREST(I_OR_F, LS, a, b, I) LANE_OP1(I_OR_F, LS, a, b, I, rint)
 
+#define INT_ABS(LS, n) (uint##LS##_t) labs(-(int##LS##_t)n)
+#define INT_NEG(LS, n) (uint##LS##_t)(-(int##LS##_t)n)
+
+#define LANE_ABS(I_OR_F, LS, a, b, I) LANE_OP1_LS(I_OR_F, LS, a, b, I, INT_ABS)
+#define LANE_NEG(I_OR_F, LS, a, b, I) LANE_OP1_LS(I_OR_F, LS, a, b, I, INT_NEG)
+
 SIMD_FOREACH_LANES_OP1(f32x4_ceil, f, 32, LANE_CEILF)
 SIMD_FOREACH_LANES_OP1(f32x4_trunc, f, 32, LANE_TRUNCF)
 SIMD_FOREACH_LANES_OP1(f32x4_floor, f, 32, LANE_FLOORF)
@@ -889,3 +898,12 @@ SIMD_FOREACH_LANES_OP1(f64x2_ceil, f, 64, LANE_CEIL)
 SIMD_FOREACH_LANES_OP1(f64x2_trunc, f, 64, LANE_TRUNC)
 SIMD_FOREACH_LANES_OP1(f64x2_floor, f, 64, LANE_FLOOR)
 SIMD_FOREACH_LANES_OP1(f64x2_nearest, f, 64, LANE_NEAREST)
+
+SIMD_FOREACH_LANES_OP1(i8x16_abs, i, 8, LANE_ABS)
+SIMD_FOREACH_LANES_OP1(i8x16_neg, i, 8, LANE_NEG)
+SIMD_FOREACH_LANES_OP1(i16x8_abs, i, 16, LANE_ABS)
+SIMD_FOREACH_LANES_OP1(i16x8_neg, i, 16, LANE_NEG)
+SIMD_FOREACH_LANES_OP1(i32x4_abs, i, 32, LANE_ABS)
+SIMD_FOREACH_LANES_OP1(i32x4_neg, i, 32, LANE_NEG)
+SIMD_FOREACH_LANES_OP1(i64x2_abs, i, 64, LANE_ABS)
+SIMD_FOREACH_LANES_OP1(i64x2_neg, i, 64, LANE_NEG)
