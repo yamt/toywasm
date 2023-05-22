@@ -144,12 +144,14 @@ INSTRUCTION(0x71, "i8x16.sub", i8x16_sub, 0)
 #if 0
 INSTRUCTION(0x72, "i8x16.sub_sat_s", i8x16_sub_sat_s, 0)
 INSTRUCTION(0x73, "i8x16.sub_sat_u", i8x16_sub_sat_u, 0)
+#endif
 
 INSTRUCTION(0x76, "i8x16.min_s", i8x16_min_s, 0)
 INSTRUCTION(0x77, "i8x16.min_u", i8x16_min_u, 0)
 INSTRUCTION(0x78, "i8x16.max_s", i8x16_max_s, 0)
 INSTRUCTION(0x79, "i8x16.max_u", i8x16_max_u, 0)
 
+#if 0
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#lane-wise-integer-rounding-average */
 INSTRUCTION(0x7b, "i8x16.avgr_u", i8x16_avgr_u, 0)
 
