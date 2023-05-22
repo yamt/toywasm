@@ -236,6 +236,25 @@ fail:                                                                         \
                 INSN_FAIL;                                                    \
         }
 
+#define SIMD_FOREACH_LANES_OP2(NAME, I_OR_F, LS, OP)                          \
+        INSN_IMPL(NAME)                                                       \
+        {                                                                     \
+                int ret;                                                      \
+                LOAD_PC;                                                      \
+                POP_VAL(TYPE_v128, b);                                        \
+                POP_VAL(TYPE_v128, a);                                        \
+                struct val val_c;                                             \
+                if (EXECUTING) {                                              \
+                        FOREACH_LANES3_2(I_OR_F, LS, &val_c, &val_a, &val_b,  \
+                                         OP);                                 \
+                }                                                             \
+                PUSH_VAL(TYPE_v128, c);                                       \
+                SAVE_PC;                                                      \
+                INSN_SUCCESS;                                                 \
+fail:                                                                         \
+                INSN_FAIL;                                                    \
+        }
+
 #define SIMD_SHIFTOP(NAME, OP)                                                \
         INSN_IMPL(NAME)                                                       \
         {                                                                     \
@@ -312,6 +331,14 @@ fail:                                                                         \
                 unsigned int _i;                                              \
                 for (_i = 0; _i < 128 / LS; _i++) {                           \
                         OP(LS, D, S, x, _i);                                  \
+                }                                                             \
+        } while (0)
+
+#define FOREACH_LANES3_2(I_OR_F, LS, a, b, c, OP)                             \
+        do {                                                                  \
+                unsigned int _i;                                              \
+                for (_i = 0; _i < 128 / LS; _i++) {                           \
+                        OP(I_OR_F, LS, a, b, c, _i);                          \
                 }                                                             \
         } while (0)
 
@@ -738,3 +765,78 @@ SIMD_OP1(i64x2_extend_low_i32x4_s, EXTEND_LOW_64_s)
 SIMD_OP1(i64x2_extend_high_i32x4_s, EXTEND_LOW_64_s)
 SIMD_OP1(i64x2_extend_low_i32x4_u, EXTEND_LOW_64_u)
 SIMD_OP1(i64x2_extend_high_i32x4_u, EXTEND_LOW_64_u)
+
+#define CMP_LANE(I_OR_F, LS, a, b, c, I, CAST, OP)                            \
+        LANEPTRi##LS(a)[I] = (CAST LANEPTR##I_OR_F##LS(                       \
+                                     b)[I] OP CAST LANEPTR##I_OR_F##LS(c)[I]) \
+                                     ? (uint##LS##_t) - 1                     \
+                                     : 0
+
+#define EQ(I_OR_F, LS, a, b, c, I) CMP_LANE(I_OR_F, LS, a, b, c, I, , ==)
+#define NE(I_OR_F, LS, a, b, c, I) CMP_LANE(I_OR_F, LS, a, b, c, I, , !=)
+#define LT(I_OR_F, LS, a, b, c, I) CMP_LANE(I_OR_F, LS, a, b, c, I, , <)
+#define GT(I_OR_F, LS, a, b, c, I) CMP_LANE(I_OR_F, LS, a, b, c, I, , >)
+#define LE(I_OR_F, LS, a, b, c, I) CMP_LANE(I_OR_F, LS, a, b, c, I, , <=)
+#define GE(I_OR_F, LS, a, b, c, I) CMP_LANE(I_OR_F, LS, a, b, c, I, , >=)
+#define LT_S(I_OR_F, LS, a, b, c, I)                                          \
+        CMP_LANE(I_OR_F, LS, a, b, c, I, (int##LS##_t), <)
+#define GT_S(I_OR_F, LS, a, b, c, I)                                          \
+        CMP_LANE(I_OR_F, LS, a, b, c, I, (int##LS##_t), >)
+#define LE_S(I_OR_F, LS, a, b, c, I)                                          \
+        CMP_LANE(I_OR_F, LS, a, b, c, I, (int##LS##_t), <=)
+#define GE_S(I_OR_F, LS, a, b, c, I)                                          \
+        CMP_LANE(I_OR_F, LS, a, b, c, I, (int##LS##_t), >=)
+
+SIMD_FOREACH_LANES_OP2(f32x4_eq, f, 32, EQ)
+SIMD_FOREACH_LANES_OP2(f32x4_ne, f, 32, NE)
+SIMD_FOREACH_LANES_OP2(f32x4_lt, f, 32, LT)
+SIMD_FOREACH_LANES_OP2(f32x4_gt, f, 32, GT)
+SIMD_FOREACH_LANES_OP2(f32x4_le, f, 32, LE)
+SIMD_FOREACH_LANES_OP2(f32x4_ge, f, 32, GE)
+
+SIMD_FOREACH_LANES_OP2(f64x2_eq, f, 64, EQ)
+SIMD_FOREACH_LANES_OP2(f64x2_ne, f, 64, NE)
+SIMD_FOREACH_LANES_OP2(f64x2_lt, f, 64, LT)
+SIMD_FOREACH_LANES_OP2(f64x2_gt, f, 64, GT)
+SIMD_FOREACH_LANES_OP2(f64x2_le, f, 64, LE)
+SIMD_FOREACH_LANES_OP2(f64x2_ge, f, 64, GE)
+
+SIMD_FOREACH_LANES_OP2(i8x16_eq, i, 8, EQ)
+SIMD_FOREACH_LANES_OP2(i8x16_ne, i, 8, NE)
+SIMD_FOREACH_LANES_OP2(i8x16_lt_s, i, 8, LT_S)
+SIMD_FOREACH_LANES_OP2(i8x16_lt_u, i, 8, LT)
+SIMD_FOREACH_LANES_OP2(i8x16_gt_s, i, 8, GT_S)
+SIMD_FOREACH_LANES_OP2(i8x16_gt_u, i, 8, GT)
+SIMD_FOREACH_LANES_OP2(i8x16_le_s, i, 8, LE_S)
+SIMD_FOREACH_LANES_OP2(i8x16_le_u, i, 8, LE)
+SIMD_FOREACH_LANES_OP2(i8x16_ge_s, i, 8, GE_S)
+SIMD_FOREACH_LANES_OP2(i8x16_ge_u, i, 8, GE)
+
+SIMD_FOREACH_LANES_OP2(i16x8_eq, i, 16, EQ)
+SIMD_FOREACH_LANES_OP2(i16x8_ne, i, 16, NE)
+SIMD_FOREACH_LANES_OP2(i16x8_lt_s, i, 16, LT_S)
+SIMD_FOREACH_LANES_OP2(i16x8_lt_u, i, 16, LT)
+SIMD_FOREACH_LANES_OP2(i16x8_gt_s, i, 16, GT_S)
+SIMD_FOREACH_LANES_OP2(i16x8_gt_u, i, 16, GT)
+SIMD_FOREACH_LANES_OP2(i16x8_le_s, i, 16, LE_S)
+SIMD_FOREACH_LANES_OP2(i16x8_le_u, i, 16, LE)
+SIMD_FOREACH_LANES_OP2(i16x8_ge_s, i, 16, GE_S)
+SIMD_FOREACH_LANES_OP2(i16x8_ge_u, i, 16, GE)
+
+SIMD_FOREACH_LANES_OP2(i32x4_eq, i, 32, EQ)
+SIMD_FOREACH_LANES_OP2(i32x4_ne, i, 32, NE)
+SIMD_FOREACH_LANES_OP2(i32x4_lt_s, i, 32, LT_S)
+SIMD_FOREACH_LANES_OP2(i32x4_lt_u, i, 32, LT)
+SIMD_FOREACH_LANES_OP2(i32x4_gt_s, i, 32, GT_S)
+SIMD_FOREACH_LANES_OP2(i32x4_gt_u, i, 32, GT)
+SIMD_FOREACH_LANES_OP2(i32x4_le_s, i, 32, LE_S)
+SIMD_FOREACH_LANES_OP2(i32x4_le_u, i, 32, LE)
+SIMD_FOREACH_LANES_OP2(i32x4_ge_s, i, 32, GE_S)
+SIMD_FOREACH_LANES_OP2(i32x4_ge_u, i, 32, GE)
+
+SIMD_FOREACH_LANES_OP2(i64x2_eq, i, 64, EQ)
+SIMD_FOREACH_LANES_OP2(i64x2_ne, i, 64, NE)
+SIMD_FOREACH_LANES_OP2(i64x2_lt_s, i, 64, LT_S)
+SIMD_FOREACH_LANES_OP2(i64x2_gt_s, i, 64, GT_S)
+SIMD_FOREACH_LANES_OP2(i64x2_le_s, i, 64, LE_S)
+SIMD_FOREACH_LANES_OP2(i64x2_ge_s, i, 64, GE_S)

@@ -65,7 +65,6 @@ INSTRUCTION(0x20, "f32x4.replace_lane", f32x4_replace_lane, 0)
 INSTRUCTION(0x21, "f64x2.extract_lane", f64x2_extract_lane, 0)
 INSTRUCTION(0x22, "f64x2.replace_lane", f64x2_replace_lane, 0)
 
-#if 0
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#comparisons */
 INSTRUCTION(0x23, "i8x16.eq", i8x16_eq, 0)
 INSTRUCTION(0x24, "i8x16.ne", i8x16_ne, 0)
@@ -113,7 +112,6 @@ INSTRUCTION(0x49, "f64x2.lt", f64x2_lt, 0)
 INSTRUCTION(0x4a, "f64x2.gt", f64x2_gt, 0)
 INSTRUCTION(0x4b, "f64x2.le", f64x2_le, 0)
 INSTRUCTION(0x4c, "f64x2.ge", f64x2_ge, 0)
-#endif
 
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#bitwise-operations */
 INSTRUCTION(0x4d, "v128.not", v128_not, 0)
@@ -324,14 +322,12 @@ INSTRUCTION(0x59, "v128.store16_lane", v128_store16_lane, 0)
 INSTRUCTION(0x5a, "v128.store32_lane", v128_store32_lane, 0)
 INSTRUCTION(0x5b, "v128.store64_lane", v128_store64_lane, 0)
 
-#if 0
 INSTRUCTION(0xd6, "i64x2.eq", i64x2_eq, 0)
 INSTRUCTION(0xd7, "i64x2.ne", i64x2_ne, 0)
 INSTRUCTION(0xd8, "i64x2.lt_s", i64x2_lt_s, 0)
 INSTRUCTION(0xd9, "i64x2.gt_s", i64x2_gt_s, 0)
 INSTRUCTION(0xda, "i64x2.le_s", i64x2_le_s, 0)
 INSTRUCTION(0xdb, "i64x2.ge_s", i64x2_ge_s, 0)
-#endif
 
 INSTRUCTION(0xc3, "i64x2.all_true", i64x2_all_true, 0)
 
