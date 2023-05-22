@@ -29,9 +29,22 @@
 
 #define EQZ(a) ((a == 0) ? 1 : 0)
 
-#define ADD(N, a, b) ((a) + (b))
-#define SUB(N, a, b) ((a) - (b))
-#define MUL(N, a, b) ((a) * (b))
+/*
+ * Note about casts below:
+ * for SIMD, i8/i16 lanes are probably smaller than unsigned int.
+ * eg. when a,b are uint16_t, when evalutaing a * b, they are
+ * promoted to int. If a * b is larger than INTMAX, it ends up
+ * with a signed integer overflow.
+ */
+#define ADD(N, a, b) (uint##N##_t)((a) + (b))
+#define SUB(N, a, b) (uint##N##_t)((a) - (b))
+#define MUL(N, a, b)                                                          \
+        (uint##N##_t)((N < sizeof(int) * 8) ? ((unsigned int)(a) * (b))       \
+                                            : ((a) * (b)))
+
+#define FADD(N, a, b) ((a) + (b))
+#define FSUB(N, a, b) ((a) - (b))
+#define FMUL(N, a, b) ((a) * (b))
 
 #define DIV_U(N, a, b) ((a) / (b))
 #define DIV_S(N, a, b) (((int##N##_t)a) / ((int##N##_t)b))

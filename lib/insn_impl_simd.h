@@ -533,12 +533,13 @@ SIMD_BOOLOP(i64x2_bitmask, 0, BITMASK_64x2)
 
 #define LANE_OP2(I_OR_F, LS, a, b, I, OP)                                     \
         LANEPTR##I_OR_F##LS(a)[I] = OP(LS, LANEPTR##I_OR_F##LS(b)[I])
+
 #define LANE_OP3(I_OR_F, LS, a, b, c, I, OP)                                  \
         LANEPTR##I_OR_F##LS(a)[I] =                                           \
                 OP(LS, LANEPTR##I_OR_F##LS(b)[I], LANEPTR##I_OR_F##LS(c)[I])
 
 #define ADD1(LS, a, b, c, I) LANE_OP3(i, LS, a, b, c, I, ADD)
-#define FADD1(LS, a, b, c, I) LANE_OP3(f, LS, a, b, c, I, ADD)
+#define FADD1(LS, a, b, c, I) LANE_OP3(f, LS, a, b, c, I, FADD)
 
 #define ADD_8x16(a, b, c) FOREACH_LANES3(8, a, b, c, ADD1)
 #define ADD_16x8(a, b, c) FOREACH_LANES3(16, a, b, c, ADD1)
@@ -555,7 +556,7 @@ SIMD_OP2(f32x4_add, FADD_32x4)
 SIMD_OP2(f64x2_add, FADD_64x2)
 
 #define SUB1(LS, a, b, c, I) LANE_OP3(i, LS, a, b, c, I, SUB)
-#define FSUB1(LS, a, b, c, I) LANE_OP3(f, LS, a, b, c, I, SUB)
+#define FSUB1(LS, a, b, c, I) LANE_OP3(f, LS, a, b, c, I, FSUB)
 
 #define SUB_8x16(a, b, c) FOREACH_LANES3(8, a, b, c, SUB1)
 #define SUB_16x8(a, b, c) FOREACH_LANES3(16, a, b, c, SUB1)
@@ -572,7 +573,7 @@ SIMD_OP2(f32x4_sub, FSUB_32x4)
 SIMD_OP2(f64x2_sub, FSUB_64x2)
 
 #define MUL1(LS, a, b, c, I) LANE_OP3(i, LS, a, b, c, I, MUL)
-#define FMUL1(LS, a, b, c, I) LANE_OP3(f, LS, a, b, c, I, MUL)
+#define FMUL1(LS, a, b, c, I) LANE_OP3(f, LS, a, b, c, I, FMUL)
 
 #define MUL_8x16(a, b, c) FOREACH_LANES3(8, a, b, c, MUL1)
 #define MUL_16x8(a, b, c) FOREACH_LANES3(16, a, b, c, MUL1)
