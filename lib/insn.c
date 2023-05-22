@@ -198,14 +198,19 @@ fail:
         return ret;
 }
 
+/*
+ * WASM float min/max follow IEEE 754-2019 minimum/maximum
+ * semantics:
+ *
+ * - If either operand is a NaN (Note: can be an sNaN), returns a qNaN.
+ * - -0.0 < +0.0
+ */
+
 static float
 wasm_fminf(float a, float b)
 {
-        if (isnan(a)) {
-                return a;
-        }
-        if (isnan(b)) {
-                return b;
+        if (isnan(a) || isnan(b)) {
+                return NAN;
         }
         if (a == b) {
                 return signbit(a) ? a : b;
@@ -216,11 +221,8 @@ wasm_fminf(float a, float b)
 static float
 wasm_fmaxf(float a, float b)
 {
-        if (isnan(a)) {
-                return a;
-        }
-        if (isnan(b)) {
-                return b;
+        if (isnan(a) || isnan(b)) {
+                return NAN;
         }
         if (a == b) {
                 return signbit(a) ? b : a;
@@ -231,11 +233,8 @@ wasm_fmaxf(float a, float b)
 static double
 wasm_fmin(double a, double b)
 {
-        if (isnan(a)) {
-                return a;
-        }
-        if (isnan(b)) {
-                return b;
+        if (isnan(a) || isnan(b)) {
+                return NAN;
         }
         if (a == b) {
                 return signbit(a) ? a : b;
@@ -246,11 +245,8 @@ wasm_fmin(double a, double b)
 static double
 wasm_fmax(double a, double b)
 {
-        if (isnan(a)) {
-                return a;
-        }
-        if (isnan(b)) {
-                return b;
+        if (isnan(a) || isnan(b)) {
+                return NAN;
         }
         if (a == b) {
                 return signbit(a) ? b : a;
