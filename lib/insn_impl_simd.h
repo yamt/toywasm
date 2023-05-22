@@ -798,6 +798,10 @@ SIMD_OP1(i64x2_extend_high_i32x4_u, EXTEND_LOW_64_u)
                                      ? (uint##LS##_t) - 1                     \
                                      : 0
 
+#define LANE_OP2_LS(I_OR_F, LS, a, b, c, I, OP)                               \
+        LANEPTR##I_OR_F##LS(a)[I] =                                           \
+                OP(LS, LANEPTR##I_OR_F##LS(b)[I], LANEPTR##I_OR_F##LS(c)[I])
+
 #define EQ(I_OR_F, LS, a, b, c, I) CMP_LANE(I_OR_F, LS, a, b, c, I, , ==)
 #define NE(I_OR_F, LS, a, b, c, I) CMP_LANE(I_OR_F, LS, a, b, c, I, , !=)
 #define LT(I_OR_F, LS, a, b, c, I) CMP_LANE(I_OR_F, LS, a, b, c, I, , <)
@@ -812,6 +816,11 @@ SIMD_OP1(i64x2_extend_high_i32x4_u, EXTEND_LOW_64_u)
         CMP_LANE(I_OR_F, LS, a, b, c, I, (int##LS##_t), <=)
 #define GE_S(I_OR_F, LS, a, b, c, I)                                          \
         CMP_LANE(I_OR_F, LS, a, b, c, I, (int##LS##_t), >=)
+
+#define AVGR(N, a, b) (((a) + (b) + 1) / 2)
+
+#define LANE_AVGR(I_OR_F, LS, a, b, c, I)                                     \
+        LANE_OP2_LS(I_OR_F, LS, a, b, c, I, AVGR)
 
 SIMD_FOREACH_LANES_OP2(f32x4_eq, f, 32, EQ)
 SIMD_FOREACH_LANES_OP2(f32x4_ne, f, 32, NE)
@@ -866,6 +875,9 @@ SIMD_FOREACH_LANES_OP2(i64x2_lt_s, i, 64, LT_S)
 SIMD_FOREACH_LANES_OP2(i64x2_gt_s, i, 64, GT_S)
 SIMD_FOREACH_LANES_OP2(i64x2_le_s, i, 64, LE_S)
 SIMD_FOREACH_LANES_OP2(i64x2_ge_s, i, 64, GE_S)
+
+SIMD_FOREACH_LANES_OP2(i8x16_avgr_u, i, 8, LANE_AVGR)
+SIMD_FOREACH_LANES_OP2(i16x8_avgr_u, i, 16, LANE_AVGR)
 
 #define LANE_OP1(I_OR_F, LS, a, b, I, OP)                                     \
         LANEPTR##I_OR_F##LS(a)[I] = OP(LANEPTR##I_OR_F##LS(b)[I])
