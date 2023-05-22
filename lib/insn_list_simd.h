@@ -240,6 +240,7 @@ INSTRUCTION(0xd5, "i64x2.mul", i64x2_mul, 0)
 #if 0
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#integer-dot-product */
 INSTRUCTION(0xba, "i64x2.dot_i16x8_s", i64x2_dot_i16x8_s, 0)
+#endif
 
 INSTRUCTION(0x67, "f32x4.ceil", f32x4_ceil, 0)
 INSTRUCTION(0x68, "f32x4.floor", f32x4_floor, 0)
@@ -250,7 +251,6 @@ INSTRUCTION(0x74, "f64x2.ceil", f64x2_ceil, 0)
 INSTRUCTION(0x75, "f64x2.floor", f64x2_floor, 0)
 INSTRUCTION(0x7a, "f64x2.trunc", f64x2_trunc, 0)
 INSTRUCTION(0x94, "f64x2.nearest", f64x2_nearest, 0)
-#endif
 
 INSTRUCTION(0xe0, "f32x4.abs", f32x4_abs, 0)
 INSTRUCTION(0xe1, "f32x4.neg", f32x4_neg, 0)

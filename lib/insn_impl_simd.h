@@ -255,6 +255,23 @@ fail:                                                                         \
                 INSN_FAIL;                                                    \
         }
 
+#define SIMD_FOREACH_LANES_OP1(NAME, I_OR_F, LS, OP)                          \
+        INSN_IMPL(NAME)                                                       \
+        {                                                                     \
+                int ret;                                                      \
+                LOAD_PC;                                                      \
+                POP_VAL(TYPE_v128, a);                                        \
+                struct val val_c;                                             \
+                if (EXECUTING) {                                              \
+                        FOREACH_LANES2_2(I_OR_F, LS, &val_c, &val_a, OP);     \
+                }                                                             \
+                PUSH_VAL(TYPE_v128, c);                                       \
+                SAVE_PC;                                                      \
+                INSN_SUCCESS;                                                 \
+fail:                                                                         \
+                INSN_FAIL;                                                    \
+        }
+
 #define SIMD_SHIFTOP(NAME, OP)                                                \
         INSN_IMPL(NAME)                                                       \
         {                                                                     \
@@ -339,6 +356,14 @@ fail:                                                                         \
                 unsigned int _i;                                              \
                 for (_i = 0; _i < 128 / LS; _i++) {                           \
                         OP(I_OR_F, LS, a, b, c, _i);                          \
+                }                                                             \
+        } while (0)
+
+#define FOREACH_LANES2_2(I_OR_F, LS, a, b, OP)                                \
+        do {                                                                  \
+                unsigned int _i;                                              \
+                for (_i = 0; _i < 128 / LS; _i++) {                           \
+                        OP(I_OR_F, LS, a, b, _i);                             \
                 }                                                             \
         } while (0)
 
@@ -840,3 +865,26 @@ SIMD_FOREACH_LANES_OP2(i64x2_lt_s, i, 64, LT_S)
 SIMD_FOREACH_LANES_OP2(i64x2_gt_s, i, 64, GT_S)
 SIMD_FOREACH_LANES_OP2(i64x2_le_s, i, 64, LE_S)
 SIMD_FOREACH_LANES_OP2(i64x2_ge_s, i, 64, GE_S)
+
+#define LANE_OP1(I_OR_F, LS, a, b, I, OP)                                     \
+        LANEPTR##I_OR_F##LS(a)[I] = OP(LANEPTR##I_OR_F##LS(b)[I])
+
+#define LANE_CEILF(I_OR_F, LS, a, b, I) LANE_OP1(I_OR_F, LS, a, b, I, ceilf)
+#define LANE_TRUNCF(I_OR_F, LS, a, b, I) LANE_OP1(I_OR_F, LS, a, b, I, truncf)
+#define LANE_FLOORF(I_OR_F, LS, a, b, I) LANE_OP1(I_OR_F, LS, a, b, I, floorf)
+#define LANE_NEARESTF(I_OR_F, LS, a, b, I) LANE_OP1(I_OR_F, LS, a, b, I, rintf)
+
+#define LANE_CEIL(I_OR_F, LS, a, b, I) LANE_OP1(I_OR_F, LS, a, b, I, ceil)
+#define LANE_TRUNC(I_OR_F, LS, a, b, I) LANE_OP1(I_OR_F, LS, a, b, I, trunc)
+#define LANE_FLOOR(I_OR_F, LS, a, b, I) LANE_OP1(I_OR_F, LS, a, b, I, floor)
+#define LANE_NEAREST(I_OR_F, LS, a, b, I) LANE_OP1(I_OR_F, LS, a, b, I, rint)
+
+SIMD_FOREACH_LANES_OP1(f32x4_ceil, f, 32, LANE_CEILF)
+SIMD_FOREACH_LANES_OP1(f32x4_trunc, f, 32, LANE_TRUNCF)
+SIMD_FOREACH_LANES_OP1(f32x4_floor, f, 32, LANE_FLOORF)
+SIMD_FOREACH_LANES_OP1(f32x4_nearest, f, 32, LANE_NEARESTF)
+
+SIMD_FOREACH_LANES_OP1(f64x2_ceil, f, 64, LANE_CEIL)
+SIMD_FOREACH_LANES_OP1(f64x2_trunc, f, 64, LANE_TRUNC)
+SIMD_FOREACH_LANES_OP1(f64x2_floor, f, 64, LANE_FLOOR)
+SIMD_FOREACH_LANES_OP1(f64x2_nearest, f, 64, LANE_NEAREST)
