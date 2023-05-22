@@ -312,9 +312,10 @@ fail:                                                                         \
 #define _EXTADD1(S_OR_U, BDST, BSRC, a, b, I)                                 \
         le##BDST##_encode(                                                    \
                 &(a)[I],                                                      \
-                EXTEND_##S_OR_U(BSRC, le##BSRC##_decode(&(b)[I * 2])) +       \
-                        EXTEND_##S_OR_U(BSRC,                                 \
-                                        le##BSRC##_decode(&(b)[I * 2 + 1])))
+                ADD(BDST,                                                     \
+                    EXTEND_##S_OR_U(BSRC, le##BSRC##_decode(&(b)[I * 2])),    \
+                    EXTEND_##S_OR_U(BSRC,                                     \
+                                    le##BSRC##_decode(&(b)[I * 2 + 1]))))
 
 #define EXTADD1(S_OR_U, BDST, BSRC, a, b, I)                                  \
         _EXTADD1(S_OR_U, BDST, BSRC, a, b, I)
@@ -330,8 +331,8 @@ fail:                                                                         \
 #define EXTEND1_s(LS, a, b, I) EXTEND1(s, LS, HALF##LS, a, b, I)
 #define EXTEND1_u(LS, a, b, I) EXTEND1(u, LS, HALF##LS, a, b, I)
 
-#define EXTADD1_s(LS, a, b, I) EXTADD1(u, LS, HALF##LS, a, b, I)
-#define EXTADD1_u(LS, a, b, I) EXTADD1(s, LS, HALF##LS, a, b, I)
+#define EXTADD1_s(LS, a, b, I) EXTADD1(s, LS, HALF##LS, a, b, I)
+#define EXTADD1_u(LS, a, b, I) EXTADD1(u, LS, HALF##LS, a, b, I)
 
 #define EXTEND_8x8_s(a, b) FOREACH_LANES(16, a, b, EXTEND1_s)
 #define EXTEND_8x8_u(a, b) FOREACH_LANES(16, a, b, EXTEND1_u)
