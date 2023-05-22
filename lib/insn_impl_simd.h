@@ -598,11 +598,11 @@ SIMD_OP2(f32x4_div, FDIV_32x4)
 SIMD_OP2(f64x2_div, FDIV_64x2)
 
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
-#define MAX_s(N, a, b) MAX((int##N##_t)a, (int##N##_t)b)
+#define MAX_s(N, a, b) (uint##N##_t) MAX((int##N##_t)a, (int##N##_t)b)
 #define MAX_u(N, a, b) MAX((uint##N##_t)a, (uint##N##_t)b)
 
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
-#define MIN_s(N, a, b) MIN((int##N##_t)a, (int##N##_t)b)
+#define MIN_s(N, a, b) (uint##N##_t) MIN((int##N##_t)a, (int##N##_t)b)
 #define MIN_u(N, a, b) MIN((uint##N##_t)a, (uint##N##_t)b)
 
 #define MAX_s1(LS, a, b, c, I) LANE_OP3(i, LS, a, b, c, I, MAX_s)
