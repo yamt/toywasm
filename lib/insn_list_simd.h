@@ -149,10 +149,8 @@ INSTRUCTION(0x77, "i8x16.min_u", i8x16_min_u, 0)
 INSTRUCTION(0x78, "i8x16.max_s", i8x16_max_s, 0)
 INSTRUCTION(0x79, "i8x16.max_u", i8x16_max_u, 0)
 
-#if 0
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#lane-wise-integer-rounding-average */
 INSTRUCTION(0x7b, "i8x16.avgr_u", i8x16_avgr_u, 0)
-#endif
 
 INSTRUCTION(0x80, "i16x8.abs", i16x8_abs, 0)
 INSTRUCTION(0x81, "i16x8.neg", i16x8_neg, 0)
@@ -187,9 +185,7 @@ INSTRUCTION(0x97, "i16x8.min_u", i16x8_min_u, 0)
 INSTRUCTION(0x98, "i16x8.max_s", i16x8_max_s, 0)
 INSTRUCTION(0x99, "i16x8.max_u", i16x8_max_u, 0)
 
-#if 0
 INSTRUCTION(0x9b, "i16x8.avgr_u", i16x8_avgr_u, 0)
-#endif
 
 INSTRUCTION(0xa0, "i32x4.abs", i32x4_abs, 0)
 INSTRUCTION(0xa1, "i32x4.neg", i32x4_neg, 0)
