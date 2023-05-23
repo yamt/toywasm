@@ -204,10 +204,8 @@ INSTRUCTION(0xb7, "i32x4.min_u", i32x4_min_u, 0)
 INSTRUCTION(0xb8, "i32x4.max_s", i32x4_max_s, 0)
 INSTRUCTION(0xb9, "i32x4.max_u", i32x4_max_u, 0)
 
-#if 0
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#integer-dot-product */
 INSTRUCTION(0xba, "i32x4.dot_i16x8_s", i32x4_dot_i16x8_s, 0)
-#endif
 
 INSTRUCTION(0xc0, "i64x2.abs", i64x2_abs, 0)
 INSTRUCTION(0xc1, "i64x2.neg", i64x2_neg, 0)
@@ -227,11 +225,6 @@ INSTRUCTION(0xce, "i64x2.add", i64x2_add, 0)
 INSTRUCTION(0xd1, "i64x2.sub", i64x2_sub, 0)
 
 INSTRUCTION(0xd5, "i64x2.mul", i64x2_mul, 0)
-
-#if 0
-/* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#integer-dot-product */
-INSTRUCTION(0xba, "i64x2.dot_i16x8_s", i64x2_dot_i16x8_s, 0)
-#endif
 
 INSTRUCTION(0x67, "f32x4.ceil", f32x4_ceil, 0)
 INSTRUCTION(0x68, "f32x4.floor", f32x4_floor, 0)
