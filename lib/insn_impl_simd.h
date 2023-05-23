@@ -615,6 +615,44 @@ SIMD_OP2(i64x2_sub, SUB_64x2)
 SIMD_OP2(f32x4_sub, FSUB_32x4)
 SIMD_OP2(f64x2_sub, FSUB_64x2)
 
+#define SAT_s(LS, a)                                                          \
+        (uint##LS##_t)((a >= INT##LS##_MAX)   ? INT##LS##_MAX                 \
+                       : (a <= INT##LS##_MIN) ? INT##LS##_MIN                 \
+                                              : a)
+
+#define SAT_u(LS, a)                                                          \
+        (uint##LS##_t)((a >= UINT##LS##_MAX) ? UINT##LS##_MAX                 \
+                       : (a <= 0)            ? 0                              \
+                                             : a)
+
+#define ADD_SAT_s(N, a, b) SAT_s(N, (int##N##_t)a + (int##N##_t)b)
+#define ADD_SAT_u(N, a, b) SAT_u(N, (uint##N##_t)a + (uint##N##_t)b)
+#define SUB_SAT_s(N, a, b) SAT_s(N, (int##N##_t)a - (int##N##_t)b)
+#define SUB_SAT_u(N, a, b) SAT_u(N, (uint##N##_t)a - (uint##N##_t)b)
+
+#define ADD_SAT_s1(LS, a, b, c, I) LANE_OP3(i, LS, a, b, c, I, ADD_SAT_s)
+#define ADD_SAT_u1(LS, a, b, c, I) LANE_OP3(i, LS, a, b, c, I, ADD_SAT_u)
+#define SUB_SAT_s1(LS, a, b, c, I) LANE_OP3(i, LS, a, b, c, I, SUB_SAT_s)
+#define SUB_SAT_u1(LS, a, b, c, I) LANE_OP3(i, LS, a, b, c, I, SUB_SAT_u)
+
+#define ADD_SAT_8_s(a, b, c) FOREACH_LANES3(8, a, b, c, ADD_SAT_s1)
+#define ADD_SAT_8_u(a, b, c) FOREACH_LANES3(8, a, b, c, ADD_SAT_u1)
+#define ADD_SAT_16_s(a, b, c) FOREACH_LANES3(16, a, b, c, ADD_SAT_s1)
+#define ADD_SAT_16_u(a, b, c) FOREACH_LANES3(16, a, b, c, ADD_SAT_u1)
+#define SUB_SAT_8_s(a, b, c) FOREACH_LANES3(8, a, b, c, SUB_SAT_s1)
+#define SUB_SAT_8_u(a, b, c) FOREACH_LANES3(8, a, b, c, SUB_SAT_u1)
+#define SUB_SAT_16_s(a, b, c) FOREACH_LANES3(16, a, b, c, SUB_SAT_s1)
+#define SUB_SAT_16_u(a, b, c) FOREACH_LANES3(16, a, b, c, SUB_SAT_u1)
+
+SIMD_OP2(i8x16_add_sat_s, ADD_SAT_8_s)
+SIMD_OP2(i16x8_add_sat_s, ADD_SAT_16_s)
+SIMD_OP2(i8x16_sub_sat_s, SUB_SAT_8_s)
+SIMD_OP2(i16x8_sub_sat_s, SUB_SAT_16_s)
+SIMD_OP2(i8x16_add_sat_u, ADD_SAT_8_u)
+SIMD_OP2(i16x8_add_sat_u, ADD_SAT_16_u)
+SIMD_OP2(i8x16_sub_sat_u, SUB_SAT_8_u)
+SIMD_OP2(i16x8_sub_sat_u, SUB_SAT_16_u)
+
 #define MUL1(LS, a, b, c, I) LANE_OP3(i, LS, a, b, c, I, MUL)
 #define FMUL1(LS, a, b, c, I) LANE_OP3(f, LS, a, b, c, I, FMUL)
 
@@ -760,14 +798,6 @@ SIMD_OP1(f64x2_convert_low_i32x4_u, CONVERT_LOW_64_u)
 /*
  * Note: for narrowing ops, the input lanes are always interpreted signed.
  */
-
-#define SAT_s(LS, a)                                                          \
-        ((a >= INT##LS##_MAX)   ? INT##LS##_MAX                               \
-         : (a <= INT##LS##_MIN) ? INT##LS##_MIN                               \
-                                : a)
-
-#define SAT_u(LS, a)                                                          \
-        ((a >= UINT##LS##_MAX) ? UINT##LS##_MAX : (a <= 0) ? 0 : a)
 
 #define NARROW1(s, LS, LSSRC, a, b, c, I)                                     \
         do {                                                                  \

@@ -134,15 +134,11 @@ INSTRUCTION(0x6b, "i8x16.shl", i8x16_shl, 0)
 INSTRUCTION(0x6c, "i8x16.shr_s", i8x16_shr_s, 0)
 INSTRUCTION(0x6d, "i8x16.shr_u", i8x16_shr_u, 0)
 INSTRUCTION(0x6e, "i8x16.add", i8x16_add, 0)
-#if 0
 INSTRUCTION(0x6f, "i8x16.add_sat_s", i8x16_add_sat_s, 0)
 INSTRUCTION(0x70, "i8x16.add_sat_u", i8x16_add_sat_u, 0)
-#endif
 INSTRUCTION(0x71, "i8x16.sub", i8x16_sub, 0)
-#if 0
 INSTRUCTION(0x72, "i8x16.sub_sat_s", i8x16_sub_sat_s, 0)
 INSTRUCTION(0x73, "i8x16.sub_sat_u", i8x16_sub_sat_u, 0)
-#endif
 
 INSTRUCTION(0x76, "i8x16.min_s", i8x16_min_s, 0)
 INSTRUCTION(0x77, "i8x16.min_u", i8x16_min_u, 0)
@@ -169,15 +165,11 @@ INSTRUCTION(0x8b, "i16x8.shl", i16x8_shl, 0)
 INSTRUCTION(0x8c, "i16x8.shr_s", i16x8_shr_s, 0)
 INSTRUCTION(0x8d, "i16x8.shr_u", i16x8_shr_u, 0)
 INSTRUCTION(0x8e, "i16x8.add", i16x8_add, 0)
-#if 0
 INSTRUCTION(0x8f, "i16x8.add_sat_s", i16x8_add_sat_s, 0)
 INSTRUCTION(0x90, "i16x8.add_sat_u", i16x8_add_sat_u, 0)
-#endif
 INSTRUCTION(0x91, "i16x8.sub", i16x8_sub, 0)
-#if 0
 INSTRUCTION(0x92, "i16x8.sub_sat_s", i16x8_sub_sat_s, 0)
 INSTRUCTION(0x93, "i16x8.sub_sat_u", i16x8_sub_sat_u, 0)
-#endif
 
 INSTRUCTION(0x95, "i16x8.mul", i16x8_mul, 0)
 INSTRUCTION(0x96, "i16x8.min_s", i16x8_min_s, 0)
