@@ -813,11 +813,16 @@ SIMD_OP1(f64x2_neg, FNEG_64)
 SIMD_OP1(f64x2_sqrt, FSQRT_64)
 
 #define CONVERT_s1(LS, a, b, I)                                               \
-        LANEPTRf##LS(a)[I] = (int##LS##_t)LANEPTRi##LS(b)[I]
-#define CONVERT_u1(LS, a, b, I) LANEPTRf##LS(a)[I] = LANEPTRi##LS(b)[I]
+        lef##LS##_encode(&LANEPTRf##LS(a)[I],                                 \
+                         (int##LS##_t)le##LS##_decode(&LANEPTRi##LS(b)[I]))
+#define CONVERT_u1(LS, a, b, I)                                               \
+        lef##LS##_encode(&LANEPTRf##LS(a)[I],                                 \
+                         le##LS##_decode(&LANEPTRi##LS(b)[I]))
 #define CONVERT_LOW_s1(LS, a, b, I)                                           \
-        LANEPTRf##LS(a)[I] = (int32_t)LANEPTRi##32(b)[I]
-#define CONVERT_LOW_u1(LS, a, b, I) LANEPTRf##LS(a)[I] = LANEPTRi##32(b)[I]
+        lef##LS##_encode(&LANEPTRf##LS(a)[I],                                 \
+                         (int32_t)le32_decode(&LANEPTRi32(b)[I]))
+#define CONVERT_LOW_u1(LS, a, b, I)                                           \
+        lef##LS##_encode(&LANEPTRf##LS(a)[I], le32_decode(&LANEPTRi32(b)[I]))
 
 #define CONVERT_32_s(a, b) FOREACH_LANES(32, a, b, CONVERT_s1)
 #define CONVERT_32_u(a, b) FOREACH_LANES(32, a, b, CONVERT_u1)

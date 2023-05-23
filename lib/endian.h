@@ -20,5 +20,8 @@ uint16_t le16_decode(const void *p);
 uint32_t le32_decode(const void *p);
 uint64_t le64_decode(const void *p);
 
+void lef32_encode(void *p, float v);
+void lef64_encode(void *p, double v);
+
 float lef32_decode(const void *p);
 double lef64_decode(const void *p);
