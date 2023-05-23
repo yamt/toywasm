@@ -32,7 +32,6 @@ INSTRUCTION(0x0d, "i8x16.shuffle", i8x16_shuffle, 0)
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#swizzling-using-variable-indices */
 INSTRUCTION(0x0e, "i8x16.swizzle", i8x16_swizzle, 0)
 
-#if 0
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#create-vector-with-identical-lanes */
 INSTRUCTION(0x0f, "i8x16.splat", i8x16_splat, 0)
 INSTRUCTION(0x10, "i16x8.splat", i16x8_splat, 0)
@@ -40,7 +39,6 @@ INSTRUCTION(0x11, "i32x4.splat", i32x4_splat, 0)
 INSTRUCTION(0x12, "i64x2.splat", i64x2_splat, 0)
 INSTRUCTION(0x13, "f32x4.splat", f32x4_splat, 0)
 INSTRUCTION(0x14, "f64x2.splat", f64x2_splat, 0)
-#endif
 
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#extract-lane-as-a-scalar */
 INSTRUCTION(0x15, "i8x16.extract_lane_s", i8x16_extract_lane_s, 0)

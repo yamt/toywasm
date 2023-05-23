@@ -148,6 +148,24 @@ fail:                                                                         \
                 INSN_FAIL;                                                    \
         }
 
+#define SIMD_SPLATOP(NAME, I_OR_F, STACK, LS, OP)                             \
+        INSN_IMPL(NAME)                                                       \
+        {                                                                     \
+                int ret;                                                      \
+                LOAD_PC;                                                      \
+                POP_VAL(TYPE_##I_OR_F##STACK, x);                             \
+                struct val val_v;                                             \
+                if (EXECUTING) {                                              \
+                        uint##LS##_t v = (uint##LS##_t)val_x.u.i##STACK;      \
+                        OP(&val_v.u.v128, &v);                                \
+                }                                                             \
+                PUSH_VAL(TYPE_v128, v);                                       \
+                SAVE_PC;                                                      \
+                INSN_SUCCESS;                                                 \
+fail:                                                                         \
+                INSN_FAIL;                                                    \
+        }
+
 #define SIMD_CONSTOP(NAME)                                                    \
         INSN_IMPL(NAME)                                                       \
         {                                                                     \
@@ -472,6 +490,13 @@ SIMD_REPLACEOP_LANE(i32x4_replace_lane, i, 32, 32, 4, COPYBITS32)
 SIMD_REPLACEOP_LANE(i64x2_replace_lane, i, 64, 64, 2, COPYBITS64)
 SIMD_REPLACEOP_LANE(f32x4_replace_lane, f, 32, 32, 4, COPYBITS32)
 SIMD_REPLACEOP_LANE(f64x2_replace_lane, f, 64, 64, 2, COPYBITS64)
+
+SIMD_SPLATOP(i8x16_splat, i, 32, 8, SPLAT_8)
+SIMD_SPLATOP(i16x8_splat, i, 32, 16, SPLAT_16)
+SIMD_SPLATOP(i32x4_splat, i, 32, 32, SPLAT_32)
+SIMD_SPLATOP(i64x2_splat, i, 64, 64, SPLAT_64)
+SIMD_SPLATOP(f32x4_splat, f, 32, 32, SPLAT_32)
+SIMD_SPLATOP(f64x2_splat, f, 64, 64, SPLAT_64)
 
 #define SHL1(LS, a, b, c, I)                                                  \
         LANEPTRi##LS(a)[I] =                                                  \
