@@ -287,7 +287,6 @@ INSTRUCTION(0xfb, "f32x4.convert_i32x4_u", f32x4_convert_i32x4_u, 0)
 INSTRUCTION(0x5c, "v128.load32_zero", v128_load32_zero, 0)
 INSTRUCTION(0x5d, "v128.load64_zero", v128_load64_zero, 0)
 
-#if 0
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#extended-integer-multiplication */
 INSTRUCTION(0x9c, "i16x8.extmul_low_i8x16_s", i16x8_extmul_low_i8x16_s, 0)
 INSTRUCTION(0x9d, "i16x8.extmul_high_i8x16_s", i16x8_extmul_high_i8x16_s, 0)
@@ -304,6 +303,7 @@ INSTRUCTION(0xdd, "i64x2.extmul_high_i32x4_s", i64x2_extmul_high_i32x4_s, 0)
 INSTRUCTION(0xde, "i64x2.extmul_low_i32x4_u", i64x2_extmul_low_i32x4_u, 0)
 INSTRUCTION(0xdf, "i64x2.extmul_high_i32x4_u", i64x2_extmul_high_i32x4_u, 0)
 
+#if 0
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#saturating-integer-q-format-rounding-multiplication */
 INSTRUCTION(0x82, "i16x8.q15mulr_sat_s", i16x8_q15mulr_sat_s, 0)
 #endif

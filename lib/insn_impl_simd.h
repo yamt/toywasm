@@ -320,6 +320,21 @@ fail:                                                                         \
 #define EXTADD1(S_OR_U, BDST, BSRC, a, b, I)                                  \
         _EXTADD1(S_OR_U, BDST, BSRC, a, b, I)
 
+/* extmul_low(a, b) = mul(ext_low(a), ext_low(b)) */
+#define _EXTMUL1(S_OR_U, BDST, BSRC, a, b, c, I)                              \
+        le##BDST##_encode(                                                    \
+                &(a)[I],                                                      \
+                MUL(BDST,                                                     \
+                    EXTEND_##S_OR_U(                                          \
+                            BSRC, le##BSRC##_decode(                          \
+                                          &((const uint##BSRC##_t *)b)[I])),  \
+                    EXTEND_##S_OR_U(                                          \
+                            BSRC, le##BSRC##_decode(                          \
+                                          &((const uint##BSRC##_t *)c)[I]))))
+
+#define EXTMUL1(S_OR_U, BDST, BSRC, a, b, c, I)                               \
+        _EXTMUL1(S_OR_U, BDST, BSRC, a, b, c, I)
+
 #define DBL8 16
 #define DBL16 32
 #define DBL32 64
@@ -345,6 +360,16 @@ fail:                                                                         \
 #define EXTADD_16x8_u(a, b) FOREACH_LANES(16, a, b, EXTADD1_u)
 #define EXTADD_32x4_s(a, b) FOREACH_LANES(32, a, b, EXTADD1_s)
 #define EXTADD_32x4_u(a, b) FOREACH_LANES(32, a, b, EXTADD1_u)
+
+#define EXTMUL1_s(LS, a, b, c, I) EXTMUL1(s, LS, HALF##LS, a, b, c, I)
+#define EXTMUL1_u(LS, a, b, c, I) EXTMUL1(u, LS, HALF##LS, a, b, c, I)
+
+#define EXTMUL_16_s(a, b, c) FOREACH_LANES3(16, a, b, c, EXTMUL1_s)
+#define EXTMUL_16_u(a, b, c) FOREACH_LANES3(16, a, b, c, EXTMUL1_u)
+#define EXTMUL_32_s(a, b, c) FOREACH_LANES3(32, a, b, c, EXTMUL1_s)
+#define EXTMUL_32_u(a, b, c) FOREACH_LANES3(32, a, b, c, EXTMUL1_u)
+#define EXTMUL_64_s(a, b, c) FOREACH_LANES3(64, a, b, c, EXTMUL1_s)
+#define EXTMUL_64_u(a, b, c) FOREACH_LANES3(64, a, b, c, EXTMUL1_u)
 
 #define SPLAT1(LS, D, S, I) le##LS##_encode(&(D)->i##LS[I], S)
 
@@ -819,6 +844,44 @@ SIMD_OP1(i16x8_extadd_pairwise_i8x16_s, EXTADD_16_s)
 SIMD_OP1(i16x8_extadd_pairwise_i8x16_u, EXTADD_16_u)
 SIMD_OP1(i32x4_extadd_pairwise_i16x8_s, EXTADD_32_s)
 SIMD_OP1(i32x4_extadd_pairwise_i16x8_u, EXTADD_32_u)
+
+#define EXTMUL_LOW_16_s(a, b, c)                                              \
+        EXTMUL_16_s(LANEPTRi16(a), &LANEPTRi8(b)[0], &LANEPTRi8(c)[0])
+#define EXTMUL_LOW_16_u(a, b, c)                                              \
+        EXTMUL_16_u(LANEPTRi16(a), &LANEPTRi8(b)[0], &LANEPTRi8(c)[0])
+#define EXTMUL_LOW_32_s(a, b, c)                                              \
+        EXTMUL_32_s(LANEPTRi32(a), &LANEPTRi16(b)[0], &LANEPTRi16(c)[0])
+#define EXTMUL_LOW_32_u(a, b, c)                                              \
+        EXTMUL_32_u(LANEPTRi32(a), &LANEPTRi16(b)[0], &LANEPTRi16(c)[0])
+#define EXTMUL_LOW_64_s(a, b, c)                                              \
+        EXTMUL_64_s(LANEPTRi64(a), &LANEPTRi32(b)[0], &LANEPTRi32(c)[0])
+#define EXTMUL_LOW_64_u(a, b, c)                                              \
+        EXTMUL_64_u(LANEPTRi64(a), &LANEPTRi32(b)[0], &LANEPTRi32(c)[0])
+#define EXTMUL_HIGH_16_s(a, b, c)                                             \
+        EXTMUL_16_s(LANEPTRi16(a), &LANEPTRi8(b)[8], &LANEPTRi8(c)[8])
+#define EXTMUL_HIGH_16_u(a, b, c)                                             \
+        EXTMUL_16_u(LANEPTRi16(a), &LANEPTRi8(b)[8], &LANEPTRi8(c)[8])
+#define EXTMUL_HIGH_32_s(a, b, c)                                             \
+        EXTMUL_32_s(LANEPTRi32(a), &LANEPTRi16(b)[4], &LANEPTRi16(c)[4])
+#define EXTMUL_HIGH_32_u(a, b, c)                                             \
+        EXTMUL_32_u(LANEPTRi32(a), &LANEPTRi16(b)[4], &LANEPTRi16(c)[4])
+#define EXTMUL_HIGH_64_s(a, b, c)                                             \
+        EXTMUL_64_s(LANEPTRi64(a), &LANEPTRi32(b)[2], &LANEPTRi32(c)[2])
+#define EXTMUL_HIGH_64_u(a, b, c)                                             \
+        EXTMUL_64_u(LANEPTRi64(a), &LANEPTRi32(b)[2], &LANEPTRi32(c)[2])
+
+SIMD_OP2(i16x8_extmul_low_i8x16_s, EXTMUL_LOW_16_s)
+SIMD_OP2(i16x8_extmul_low_i8x16_u, EXTMUL_LOW_16_u)
+SIMD_OP2(i32x4_extmul_low_i16x8_s, EXTMUL_LOW_32_s)
+SIMD_OP2(i32x4_extmul_low_i16x8_u, EXTMUL_LOW_32_u)
+SIMD_OP2(i64x2_extmul_low_i32x4_s, EXTMUL_LOW_64_s)
+SIMD_OP2(i64x2_extmul_low_i32x4_u, EXTMUL_LOW_64_u)
+SIMD_OP2(i16x8_extmul_high_i8x16_s, EXTMUL_HIGH_16_s)
+SIMD_OP2(i16x8_extmul_high_i8x16_u, EXTMUL_HIGH_16_u)
+SIMD_OP2(i32x4_extmul_high_i16x8_s, EXTMUL_HIGH_32_s)
+SIMD_OP2(i32x4_extmul_high_i16x8_u, EXTMUL_HIGH_32_u)
+SIMD_OP2(i64x2_extmul_high_i32x4_s, EXTMUL_HIGH_64_s)
+SIMD_OP2(i64x2_extmul_high_i32x4_u, EXTMUL_HIGH_64_u)
 
 #define CMP_LANE(I_OR_F, LS, a, b, c, I, CAST, OP)                            \
         LANEPTRi##LS(a)[I] = (CAST LANEPTR##I_OR_F##LS(                       \
