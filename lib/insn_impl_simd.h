@@ -1051,3 +1051,17 @@ SIMD_FOREACH_LANES_OP1(i64x2_neg, i, 64, LANE_NEG)
         LANE_OP2_LS(I_OR_F, LS, a, b, c, I, Q15MULR)
 
 SIMD_FOREACH_LANES_OP2(i16x8_q15mulr_sat_s, i, 16, LANE_Q15MULR)
+
+#define DOT32_1(LS, a, b, c, I)                                               \
+        le32_encode(&LANEPTRi32(a)[I],                                        \
+                    MUL(32, EXTEND_s(16, le16_decode(&LANEPTRi16(b)[I * 2])), \
+                        EXTEND_s(16, le16_decode(&LANEPTRi16(c)[I * 2]))) +   \
+                            MUL(32,                                           \
+                                EXTEND_s(16, le16_decode(&LANEPTRi16(         \
+                                                     b)[I * 2 + 1])),         \
+                                EXTEND_s(16, le16_decode(&LANEPTRi16(         \
+                                                     c)[I * 2 + 1]))))
+
+#define DOT32(a, b, c) FOREACH_LANES3(32, a, b, c, DOT32_1)
+
+SIMD_OP2(i32x4_dot_i16x8_s, DOT32)
