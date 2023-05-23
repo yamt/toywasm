@@ -157,6 +157,28 @@ le64_decode(const void *p)
         return le64_to_host(le);
 }
 
+void
+lef32_encode(void *p, float v)
+{
+        union {
+                uint32_t i;
+                float f;
+        } u;
+        u.f = v;
+        le32_encode(p, u.i);
+}
+
+void
+lef64_encode(void *p, double v)
+{
+        union {
+                uint64_t i;
+                double f;
+        } u;
+        u.f = v;
+        le64_encode(p, u.i);
+}
+
 float
 lef32_decode(const void *p)
 {
