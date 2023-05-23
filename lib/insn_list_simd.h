@@ -303,10 +303,8 @@ INSTRUCTION(0xdd, "i64x2.extmul_high_i32x4_s", i64x2_extmul_high_i32x4_s, 0)
 INSTRUCTION(0xde, "i64x2.extmul_low_i32x4_u", i64x2_extmul_low_i32x4_u, 0)
 INSTRUCTION(0xdf, "i64x2.extmul_high_i32x4_u", i64x2_extmul_high_i32x4_u, 0)
 
-#if 0
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#saturating-integer-q-format-rounding-multiplication */
 INSTRUCTION(0x82, "i16x8.q15mulr_sat_s", i16x8_q15mulr_sat_s, 0)
-#endif
 
 INSTRUCTION(0x53, "v128.any_true", v128_any_true, 0)
 
