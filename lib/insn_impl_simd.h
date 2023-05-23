@@ -1068,3 +1068,25 @@ SIMD_FOREACH_LANES_OP2(i16x8_q15mulr_sat_s, i, 16, LANE_Q15MULR)
 #define DOT32(a, b, c) FOREACH_LANES3(32, a, b, c, DOT32_1)
 
 SIMD_OP2(i32x4_dot_i16x8_s, DOT32)
+
+#define TRUNC_SAT_s1(LS, a, b, I)                                             \
+        do {                                                                  \
+                int32_t r;                                                    \
+                float f = lef32_decode(&LANEPTRf32(b)[I]);                    \
+                TRUNC_SAT_S_32_32(r, f);                                      \
+                le32_encode(&LANEPTRi32(a)[I], (uint32_t)r);                  \
+        } while (0)
+
+#define TRUNC_SAT_u1(LS, a, b, I)                                             \
+        do {                                                                  \
+                uint32_t r;                                                   \
+                float f = lef32_decode(&LANEPTRf32(b)[I]);                    \
+                TRUNC_SAT_U_32_32(r, f);                                      \
+                le32_encode(&LANEPTRi32(a)[I], r);                            \
+        } while (0)
+
+#define TRUNC_SAT_32_s(a, b) FOREACH_LANES(32, a, b, TRUNC_SAT_s1)
+#define TRUNC_SAT_32_u(a, b) FOREACH_LANES(32, a, b, TRUNC_SAT_u1)
+
+SIMD_OP1(i32x4_trunc_sat_f32x4_s, TRUNC_SAT_32_s)
+SIMD_OP1(i32x4_trunc_sat_f32x4_u, TRUNC_SAT_32_u)
