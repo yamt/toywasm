@@ -1090,3 +1090,31 @@ SIMD_OP2(i32x4_dot_i16x8_s, DOT32)
 
 SIMD_OP1(i32x4_trunc_sat_f32x4_s, TRUNC_SAT_32_s)
 SIMD_OP1(i32x4_trunc_sat_f32x4_u, TRUNC_SAT_32_u)
+
+#define TRUNC_SAT_64_s1(LS, a, b, I)                                          \
+        do {                                                                  \
+                int32_t r;                                                    \
+                double f = lef64_decode(&LANEPTRf64(b)[I]);                   \
+                TRUNC_SAT_S_64_32(r, f);                                      \
+                le32_encode(&LANEPTRi32(a)[I], (uint32_t)r);                  \
+        } while (0)
+
+#define TRUNC_SAT_64_u1(LS, a, b, I)                                          \
+        do {                                                                  \
+                uint32_t r;                                                   \
+                double f = lef64_decode(&LANEPTRf64(b)[I]);                   \
+                TRUNC_SAT_U_64_32(r, f);                                      \
+                le32_encode(&LANEPTRi32(a)[I], r);                            \
+        } while (0)
+
+#define TRUNC_SAT_64_s(a, b)                                                  \
+        FOREACH_LANES(64, a, b, TRUNC_SAT_64_s1);                             \
+        LANEPTRi32(a)[2] = 0;                                                 \
+        LANEPTRi32(a)[3] = 0
+#define TRUNC_SAT_64_u(a, b)                                                  \
+        FOREACH_LANES(64, a, b, TRUNC_SAT_64_u1);                             \
+        LANEPTRi32(a)[2] = 0;                                                 \
+        LANEPTRi32(a)[3] = 0
+
+SIMD_OP1(i32x4_trunc_sat_f64x2_s_zero, TRUNC_SAT_64_s)
+SIMD_OP1(i32x4_trunc_sat_f64x2_u_zero, TRUNC_SAT_64_u)
