@@ -112,8 +112,8 @@ fail:                                                                         \
                 if (EXECUTING) {                                              \
                         uint##LS##_t le;                                      \
                         CP(&le, &LANEPTRi##LS(&val_v)[lane]);                 \
-                        val_c.u.i##STACK =                                    \
-                                EXTEND_##SIGN(LS, le##LS##_decode(&le));      \
+                        val_c.u.i##STACK = EXTEND_##SIGN(                     \
+                                STACK, LS, le##LS##_decode(&le));             \
                 }                                                             \
                 PUSH_VAL(TYPE_##I_OR_F##STACK, c);                            \
                 SAVE_PC;                                                      \
@@ -297,15 +297,16 @@ fail:                                                                         \
 #define COPYBITS64(a, b) COPYBITS(a, b, 64)
 #define COPYBITS128(a, b) COPYBITS(a, b, 128)
 
-#define EXTEND_s(B, S) (int##B##_t)(S)
-#define EXTEND_u(B, S) (uint##B##_t)(S)
-#define EXTEND_noop(B, S) (S)
+#define EXTEND_s(BDST, BSRC, S) (int##BDST##_t)(int##BSRC##_t)(S)
+#define EXTEND_u(BDST, BSRC, S) (uint##BDST##_t)(uint##BSRC##_t)(S)
+#define EXTEND_noop(B, B2, S) (S)
 
 #define _EXTEND1(S_OR_U, BDST, BSRC, a, b, I)                                 \
         le##BDST##_encode(                                                    \
                 &(a)->i##BDST[I],                                             \
-                EXTEND_##S_OR_U(BSRC, le##BSRC##_decode(&((                   \
-                                              const uint##BSRC##_t *)b)[I])))
+                EXTEND_##S_OR_U(                                              \
+                        BDST, BSRC,                                           \
+                        le##BSRC##_decode(&((const uint##BSRC##_t *)b)[I])))
 #define EXTEND1(S_OR_U, BDST, BSRC, a, b, I)                                  \
         _EXTEND1(S_OR_U, BDST, BSRC, a, b, I)
 
@@ -313,8 +314,9 @@ fail:                                                                         \
         le##BDST##_encode(                                                    \
                 &(a)[I],                                                      \
                 ADD(BDST,                                                     \
-                    EXTEND_##S_OR_U(BSRC, le##BSRC##_decode(&(b)[I * 2])),    \
-                    EXTEND_##S_OR_U(BSRC,                                     \
+                    EXTEND_##S_OR_U(BDST, BSRC,                               \
+                                    le##BSRC##_decode(&(b)[I * 2])),          \
+                    EXTEND_##S_OR_U(BDST, BSRC,                               \
                                     le##BSRC##_decode(&(b)[I * 2 + 1]))))
 
 #define EXTADD1(S_OR_U, BDST, BSRC, a, b, I)                                  \
@@ -325,12 +327,12 @@ fail:                                                                         \
         le##BDST##_encode(                                                    \
                 &(a)[I],                                                      \
                 MUL(BDST,                                                     \
-                    EXTEND_##S_OR_U(                                          \
-                            BSRC, le##BSRC##_decode(                          \
-                                          &((const uint##BSRC##_t *)b)[I])),  \
-                    EXTEND_##S_OR_U(                                          \
-                            BSRC, le##BSRC##_decode(                          \
-                                          &((const uint##BSRC##_t *)c)[I]))))
+                    EXTEND_##S_OR_U(BDST, BSRC,                               \
+                                    le##BSRC##_decode(&(                      \
+                                            (const uint##BSRC##_t *)b)[I])),  \
+                    EXTEND_##S_OR_U(BDST, BSRC,                               \
+                                    le##BSRC##_decode(&(                      \
+                                            (const uint##BSRC##_t *)c)[I]))))
 
 #define EXTMUL1(S_OR_U, BDST, BSRC, a, b, c, I)                               \
         _EXTMUL1(S_OR_U, BDST, BSRC, a, b, c, I)
@@ -1043,9 +1045,8 @@ SIMD_FOREACH_LANES_OP1(i64x2_neg, i, 64, LANE_NEG)
 
 #define Q15MULR(N, a, b)                                                      \
         (uint##N##_t) SAT_s(                                                  \
-                N, (((int32_t)EXTEND_s(N, a)) * ((int32_t)EXTEND_s(N, b)) +   \
-                    0x4000) >>                                                \
-                           15)
+                N,                                                            \
+                ((EXTEND_s(32, N, a)) * (EXTEND_s(32, N, b)) + 0x4000) >> 15)
 
 #define LANE_Q15MULR(I_OR_F, LS, a, b, c, I)                                  \
         LANE_OP2_LS(I_OR_F, LS, a, b, c, I, Q15MULR)
@@ -1053,14 +1054,16 @@ SIMD_FOREACH_LANES_OP1(i64x2_neg, i, 64, LANE_NEG)
 SIMD_FOREACH_LANES_OP2(i16x8_q15mulr_sat_s, i, 16, LANE_Q15MULR)
 
 #define DOT32_1(LS, a, b, c, I)                                               \
-        le32_encode(&LANEPTRi32(a)[I],                                        \
-                    MUL(32, EXTEND_s(16, le16_decode(&LANEPTRi16(b)[I * 2])), \
-                        EXTEND_s(16, le16_decode(&LANEPTRi16(c)[I * 2]))) +   \
-                            MUL(32,                                           \
-                                EXTEND_s(16, le16_decode(&LANEPTRi16(         \
-                                                     b)[I * 2 + 1])),         \
-                                EXTEND_s(16, le16_decode(&LANEPTRi16(         \
-                                                     c)[I * 2 + 1]))))
+        le32_encode(                                                          \
+                &LANEPTRi32(a)[I],                                            \
+                MUL(32, EXTEND_s(32, 16, le16_decode(&LANEPTRi16(b)[I * 2])), \
+                    EXTEND_s(32, 16, le16_decode(&LANEPTRi16(c)[I * 2]))) +   \
+                        MUL(32,                                               \
+                            EXTEND_s(32, 16,                                  \
+                                     le16_decode(&LANEPTRi16(b)[I * 2 + 1])), \
+                            EXTEND_s(                                         \
+                                    32, 16,                                   \
+                                    le16_decode(&LANEPTRi16(c)[I * 2 + 1]))))
 
 #define DOT32(a, b, c) FOREACH_LANES3(32, a, b, c, DOT32_1)
 
