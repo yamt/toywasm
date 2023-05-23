@@ -260,10 +260,8 @@ INSTRUCTION(0xf5, "f64x2.max", f64x2_max, 0)
 INSTRUCTION(0xf6, "f64x2.pmin", f64x2_pmin, 0)
 INSTRUCTION(0xf7, "f64x2.pmax", f64x2_pmax, 0)
 
-#if 0
 INSTRUCTION(0xf8, "i32x4.trunc_sat_f32x4_s", i32x4_trunc_sat_f32x4_s, 0)
 INSTRUCTION(0xf9, "i32x4.trunc_sat_f32x4_u", i32x4_trunc_sat_f32x4_u, 0)
-#endif
 
 INSTRUCTION(0xfa, "f32x4.convert_i32x4_s", f32x4_convert_i32x4_s, 0)
 INSTRUCTION(0xfb, "f32x4.convert_i32x4_u", f32x4_convert_i32x4_u, 0)

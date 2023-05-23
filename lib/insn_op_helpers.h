@@ -80,6 +80,7 @@
 #define FMAX64(N, a, b) wasm_fmax(a, b)
 #define FCOPYSIGN64(N, a, b) copysign(a, b)
 
+/* TRUNC_SAT_{S,U}_xx_yy: saturating truncation towards zero, fxx to iyy. */
 #define TRUNC_SAT_S_32_32(R, A)                                               \
         TRUNC_SAT(R, float, INT32_MIN, INT32_MAX, (int32_t)truncf, A)
 #define TRUNC_SAT_U_32_32(R, A) TRUNC_SAT(R, float, 0, UINT32_MAX, truncf, A)

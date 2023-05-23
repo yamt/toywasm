@@ -156,3 +156,25 @@ le64_decode(const void *p)
         memcpy(&le, p, sizeof(le));
         return le64_to_host(le);
 }
+
+float
+lef32_decode(const void *p)
+{
+        union {
+                uint32_t i;
+                float f;
+        } u;
+        u.i = le32_decode(p);
+        return u.f;
+}
+
+double
+lef64_decode(const void *p)
+{
+        union {
+                uint64_t i;
+                double f;
+        } u;
+        u.i = le64_decode(p);
+        return u.f;
+}
