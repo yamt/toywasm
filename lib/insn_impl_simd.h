@@ -449,13 +449,13 @@ SIMD_LOADOP(v128_load32_splat, 32, v128, SPLAT_32)
 SIMD_LOADOP(v128_load64_splat, 64, v128, SPLAT_64)
 
 #define ZERO32(D, S)                                                          \
-        le32_encode(&(D)->i32[0], *(const uint32_t *)(S));                    \
+        memcpy(&(D)->i32[0], (S), 4);                                         \
         (D)->i32[1] = 0;                                                      \
         (D)->i32[2] = 0;                                                      \
         (D)->i32[3] = 0
 
 #define ZERO64(D, S)                                                          \
-        le64_encode(&(D)->i64[0], *(const uint64_t *)(S));                    \
+        memcpy(&(D)->i64[0], (S), 8);                                         \
         (D)->i64[1] = 0
 
 SIMD_LOADOP(v128_load32_zero, 32, v128, ZERO32)
