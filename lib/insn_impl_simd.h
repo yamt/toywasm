@@ -1125,3 +1125,17 @@ SIMD_OP1(i32x4_trunc_sat_f64x2_u_zero, TRUNC_SAT_64_u)
         LANE_OP1_LS(I_OR_F, LS, a, b, I, POPCNT)
 
 SIMD_FOREACH_LANES_OP1(i8x16_popcnt, i, 8, LANE_POPCNT)
+
+#define LANE_SWIZZLE(I_OR_F, LS, a, b, c, I)                                  \
+        do {                                                                  \
+                uint##LS##_t s = LANEPTR##I_OR_F##LS(c)[I];                   \
+                uint##LS##_t r;                                               \
+                if (s < 128 / LS) {                                           \
+                        r = LANEPTR##I_OR_F##LS(b)[s];                        \
+                } else {                                                      \
+                        r = 0;                                                \
+                }                                                             \
+                LANEPTR##I_OR_F##LS(a)[I] = r;                                \
+        } while (0)
+
+SIMD_FOREACH_LANES_OP2(i8x16_swizzle, i, 8, LANE_SWIZZLE)

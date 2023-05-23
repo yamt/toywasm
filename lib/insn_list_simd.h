@@ -29,10 +29,12 @@ INSTRUCTION(0x0c, "v128.const", v128_const, INSN_FLAG_CONST)
 #if 0
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#shuffling-using-immediate-indices */
 INSTRUCTION(0x0d, "i8x16.shuffle", i8x16_shuffle, 0)
+#endif
 
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#swizzling-using-variable-indices */
 INSTRUCTION(0x0e, "i8x16.swizzle", i8x16_swizzle, 0)
 
+#if 0
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#create-vector-with-identical-lanes */
 INSTRUCTION(0x0f, "i8x16.splat", i8x16_splat, 0)
 INSTRUCTION(0x10, "i16x8.splat", i16x8_splat, 0)
