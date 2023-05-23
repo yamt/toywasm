@@ -761,12 +761,12 @@ SIMD_OP1(f64x2_convert_low_i32x4_u, CONVERT_LOW_64_u)
  * Note: for narrowing ops, the input lanes are always interpreted signed.
  */
 
-#define NARROW_SAT_s(LS, a)                                                   \
+#define SAT_s(LS, a)                                                          \
         ((a >= INT##LS##_MAX)   ? INT##LS##_MAX                               \
          : (a <= INT##LS##_MIN) ? INT##LS##_MIN                               \
                                 : a)
 
-#define NARROW_SAT_u(LS, a)                                                   \
+#define SAT_u(LS, a)                                                          \
         ((a >= UINT##LS##_MAX) ? UINT##LS##_MAX : (a <= 0) ? 0 : a)
 
 #define NARROW1(s, LS, LSSRC, a, b, c, I)                                     \
@@ -778,7 +778,7 @@ SIMD_OP1(f64x2_convert_low_i32x4_u, CONVERT_LOW_64_u)
                         _src = (int##LSSRC##_t)LANEPTRi##LSSRC(               \
                                 c)[I - 128 / LSSRC];                          \
                 }                                                             \
-                LANEPTRi##LS(a)[I] = (uint##LS##_t)NARROW_SAT_##s(LS, _src);  \
+                LANEPTRi##LS(a)[I] = (uint##LS##_t)SAT_##s(LS, _src);         \
         } while (0)
 
 #define _NARROW_s1(LS, FROM, a, b, c, I) NARROW1(s, LS, FROM, a, b, c, I)
@@ -1010,3 +1010,14 @@ SIMD_FOREACH_LANES_OP1(i32x4_abs, i, 32, LANE_ABS)
 SIMD_FOREACH_LANES_OP1(i32x4_neg, i, 32, LANE_NEG)
 SIMD_FOREACH_LANES_OP1(i64x2_abs, i, 64, LANE_ABS)
 SIMD_FOREACH_LANES_OP1(i64x2_neg, i, 64, LANE_NEG)
+
+#define Q15MULR(N, a, b)                                                      \
+        (uint##N##_t) SAT_s(                                                  \
+                N, (((int32_t)EXTEND_s(N, a)) * ((int32_t)EXTEND_s(N, b)) +   \
+                    0x4000) >>                                                \
+                           15)
+
+#define LANE_Q15MULR(I_OR_F, LS, a, b, c, I)                                  \
+        LANE_OP2_LS(I_OR_F, LS, a, b, c, I, Q15MULR)
+
+SIMD_FOREACH_LANES_OP2(i16x8_q15mulr_sat_s, i, 16, LANE_Q15MULR)
