@@ -315,11 +315,9 @@ INSTRUCTION(0xc3, "i64x2.all_true", i64x2_all_true, 0)
 INSTRUCTION(0xfe, "f64x2.convert_low_i32x4_s", f64x2_convert_low_i32x4_s, 0)
 INSTRUCTION(0xff, "f64x2.convert_low_i32x4_u", f64x2_convert_low_i32x4_u, 0)
 
-#if 0
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#double-precision-floating-point-to-integer-with-saturation */
 INSTRUCTION(0xfc, "i32x4.trunc_sat_f64x2_s_zero", i32x4_trunc_sat_f64x2_s_zero, 0)
 INSTRUCTION(0xfd, "i32x4.trunc_sat_f64x2_u_zero", i32x4_trunc_sat_f64x2_u_zero, 0)
-#endif
 
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#double-precision-floating-point-to-single-precision */
 INSTRUCTION(0x5e, "f32x4.demote_f64x2_zero", f32x4_demote_f64x2_zero, 0)
