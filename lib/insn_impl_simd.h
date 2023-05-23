@@ -138,7 +138,7 @@ fail:                                                                         \
                 POP_VAL(TYPE_v128, v);                                        \
                 if (EXECUTING) {                                              \
                         uint##LS##_t le;                                      \
-                        le##LS##_encode(&le, val_x.u.i##STACK);               \
+                        le##LS##_encode(&le, (uint##LS##_t)val_x.u.i##STACK); \
                         CP(&LANEPTRi##LS(&val_v)[lane], &le);                 \
                 }                                                             \
                 PUSH_VAL(TYPE_v128, v);                                       \
