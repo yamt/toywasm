@@ -324,10 +324,8 @@ INSTRUCTION(0x5e, "f32x4.demote_f64x2_zero", f32x4_demote_f64x2_zero, 0)
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#single-precision-floating-point-to-double-precision */
 INSTRUCTION(0x5f, "f64x2.promote_low_f32x4", f64x2_promote_low_f32x4, 0)
 
-#if 0
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#lane-wise-population-count */
 INSTRUCTION(0x62, "i8x16.popcnt", i8x16_popcnt, 0)
-#endif
 
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#extended-pairwise-integer-addition */
 INSTRUCTION(0x7c, "i16x8.extadd_pairwise_i8x16_s", i16x8_extadd_pairwise_i8x16_s, 0)

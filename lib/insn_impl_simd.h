@@ -1118,3 +1118,10 @@ SIMD_OP1(i32x4_trunc_sat_f32x4_u, TRUNC_SAT_32_u)
 
 SIMD_OP1(i32x4_trunc_sat_f64x2_s_zero, TRUNC_SAT_64_s)
 SIMD_OP1(i32x4_trunc_sat_f64x2_u_zero, TRUNC_SAT_64_u)
+
+#define POPCNT(LS, a) wasm_popcount(a)
+
+#define LANE_POPCNT(I_OR_F, LS, a, b, I)                                      \
+        LANE_OP1_LS(I_OR_F, LS, a, b, I, POPCNT)
+
+SIMD_FOREACH_LANES_OP1(i8x16_popcnt, i, 8, LANE_POPCNT)
