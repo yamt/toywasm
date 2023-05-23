@@ -6,6 +6,10 @@
         READ_U8(VAR);                                                         \
         CHECK(VAR < N)
 
+#define READ_LANEIDX_TO(VAR, N)                                               \
+        READ_U8_TO(VAR);                                                      \
+        CHECK(VAR < N)
+
 /*
  * Note: i128x1 is just for implementation convenience
  */
@@ -24,6 +28,8 @@
 #define READ_LANEIDX8(VAR) READ_LANEIDX(VAR, 8)
 #define READ_LANEIDX16(VAR) READ_LANEIDX(VAR, 16)
 #define READ_LANEIDX32(VAR) READ_LANEIDX(VAR, 32)
+
+#define READ_LANEIDX32_TO(VAR) READ_LANEIDX_TO(VAR, 32)
 
 /*
  * MEM - num of bits in memory
@@ -1139,3 +1145,35 @@ SIMD_FOREACH_LANES_OP1(i8x16_popcnt, i, 8, LANE_POPCNT)
         } while (0)
 
 SIMD_FOREACH_LANES_OP2(i8x16_swizzle, i, 8, LANE_SWIZZLE)
+
+INSN_IMPL(i8x16_shuffle)
+{
+        int ret;
+        LOAD_PC;
+        uint8_t lane[16];
+        uint32_t i;
+        for (i = 0; i < 16; i++) {
+                READ_LANEIDX32_TO(lane[i]);
+        }
+        POP_VAL(TYPE_v128, b);
+        POP_VAL(TYPE_v128, a);
+        struct val val_c;
+        if (EXECUTING) {
+                uint8_t *result = val_c.u.v128.i8;
+                const uint8_t *a = val_a.u.v128.i8;
+                const uint8_t *b = val_b.u.v128.i8;
+                for (i = 0; i < 16; i++) {
+                        uint8_t s = lane[i];
+                        if (s < 16) {
+                                result[i] = a[s];
+                        } else {
+                                result[i] = b[s - 16];
+                        }
+                }
+        }
+        PUSH_VAL(TYPE_v128, c);
+        SAVE_PC;
+        INSN_SUCCESS;
+fail:
+        INSN_FAIL;
+}
