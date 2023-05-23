@@ -897,13 +897,13 @@ SIMD_OP2(i16x8_narrow_i32x4_s, NARROW_16_s)
 SIMD_OP2(i16x8_narrow_i32x4_u, NARROW_16_u)
 
 #define DEMOTE_32(a, b)                                                       \
-        LANEPTRf32(a)[0] = LANEPTRf64(b)[0];                                  \
-        LANEPTRf32(a)[1] = LANEPTRf64(b)[1];                                  \
-        LANEPTRf32(a)[2] = 0;                                                 \
-        LANEPTRf32(a)[3] = 0
+        SET_LANE(f, 32, a, 0, GET_LANE(f, 64, b, 0));                         \
+        SET_LANE(f, 32, a, 1, GET_LANE(f, 64, b, 1));                         \
+        SET_LANE(f, 32, a, 2, 0);                                             \
+        SET_LANE(f, 32, a, 3, 0);
 #define PROMOTE_LOW_64(a, b)                                                  \
-        LANEPTRf64(a)[0] = LANEPTRf32(b)[0];                                  \
-        LANEPTRf64(a)[1] = LANEPTRf32(b)[1]
+        SET_LANE(f, 64, a, 0, GET_LANE(f, 32, b, 0));                         \
+        SET_LANE(f, 64, a, 1, GET_LANE(f, 32, b, 1))
 
 SIMD_OP1(f32x4_demote_f64x2_zero, DEMOTE_32)
 SIMD_OP1(f64x2_promote_low_f32x4, PROMOTE_LOW_64)
