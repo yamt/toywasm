@@ -157,7 +157,7 @@ fail:                                                                         \
                 struct val val_v;                                             \
                 if (EXECUTING) {                                              \
                         uint##LS##_t v = (uint##LS##_t)val_x.u.i##STACK;      \
-                        OP(&val_v.u.v128, &v);                                \
+                        FOREACH_LANES(LS, &val_v.u.v128, &v, SPLAT1);         \
                 }                                                             \
                 PUSH_VAL(TYPE_v128, v);                                       \
                 SAVE_PC;                                                      \
@@ -397,12 +397,12 @@ fail:                                                                         \
 #define EXTMUL_64_s(a, b, c) FOREACH_LANES3(64, a, b, c, EXTMUL1_s)
 #define EXTMUL_64_u(a, b, c) FOREACH_LANES3(64, a, b, c, EXTMUL1_u)
 
-#define SPLAT1(LS, D, S, I) le##LS##_encode(&(D)->i##LS[I], S)
+#define SPLAT1(LS, D, S, I) COPYBITS##LS(&(D)->i##LS[I], S)
 
-#define SPLAT_8(D, S) FOREACH_LANES(8, D, *(const uint8_t *)S, SPLAT1)
-#define SPLAT_16(D, S) FOREACH_LANES(16, D, *(const uint16_t *)S, SPLAT1)
-#define SPLAT_32(D, S) FOREACH_LANES(32, D, *(const uint32_t *)S, SPLAT1)
-#define SPLAT_64(D, S) FOREACH_LANES(64, D, *(const uint64_t *)S, SPLAT1)
+#define SPLAT_8(D, S) FOREACH_LANES(8, D, S, SPLAT1)
+#define SPLAT_16(D, S) FOREACH_LANES(16, D, S, SPLAT1)
+#define SPLAT_32(D, S) FOREACH_LANES(32, D, S, SPLAT1)
+#define SPLAT_64(D, S) FOREACH_LANES(64, D, S, SPLAT1)
 
 #define FOREACH_LANES(LS, D, S, OP)                                           \
         do {                                                                  \
