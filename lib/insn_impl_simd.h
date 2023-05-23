@@ -872,12 +872,12 @@ SIMD_OP1(f64x2_convert_low_i32x4_u, CONVERT_LOW_64_u)
         do {                                                                  \
                 int##LSSRC##_t _src;                                          \
                 if (I < 128 / LSSRC) {                                        \
-                        _src = (int##LSSRC##_t)LANEPTRi##LSSRC(b)[I];         \
+                        _src = (int##LSSRC##_t)GET_LANE(i, LSSRC, b, I);      \
                 } else {                                                      \
-                        _src = (int##LSSRC##_t)LANEPTRi##LSSRC(               \
-                                c)[I - 128 / LSSRC];                          \
+                        _src = (int##LSSRC##_t)GET_LANE(i, LSSRC, c,          \
+                                                        I - 128 / LSSRC);     \
                 }                                                             \
-                LANEPTRi##LS(a)[I] = (uint##LS##_t)SAT_##s(LS, _src);         \
+                SET_LANE(i, LS, a, I, (uint##LS##_t)SAT_##s(LS, _src));       \
         } while (0)
 
 #define _NARROW_s1(LS, FROM, a, b, c, I) NARROW1(s, LS, FROM, a, b, c, I)
