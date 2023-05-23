@@ -517,13 +517,14 @@ SIMD_SPLATOP(f32x4_splat, f, 32, 32)
 SIMD_SPLATOP(f64x2_splat, f, 64, 64)
 
 #define SHL1(LS, a, b, c, I)                                                  \
-        LANEPTRi##LS(a)[I] =                                                  \
-                (uint##LS##_t)(LANEPTRi##LS(b)[I] << ((c)->u.i32 % LS))
+        SET_LANE(i, LS, a, I,                                                 \
+                 (uint##LS##_t)(GET_LANE(i, LS, b, I) << ((c)->u.i32 % LS)))
 #define SHR_s1(LS, a, b, c, I)                                                \
-        LANEPTRi##LS(a)[I] = (uint##LS##_t)(                                  \
-                (int##LS##_t)LANEPTRi##LS(b)[I] >> ((c)->u.i32 % LS))
+        SET_LANE(i, LS, a, I,                                                 \
+                 (uint##LS##_t)((int##LS##_t)GET_LANE(i, LS, b, I) >>         \
+                                ((c)->u.i32 % LS)))
 #define SHR_u1(LS, a, b, c, I)                                                \
-        LANEPTRi##LS(a)[I] = (LANEPTRi##LS(b)[I] >> ((c)->u.i32 % LS))
+        SET_LANE(i, LS, a, I, GET_LANE(i, LS, b, I) >> ((c)->u.i32 % LS))
 
 #define SHL_8(a, b, c) FOREACH_LANES3(8, a, b, c, SHL1)
 #define SHL_16(a, b, c) FOREACH_LANES3(16, a, b, c, SHL1)
