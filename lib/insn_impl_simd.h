@@ -22,6 +22,7 @@
 #define LANEPTRf64(val) (val)->u.v128.f64
 #define LANEPTRf32(val) (val)->u.v128.f32
 
+/* macros to read laneidx imm */
 #define READ_LANEIDX1(VAR) const uint8_t VAR = 0
 #define READ_LANEIDX2(VAR) READ_LANEIDX(VAR, 2)
 #define READ_LANEIDX4(VAR) READ_LANEIDX(VAR, 4)
@@ -30,6 +31,22 @@
 #define READ_LANEIDX32(VAR) READ_LANEIDX(VAR, 32)
 
 #define READ_LANEIDX32_TO(VAR) READ_LANEIDX_TO(VAR, 32)
+
+/* aliases just for convenience in this file */
+#define lei8_encode(a, b) le8_encode(a, b)
+#define lei16_encode(a, b) le16_encode(a, b)
+#define lei32_encode(a, b) le32_encode(a, b)
+#define lei64_encode(a, b) le64_encode(a, b)
+#define lei8_decode(a) le8_decode(a)
+#define lei16_decode(a) le16_decode(a)
+#define lei32_decode(a) le32_decode(a)
+#define lei64_decode(a) le64_decode(a)
+
+#define SET_LANE(I_OR_F, LS, a, I, v)                                         \
+        le##I_OR_F##LS##_encode(&LANEPTR##I_OR_F##LS(a)[I], v)
+
+#define GET_LANE(I_OR_F, LS, a, I)                                            \
+        le##I_OR_F##LS##_decode(&LANEPTR##I_OR_F##LS(a)[I])
 
 /*
  * MEM - num of bits in memory
@@ -609,11 +626,12 @@ SIMD_BOOLOP(i32x4_bitmask, 0, BITMASK_32x4)
 SIMD_BOOLOP(i64x2_bitmask, 0, BITMASK_64x2)
 
 #define LANE_OP2(I_OR_F, LS, a, b, I, OP)                                     \
-        LANEPTR##I_OR_F##LS(a)[I] = OP(LS, LANEPTR##I_OR_F##LS(b)[I])
+        SET_LANE(I_OR_F, LS, a, I, OP(LS, GET_LANE(I_OR_F, LS, b, I)))
 
 #define LANE_OP3(I_OR_F, LS, a, b, c, I, OP)                                  \
-        LANEPTR##I_OR_F##LS(a)[I] =                                           \
-                OP(LS, LANEPTR##I_OR_F##LS(b)[I], LANEPTR##I_OR_F##LS(c)[I])
+        SET_LANE(I_OR_F, LS, a, I,                                            \
+                 OP(LS, GET_LANE(I_OR_F, LS, b, I),                           \
+                    GET_LANE(I_OR_F, LS, c, I)))
 
 #define ADD1(LS, a, b, c, I) LANE_OP3(i, LS, a, b, c, I, ADD)
 #define FADD1(LS, a, b, c, I) LANE_OP3(f, LS, a, b, c, I, FADD)
