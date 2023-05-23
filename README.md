@@ -41,7 +41,7 @@ is built with an ancient wasi-sdk to workaround
 
 |Feature                 |Status                                            |
 | ---------------------- | ------------------------------------------------ |
-|[WebAssembly]           |Complete except `simd`                            |
+|[WebAssembly]           |Complete `2.0 (Draft 2022-06-27)`                 |
 |[extended-const]        |Complete (`TOYWASM_ENABLE_WASM_EXTENDED_CONST`)   |
 |[multi-memory]          |Complete (`TOYWASM_ENABLE_WASM_MULTI_MEMORY`)     |
 |[tail-call]             |Complete (`TOYWASM_ENABLE_WASM_TAILCALL`)         |
@@ -58,7 +58,8 @@ It includes
 `sign-extension-ops`,
 `multi-value`,
 `reference-types`,
-`bulk-memory-operations`.
+`bulk-memory-operations`,
+`simd`.
 
 [WebAssembly]: https://github.com/WebAssembly/spec
 [extended-const]: https://github.com/WebAssembly/extended-const
@@ -151,13 +152,13 @@ It includes
     (`-D TOYWASM_USE_SMALL_CELLS=OFF`) an access to a local is O(1).
     In that case, this table is not necessary or used, regardless of
     the above mentioned cli options.
+    The fixed-size values here are of 128-bit for the `v128` type with
+    SIMD enabled (`-D TOYWASM_ENABLE_WASM_SIMD=ON`, which is the default)
+    and 64-bit with SIMD disabled.
     An implementation with fixed-sized values is probably more
-    cpu-efficient especially on a 64-bit host. It's probably more
-    memory-efficient as well because it doesn't involve the static
-    overhead. (this table) The situation might change when we implement
-    larger values. (`v128` used by SIMD.) Or, when a module is using
-    many 32-bit values on the operand stack. Or, when you are using many
-    instances.
+    cpu-efficient especially on a 64-bit host. Depending on situations,
+    it can be memory-efficient as well because it doesn't involve the
+    static overhead, (this table) especially when SIMD is disabled.
 
   * Type annotations for value-polymorphic instructions.
 
