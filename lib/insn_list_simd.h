@@ -26,10 +26,8 @@ INSTRUCTION(0x0b, "v128.store", v128_store, 0)
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#constant */
 INSTRUCTION(0x0c, "v128.const", v128_const, INSN_FLAG_CONST)
 
-#if 0
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#shuffling-using-immediate-indices */
 INSTRUCTION(0x0d, "i8x16.shuffle", i8x16_shuffle, 0)
-#endif
 
 /* https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#swizzling-using-variable-indices */
 INSTRUCTION(0x0e, "i8x16.swizzle", i8x16_swizzle, 0)

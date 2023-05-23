@@ -84,6 +84,9 @@
 
 #define READ_IMM(TYPE, VAR, READ, READ_NOCHECK)                               \
         TYPE VAR;                                                             \
+        READ_IMM_TO(VAR, READ, READ_NOCHECK)
+
+#define READ_IMM_TO(VAR, READ, READ_NOCHECK)                                  \
         do {                                                                  \
                 if (VALIDATING) {                                             \
                         ret = READ;                                           \
@@ -128,3 +131,4 @@
                  read_leb_i64_nocheck(&p))
 
 #define READ_U8(VAR) READ_IMM(uint8_t, VAR, read_u8(&p, ep, &VAR), *p++)
+#define READ_U8_TO(VAR) READ_IMM_TO(VAR, read_u8(&p, ep, &VAR), *p++)
