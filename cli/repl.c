@@ -598,6 +598,7 @@ fail:
         return ret;
 }
 
+#if defined(TOYWASM_ENABLE_WASM_SIMD)
 int
 parse_v128(const char *s, struct val *result)
 {
@@ -615,6 +616,7 @@ parse_v128(const char *s, struct val *result)
         le64_encode(&result->u.v128.i64[0], lower);
         return 0;
 }
+#endif
 
 int
 arg_conv(enum valtype type, const char *s, struct val *result)
@@ -640,9 +642,11 @@ arg_conv(enum valtype type, const char *s, struct val *result)
                         result->u.i64 = u;
                 }
                 break;
+#if defined(TOYWASM_ENABLE_WASM_SIMD)
         case TYPE_v128:
                 ret = parse_v128(s, result);
                 break;
+#endif
         case TYPE_FUNCREF:
                 ret = str_to_ptr(s, 0, &u);
                 if (ret != 0) {
@@ -700,11 +704,13 @@ repl_print_result(const struct resulttype *rt, const struct val *vals)
                 case TYPE_f64:
                         nbio_printf("%s%" PRIu64 ":f64", sep, val->u.i64);
                         break;
+#if defined(TOYWASM_ENABLE_WASM_SIMD)
                 case TYPE_v128:
                         nbio_printf("%s%016" PRIx64 "%016" PRIx64 ":v128", sep,
                                     le64_decode(&val->u.v128.i64[1]),
                                     le64_decode(&val->u.v128.i64[0]));
                         break;
+#endif
                 case TYPE_FUNCREF:
                         if (val->u.funcref.func == NULL) {
                                 nbio_printf("%snull:funcref", sep);
