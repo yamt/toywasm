@@ -18,7 +18,11 @@ struct cell {
 #if defined(TOYWASM_USE_SMALL_CELLS)
         uint32_t x;
 #else
+#if defined(TOYWASM_ENABLE_WASM_SIMD)
+        uint64_t x[2];
+#else
         uint64_t x;
+#endif
 #endif
 };
 
