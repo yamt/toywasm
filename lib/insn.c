@@ -575,12 +575,12 @@ read_memarg_nocheck(const uint8_t **pp, struct memarg *arg)
 #define push_val(v, csz, ctx)                                                 \
         do {                                                                  \
                 assert(csz == 1);                                             \
-                (stack++)->x = (v)->u.i64;                                    \
+                *stack++ = (v)->u.cells[0];                                   \
         } while (0)
 #define pop_val(v, csz, ctx)                                                  \
         do {                                                                  \
                 assert(csz == 1);                                             \
-                (v)->u.i64 = (--stack)->x;                                    \
+                (v)->u.cells[0] = *(--stack);                                 \
         } while (0)
 #endif
 

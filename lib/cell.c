@@ -229,10 +229,7 @@ vals_from_cells(struct val *vals, const struct cell *cells,
 void
 cells_zero(struct cell *cells, uint32_t ncells)
 {
-        uint32_t i;
-        for (i = 0; i < ncells; i++) {
-                (cells++)->x = 0;
-        }
+        memset(cells, 0, sizeof(*cells) * ncells);
 }
 
 void

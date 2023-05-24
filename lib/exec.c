@@ -367,8 +367,14 @@ frame_enter(struct exec_context *ctx, struct instance *inst, uint32_t funcidx,
                 xlog_trace_insn("local [%" PRIu32 "] %08" PRIx32, i,
                                 frame_locals(ctx, frame)[i].x);
 #else
+#if defined(TOYWASM_ENABLE_WASM_SIMD)
+                xlog_trace_insn("local [%" PRIu32 "] %08" PRIx64 "%08" PRIx64,
+                                i, frame_locals(ctx, frame)[i].x[1],
+                                frame_locals(ctx, frame)[i].x[0]);
+#else
                 xlog_trace_insn("local [%" PRIu32 "] %08" PRIx64, i,
                                 frame_locals(ctx, frame)[i].x);
+#endif
 #endif
         }
 
