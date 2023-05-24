@@ -433,6 +433,11 @@ struct meminst {
 };
 
 struct globalinst {
+        /*
+         * While this can use cells instead of a val to save some memory,
+         * I'm not sure if it's worth the cost (runtime and developer time)
+         * because typical modules have only a few globals.
+         */
         struct val val;
         const struct globaltype *type;
 };
