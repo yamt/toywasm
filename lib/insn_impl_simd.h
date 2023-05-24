@@ -614,7 +614,7 @@ SIMD_BOOLOP(i32x4_all_true, 1, ALL_TRUE_32x4)
 SIMD_BOOLOP(i64x2_all_true, 1, ALL_TRUE_64x2)
 
 #define BITMASK(LS, a, b, I)                                                  \
-        a |= (uint32_t)((int##LS##_t)LANEPTRi##LS(b)[I] < 0) << I
+        a |= (uint32_t)((int##LS##_t)GET_LANE(i, LS, b, I) < 0) << I
 
 #define BITMASK_8x16(r, v) FOREACH_LANES(8, r, v, BITMASK)
 #define BITMASK_16x8(r, v) FOREACH_LANES(16, r, v, BITMASK)
