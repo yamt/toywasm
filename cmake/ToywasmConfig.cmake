@@ -125,6 +125,12 @@ if(CMAKE_C_COMPILER_ID STREQUAL GNU)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unknown-pragmas")
 endif()
 
+# GCC 9's builtin ceil() etc seems to propagate sNaN as it is.
+# GCC 11 seems ok.
+if(CMAKE_C_COMPILER_ID STREQUAL GNU)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-builtin")
+endif()
+
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -fomit-frame-pointer")
 
 if (NOT CMAKE_BUILD_TYPE MATCHES "Debug")
