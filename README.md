@@ -149,16 +149,17 @@ It includes
     and the `--disable-resulttype-cellidx` runtime options.
 
     When toywasm is built to use fixed-sized values,
-    (`-D TOYWASM_USE_SMALL_CELLS=OFF`) an access to a local is O(1).
-    In that case, this table is not necessary or used, regardless of
-    the above mentioned cli options.
-    The fixed-size values here are of 128-bit for the `v128` type with
-    SIMD enabled (`-D TOYWASM_ENABLE_WASM_SIMD=ON`, which is the default)
-    and 64-bit with SIMD disabled.
-    An implementation with fixed-sized values is probably more
-    cpu-efficient especially on a 64-bit host. Depending on situations,
-    it can be memory-efficient as well because it doesn't involve the
-    static overhead, (this table) especially when SIMD is disabled.
+    (`-D TOYWASM_USE_SMALL_CELLS=OFF`) an access to a local is naturally
+    O(1).  In that case, this table is not necessary or used, regardless
+    of the above mentioned cli options.
+    The fixed-size here is 128-bit for the `v128` type if toywasm is
+    built with SIMD enabled. (`-D TOYWASM_ENABLE_WASM_SIMD=ON`, which is
+    the default) Othewise, it's 64-bit.
+    While fixed-sized values incurs up to 4x memory overhead (eg. by using
+    128 bits to store an i32 value) for wasm operand stack, wasm locals,
+    and wasm tables, it's probably more cpu-efficient especially on a
+    64-bit host. Depending on situations, it can be memory-efficient as
+    well because it doesn't involve the static overhead of this table.
 
   * Type annotations for value-polymorphic instructions.
 
