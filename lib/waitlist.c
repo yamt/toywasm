@@ -143,8 +143,8 @@ waiter_block(struct waiter_list *l, struct toywasm_mutex *lock,
                 if (ret == ETIMEDOUT) {
 #if defined(TOYWASM_USE_USER_SCHED)
                         struct timespec now;
-                        ret = timespec_now(CLOCK_REALTIME, &now);
-                        if (ret != 0) {
+                        int ret1 = timespec_now(CLOCK_REALTIME, &now);
+                        if (ret1 != 0) {
                                 break;
                         }
                         if (timespec_cmp(&now, abstimeout) < 0) {
@@ -159,6 +159,7 @@ waiter_block(struct waiter_list *l, struct toywasm_mutex *lock,
                 }
                 assert(ret == 0);
         }
+        xlog_trace("%s: woken=%d, ret=%d", __func__, (int)w->woken, ret);
         return ret;
 }
 
