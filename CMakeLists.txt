@@ -171,6 +171,7 @@ endif()
 # unit test
 
 if(BUILD_TESTING)
+if(TOYWASM_BUILD_UNITTEST)
 find_package(cmocka REQUIRED)
 
 # compat with cmocka <1.1.6
@@ -196,6 +197,7 @@ target_link_libraries(toywasm-test toywasm-lib-core m ${CMOCKA_LIBRARY})
 add_test(NAME toywasm-test COMMAND toywasm-test)
 set_tests_properties(toywasm-test PROPERTIES ENVIRONMENT "${TEST_ENV}")
 target_link_libraries(toywasm-test cmocka::cmocka)
+endif() # TOYWASM_BUILD_UNITTEST
 endif()
 
 # XXX Is there a way to create the file list from install() commands?
