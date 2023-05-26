@@ -1,11 +1,29 @@
 /*
  * a simple userland thread implementation.
  *
- * this is slow because of a few reasons:
+ * the purpose of this scheduler is to make it possible to experiment
+ * our wasi-threads implementation on platforms w/o pthread. namely,
+ * wasi itself.
  *
- * - sleeping threads do not yield the scheduler.
+ * also, it might or might not be useful for small use cases, where
+ * real host thread is too expensive. in that case, it's probably better
+ * to implement a bit more serious scheduler though.
+ *
+ * this is not efficient because of a few reasons:
+ *
+ * - sleeping threads do not yield the scheduler. there is no concept
+ *   like runnable threads. all threads are equally scheduled in a
+ *   round-robin manner.
+ *
  * - reschedule requests are based on periodic polling. (check_interrupt)
- * - no real i/o wait.
+ *   because of that, long sleep request is divided into small intervals
+ *   so that the thread have a chances to check reschedule requests
+ *   frequently enough.
+ *
+ * - no real i/o wait. when a thread want to block on an i/o event, it just
+ *   yields the cpu to other threads. when the thread is scheduled next time,
+ *   it simply polls the event again. an ideal scheduler implementation
+ *   would have a list of event sources to poll on instead.
  */
 
 #include <assert.h>
