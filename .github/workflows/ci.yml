@@ -374,7 +374,7 @@ jobs:
     - name: Set environment
       run: |
         echo "builddir=${{github.workspace}}/build.wasm" >> ${GITHUB_ENV}
-        echo "TOYWASM_NATIVE=${{github.workspace}/build.native/toywasm" >> ${GITHUB_ENV}
+        echo "TOYWASM_NATIVE=${{github.workspace}}/build.native/toywasm" >> ${GITHUB_ENV}
 
     - name: Install dependencies (ubuntu)
       if: startsWith(matrix.os, 'ubuntu-')
