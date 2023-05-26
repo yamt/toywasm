@@ -30,9 +30,9 @@ if args.version:
 
 options = []
 for x in args.env:
-    options.extend(["--wasi-env", x])
+    options.extend([f"--wasi-env={x}"])
 for x in args.dir:
-    options.extend(["--wasi-dir", x])
+    options.extend([f"--wasi-dir={x}"])
 result = subprocess.run(
     shlex.split(executable) + ["--wasi"] + options + ["--", args.test_file] + args.arg
 )
