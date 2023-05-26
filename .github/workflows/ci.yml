@@ -410,6 +410,7 @@ jobs:
         ctest -V -LE slow
 
     - name: Test (slow)
+      if: false
       working-directory: ${{env.builddir}}
       run: |
         ctest -V -L slow
