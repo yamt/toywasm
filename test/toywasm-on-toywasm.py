@@ -7,7 +7,7 @@ import shlex
 import sys
 import subprocess
 
-executable = os.getenv("TOYWASM", "./build.native/toywasm")
+executable = os.getenv("TOYWASM_NATIVE", "./build.native/toywasm")
 executable_wasm = os.getenv("TOYWASM_WASM", "./build.wasm/toywasm")
 
 parser = argparse.ArgumentParser(allow_abbrev=False)
