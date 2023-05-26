@@ -396,6 +396,8 @@ jobs:
       run: ./wasm-on-wasm.sh
 
     - name: toywasm --version
+      env:
+        TOYWASM_WASM: ${{env.builddir}}/toywasm
       working-directory: ${{env.builddir}}
       run: |
         ${{github.workspace}}/test/toywasm-on-toywasm.py --version
