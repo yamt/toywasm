@@ -26,6 +26,8 @@ option(TOYWASM_ENABLE_WASM_THREADS "Enable WASM threads proposal" OFF)
 option(TOYWASM_ENABLE_WASI "Enable WASI snapshow preview1" ON)
 option(TOYWASM_ENABLE_WASI_THREADS "Enable wasi-threads proposal" OFF)
 
+option(TOYWASM_BUILD_UNITTEST "Build toywasm-test" ON)
+
 if(NOT DEFINED USE_LSAN)
 set(USE_LSAN ON)
 endif()
