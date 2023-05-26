@@ -16,6 +16,7 @@ parser.add_argument("--wasi-mapdir", action="append", default=[])
 args, unknown = parser.parse_known_args()
 
 sys_prefix = "@TOYWASM@"
+debug = False
 
 
 def translate_path(cat, name):
@@ -38,13 +39,40 @@ for x in args.wasi_mapdir:
     g, h = x.split("::", maxsplit=2)
     options.append(f"--wasi-dir={h}")
 
-# assume that the first argument which doesn't
-# start with "--" is a wasm module.
+# assume that the first argument which doesn't start with "--" is
+# a wasm module.
+# also, translate --load argument.
+# note: this logic recognizes only a subset of toywasm cli options.
+# you can use "--invoke=foo" instead of "--invoke foo" to avoid
+# misinterpretations.
 user_args = sys.argv[1:]
+if debug:
+    print(f"Original: {user_args}")
+load_arg = False
+options_done = False
 for i in range(0, len(user_args)):
-    if not user_args[i].startswith("--"):
+    if load_arg:
+        user_args[i] = translate_path(f"load-wasm-{i}", user_args[i])
+        load_arg = False
+        continue
+    if not options_done:
+        if user_args[i] == "--":
+            options_done = True
+            continue
+        if user_args[i] == "--load":
+            load_arg = True
+            continue
+        if user_args[i].startswith("--load="):
+            _, wasm = user_args[i].split("=", 1)
+            translated = translate_path(f"load-wasm-{i}", wasm)
+            user_args[i] = f"--load={translated}"
+            continue
+    if options_done or not user_args[i].startswith("--"):
         user_args[i] = translate_path("user-wasm", user_args[i])
         break
+if debug:
+    print(f"Translated: {user_args}")
+    print(f"Host toywasm options: {options}")
 
 cmd = (
     shlex.split(executable) + ["--wasi"] + options + ["--", executable_wasm] + user_args
