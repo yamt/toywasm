@@ -36,7 +36,7 @@ if [ "${WASM_ON_WASM:-0}" -ne 0 ]; then
 else
     run_wasi_test()
     {
-        ${EXE} --wasi-dir ${TMP} ${w} ${TMP};
+        ${EXE} --wasi-dir=${TMP} -- ${w} ${TMP};
     }
     if ${EXE} --version | grep -F "sizeof(void *) = 4"; then
         SKIPLIST="${SKIPLIST} ${THIS_DIR}/wasmtime-wasi-tests-skip-32bit.txt"
