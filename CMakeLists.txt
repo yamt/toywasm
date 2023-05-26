@@ -25,6 +25,21 @@ if(TOYWASM_ENABLE_WASI)
 add_subdirectory(libwasi)
 endif()
 
+if(CMAKE_C_COMPILER_TARGET MATCHES "wasm")
+set(TOYWASM_CLI "${CMAKE_CURRENT_SOURCE_DIR}/test/toywasm-on-toywasm.py")
+if(NOT DEFINED ENV{TOYWASM_NATIVE})
+list(APPEND TEST_ENV "TOYWASM_NATIVE=${CMAKE_CURRENT_SOURCE_DIR}/build.native/toywasm")
+endif()
+if(NOT DEFINED ENV{TOYWASM_WASM})
+list(APPEND TEST_ENV "TOYWASM_WASM=${CMAKE_BINARY_DIR}/toywasm")
+endif()
+else()
+set(TOYWASM_CLI "${CMAKE_BINARY_DIR}/toywasm")
+endif()
+
+# for wasi-testsuite-adapter.py
+list(APPEND TEST_ENV "TEST_RUNTIME_EXE=${TOYWASM_CLI}")
+
 # cli
 
 set(cli_sources
@@ -37,7 +52,7 @@ target_link_libraries(toywasm-cli toywasm-lib-core $<$<BOOL:${TOYWASM_ENABLE_WAS
 set_target_properties(toywasm-cli PROPERTIES OUTPUT_NAME toywasm)
 
 add_test(NAME toywasm-cli-simple-module COMMAND
-	toywasm-cli --load spectest.wasm --invoke "print_i32 123"
+	${TOYWASM_CLI} --load=spectest.wasm "--invoke=print_i32 123"
 )
 set_tests_properties(toywasm-cli-simple-module PROPERTIES ENVIRONMENT "${TEST_ENV}")
 
@@ -48,7 +63,7 @@ if(NOT TOYWASM_ENABLE_WASM_MULTI_MEMORY)
 add_test(NAME toywasm-cli-wasm3-spec-test
 	# Note: arbitrary limits for stack overflow tests in call.wast.
 	# (--max-frames and --max-stack-cells)
-	COMMAND ./test/run-wasm3-spec-test-opam-2.0.0.sh --exec "${CMAKE_BINARY_DIR}/toywasm --max-frames 2000 --max-stack-cells 10000 --repl --repl-prompt wasm3" --timeout 60 --spectest ${CMAKE_BINARY_DIR}/spectest.wasm
+	COMMAND ./test/run-wasm3-spec-test-opam-2.0.0.sh --exec "${TOYWASM_CLI} --max-frames=2000 --max-stack-cells=10000 --repl --repl-prompt=wasm3" --timeout 60 --spectest ${CMAKE_BINARY_DIR}/spectest.wasm
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 set_tests_properties(toywasm-cli-wasm3-spec-test PROPERTIES ENVIRONMENT "${TEST_ENV}")
@@ -57,7 +72,7 @@ endif()
 
 if(TOYWASM_ENABLE_WASM_SIMD)
 add_test(NAME toywasm-cli-wasm3-spec-test-simd
-	COMMAND ./test/run-wasm3-spec-test-simd.sh --exec "${CMAKE_BINARY_DIR}/toywasm --repl --repl-prompt wasm3" --timeout 60 --spectest ${CMAKE_BINARY_DIR}/spectest.wasm
+	COMMAND ./test/run-wasm3-spec-test-simd.sh --exec "${TOYWASM_CLI} --repl --repl-prompt=wasm3" --timeout 60 --spectest ${CMAKE_BINARY_DIR}/spectest.wasm
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 set_tests_properties(toywasm-cli-wasm3-spec-test-simd PROPERTIES ENVIRONMENT "${TEST_ENV}")
@@ -66,7 +81,7 @@ endif()
 
 if(TOYWASM_ENABLE_WASM_EXTENDED_CONST)
 add_test(NAME toywasm-cli-wasm3-spec-test-extended-const
-	COMMAND ./test/run-wasm3-spec-test-extended-const.sh --exec "${CMAKE_BINARY_DIR}/toywasm --repl --repl-prompt wasm3" --timeout 60 --spectest ${CMAKE_BINARY_DIR}/spectest.wasm
+	COMMAND ./test/run-wasm3-spec-test-extended-const.sh --exec "${TOYWASM_CLI} --repl --repl-prompt=wasm3" --timeout 60 --spectest ${CMAKE_BINARY_DIR}/spectest.wasm
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 set_tests_properties(toywasm-cli-wasm3-spec-test-extended-const PROPERTIES ENVIRONMENT "${TEST_ENV}")
@@ -75,7 +90,7 @@ endif()
 
 if(TOYWASM_ENABLE_WASM_MULTI_MEMORY)
 add_test(NAME toywasm-cli-wasm3-spec-test-multi-memory
-	COMMAND ./test/run-wasm3-spec-test-multi-memory.sh --exec "${CMAKE_BINARY_DIR}/toywasm --repl --repl-prompt wasm3" --timeout 60 --spectest ${CMAKE_BINARY_DIR}/spectest.wasm
+	COMMAND ./test/run-wasm3-spec-test-multi-memory.sh --exec "${TOYWASM_CLI} --repl --repl-prompt=wasm3" --timeout 60 --spectest ${CMAKE_BINARY_DIR}/spectest.wasm
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 set_tests_properties(toywasm-cli-wasm3-spec-test-multi-memory PROPERTIES ENVIRONMENT "${TEST_ENV}")
@@ -84,7 +99,7 @@ endif()
 
 if(TOYWASM_ENABLE_WASM_TAILCALL)
 add_test(NAME toywasm-cli-wasm3-spec-test-tailcall
-	COMMAND ./test/run-wasm3-spec-test-tailcall.sh --exec "${CMAKE_BINARY_DIR}/toywasm --repl --repl-prompt wasm3" --timeout 60 --spectest ${CMAKE_BINARY_DIR}/spectest.wasm
+	COMMAND ./test/run-wasm3-spec-test-tailcall.sh --exec "${TOYWASM_CLI} --repl --repl-prompt=wasm3" --timeout 60 --spectest ${CMAKE_BINARY_DIR}/spectest.wasm
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 set_tests_properties(toywasm-cli-wasm3-spec-test-tailcall PROPERTIES ENVIRONMENT "${TEST_ENV}")
@@ -105,24 +120,24 @@ add_test(NAME toywasm-cli-wasi-testsuite
 	COMMAND ./test/run-wasi-testsuite.sh
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
-set_tests_properties(toywasm-cli-wasi-testsuite PROPERTIES ENVIRONMENT "${TEST_ENV};TOYWASM=${CMAKE_BINARY_DIR}/toywasm;$<$<BOOL:${TOYWASM_ENABLE_WASI_THREADS}>:TESTS=proposals/wasi-threads/>")
+set_tests_properties(toywasm-cli-wasi-testsuite PROPERTIES ENVIRONMENT "${TEST_ENV};TOYWASM=${TOYWASM_CLI};$<$<BOOL:${TOYWASM_ENABLE_WASI_THREADS}>:TESTS=proposals/wasi-threads/>")
 set_tests_properties(toywasm-cli-wasi-testsuite PROPERTIES LABELS "wasi-testsuite")
 
 add_test(NAME toywasm-cli-wasmtime-wasi-tests
-	COMMAND ./test/run-wasmtime-wasi-tests.sh "${CMAKE_BINARY_DIR}/toywasm --wasi --wasi-dir ."
+	COMMAND ./test/run-wasmtime-wasi-tests.sh "${TOYWASM_CLI} --wasi --wasi-dir=."
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 set_tests_properties(toywasm-cli-wasmtime-wasi-tests PROPERTIES ENVIRONMENT "${TEST_ENV}")
 set_tests_properties(toywasm-cli-wasmtime-wasi-tests PROPERTIES LABELS "wasmtime-wasi-tests")
 
 add_test(NAME toywasm-cli-spidermonkey
-	COMMAND ./test/run-spidermonkey.sh ${CMAKE_BINARY_DIR}/toywasm --wasi
+	COMMAND ./test/run-spidermonkey.sh ${TOYWASM_CLI} --wasi
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 set_tests_properties(toywasm-cli-spidermonkey PROPERTIES ENVIRONMENT "${TEST_ENV}")
 
 add_test(NAME toywasm-cli-ffmpeg
-	COMMAND ./test/run-ffmpeg.sh ${CMAKE_BINARY_DIR}/toywasm --wasi --wasi-dir .video --
+	COMMAND ./test/run-ffmpeg.sh ${TOYWASM_CLI} --wasi --wasi-dir=.video --
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 set_tests_properties(toywasm-cli-ffmpeg PROPERTIES ENVIRONMENT "${TEST_ENV}")
@@ -133,7 +148,7 @@ if(NOT TOYWASM_ENABLE_WASM_MULTI_MEMORY)
 add_test(NAME toywasm-cli-wasm3-spec-test-disable-optimizations
 	# Note: arbitrary limits for stack overflow tests in call.wast.
 	# (--max-frames and --max-stack-cells)
-	COMMAND ./test/run-wasm3-spec-test-opam-2.0.0.sh --exec "${CMAKE_BINARY_DIR}/toywasm --disable-jump-table --disable-resulttype-cellidx --disable-localtype-cellidx --max-frames 2000 --max-stack-cells 10000 --repl --repl-prompt wasm3" --timeout 60 --spectest ${CMAKE_BINARY_DIR}/spectest.wasm
+	COMMAND ./test/run-wasm3-spec-test-opam-2.0.0.sh --exec "${TOYWASM_CLI} --disable-jump-table --disable-resulttype-cellidx --disable-localtype-cellidx --max-frames=2000 --max-stack-cells=10000 --repl --repl-prompt=wasm3" --timeout 60 --spectest ${CMAKE_BINARY_DIR}/spectest.wasm
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 set_tests_properties(toywasm-cli-wasm3-spec-test-disable-optimizations PROPERTIES ENVIRONMENT "${TEST_ENV}")
@@ -142,7 +157,7 @@ endif()
 
 if(TOYWASM_ENABLE_WASI)
 add_test(NAME toywasm-cli-wasm3-wasi-test
-	COMMAND ./test/run-wasm3-wasi-test.sh --exec "${CMAKE_BINARY_DIR}/toywasm --wasi --wasi-dir ." --separate-args --timeout 1200
+	COMMAND ./test/run-wasm3-wasi-test.sh --exec "${TOYWASM_CLI} --wasi --wasi-dir=." --separate-args --timeout 1200
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 set_tests_properties(toywasm-cli-wasm3-wasi-test PROPERTIES ENVIRONMENT "${TEST_ENV}")
