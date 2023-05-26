@@ -84,13 +84,21 @@ It includes
 * macOS/amd64
 * Ubuntu/amd64
 
-#### With qemu (less coverage because of slowness)
+#### With qemu
 
 * Ubuntu/arm64
 * Ubuntu/armhf (Note: 32-bit)
-* Ubuntu/s390x (Note: big endian)
 
-#### with even less coverage
+#### With qemu (less coverage because of slowness)
+
+* Ubuntu/s390x (Note: big endian)
+* Ubuntu/risc-v
+
+(I haven't investigated why they are slower than others.
+It might be related to the fact that our build disables LTO
+for them for toolchain issues.)
+
+#### With toywasm (less coverage because of slowness)
 
 * wasm32-wasi
 
