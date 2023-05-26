@@ -371,6 +371,11 @@ jobs:
     runs-on: ${{matrix.os}}
 
     steps:
+    - name: Set environment
+      run: |
+        echo "builddir=${{github.workspace}}/build.wasm" >> ${GITHUB_ENV}
+        echo "TOYWASM_NATIVE=${{github.workspace}/build.native/toywasm" >> ${GITHUB_ENV}
+
     - name: Install dependencies (ubuntu)
       if: startsWith(matrix.os, 'ubuntu-')
       run: sudo apt-get update && sudo apt-get install -y pax ninja-build
@@ -389,6 +394,21 @@ jobs:
         # Note: we don't care about tarball suffix for native build here.
         EXTRA_CMAKE_OPTIONS: -G Ninja -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/dist -DTOYWASM_TARBALL_SUFFIX=-${{matrix.name}} ${{matrix.extra}}
       run: ./wasm-on-wasm.sh
+
+    - name: toywasm --version
+      working-directory: ${{env.builddir}}
+      run: |
+        ${{github.workspace}}/test/toywasm-on-toywasm.py --version
+
+    - name: Test
+      working-directory: ${{env.builddir}}
+      run: |
+        ctest -V -LE slow
+
+    - name: Test (slow)
+      working-directory: ${{env.builddir}}
+      run: |
+        ctest -V -L slow
 
     - name: Install
       run: |
