@@ -108,7 +108,7 @@ endif()
 
 if(TOYWASM_ENABLE_WASM_THREADS)
 add_test(NAME toywasm-cli-wasm3-spec-test-threads
-	COMMAND ./test/run-wasm3-spec-test-threads.sh --exec "${CMAKE_BINARY_DIR}/toywasm --repl --repl-prompt wasm3" --timeout 60 --spectest ${CMAKE_BINARY_DIR}/spectest.wasm
+	COMMAND ./test/run-wasm3-spec-test-threads.sh --exec "${TOYWASM_CLI} --repl --repl-prompt=wasm3" --timeout 60 --spectest ${CMAKE_BINARY_DIR}/spectest.wasm
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 set_tests_properties(toywasm-cli-wasm3-spec-test-threads PROPERTIES ENVIRONMENT "${TEST_ENV}")
