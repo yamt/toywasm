@@ -1,5 +1,14 @@
 /*
+ * SIMD implementation for toywasm
+ *
  * https://github.com/WebAssembly/simd
+ *
+ * this is a dumb pure C implementation, mainly for portability reasons.
+ *
+ * if performance matters, it's probably better to use vector instrinsics
+ * available on host:
+ * https://gcc.gnu.org/onlinedocs/gcc/Vector-Extensions.html
+ * https://clang.llvm.org/docs/LanguageExtensions.html#vectors-and-extended-vectors
  */
 
 #define READ_LANEIDX(VAR, N)                                                  \
