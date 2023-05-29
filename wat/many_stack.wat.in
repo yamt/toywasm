@@ -1,6 +1,17 @@
 ;; Consume operand stack a lot within a function, similarly
 ;; to ../wast/many_locals.wast.in.
 ;;
+;; % m4 -D NUM=11 many_stack.wat.in | wat2wasm -o many_stack11.wasm -
+;; % toywasm --print-stats many_stack11.wasm
+;; === execution statistics ===
+;; operand stack 4194307 (16777228 bytes)
+;; locals 5 (20 bytes)
+;; labels 0 (0 bytes)
+;; frames 3 (96 bytes)
+;;     :
+;;     :
+;;     :
+;;
 ;; % m4 many_stack.wat.in | wat2wasm -o many_stack7.wasm -
 ;; % toywasm --print-stats many_stack7.wasm
 ;; === execution statistics ===
@@ -12,18 +23,7 @@
 ;;     :
 ;;     :
 ;;
-;; % m4 -D NUM1=4095 -D NUM2=1365 many_stack.wat.in | wat2wasm -o many_stack6.wasm -
-;; % toywasm --print-stats many_stack6.wasm
-;; === execution statistics ===
-;; operand stack 4099 (16396 bytes)
-;; locals 5 (20 bytes)
-;; labels 0 (0 bytes)
-;; frames 3 (96 bytes)
-;;     :
-;;     :
-;;     :
-;;
-;; % m4 -D NUM1=1023 -D NUM2=341 many_stack.wat.in | wat2wasm -o many_stack5.wasm -
+;; % m4 -D NUM=5 many_stack.wat.in | wat2wasm -o many_stack5.wasm -
 ;; % toywasm --print-stats many_stack5.wasm
 ;; === execution statistics ===
 ;; operand stack 1027 (4108 bytes)
@@ -34,9 +34,24 @@
 ;;     :
 ;;     :
 
-
 define(`_repeat',`ifelse(eval($1<=$2),1,`$3`'$0(incr($1),$2,`$3')')')dnl
 define(`repeat',`_repeat(1,$1,``$2'')')dnl
+
+ifdef(`NUM',,`define(`NUM',7)dnl')
+
+;; 4^7 - 1
+;; = 16383
+ifdef(`NUM1',,`define(`NUM1',`esyscmd(echo "4^NUM-1" | bc | tr -d \\n)')dnl')
+;; `DEF1' DEF1
+
+;; 4^6 + ... + 4^0
+;; = (4^(6+1)-1)/3
+;; = 5461
+ifdef(`NUM2',,`define(`NUM2',`esyscmd(echo "(4^(NUM-1+1)-1)/3" | bc | tr -d \\n)')dnl')
+
+;; `NUM0' = NUM0
+;; `NUM1' = NUM1
+;; `NUM2' = NUM2
 
 (module
   (func $add4 (export "add4") (param i32 i32 i32 i32) (result i32)
@@ -51,16 +66,14 @@ define(`repeat',`_repeat(1,$1,``$2'')')dnl
   (func $func (export "func") (param $i i32) (result i32)
     local.get $i
 
-    ;;; 4^7 - 1
-    ;;; = 16383
-ifdef(`NUM1',,`define(`NUM1',16383)')
 repeat(NUM1,`
-    (call $add4 (local.get $i (local.tee $i (i32.load))) (local.get $i (local.tee $i (i32.load))) (local.get $i (local.tee $i (i32.load))) (local.get $i (local.tee $i (i32.load))))')
+    (call $add4
+      (local.get $i (local.tee $i (i32.load)))
+      (local.get $i (local.tee $i (i32.load)))
+      (local.get $i (local.tee $i (i32.load)))
+      (local.get $i (local.tee $i (i32.load)))
+    )')
 
-    ;;; 4^6 + ... + 4^0
-    ;;; = (4^(6+1)-1)/3
-    ;;; = 5461
-ifdef(`NUM2',,`define(`NUM2',5461)')
 repeat(NUM2,`
     call $add4')
   )
