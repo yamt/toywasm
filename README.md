@@ -31,6 +31,11 @@ is built with an ancient wasi-sdk to workaround
 * Correctness
 * Clean code
 * Small footprint
+* Portability
+  * Core wasm: C11
+  * WASI: POSIX-like
+  * Clang/LLVM extentions are ok where an alternative implmentation
+    in pure C is reasonably easy.
 
 ## Non-goals
 
