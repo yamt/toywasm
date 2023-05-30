@@ -6,6 +6,9 @@ run() {
     printf "$1,"
     shift
     OUTPUT=$(mktemp)
+
+    sync;sync;sync
+
     # ffmpeg binary downloaded by ../test/run-ffmpeg.sh
     /usr/bin/time -l $@ ../.ffmpeg/ffmpeg.wasm -version > ${OUTPUT} 2>&1
 
