@@ -93,6 +93,13 @@ measure the time taken.
           1637302272  peak memory footprint
 ```
 
+* Run on a macOS/amd64 laptop:
+
+  ```
+  MacBook Pro (15-inch, 2018)
+  2.2 GHz 6-Core Intel Core i7
+  ```
+
 ## Observations
 
 * toywasm performs reasonably well for an interpreter.

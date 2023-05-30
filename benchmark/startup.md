@@ -12,7 +12,12 @@ print the `-version` message)
 
 ![Result](./startup.png)
 
-* Run on a macOS/amd64 laptop.
+* Run on a macOS/amd64 laptop:
+
+  ```
+  MacBook Pro (15-inch, 2018)
+  2.2 GHz 6-Core Intel Core i7
+  ```
 
 * [Raw values](./startup.txt)
 
