@@ -38,7 +38,7 @@ if [ -n "${TOYWASM_FIXED}" ]; then
 fi
 
 if [ -n "${TOYWASM_FIXED_NOSIMD}" ]; then
-    run "$(${TOYWASM_FIXED_NOSIMD} --version | head -1) (64-bit fixed cells, SIMD disabled)" ${TOYWASM_FIXED} --wasi --wasi-dir .video --
+    run "$(${TOYWASM_FIXED_NOSIMD} --version | head -1) (64-bit fixed cells, SIMD disabled)" ${TOYWASM_FIXED_NOSIMD} --wasi --wasi-dir .video --
 fi
 
 # without tables. optional because this is very slow.
