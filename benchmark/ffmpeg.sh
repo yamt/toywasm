@@ -34,7 +34,11 @@ run "$(${TOYWASM} --version | head -1) (default configuration)" ${TOYWASM} --was
 # with fixed sized cells.
 # separate binary as it's a build-time option.
 if [ -n "${TOYWASM_FIXED}" ]; then
-    run "$(${TOYWASM_FIXED} --version | head -1) (-DTOYWASM_USE_SMALL_CELLS=OFF, likely faster)" ${TOYWASM_FIXED} --wasi --wasi-dir .video --
+    run "$(${TOYWASM_FIXED} --version | head -1) (128-bit fixed cells)" ${TOYWASM_FIXED} --wasi --wasi-dir .video --
+fi
+
+if [ -n "${TOYWASM_FIXED_NOSIMD}" ]; then
+    run "$(${TOYWASM_FIXED_NOSIMD} --version | head -1) (64-bit fixed cells, SIMD disabled)" ${TOYWASM_FIXED} --wasi --wasi-dir .video --
 fi
 
 # without tables. optional because this is very slow.
