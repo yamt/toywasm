@@ -77,42 +77,19 @@ It includes
 
 ## Where can this run?
 
-### The most tested
-
-* macOS/amd64
-* wasm32-wasi (on toywasm itself)
-
-### Tested on CI
-
-#### Natively
-
-* macOS/amd64
-* Ubuntu/amd64
-
-#### With qemu
-
-* Ubuntu/arm64
-* Ubuntu/armhf (Note: 32-bit)
-
-#### With qemu (less coverage because of slowness)
-
-* Ubuntu/s390x (Note: big endian)
-* Ubuntu/risc-v
-
-(I haven't investigated why they are slower than others.
-It might be related to the fact that our build disables LTO
-for them for toolchain issues.)
-
-#### With toywasm (less coverage because of slowness)
-
-* wasm32-wasi
-
-### Occasionally tested manually
-
-* wasm32-wasi-threads
-* NuttX/xtensa
-* NuttX/sim on macOS/amd64
-* NetBSD/amd64
+|Platform                |Tested on CI     |Notes                        |
+| ---------------------- | --------------- | --------------------------- |
+|macOS/amd64             |Yes              |                             |
+|wasm32-wasi             |Yes (on toywasm) |                             |
+|Ubuntu/amd64            |Yes              |                             |
+|Ubuntu/arm64            |Yes (on qemu)    |                             |
+|Ubuntu/armhf            |Yes (on qemu)    |32-bit                       |
+|Ubuntu/s390x            |Yes (on qemu)    |Big endian                   |
+|Ubuntu/riscv64          |Yes (on qemu)    |                             |
+|wasm32-wasi-threads     |No               |Occasionally tested manually |
+|NuttX/esp32             |No               |Occasionally tested manually |
+|NuttX/sim on macOS/amd64|No               |Occasionally tested manually |
+|NetBSD/amd64            |No               |Occasionally tested manually |
 
 ## How slow/fast is this?
 
