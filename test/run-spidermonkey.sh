@@ -1,5 +1,9 @@
 #! /bin/sh
 
+# Note: spidermonkey uses nan-boxing, which is one of motivations of
+# nan-canonicalization in wasm.
+# cf. https://github.com/WebAssembly/design/issues/1463
+
 set -e
 BIN=.spidermonkey/spidermonkey.wasm
 if [ ! -f ${BIN} ]; then
