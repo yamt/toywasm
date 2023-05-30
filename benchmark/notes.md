@@ -58,8 +58,14 @@ cp target/release/wasmi_cli ~/bin
 
 ### wasmedge
 
-built with cmake, with an option to disable aot.
-otherwise all the default.
+```
+git checkout 0.12.1
+mkdir build
+cd build
+cmake .. -DWASMEDGE_BUILD_AOT_RUNTIME=OFF -DWASMEDGE_BUILD_SHARED_LIB=OFF
+make
+cp ./tools/wasmedge/wasmedge ~/bin
+```
 
 ### wasmtime
 
