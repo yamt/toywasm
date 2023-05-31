@@ -5,8 +5,8 @@
 [A simple benchmark with ffmpeg](./benchmark/ffmpeg.sh), intended to
 measure computation performance with a real application.
 
-For each runtimes, it converts a video frame with using `ffmpeg.wasm` and
-measure the time taken.
+For each runtimes, it converts a video frame with `ffmpeg.wasm` and
+measures the time taken.
 
 ## Result
 
