@@ -1,0 +1,14 @@
+"toywasm(default configuration)",78.90,78.85,0.03,85520384
+"toywasm(128-bit fixed cells)",51.35,51.31,0.03,98430976
+"toywasm(64-bit fixed cells, SIMD disabled)",49.54,49.51,0.02,85098496
+"toywasm(annotations disabled, very slow)",571.55,571.41,0.11,72032256
+"Wasm3",18.37,18.34,0.02,84975616
+"iwasm(fast interpreter)",21.51,21.47,0.03,142151680
+"iwasm(classic interpreter)",204.66,204.59,0.05,80539648
+"wasmedge(interpreter)",181.43,181.24,0.18,642191360
+"wasmi_cli",47.38,47.33,0.04,145547264
+"wazero(interpreter)",157.94,157.96,0.44,1226977280
+"iwasm(fast jit)",3.34,5.91,0.13,149381120
+"wasmer",5.38,37.54,1.50,617656320
+"wasmtime-cli",6.55,44.08,1.77,586821632
+"wazero",8.19,8.13,0.19,805183488
