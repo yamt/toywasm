@@ -38,7 +38,12 @@ measures the time taken.
   and vary among runs. If you know better metrics to show memory footprint,
   preferably available on macOS, please let us know.)
 
+* toywasm's SIMD overhead is not huge for this particular workload.
+  (Note: this workload doesn't actually involve SIMD at all.)
+
 * toywasm is far slower than JIT-based engines as expected.
+
+* Some of runtimes involve surprisingly large RSS. I'm not sure why.
 
 * Many of JIT-based engines use multiple threads to hide its
   compilation time. (You can see their "user" time is often longer
