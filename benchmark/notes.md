@@ -52,7 +52,7 @@ installed with homebrew.
 
 ```
 git checkout v0.30.0
-carge build --release
+cargo build --release
 cp target/release/wasmi_cli ~/bin
 ```
 
