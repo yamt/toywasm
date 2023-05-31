@@ -10,6 +10,10 @@ measures the time taken.
 
 ## Result
 
+> **Warning**
+> It's pointed out that the way I built wasmi was not ideal:
+> https://github.com/yamt/toywasm/issues/8#issuecomment-1570506209
+
 ![Result](./ffmpeg.png)
 
 * Run on a macOS/amd64 laptop:
