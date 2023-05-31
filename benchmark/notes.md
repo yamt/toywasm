@@ -56,6 +56,10 @@ cargo build --release
 cp target/release/wasmi_cli ~/bin
 ```
 
+Note: it's pointed out that i should have used `cargo install` instead
+to get a better optimized binary.
+cf. https://github.com/yamt/toywasm/issues/8#issuecomment-1570506209
+
 ### wasmedge
 
 ```
