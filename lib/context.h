@@ -49,7 +49,17 @@ struct funcframe {
         uint32_t nresults; /* number of cells for the result */
 };
 
-/* For funcframe.funcidx */
+/*
+ * A special value for funcframe.funcidx
+ *
+ * It's used to indicate that it isn't a part of a function.
+ * That is, a const expr.
+ *
+ * Note: it's assumed that UINT32_MAX can't be a valid funcidx.
+ * Because the size of module sections is u32 in the binary format,
+ * a module can't have that many functions, imported or not, anyway.
+ * cf. https://webassembly.github.io/spec/core/binary/modules.html#sections
+ */
 #define FUNCIDX_INVALID UINT32_MAX
 
 enum trapid {
