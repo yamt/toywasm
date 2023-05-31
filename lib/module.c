@@ -966,6 +966,10 @@ read_function_section(const uint8_t **pp, const uint8_t *ep,
         if (ret != 0) {
                 goto fail;
         }
+        if (UINT32_MAX - m->nfuncs < m->nimportedfuncs) {
+                ret = EOVERFLOW;
+                goto fail;
+        }
 
         uint32_t i;
         for (i = 0; i < m->nfuncs; i++) {
@@ -1010,6 +1014,10 @@ read_table_section(const uint8_t **pp, const uint8_t *ep,
         if (ret != 0) {
                 goto fail;
         }
+        if (UINT32_MAX - m->ntables < m->nimportedtables) {
+                ret = EOVERFLOW;
+                goto fail;
+        }
 
         uint32_t i;
         for (i = 0; i < m->ntables; i++) {
@@ -1036,6 +1044,10 @@ read_memory_section(const uint8_t **pp, const uint8_t *ep,
                                 ctx, &m->nmems, &m->mems);
         if (ret != 0) {
                 xlog_trace("failed to load mems with %d", ret);
+                goto fail;
+        }
+        if (UINT32_MAX - m->nmems < m->nimportedmems) {
+                ret = EOVERFLOW;
                 goto fail;
         }
 
@@ -1091,6 +1103,10 @@ read_global_section(const uint8_t **pp, const uint8_t *ep,
         ret = read_vec_with_ctx(&p, ep, sizeof(*m->globals), read_global,
                                 clear_global, ctx, &m->nglobals, &m->globals);
         if (ret != 0) {
+                goto fail;
+        }
+        if (UINT32_MAX - m->nglobals < m->nimportedglobals) {
+                ret = EOVERFLOW;
                 goto fail;
         }
 
