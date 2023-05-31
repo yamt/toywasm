@@ -1,7 +1,7 @@
 ;; Consume operand stack a lot within a function, similarly
 ;; to ../wast/many_locals.wast.in.
 ;;
-;; % m4 -D NUM=11 many_stack.wat.in | wat2wasm -o many_stack11.wasm -
+;; % jinja2 -D NUM=11 many_stack.wat.jinja | wat2wasm -o many_stack11.wasm -
 ;; % toywasm --print-stats many_stack11.wasm
 ;; === execution statistics ===
 ;; operand stack 4194307 (16777228 bytes)
@@ -12,7 +12,7 @@
 ;;     :
 ;;     :
 ;;
-;; % m4 many_stack.wat.in | wat2wasm -o many_stack7.wasm -
+;; % jinja2 many_stack.wat.jinja | wat2wasm -o many_stack7.wasm -
 ;; % toywasm --print-stats many_stack7.wasm
 ;; === execution statistics ===
 ;; operand stack 16387 (65548 bytes)
@@ -23,7 +23,7 @@
 ;;     :
 ;;     :
 ;;
-;; % m4 -D NUM=5 many_stack.wat.in | wat2wasm -o many_stack5.wasm -
+;; % jinja2 -D NUM=5 many_stack.wat.jinja | wat2wasm -o many_stack5.wasm -
 ;; % toywasm --print-stats many_stack5.wasm
 ;; === execution statistics ===
 ;; operand stack 1027 (4108 bytes)
@@ -34,24 +34,21 @@
 ;;     :
 ;;     :
 
-define(`_repeat',`ifelse(eval($1<=$2),1,`$3`'$0(incr($1),$2,`$3')')')dnl
-define(`repeat',`_repeat(1,$1,``$2'')')dnl
-
-ifdef(`NUM',,`define(`NUM',7)dnl')
+{% set NUM = NUM | default(7) | int %}
 
 ;; 4^7 - 1
 ;; = 16383
-ifdef(`NUM1',,`define(`NUM1',`esyscmd(echo "4^NUM-1" | bc | tr -d \\n)')dnl')
+{% set NUM1 = NUM1 | default(4**NUM-1) | int %}
 ;; `DEF1' DEF1
 
 ;; 4^6 + ... + 4^0
 ;; = (4^(6+1)-1)/3
 ;; = 5461
-ifdef(`NUM2',,`define(`NUM2',`esyscmd(echo "(4^(NUM-1+1)-1)/3" | bc | tr -d \\n)')dnl')
+{% set NUM2 = NUM2 | default((4**(NUM-1+1)-1)/3) | int %}
 
-;; `NUM0' = NUM0
-;; `NUM1' = NUM1
-;; `NUM2' = NUM2
+;; `NUM0' = {{ NUM }}
+;; `NUM1' = {{ NUM1 }}
+;; `NUM2' = {{ NUM2 }}
 
 (module
   (func $add4 (export "add4") (param i32 i32 i32 i32) (result i32)
@@ -66,16 +63,18 @@ ifdef(`NUM2',,`define(`NUM2',`esyscmd(echo "(4^(NUM-1+1)-1)/3" | bc | tr -d \\n)
   (func $func (export "func") (param $i i32) (result i32)
     local.get $i
 
-repeat(NUM1,`
+{% for _ in range(NUM1) -%}
     (call $add4
       (local.get $i (local.tee $i (i32.load)))
       (local.get $i (local.tee $i (i32.load)))
       (local.get $i (local.tee $i (i32.load)))
       (local.get $i (local.tee $i (i32.load)))
-    )')
+    )
+{% endfor -%}
 
-repeat(NUM2,`
-    call $add4')
+{% for _ in range(NUM2) -%}
+    call $add4
+{% endfor -%}
   )
   (func (export "_start")
     (call $func (i32.const 1))
