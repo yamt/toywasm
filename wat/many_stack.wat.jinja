@@ -33,8 +33,21 @@
 ;;     :
 ;;     :
 ;;     :
+;;
+;; % jinja2 -D NUM=5 -D recursive_count=1000 many_stack.wat.jinja | wat2wasm -o many_stack5_recursive1000.wasm -
+;; % toywasm --print-stats many_stack5_recursive1000.wasm
+;; === execution statistics ===
+;; operand stack 2027 (8108 bytes)
+;; locals 2006 (8024 bytes)
+;; labels 1001 (8008 bytes)
+;; frames 1003 (32096 bytes)
+;;     :
+;;     :
+;;     :
+
 
 {% set NUM = NUM | default(7) | int %}
+{% set recursive_count = recursive_count | default(0) | int %}
 
 ;; 4^7 - 1
 ;; = 16383
@@ -60,7 +73,11 @@
     i32.add
     i32.add
   )
-  (func $func (export "func") (param $i i32) (result i32)
+  (func $func (export "func") (param $i i32)
+{% if recursive_count > 0 -%}
+    (param $n i32)
+{% endif -%}
+    (result i32)
     local.get $i
 
 {% for _ in range(NUM1) -%}
@@ -75,9 +92,26 @@
 {% for _ in range(NUM2) -%}
     call $add4
 {% endfor -%}
+
+{% if recursive_count > 0 -%}
+    ;; recursive call
+    local.get $n
+    if
+      local.get $i
+      local.get $n
+      i32.const 1
+      i32.sub
+      call $func
+      drop
+    end
+{% endif -%}
   )
   (func (export "_start")
-    (call $func (i32.const 1))
+    (call $func (i32.const 1)
+{% if recursive_count > 0 -%}
+      (i32.const {{ recursive_count }})
+{% endif -%}
+    )
     (i32.store (i32.const 0))
   )
   (memory (export "memory") 1)
