@@ -81,7 +81,7 @@ add_library(toywasm-lib-core STATIC ${lib_core_sources} ${lib_core_sources_write
 set_target_properties(toywasm-lib-core PROPERTIES OUTPUT_NAME toywasm-core)
 if (USE_IPO)
 # Note: -flto=full seems to produce considerably faster code
-# than flto=thin for us. However, cmake INTERPROCEDURAL_OPTIMIZATION
+# than -flto=thin for us. However, cmake INTERPROCEDURAL_OPTIMIZATION
 # always use -flto=thin for clang.
 # cf. https://gitlab.kitware.com/cmake/cmake/-/issues/16808
 set_property(TARGET toywasm-lib-core PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
