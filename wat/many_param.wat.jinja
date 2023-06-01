@@ -1,8 +1,13 @@
 ;; Use many parameters and results
 
+;; toywasm slows down if the number of parameter cells overflows 16-bit.
+;; jinja2 -DNUM=16383 -Duse_v128=true many_param.wat.jinja | wat2wasm -o many_param16383_v128.wasm -
+;; jinja2 -DNUM=16384 -Duse_v128=true many_param.wat.jinja | wat2wasm -o many_param16384_v128.wasm -
+;;
 ;; wamrc: 64
 ;; https://github.com/bytecodealliance/wasm-micro-runtime/blob/a2d4744a2b2c587eacca66c357dc2e88925fcadd/core/iwasm/compilation/aot_emit_function.c#L708-L712
 ;; jinja2 -DNUM=64 many_param.wat.jinja | wat2wasm -o many_param64.wasm -
+;; jinja2 -DNUM=16 -Duse_v128=true many_param.wat.jinja | wat2wasm -o many_param16_v128.wasm -
 ;;
 ;; wamr also has various limits around UINT16_MAX / INT16_MAX.
 ;;
@@ -21,17 +26,32 @@
 #}
 {% set EXPECTED = (INPUT * NUM + NUM * (NUM - 1) // 2) % 4294967296 %}
 
+{% set use_v128 = use_v128 | default(false) %}
+{% if use_v128 %}
+{% set type = "v128" %}
+{% macro const(v) %}
+(i32x4.splat (i32.const {{v}}))
+{% endmacro %}
+{% set add_insn = "i32x4.add" %}
+{% else %}
+{% set type = "i32" %}
+{% macro const(v) %}
+(i32.const {{v}})
+{% endmacro %}
+{% set add_insn = "i32.add" %}
+{% endif %}
+
 (module
   (type $add_many_params_type (func (param
-    {%- for x in range(NUM) %} i32{% endfor -%}
-  ) (result i32)))
+    {%- for x in range(NUM) %} {{type}}{% endfor -%}
+  ) (result {{type}})))
   (type $pass_many_values_type (func (param
-    {%- for x in range(NUM) %} i32{% endfor -%}
+    {%- for x in range(NUM) %} {{type}}{% endfor -%}
   ) (result
-    {%- for x in range(NUM) %} i32{% endfor -%}
+    {%- for x in range(NUM) %} {{type}}{% endfor -%}
   )))
-  (type $return_many_results_type (func (param i32) (result
-    {%- for x in range(NUM) %} i32{% endfor -%}
+  (type $return_many_results_type (func (param {{type}}) (result
+    {%- for x in range(NUM) %} {{type}}{% endfor -%}
   )))
 
   (func $add_many_params (export "add_many_params") (type $add_many_params_type)
@@ -39,7 +59,7 @@
     local.get {{x}}
     {% endfor -%}
     {% for x in range(NUM-1) -%}
-    i32.add
+    {{add_insn}}
     {% endfor -%}
   )
   (func $pass_many_values (export "pass_many_values") (type $pass_many_values_type)
@@ -49,16 +69,16 @@
   )
   (func $return_many_results (export "return_many_results") (type $return_many_results_type)
     {% for x in range(NUM) -%}
-    (i32.add (i32.const {{x}}) (local.get 0))
+    ({{add_insn}} {{const(x)}} (local.get 0))
     {% endfor -%}
   )
-  (func $test (export "test") (param i32) (result i32)
+  (func $test (export "test") (param {{type}}) (result {{type}})
     local.get 0
     call $return_many_results
     call $pass_many_values
     call $add_many_params
   )
-  (func $test_indirect (export "test_indirect") (param i32) (result i32)
+  (func $test_indirect (export "test_indirect") (param {{type}}) (result {{type}})
     local.get 0
     i32.const 2
     call_indirect (type $return_many_results_type)
@@ -68,19 +88,29 @@
     call_indirect (type $add_many_params_type)
   )
   (func (export "_start")
-    i32.const {{EXPECTED}}
-    i32.const {{INPUT}}
+    {{const(EXPECTED)}}
+    {{const(INPUT)}}
     call $test
-    block (param i32 i32)
+    block (param {{type}} {{type}})
+      {% if use_v128 %}
+      i32x4.eq
+      i32x4.all_true
+      {% else %}
       i32.eq
+      {% endif %}
       br_if 0
       unreachable
     end
-    i32.const {{EXPECTED}}
-    i32.const {{INPUT}}
+    {{const(EXPECTED)}}
+    {{const(INPUT)}}
     call $test_indirect
-    block (param i32 i32)
+    block (param {{type}} {{type}})
+      {% if use_v128 %}
+      i32x4.eq
+      i32x4.all_true
+      {% else %}
       i32.eq
+      {% endif %}
       br_if 0
       unreachable
     end
