@@ -50,15 +50,20 @@ installed with homebrew.
 
 ### wasmi
 
+what i used for the latest run of the benchmarks:
 ```
 git checkout v0.30.0
 cargo build --release
 cp target/release/wasmi_cli ~/bin
 ```
 
-Note: it's pointed out that i should have used `cargo install` instead
-to get a better optimized binary.
-cf. https://github.com/yamt/toywasm/issues/8#issuecomment-1570506209
+however, it's pointed out that the following is
+a better procedure which applies proper optimizations
+for benchmarking. i will use it next time.
+```
+cargo build --profile bench
+cp target/release/wasmi_cli ~/bin
+```
 
 ### wasmedge
 
