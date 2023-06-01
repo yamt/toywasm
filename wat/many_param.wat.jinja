@@ -12,7 +12,7 @@
 ;; u 0.30s s 0.00s e 0.30s maj 0 min 686 in 0 out 0
 ;; %
 ;;
-;; wamrc: 64
+;; wamrc has a limit on number of cells: 64
 ;; https://github.com/bytecodealliance/wasm-micro-runtime/blob/a2d4744a2b2c587eacca66c357dc2e88925fcadd/core/iwasm/compilation/aot_emit_function.c#L708-L712
 ;; jinja2 -DNUM=64 many_param.wat.jinja | wat2wasm -o many_param64.wasm -
 ;; jinja2 -DNUM=16 -Duse_v128=true many_param.wat.jinja | wat2wasm -o many_param16_v128.wasm -
