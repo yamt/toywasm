@@ -1,8 +1,16 @@
 ;; Use many parameters and results
 
-;; toywasm slows down if the number of parameter cells overflows 16-bit.
+;; toywasm (with `TOYWASM_USE_SMALL_CELLS=ON`) slows down if the number of
+;; parameter cells overflows 16-bit.
 ;; jinja2 -DNUM=16383 -Duse_v128=true many_param.wat.jinja | wat2wasm -o many_param16383_v128.wasm -
 ;; jinja2 -DNUM=16384 -Duse_v128=true many_param.wat.jinja | wat2wasm -o many_param16384_v128.wasm -
+;; % time toywasm many_param16383_v128.wasm
+;; u 0.01s s 0.00s e 0.01s maj 0 min 705 in 0 out 0
+;; % time toywasm many_param16384_v128.wasm
+;; u 0.31s s 0.00s e 0.31s maj 0 min 697 in 0 out 0
+;; % time toywasm --disable-resulttype-cellidx many_param16383_v128.wasm
+;; u 0.30s s 0.00s e 0.30s maj 0 min 686 in 0 out 0
+;; %
 ;;
 ;; wamrc: 64
 ;; https://github.com/bytecodealliance/wasm-micro-runtime/blob/a2d4744a2b2c587eacca66c357dc2e88925fcadd/core/iwasm/compilation/aot_emit_function.c#L708-L712
