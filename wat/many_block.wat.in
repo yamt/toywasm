@@ -1,0 +1,35 @@
+;; note: wat2wasm seems to use recursive calls to process nested blocks
+;; and easily ends up with stack overflow.
+;;
+;; note: wasm3 seems to use recursive calls to compile nested blocks
+;; and easily ends up with stack overflow.
+;;
+;; note: wamr has a 16-bit limit for nested blocks.
+;; (it works up to NUM=65534)
+;;
+;; % m4 -DNUM=10000 many_block.wat.in|wat2wasm -o many_block.wasm -
+;; % m4 -DNUM=100000 many_block.wat.in|wat2wasm -o many_block.wasm -
+;; zsh: done                m4 -DNUM=100000 many_block.wat.in |
+;; zsh: segmentation fault  wat2wasm -o many_block.wasm -
+;; %
+;; % m4 -DNUM=100000 many_block.wat.in|wasm-tools parse -o many_block.wasm
+;; %
+
+define(`_repeat',`ifelse(eval($1<=$2),1,`$3`'$0(incr($1),$2,`$3')')')dnl
+define(`repeat',`_repeat(1,$1,``$2'')')dnl
+
+ifdef(`NUM',,`define(`NUM',1000000)')
+
+(module
+  (func $test (export "test")
+repeat(NUM, `
+    block')
+    br NUM
+repeat(NUM, `
+    end')
+  )
+  (func (export "_start")
+    call $test
+  )
+  (memory (export "memory") 0)
+)
