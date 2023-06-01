@@ -8,6 +8,7 @@ define(`for',`_for($1,$2,$3,`$4')')dnl
 
 ;; wamrc: 64
 ;; https://github.com/bytecodealliance/wasm-micro-runtime/blob/a2d4744a2b2c587eacca66c357dc2e88925fcadd/core/iwasm/compilation/aot_emit_function.c#L708-L712
+;; m4 -DNUM=64 many_param.wat.in | wat2wasm -o many_param64.wasm -
 ;;
 ;; wamr also has various limits around UINT16_MAX / INT16_MAX.
 ;;
@@ -27,6 +28,7 @@ define(`EXPECTED',`syscmd(echo "(INPUT * NUM + NUM * (NUM - 1) / 2) % 4294967296
 
 (module
   (type $add_many_params_type (func (param repeat(NUM, i32 )) (result i32)))
+  (type $pass_many_values_type (func (param repeat(NUM, i32 )) (result repeat(NUM, i32 ))))
   (type $return_many_results_type (func (param i32) (result repeat(NUM, i32 ))))
 
   (func $add_many_params (export "add_many_params") (type $add_many_params_type)
@@ -35,6 +37,10 @@ for(`X', 0, NUM, `
 repeat(decr(NUM), `
     i32.add')
   )
+  (func $pass_many_values (export "pass_many_values") (type $pass_many_values_type)
+for(`X', 0, NUM, `
+    local.get X')
+  )
   (func $return_many_results (export "return_many_results") (type $return_many_results_type)
 for(`X', 0, NUM, `
     (i32.add (i32.const X) (local.get 0))')
@@ -42,12 +48,15 @@ for(`X', 0, NUM, `
   (func $test (export "test") (param i32) (result i32)
     local.get 0
     call $return_many_results
+    call $pass_many_values
     call $add_many_params
   )
   (func $test_indirect (export "test_indirect") (param i32) (result i32)
     local.get 0
-    i32.const 1
+    i32.const 2
     call_indirect (type $return_many_results_type)
+    i32.const 1
+    call_indirect (type $pass_many_values_type)
     i32.const 0
     call_indirect (type $add_many_params_type)
   )
@@ -70,6 +79,6 @@ for(`X', 0, NUM, `
     end
   )
   (memory (export "memory") 1)
-  (table 2 2 funcref)
-  (elem (i32.const 0) func $add_many_params $return_many_results)
+  (table 3 3 funcref)
+  (elem (i32.const 0) func $add_many_params $pass_many_values $return_many_results)
 )
