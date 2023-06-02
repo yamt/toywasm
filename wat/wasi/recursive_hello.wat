@@ -40,5 +40,5 @@
 
   ;; iov_base = 0, iov_len = 1
   (data (i32.const 0) "\00\00\00\00\01\00\00\00")
-  (data (i32.const 0x100) "hello\n\00")
+  (data (i32.const 0x100) "hello, recursive\n\00")
 )
