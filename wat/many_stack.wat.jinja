@@ -80,6 +80,7 @@
     (result i32)
     local.get $i
 
+    ;; load from linear memory to avoid compile-time constant folding
 {% for _ in range(NUM1) -%}
     (call $add4
       (local.get $i (local.tee $i (i32.load)))
