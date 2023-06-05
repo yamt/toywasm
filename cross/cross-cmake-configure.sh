@@ -2,7 +2,7 @@
 
 set -e
 
-# tested ARCH: arm64 s390x armhf riscv64
+# tested ARCH: arm64 s390x armhf riscv64 i386
 
 ARCH=${ARCH:-arm64}
 case ${ARCH} in
