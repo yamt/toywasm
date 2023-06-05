@@ -42,13 +42,15 @@ fetch_spec .spec-threads https://github.com/WebAssembly/threads 09f2831349bf4091
 fetch_spec .spec-tail-call https://github.com/WebAssembly/tail-call 6f44ca27af411a0f6bc4e07520807d7adfc0de88
 (cd .spec-tail-call && find test -name "return_call*.wast") | compile tail-call
 
-# currently memory-multi.wast is handled manually because it has simd tests
+# https://github.com/WebAssembly/multi-memory/pull/46
 fetch_spec .spec-multi-memory https://github.com/WebAssembly/multi-memory 4f6b8f53ec11e59f5e38033db4199db18df83706
 (cd .spec-multi-memory && find test \
 -name "load.wast" -o \
 -name "store.wast" -o \
 -name "memory_size.wast" -o \
--name "memory_grow.wast") | compile multi-memory
+-name "memory_grow.wast" -o \
+-path "*/multi-memory/*.wast" -a ! -name "memory_copy1.wast") \
+| compile multi-memory
 
 fetch_spec .spec-extended-const https://github.com/WebAssembly/extended-const dd72ab9676e27d4c3fbf48030115e4ee64e05507
 (cd .spec-extended-const && find test \
