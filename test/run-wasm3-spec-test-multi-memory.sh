@@ -4,4 +4,7 @@ set -e
 
 export TEST_DIR=.wasm-spec-test
 ./test/fetch-spec-test.sh
-exec ./test/run-wasm3-spec-test.sh --spec-dir $(pwd -P)/${TEST_DIR}/multi-memory/test "$@"
+exec ./test/run-wasm3-spec-test.sh \
+--spec-dir-raw $(pwd -P)/${TEST_DIR}/multi-memory/test/core \
+--spec-dir-raw $(pwd -P)/${TEST_DIR}/multi-memory/test/core/multi-memory \
+"$@"
