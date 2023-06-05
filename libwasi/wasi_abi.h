@@ -174,6 +174,7 @@ struct wasi_dirent {
         uint64_t d_ino;
         uint32_t d_namlen;
         uint8_t d_type;
+        uint8_t pad[3];
 };
 _Static_assert(sizeof(struct wasi_dirent) == 24, "wasi_dirent");
 #define WASI_DIRENT_ALIGN WASI_U64_ALIGN
