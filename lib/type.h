@@ -130,6 +130,10 @@ union v128 {
         double f64[2];
 };
 
+_Static_assert(sizeof(float) == 4, "float");
+_Static_assert(sizeof(double) == 8, "double");
+_Static_assert(sizeof(union v128) == 16, "v128");
+
 /*
  * a value on operand stack, locals, etc.
  *
