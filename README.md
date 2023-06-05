@@ -82,6 +82,7 @@ It includes
 |macOS/amd64             |Yes              |                             |
 |wasm32-wasi             |Yes (on toywasm) |                             |
 |Ubuntu/amd64            |Yes              |                             |
+|Ubuntu/i386             |Yes              |32-bit, smaller alignment    |
 |Ubuntu/arm64            |Yes (on qemu)    |                             |
 |Ubuntu/armhf            |Yes (on qemu)    |32-bit                       |
 |Ubuntu/s390x            |Yes (on qemu)    |Big endian                   |
