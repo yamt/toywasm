@@ -3,6 +3,9 @@
 # Note: spidermonkey uses nan-boxing, which is one of motivations of
 # nan-canonicalization in wasm.
 # cf. https://github.com/WebAssembly/design/issues/1463
+#
+# the implementation doesn't seem so senstive at least for wasm32 though.
+# https://github.com/mozilla/gecko-dev/blob/af5be0d1e0ff1e44bd37896d95cca9f21d47ec9c/js/public/Value.h#L31
 
 set -e
 BIN=.spidermonkey/spidermonkey.wasm
