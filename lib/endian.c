@@ -179,6 +179,7 @@ lef64_encode(void *p, double v)
         le64_encode(p, u.i);
 }
 
+#if !defined(__i386__)
 float
 lef32_decode(const void *p)
 {
@@ -200,3 +201,4 @@ lef64_decode(const void *p)
         u.i = le64_decode(p);
         return u.f;
 }
+#endif

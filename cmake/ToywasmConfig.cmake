@@ -61,6 +61,12 @@ endif()
 endif()
 endif()
 
+if(TRIPLET MATCHES "i386")
+# x87 doesn't preserve sNaN as IEEE 754 and wasm expect.
+# unfortunately, clang doesn't have -mno-fp-ret-in-387.
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse2 -mfpmath=sse")
+endif()
+
 if(CMAKE_C_COMPILER_TARGET MATCHES "wasm")
 if(TOYWASM_USE_TAILCALL)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mtail-call")
