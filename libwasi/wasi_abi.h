@@ -119,9 +119,12 @@ _Static_assert(sizeof(struct wasi_filestat) == 64, "wasi_filestat");
 
 struct wasi_subscription_clock {
         uint32_t clock_id; /* WASI_CLOCK_ID_ */
+        uint32_t pad1;
         uint64_t timeout;
         uint64_t precision;
         uint16_t flags; /* WASI_SUBCLOCKFLAG_ */
+        uint16_t pad2;
+        uint32_t pad3;
 };
 _Static_assert(sizeof(struct wasi_subscription_clock) == 32,
                "wasi_subscription_clock");
@@ -135,6 +138,7 @@ _Static_assert(sizeof(struct wasi_subscription_fd_readwrite) == 4,
 struct wasi_subscription {
         uint64_t userdata;
         uint8_t type; /* WASI_EVENTTYPE_ */
+        uint8_t pad[7];
         union {
                 struct wasi_subscription_clock clock;
                 struct wasi_subscription_fd_readwrite fd_read;
@@ -154,8 +158,11 @@ struct wasi_event {
         uint64_t userdata;
         uint16_t error;
         uint8_t type; /* WASI_EVENTTYPE_ */
+        uint8_t pad1;
+        uint32_t pad2;
         uint64_t availbytes;
         uint16_t rwflags; /* WASI_EVENTRWFLAG_ */
+        uint16_t pad3[3];
 };
 _Static_assert(sizeof(struct wasi_event) == 32, "wasi_event");
 #define WASI_EVENT_ALIGN WASI_U64_ALIGN
