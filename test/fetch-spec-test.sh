@@ -6,7 +6,7 @@ TEST_DIR=${TEST_DIR:-.wasm-spec-test}
 fetch_spec_json()
 {
     REPO=https://github.com/yamt/wasm-spec-test
-    REF=6a4ccf9cc5cf50afdb205c893150036c53c81ede
+    REF=fc9a60041c6b3f41d1e11b7714693507f9a52545
     mkdir "${TEST_DIR}"
     git -C "${TEST_DIR}" init
     git -C "${TEST_DIR}" fetch --depth 1 ${REPO} ${REF}
