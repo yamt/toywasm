@@ -1,3 +1,5 @@
+#if !defined(_ENDIAN_H)
+#define _ENDIAN_H
 #include <stdint.h>
 
 uint8_t le8_to_host(uint8_t v);
@@ -23,5 +25,44 @@ uint64_t le64_decode(const void *p);
 void lef32_encode(void *p, float v);
 void lef64_encode(void *p, double v);
 
+/*
+ * x87 fld/fstp does not preserve sNaN. it breaks wasm semantics.
+ *
+ * while in later processors we can use XMM registers (eg. -msse2) which
+ * don't have the problem, x87 ST0 register is still used to return
+ * float/double function results as it's specified by the i386 ABI.
+ *
+ * while GCC has -mno-fp-ret-in-387 to alter the abi, Clang unfortunately
+ * doesn't seem to have an equivalent.
+ */
+#if defined(__i386__)
+__attribute__((always_inline, used)) static float
+lef32_decode(const void *p)
+{
+        union {
+                uint32_t i;
+                float f;
+        } u;
+        u.i = le32_decode(p);
+        return u.f;
+}
+#else
 float lef32_decode(const void *p);
+#endif
+
+#if defined(__i386__)
+__attribute__((always_inline, used)) static double
+lef64_decode(const void *p)
+{
+        union {
+                uint64_t i;
+                double f;
+        } u;
+        u.i = le64_decode(p);
+        return u.f;
+}
+#else
 double lef64_decode(const void *p);
+#endif
+
+#endif /* !defined(_ENDIAN_H) */
