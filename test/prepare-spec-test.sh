@@ -21,27 +21,29 @@ fetch_spec()
 compile()
 {
     TEST_DIR=$1
+    shift 1
     while read WAST; do
         D=${TEST_DIR}/$(dirname ${WAST})
         mkdir -p ${D}
-        ${WAST2JSON} --enable-all -o ${TEST_DIR}/${WAST%%.wast}.json ${SPEC_DIR}/${WAST}
+        ${WAST2JSON} --enable-all "$@" -o ${TEST_DIR}/${WAST%%.wast}.json ${SPEC_DIR}/${WAST}
     done
 }
 
 ${WAST2JSON} --version
 
-fetch_spec .spec https://github.com/WebAssembly/spec opam-2.0.0
-(cd ${SPEC_DIR} && find test -name "*.wast") | compile .
+# Note: --no-check for https://github.com/WebAssembly/wabt/issues/2201
+fetch_spec .spec https://github.com/WebAssembly/spec b55d740054915ffc9089e709c99f3319ae6baabc
+(cd ${SPEC_DIR} && find test -name "*.wast") | compile . --no-check
 
-fetch_spec .spec-threads https://github.com/WebAssembly/threads 8e1a7de753fbe6455c33e670352bdfe43b8cc5bd
+fetch_spec .spec-threads https://github.com/WebAssembly/threads 09f2831349bf409187abb6f7868482a8079f2264
 # Note: we don't have the test harness necessary for threads.wast
 (cd .spec-threads && find test -name "atomic.wast") | compile threads
 
-fetch_spec .spec-tail-call https://github.com/WebAssembly/tail-call 8d7be0b84f992d6350f1df3d9b9d4159d5083b0f
+fetch_spec .spec-tail-call https://github.com/WebAssembly/tail-call 6f44ca27af411a0f6bc4e07520807d7adfc0de88
 (cd .spec-tail-call && find test -name "return_call*.wast") | compile tail-call
 
 # currently memory-multi.wast is handled manually because it has simd tests
-fetch_spec .spec-multi-memory https://github.com/WebAssembly/multi-memory 07fc57c48fbc87b098fae622cd10278bb95ef576
+fetch_spec .spec-multi-memory https://github.com/WebAssembly/multi-memory 4f6b8f53ec11e59f5e38033db4199db18df83706
 (cd .spec-multi-memory && find test \
 -name "load.wast" -o \
 -name "store.wast" -o \
