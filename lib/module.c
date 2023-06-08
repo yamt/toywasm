@@ -827,11 +827,11 @@ read_locals(const uint8_t **pp, const uint8_t *ep, struct func *func,
                 if (ret != 0) {
                         goto fail;
                 }
-                nlocals += count;
                 if (UINT32_MAX - nlocals < count) {
                         ret = E2BIG;
                         goto fail;
                 }
+                nlocals += count;
                 ret = read_u8(&p, ep, &u8);
                 if (ret != 0) {
                         goto fail;
