@@ -861,7 +861,6 @@ read_locals(const uint8_t **pp, const uint8_t *ep, struct func *func,
                         xlog_trace("populate_localtype_cellidx failed with "
                                    "%d. It can cause very slow execution.",
                                    ret);
-                        lt->localchunks = NULL;
                 }
         }
 #endif
