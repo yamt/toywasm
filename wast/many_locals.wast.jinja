@@ -6,18 +6,22 @@
 ;; wasmparser: MAX_WASM_FUNCTION_LOCALS = 50000
 ;; https://github.com/bytecodealliance/wasm-tools/blob/5e8639a37260cdc1aab196f5ae5c7ae6427c214f/crates/wasmparser/src/limits.rs#L28
 
-define(`_repeat',`ifelse(eval($1<=$2),1,`$3`'$0(incr($1),$2,`$3')')')dnl
-define(`repeat',`_repeat(1,$1,``$2'')')dnl
+;; jinja2 -DNUM=1000000 many_locals.wast.jinja > many_locals1000000.wast
+;; jinja2 -DNUM=100000000 many_locals.wast.jinja | wast2json -o many_locals.json -
+;; for larger NUM, probably it's simpler to modify LEB128 in the binary.
+
+{% set NUM = NUM | default(70000) | int %}
 
 (module
   (func (export "func_with_many_locals") (param i32) (result i32)
-    ;; 70000 locals
-repeat(70000,`
-    (local i32)')
-
+    (local
+    {% for x in range(NUM) -%}
+    i32
+    {% endfor %}
+    )
     (local.get 0)
-    (local.set 70000)
-    (local.get 70000)
+    (local.set {{NUM}})
+    (local.get {{NUM}})
   )
 )
 
