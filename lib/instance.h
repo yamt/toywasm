@@ -104,6 +104,9 @@ int instance_execute_continue(struct exec_context *ctx);
  */
 int instance_execute_handle_restart(struct exec_context *ctx, int exec_ret);
 
+/*
+ * see the comment in type.h about the concept of import_object.
+ */
 int import_object_create_for_exports(struct instance *inst,
                                      const struct name *module_name,
                                      struct import_object **resultp);
@@ -115,5 +118,14 @@ struct memtype;
 int memory_instance_create(struct meminst **mip, const struct memtype *mt);
 void memory_instance_destroy(struct meminst *mi);
 
+/*
+ * create_satisfying_shared_memories:
+ *
+ * create shared memories to satisfy all shared memory imports
+ * in the module.
+ *
+ * mainly for wasi-threads, where it's host's responsibility to
+ * provide the linear memory.
+ */
 int create_satisfying_shared_memories(const struct module *module,
                                       struct import_object **imop);
