@@ -151,7 +151,7 @@ struct exec_context {
         LIST_ENTRY(struct exec_context) rq;
 
         /* Trap */
-        bool trapped; /* used with a combination with ETOYWASMTRAP */
+        bool trapped; /* for sanity check. apps should check ETOYWASMTRAP. */
         struct trap_info trap;
         struct report *report;
         struct report report0;
