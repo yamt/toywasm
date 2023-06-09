@@ -809,8 +809,8 @@ exec_func(struct exec_context *ctx, uint32_t funcidx,
           const struct trap_info **trapp)
 {
         int ret;
-        ret = instance_execute_func_with_default_restart_handling(
-                ctx, funcidx, ptype, rtype, param, result);
+        ret = instance_execute_func(ctx, funcidx, ptype, rtype, param, result);
+        ret = instance_execute_handle_restart(ctx, ret);
         *trapp = NULL;
         if (ret == ETOYWASMTRAP) {
                 assert(ctx->trapped);

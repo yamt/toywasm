@@ -636,13 +636,9 @@ instance_execute_func_nocheck(struct exec_context *ctx, uint32_t funcidx,
 }
 
 int
-instance_execute_func_with_default_restart_handling(
-        struct exec_context *ctx, uint32_t funcidx,
-        const struct resulttype *ptype, const struct resulttype *rtype,
-        const struct val *param, struct val *result)
+instance_execute_handle_restart(struct exec_context *ctx, int exec_ret)
 {
-        int ret = instance_execute_func(ctx, funcidx, ptype, rtype, param,
-                                        result);
+        int ret = exec_ret;
         while (ret == ETOYWASMRESTART) {
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
                 suspend_parked(ctx->cluster);
