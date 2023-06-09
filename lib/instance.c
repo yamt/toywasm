@@ -12,6 +12,7 @@
 #include "shared_memory_impl.h"
 #include "suspend.h"
 #include "type.h"
+#include "usched.h"
 #include "util.h"
 #include "xlog.h"
 
