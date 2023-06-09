@@ -1,7 +1,7 @@
 /*
  * Note: the main purpose of this repl implementation is to run
- * the wasm3 testsuite:
- * https://github.com/wasm3/wasm3/blob/main/test/run-spec-test.py
+ * (our fork of) the wasm3 testsuite:
+ * https://github.com/yamt/wasm3/blob/toywasm-test/test/run-spec-test.py
  *
  * eg.
  * ./run-spec-test.py --exec ".../main_bin --repl --repl-prompt wasm3"
