@@ -55,6 +55,7 @@ set(lib_core_headers
 	"bitmap.h"
 	"cell.h"
 	"context.h"
+	"exec_context.h"
 	"fileio.h"
 	"idalloc.h"
 	"instance.h"
