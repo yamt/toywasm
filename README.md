@@ -51,7 +51,7 @@ is built with an ancient wasi-sdk to workaround
 |[multi-memory]          |Complete (`TOYWASM_ENABLE_WASM_MULTI_MEMORY`)     |
 |[tail-call]             |Complete (`TOYWASM_ENABLE_WASM_TAILCALL`)         |
 |[threads]               |Complete (`TOYWASM_ENABLE_WASM_THREADS`)          |
-|[wasi_snapshot_preview1]|See [the top comment in lib/wasi.c]               |
+|[wasi_snapshot_preview1]|See [the top comment in wasi.c]                   |
 |[wasi-threads]          |Complete (`TOYWASM_ENABLE_WASI_THREADS`)          |
 
 Note: As this runtime is relatively new, all proposals which had finished
@@ -73,7 +73,7 @@ It includes
 [threads]: https://github.com/WebAssembly/threads
 [wasi_snapshot_preview1]: https://github.com/WebAssembly/wasi
 [wasi-threads]: https://github.com/WebAssembly/wasi-threads
-[the top comment in lib/wasi.c]: lib/wasi.c
+[the top comment in wasi.c]: libwasi/wasi.c
 
 ## Where can this run?
 
