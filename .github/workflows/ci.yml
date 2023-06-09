@@ -369,10 +369,16 @@ jobs:
         mkdir -p ${{github.workspace}}/artifacts
         cp ${{env.builddir}}/*.tgz ${{github.workspace}}/artifacts/
 
-    - name: Test example app with the library we built
+    - name: Test "app" example with the library we built
       if: matrix.BUILD_TYPE == 'Release' && matrix.arch == 'native'
       run: |
-        ./test/test-example-app.sh ${{env.builddir}}/toywasm-v*.tgz ${{env.builddir}}/spectest.wasm
+        ./test/test-example.sh app ${{env.builddir}}/toywasm-v*.tgz ${{env.builddir}}/spectest.wasm
+
+    - name: Test "runwasi" example with the library we built
+      if: matrix.BUILD_TYPE == 'Release' && matrix.arch == 'native'
+      run: |
+        wat2wasm wat/wasi/hello.wat
+        ./test/test-example.sh runwasi ${{env.builddir}}/toywasm-v*.tgz hello.wasm
 
     - name: Upload artifacts
       if: matrix.name != 'noname'
