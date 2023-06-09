@@ -808,10 +808,8 @@ unescape(char *p0, size_t *lenp)
 }
 
 /*
- * an instance_execute_func wrapper with wasi-threads handling.
+ * an instance_execute_func wrapper with ETOYWASMRESTART handling.
  * REVISIT: move to lib
- *
- * the returned trap is owned by either exec_context or wasi_threads_instance.
  */
 static int
 exec_func(struct exec_context *ctx, uint32_t funcidx,
@@ -820,16 +818,6 @@ exec_func(struct exec_context *ctx, uint32_t funcidx,
           const struct trap_info **trapp, const struct repl_state *state)
 {
         int ret;
-#if defined(TOYWASM_ENABLE_WASI_THREADS)
-        struct wasi_threads_instance *wasi_threads = state->wasi_threads;
-        if (wasi_threads != NULL) {
-                ctx->intrp = wasi_threads_interrupt_pointer(wasi_threads);
-                ctx->cluster = wasi_threads_cluster(wasi_threads);
-#if defined(TOYWASM_USE_USER_SCHED)
-                ctx->sched = wasi_threads_sched(wasi_threads);
-#endif
-        }
-#endif
         ret = instance_execute_func(ctx, funcidx, ptype, rtype, param, result);
         while (ret == ETOYWASMRESTART) {
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
@@ -852,20 +840,7 @@ exec_func(struct exec_context *ctx, uint32_t funcidx,
         if (ret == ETOYWASMTRAP) {
                 assert(ctx->trapped);
                 const struct trap_info *trap = &ctx->trap;
-#if defined(TOYWASM_ENABLE_WASI_THREADS)
-                if (wasi_threads != NULL) {
-                        wasi_threads_propagate_trap(wasi_threads, trap);
-                        wasi_threads_instance_join(wasi_threads);
-                        trap = wasi_threads_instance_get_trap(wasi_threads);
-                }
-#endif
                 *trapp = trap;
-        } else {
-#if defined(TOYWASM_ENABLE_WASI_THREADS)
-                if (wasi_threads != NULL) {
-                        wasi_threads_instance_join(wasi_threads);
-                }
-#endif
         }
         return ret;
 }
@@ -952,8 +927,15 @@ toywasm_repl_invoke(struct repl_state *state, const char *modname,
         exec_context_init(ctx, inst);
         ctx->options = state->opts.exec_options;
         const struct trap_info *trap;
+#if defined(TOYWASM_ENABLE_WASI_THREADS)
+        struct wasi_threads_instance *wasi_threads = state->wasi_threads;
+        wasi_threads_setup_exec_context(wasi_threads, ctx);
+#endif
         ret = exec_func(ctx, funcidx, ptype, rtype, param, result, &trap,
                         state);
+#if defined(TOYWASM_ENABLE_WASI_THREADS)
+        wasi_threads_complete_exec(wasi_threads, &trap);
+#endif
         if (state->opts.print_stats) {
                 exec_context_print_stats(ctx);
         }
