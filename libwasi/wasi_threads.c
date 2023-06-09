@@ -149,7 +149,7 @@ void
 wasi_threads_complete_exec(struct wasi_threads_instance *wasi_threads,
                            const struct trap_info **trapp)
 {
-        if (wasi_threads != NULL) {
+        if (wasi_threads == NULL) {
                 return;
         }
         const struct trap_info *trap = *trapp;
