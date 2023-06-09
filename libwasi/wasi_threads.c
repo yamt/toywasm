@@ -58,8 +58,24 @@ struct wasi_threads_instance {
 #endif
 };
 
+/*
+ * wasi_threads_instance_join: wait for completion of all threads
+ * spawned by wasi:thread_spawn in the wasi-threads instance.
+ */
+static void wasi_threads_instance_join(struct wasi_threads_instance *inst);
+
+static const atomic_uint *
+wasi_threads_interrupt_pointer(struct wasi_threads_instance *inst);
+static struct cluster *
+wasi_threads_cluster(struct wasi_threads_instance *inst);
+
+static void wasi_threads_propagate_trap(struct wasi_threads_instance *wasi,
+                                        const struct trap_info *trap);
+static const struct trap_info *
+wasi_threads_instance_get_trap(struct wasi_threads_instance *wasi);
+
 #if defined(TOYWASM_USE_USER_SCHED)
-struct sched *
+static struct sched *
 wasi_threads_sched(struct wasi_threads_instance *wasi)
 {
         return &wasi->sched;
@@ -180,7 +196,7 @@ fail:
         return 0;
 }
 
-void
+static void
 wasi_threads_instance_join(struct wasi_threads_instance *wasi)
 {
         toywasm_mutex_lock(&wasi->cluster.lock);
@@ -204,19 +220,19 @@ wasi_threads_instance_join(struct wasi_threads_instance *wasi)
         cluster_join(&wasi->cluster);
 }
 
-const atomic_uint *
+static const atomic_uint *
 wasi_threads_interrupt_pointer(struct wasi_threads_instance *inst)
 {
         return &inst->cluster.interrupt;
 }
 
-struct cluster *
+static struct cluster *
 wasi_threads_cluster(struct wasi_threads_instance *inst)
 {
         return &inst->cluster;
 }
 
-const struct trap_info *
+static const struct trap_info *
 wasi_threads_instance_get_trap(struct wasi_threads_instance *wasi)
 {
         return &wasi->trap;
@@ -228,7 +244,7 @@ trap_is_local(const struct trap_info *trap)
         return trap->trapid == TRAP_VOLUNTARY_THREAD_EXIT;
 }
 
-void
+static void
 wasi_threads_propagate_trap(struct wasi_threads_instance *wasi,
                             const struct trap_info *trap)
 {
