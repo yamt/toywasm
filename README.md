@@ -92,6 +92,18 @@ It includes
 |NuttX/sim on macOS/amd64|No               |Occasionally tested manually |
 |NetBSD/amd64            |No               |Occasionally tested manually |
 
+## Use as a command
+
+See [toywasm command help message](https://webassembly.sh/?run-command=toywasm).
+
+## Use as a library
+
+See example apps:
+
+* [Investigate module](./examples/app/app.c)
+
+* [Load and execute WASI module](./examples/runwasi/runwasi.c)
+
 ## How slow/fast is this?
 
 * [Computation benchmark](./benchmark/ffmpeg.md)
