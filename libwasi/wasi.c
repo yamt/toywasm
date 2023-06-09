@@ -1,9 +1,10 @@
 /*
  * WASI implementation for toywasm
  *
- * This is a bit relaxed implementation of WASI preview1.
+ * This is a bit relaxed implementation of WASI snapshot preview1.
  *
  * - The "rights" stuff is not implemented. mendokusai.
+ *   Also, it's being removed in preview2.
  *
  * - The "openat" family API is intentionally not used in favor
  *   of portability.
