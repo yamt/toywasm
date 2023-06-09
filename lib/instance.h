@@ -42,6 +42,23 @@ int instance_create_execute_init(struct instance *inst,
  */
 void instance_destroy(struct instance *inst);
 
+/*
+ * instance_execute_func:
+ *
+ * execute the function.
+ *
+ * in addition to usual <errno.h> error numbers, this function can
+ * return following toywasm-specific errors:
+ *
+ * ETOYWASMRESTART: the execution has been suspended for some reasons.
+ *                  the caller should usually resume the execution by
+ *                  calling instance_execute_handle_restart. or,
+ *                  use instance_execute_continue if you need some
+ *                  application-specific processing.
+ *
+ * ETOYWASMTRAP:    the exection was terminated by a wasm trap.
+ *                  the caller can investigate ctx->trap for details.
+ */
 int instance_execute_func(struct exec_context *ctx, uint32_t funcidx,
                           const struct resulttype *paramtype,
                           const struct resulttype *resulttype,
@@ -65,6 +82,8 @@ int instance_execute_func_nocheck(struct exec_context *ctx, uint32_t funcidx,
  *   - instance_execute_func
  *   - instance_execute_func_nocheck
  *   - instance_execute_continue
+ *
+ * see also: instance_execute_handle_restart
  */
 int instance_execute_continue(struct exec_context *ctx);
 
@@ -73,6 +92,8 @@ int instance_execute_continue(struct exec_context *ctx);
  *
  * perform the default ETOYWASMRESTART handling.
  * this function never returns ETOYWASMRESTART.
+ * if the given exec_ret is not ETOYWASMRESTART, this function just
+ * returns it as it is.
  */
 int instance_execute_handle_restart(struct exec_context *ctx, int exec_ret);
 
