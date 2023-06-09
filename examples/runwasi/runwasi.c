@@ -177,7 +177,7 @@ main(int argc, char **argv)
         exec_context_init(&ectx, inst);
         ret = instance_execute_func(&ectx, funcidx, pt, rt, NULL, NULL);
         ret = instance_execute_handle_restart(&ectx, ret);
-        uint32_t wasi_exit_code;
+        uint32_t wasi_exit_code = 0;
         if (ret == ETOYWASMTRAP) {
                 const struct trap_info *trap = &ectx.trap;
                 if (trap->trapid == TRAP_VOLUNTARY_EXIT) {
