@@ -6,6 +6,9 @@ struct import_object;
  * including command line arguments, environment variables, and a file
  * descriptor table.
  * usually you should create a WASI instance for each WASI-using modules.
+ *
+ * Note: for now, the data for wasi-threads is maintained as a separate
+ * object. see wasi_threads.h.
  */
 
 int wasi_instance_create(struct wasi_instance **resultp);
