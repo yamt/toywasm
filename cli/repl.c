@@ -815,7 +815,7 @@ static int
 exec_func(struct exec_context *ctx, uint32_t funcidx,
           const struct resulttype *ptype, const struct resulttype *rtype,
           const struct val *param, struct val *result,
-          const struct trap_info **trapp, const struct repl_state *state)
+          const struct trap_info **trapp)
 {
         int ret;
         ret = instance_execute_func(ctx, funcidx, ptype, rtype, param, result);
@@ -931,8 +931,7 @@ toywasm_repl_invoke(struct repl_state *state, const char *modname,
         struct wasi_threads_instance *wasi_threads = state->wasi_threads;
         wasi_threads_setup_exec_context(wasi_threads, ctx);
 #endif
-        ret = exec_func(ctx, funcidx, ptype, rtype, param, result, &trap,
-                        state);
+        ret = exec_func(ctx, funcidx, ptype, rtype, param, result, &trap);
 #if defined(TOYWASM_ENABLE_WASI_THREADS)
         wasi_threads_complete_exec(wasi_threads, &trap);
 #endif
