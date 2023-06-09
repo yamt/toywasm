@@ -1609,9 +1609,9 @@ get_section_type(uint8_t id)
         return &section_types[id];
 }
 
-int
-module_load(struct module *m, const uint8_t *p, const uint8_t *ep,
-            struct load_context *ctx)
+static int
+module_load_into(struct module *m, const uint8_t *p, const uint8_t *ep,
+                 struct load_context *ctx)
 {
         uint32_t v;
         int ret;
@@ -1745,6 +1745,35 @@ fail:
         return ret;
 }
 
+static int
+module_create0(struct module **mp)
+{
+        struct module *m = zalloc(sizeof(*m));
+        if (m == NULL) {
+                return ENOMEM;
+        }
+        *mp = m;
+        return 0;
+}
+
+int
+module_create(struct module **mp, const uint8_t *p, const uint8_t *ep,
+              struct load_context *ctx)
+{
+        struct module *m;
+        int ret = module_create0(&m);
+        if (ret != 0) {
+                return ret;
+        }
+        ret = module_load_into(m, p, ep, ctx);
+        if (ret != 0) {
+                module_destroy(m);
+                return ret;
+        }
+        *mp = m;
+        return 0;
+}
+
 static void
 module_unload(struct module *m)
 {
@@ -1792,17 +1821,6 @@ module_unload(struct module *m)
         free(m->exports);
 
         memset(m, 0, sizeof(*m));
-}
-
-int
-module_create(struct module **mp)
-{
-        struct module *m = zalloc(sizeof(*m));
-        if (m == NULL) {
-                return ENOMEM;
-        }
-        *mp = m;
-        return 0;
 }
 
 void

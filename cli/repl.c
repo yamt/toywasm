@@ -402,16 +402,11 @@ repl_load_from_buf(struct repl_state *state, const char *modname,
                    struct repl_module_state *mod, bool trap_ok)
 {
         int ret;
-        ret = module_create(&mod->module);
-        if (ret != 0) {
-                xlog_printf("module_create failed\n");
-                goto fail;
-        }
         struct load_context ctx;
         load_context_init(&ctx);
         ctx.options = state->opts.load_options;
-        ret = module_load(mod->module, mod->buf, mod->buf + mod->bufsize,
-                          &ctx);
+        ret = module_create(&mod->module, mod->buf, mod->buf + mod->bufsize,
+                            &ctx);
         if (ctx.report.msg != NULL) {
                 xlog_error("load/validation error: %s", ctx.report.msg);
                 nbio_printf("load/validation error: %s\n", ctx.report.msg);

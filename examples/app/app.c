@@ -27,14 +27,9 @@ main(int argc, char **argv)
                 xlog_error("map_file failed with %d", ret);
                 exit(1);
         }
-        ret = module_create(&m);
-        if (ret != 0) {
-                xlog_error("module_create failed with %d", ret);
-                exit(1);
-        }
         struct load_context ctx;
         load_context_init(&ctx);
-        ret = module_load(m, p, p + sz, &ctx);
+        ret = module_create(&m, p, p + sz, &ctx);
         if (ret != 0) {
                 xlog_error("module_load failed with %d", ret);
                 exit(1);
