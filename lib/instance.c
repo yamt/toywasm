@@ -634,3 +634,31 @@ instance_execute_func_nocheck(struct exec_context *ctx, uint32_t funcidx,
         return instance_execute_func(ctx, funcidx, ptype, rtype, params,
                                      results);
 }
+
+int
+instance_execute_func_with_default_restart_handling(
+        struct exec_context *ctx, uint32_t funcidx,
+        const struct resulttype *ptype, const struct resulttype *rtype,
+        const struct val *param, struct val *result)
+{
+        int ret = instance_execute_func(ctx, funcidx, ptype, rtype, param,
+                                        result);
+        while (ret == ETOYWASMRESTART) {
+#if defined(TOYWASM_ENABLE_WASM_THREADS)
+                suspend_parked(ctx->cluster);
+#endif
+                xlog_trace("%s: restarting execution\n", __func__);
+#if defined(TOYWASM_USE_USER_SCHED)
+                struct sched *sched = ctx->sched;
+                if (sched != NULL) {
+                        sched_enqueue(sched, ctx);
+                        sched_run(sched, ctx);
+                        ret = ctx->exec_ret;
+                } else
+#endif
+                {
+                        ret = instance_execute_continue(ctx);
+                }
+        }
+        return ret;
+}

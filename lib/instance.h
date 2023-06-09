@@ -68,6 +68,11 @@ int instance_execute_func_nocheck(struct exec_context *ctx, uint32_t funcidx,
  */
 int instance_execute_continue(struct exec_context *ctx);
 
+int instance_execute_func_with_default_restart_handling(
+        struct exec_context *ctx, uint32_t funcidx,
+        const struct resulttype *ptype, const struct resulttype *rtype,
+        const struct val *param, struct val *result);
+
 int import_object_create_for_exports(struct instance *inst,
                                      const struct name *module_name,
                                      struct import_object **resultp);
