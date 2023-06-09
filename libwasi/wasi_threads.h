@@ -37,22 +37,5 @@ wasi_threads_setup_exec_context(struct wasi_threads_instance *wasi_threads,
 void wasi_threads_complete_exec(struct wasi_threads_instance *wasi_threads,
                                 const struct trap_info **trapp);
 
-/*
- * wasi_threads_instance_join: wait for completion of all threads
- * spawned by wasi:thread_spawn in the wasi-threads instance.
- */
-void wasi_threads_instance_join(struct wasi_threads_instance *inst);
-
-const atomic_uint *
-wasi_threads_interrupt_pointer(struct wasi_threads_instance *inst);
-struct cluster *wasi_threads_cluster(struct wasi_threads_instance *inst);
-
-void wasi_threads_propagate_trap(struct wasi_threads_instance *wasi,
-                                 const struct trap_info *trap);
-const struct trap_info *
-wasi_threads_instance_get_trap(struct wasi_threads_instance *wasi);
-
-struct sched *wasi_threads_sched(struct wasi_threads_instance *wasi);
-
 int import_object_create_for_wasi_threads(struct wasi_threads_instance *wasi,
                                           struct import_object **impp);
