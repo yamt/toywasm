@@ -108,6 +108,44 @@ wasi_threads_instance_destroy(struct wasi_threads_instance *inst)
         free(inst);
 }
 
+void
+wasi_threads_setup_exec_context(struct wasi_threads_instance *wasi_threads,
+                                struct exec_context *ctx)
+{
+        if (wasi_threads == NULL) {
+                return;
+        }
+        ctx->intrp = wasi_threads_interrupt_pointer(wasi_threads);
+        ctx->cluster = wasi_threads_cluster(wasi_threads);
+#if defined(TOYWASM_USE_USER_SCHED)
+        ctx->sched = wasi_threads_sched(wasi_threads);
+#endif
+}
+
+/*
+ * 1. wait for the completion of the other threads
+ *
+ * 2. if necessary, replace the trap in *trapp with another one, which
+ *    represents the exit status of the whole "process".
+ *    in that case, the new trap might be the one owned by wasi_threads.
+ */
+void
+wasi_threads_complete_exec(struct wasi_threads_instance *wasi_threads,
+                           const struct trap_info **trapp)
+{
+        if (wasi_threads != NULL) {
+                return;
+        }
+        const struct trap_info *trap = *trapp;
+        if (trap != NULL) {
+                wasi_threads_propagate_trap(wasi_threads, trap);
+                wasi_threads_instance_join(wasi_threads);
+                *trapp = wasi_threads_instance_get_trap(wasi_threads);
+        } else {
+                wasi_threads_instance_join(wasi_threads);
+        }
+}
+
 int
 wasi_threads_instance_set_thread_spawn_args(
         struct wasi_threads_instance *inst, struct module *m,
