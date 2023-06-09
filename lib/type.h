@@ -468,6 +468,12 @@ struct instance {
         struct bitmap elem_dropped;
 };
 
+/*
+ * import_object_entry represents a wasm external value which can
+ * satisfy an import.
+ *
+ * https://webassembly.github.io/spec/core/exec/runtime.html#external-values
+ */
 struct import_object_entry {
         const struct name *module_name;
         const struct name *name;
@@ -482,16 +488,21 @@ struct import_object_entry {
 
 /*
  * instance_create() takes a list of import_object, chained together
- * with the "next" member. The list logically represents a single list
- * of import_object_entry. If there are multiple matching entries,
- * the first one is used.
+ * with the "next" member.
+ * a chained list of import_object is a logical equivalent of
+ * the importObject argument of the js-api:
+ * https://webassembly.github.io/spec/js-api/index.html#instances
+ *
+ * instance_create() searches wasm external values in the list to
+ * satisfy imports of the module.
+ * If there are multiple matching entries, the first one is used.
  */
 struct import_object {
         size_t nentries;
         struct import_object_entry *entries;
         void (*dtor)(struct import_object *im);
         void *dtor_arg;
-        struct import_object *next;
+        struct import_object *next; /* NULL for the last import_object */
 };
 
 bool is_numtype(enum valtype vt) __constfunc;
