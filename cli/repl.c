@@ -20,8 +20,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "context.h"
 #include "endian.h"
+#include "exec_context.h"
 #include "fileio.h"
 #include "instance.h"
 #include "load_context.h"
