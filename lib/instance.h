@@ -68,6 +68,12 @@ int instance_execute_func_nocheck(struct exec_context *ctx, uint32_t funcidx,
  */
 int instance_execute_continue(struct exec_context *ctx);
 
+/*
+ * instance_execute_handle_restart:
+ *
+ * perform the default ETOYWASMRESTART handling.
+ * this function never returns ETOYWASMRESTART.
+ */
 int instance_execute_handle_restart(struct exec_context *ctx, int exec_ret);
 
 int import_object_create_for_exports(struct instance *inst,
