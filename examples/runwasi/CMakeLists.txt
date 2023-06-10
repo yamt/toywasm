@@ -7,6 +7,7 @@ find_package(toywasm-lib-wasi REQUIRED)
 
 set(sources
 	"runwasi.c"
+	"main.c"
 )
 
 add_executable(runwasi ${sources})
