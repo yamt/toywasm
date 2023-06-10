@@ -121,11 +121,12 @@ runwasi(const char *filename, unsigned int ndirs, char **dirs,
                 goto fail;
         }
         exec_context_clear(&ectx);
-
+        *wasi_exit_code_p = wasi_exit_code;
+        ret = 0;
+fail:
         /*
          * clean up
          */
-fail:
         if (inst != NULL) {
                 instance_destroy(inst);
         }
