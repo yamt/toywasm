@@ -76,6 +76,13 @@ runwasi(const char *filename, unsigned int ndirs, char **dirs,
                         goto fail;
                 }
         }
+        ret = wasi_instance_populate_stdio_with_hostfd(wasi);
+        if (ret != 0) {
+                xlog_error("wasi_instance_populate_stdio_with_hostfd failed "
+                           "with %d",
+                           ret);
+                goto fail;
+        }
         ret = import_object_create_for_wasi(wasi, &wasi_import_object);
         if (ret != 0) {
                 xlog_error("import_object_create_for_wasi failed with %d",
