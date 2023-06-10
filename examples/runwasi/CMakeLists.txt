@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.16)
 
 project(runwasi LANGUAGES C)
 
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wvla -Werror")
+
 find_package(toywasm-lib-core REQUIRED)
 find_package(toywasm-lib-wasi REQUIRED)
 
