@@ -18,6 +18,7 @@ runwasi(const char *filename, unsigned int ndirs, char **dirs,
         struct module *m = NULL;
         struct wasi_instance *wasi = NULL;
         struct import_object *wasi_import_object = NULL;
+        struct instance *inst = NULL;
         int ret;
 
         /*
@@ -98,7 +99,6 @@ runwasi(const char *filename, unsigned int ndirs, char **dirs,
         /*
          * instantiate the module
          */
-        struct instance *inst;
         struct report report;
         report_init(&report);
         ret = instance_create(m, &inst, wasi_import_object, &report);
