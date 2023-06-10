@@ -13,7 +13,7 @@
 int
 runwasi(const char *filename, unsigned int ndirs, char **dirs,
         unsigned int nenvs, char **envs, int argc, char **argv,
-        uint32_t *wasi_exit_code_p)
+        const int stdio_fds[3], uint32_t *wasi_exit_code_p)
 {
         struct module *m = NULL;
         struct wasi_instance *wasi = NULL;
@@ -76,12 +76,17 @@ runwasi(const char *filename, unsigned int ndirs, char **dirs,
                         goto fail;
                 }
         }
-        ret = wasi_instance_populate_stdio_with_hostfd(wasi);
-        if (ret != 0) {
-                xlog_error("wasi_instance_populate_stdio_with_hostfd failed "
-                           "with %d",
-                           ret);
-                goto fail;
+        for (i = 0; i < 3; i++) {
+                int hostfd = stdio_fds[i];
+                if (hostfd == -1) {
+                        continue;
+                }
+                ret = wasi_instance_add_hostfd(wasi, i, hostfd);
+                if (ret != 0) {
+                        xlog_error("wasi_instance_add_hostfd failed with %d",
+                                   ret);
+                        goto fail;
+                }
         }
         ret = import_object_create_for_wasi(wasi, &wasi_import_object);
         if (ret != 0) {
