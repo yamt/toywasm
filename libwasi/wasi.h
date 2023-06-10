@@ -32,6 +32,20 @@ int wasi_instance_prestat_add_mapdir(struct wasi_instance *inst,
                                      const char *path);
 
 /*
+ * wasi_instance_add_hostfd:
+ *
+ * add a wasi fd which maps to the host fd.
+ *
+ * wasi_instance_populate_stdio_with_hostfd is a shorthand of
+ *    wasi_instance_add_hostfd(wasi, 0, 0);
+ *    wasi_instance_add_hostfd(wasi, 1, 1);
+ *    wasi_instance_add_hostfd(wasi, 2, 2);
+ */
+int wasi_instance_add_hostfd(struct wasi_instance *inst, uint32_t wasmfd,
+                             int hostfd);
+int wasi_instance_populate_stdio_with_hostfd(struct wasi_instance *inst);
+
+/*
  * wasi_instance_exit_code:
  *
  * obtain the exit code from WASI proc_exit.

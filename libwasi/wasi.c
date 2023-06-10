@@ -3313,7 +3313,7 @@ const struct host_func wasi_funcs[] = {
         WASI_HOST_FUNC(sock_shutdown, "(ii)i"),
 };
 
-static int
+int
 wasi_instance_add_hostfd(struct wasi_instance *inst, uint32_t wasmfd,
                          int hostfd)
 {
@@ -3385,7 +3385,7 @@ fail:
         return ret;
 }
 
-static int
+int
 wasi_instance_populate_stdio_with_hostfd(struct wasi_instance *inst)
 {
         uint32_t nfds = 3;
@@ -3416,15 +3416,8 @@ wasi_instance_create(struct wasi_instance **instp) NO_THREAD_SAFETY_ANALYSIS
         }
         toywasm_mutex_init(&inst->lock);
         toywasm_cv_init(&inst->cv);
-        int ret = wasi_instance_populate_stdio_with_hostfd(inst);
-        if (ret != 0) {
-                goto fail;
-        }
         *instp = inst;
         return 0;
-fail:
-        wasi_instance_destroy(inst);
-        return ret;
 }
 
 void

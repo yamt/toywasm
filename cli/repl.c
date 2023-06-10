@@ -213,6 +213,10 @@ toywasm_repl_load_wasi(struct repl_state *state)
         if (ret != 0) {
                 goto fail;
         }
+        ret = wasi_instance_populate_stdio_with_hostfd(state->wasi);
+        if (ret != 0) {
+                goto undo_wasi_create;
+        }
         struct import_object *im;
         ret = import_object_create_for_wasi(state->wasi, &im);
         if (ret != 0) {
