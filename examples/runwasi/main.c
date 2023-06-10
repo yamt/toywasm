@@ -82,8 +82,13 @@ main(int argc, char **argv)
         }
         const char *filename = argv[0];
         uint32_t wasi_exit_code;
+        const int stdio_fds[3] = {
+                0,
+                1,
+                2,
+        };
         ret = runwasi(filename, ndirs, dirs, nenvs, envs, argc, argv,
-                      &wasi_exit_code);
+                      stdio_fds, &wasi_exit_code);
         free(dirs);
         free(envs);
         if (ret != 0) {
