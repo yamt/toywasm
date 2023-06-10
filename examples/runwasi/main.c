@@ -9,6 +9,7 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include <toywasm/xlog.h>
 
@@ -83,9 +84,9 @@ main(int argc, char **argv)
         const char *filename = argv[0];
         uint32_t wasi_exit_code;
         const int stdio_fds[3] = {
-                0,
-                1,
-                2,
+                STDIN_FILENO,
+                STDOUT_FILENO,
+                STDERR_FILENO,
         };
         ret = runwasi(filename, ndirs, dirs, nenvs, envs, argc, argv,
                       stdio_fds, &wasi_exit_code);
