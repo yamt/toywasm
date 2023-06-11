@@ -130,7 +130,6 @@ _read_vec_with_ctx_impl(const uint8_t **pp, const uint8_t *ep,
         ret = 0;
         *pp = p;
         *countp = total_count;
-        return 0;
 fail:
         return ret;
 }

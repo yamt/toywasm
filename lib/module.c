@@ -1345,7 +1345,6 @@ read_element(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
         }
         ret = 0;
         *pp = p;
-        return 0;
 fail:
         return ret;
 }
@@ -1492,7 +1491,6 @@ read_data(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
 
         ret = 0;
         *pp = p;
-        return 0;
 fail:
         return ret;
 }

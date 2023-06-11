@@ -43,7 +43,7 @@ void list_insert_tail(struct list_head *h, void *elem, struct list_entry *e);
 #if defined(toywasm_typeof)
 #define CHECK_TYPE(a, b)                                                      \
         do {                                                                  \
-                __attribute__((__unused__)) toywasm_typeof(a) __dummy = b;    \
+                __attribute__((__unused__)) toywasm_typeof(a) *__dummy = &b;  \
         } while (0)
 #else
 #define CHECK_TYPE(a, b)

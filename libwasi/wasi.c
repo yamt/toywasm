@@ -658,7 +658,9 @@ fail:
         assert(host_ret != 0 || ret != 0 || *neventsp > 0);
         assert(host_ret == ETOYWASMRESTART ||
                ctx->restart_type == RESTART_NONE);
-        *retp = ret;
+        if (host_ret == 0) {
+                *retp = ret;
+        }
         return host_ret;
 }
 
@@ -1970,9 +1972,6 @@ retry:
                                    ret);
                         goto fail;
                 }
-        } else {
-                host_ret = 0;
-                ret = 0;
         }
         struct wasi_event *ev = events;
         for (i = 0; i < nsubscriptions; i++) {

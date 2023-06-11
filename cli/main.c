@@ -296,7 +296,6 @@ main(int argc, char *const *argv)
                         nenvs++;
                         envs = realloc(envs, nenvs * sizeof(*envs));
                         if (envs == NULL) {
-                                ret = ENOMEM;
                                 goto fail;
                         }
                         envs[nenvs - 1] = optarg;
