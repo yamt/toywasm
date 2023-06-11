@@ -62,7 +62,7 @@ struct wasi_threads_instance {
  * wasi_threads_instance_join: wait for completion of all threads
  * spawned by wasi:thread_spawn in the wasi-threads instance.
  */
-static void wasi_threads_instance_join(struct wasi_threads_instance *inst);
+static void wasi_threads_instance_join(struct wasi_threads_instance *wasi);
 
 static const atomic_uint *
 wasi_threads_interrupt_pointer(struct wasi_threads_instance *inst);
@@ -589,9 +589,10 @@ static const struct host_module module_wasi_threads = {
 };
 
 int
-import_object_create_for_wasi_threads(struct wasi_threads_instance *th,
-                                      struct import_object **impp)
+import_object_create_for_wasi_threads(
+        struct wasi_threads_instance *wasi_threads,
+        struct import_object **impp)
 {
         return import_object_create_for_host_funcs(&module_wasi_threads, 1,
-                                                   &th->hi, impp);
+                                                   &wasi_threads->hi, impp);
 }

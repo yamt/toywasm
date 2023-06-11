@@ -15,7 +15,7 @@ struct val;
 
 int exec_expr(uint32_t funcidx, const struct expr *expr,
               const struct localtype *localtype,
-              const struct resulttype *paramtype, uint32_t nresults,
+              const struct resulttype *parametertype, uint32_t nresults,
               const struct cell *params, struct cell *results,
               struct exec_context *ctx);
 int exec_expr_continue(struct exec_context *ctx);
@@ -25,8 +25,7 @@ int exec_const_expr(const struct expr *expr, enum valtype type,
 
 int memory_init(struct exec_context *ctx, uint32_t memidx, uint32_t dataidx,
                 uint32_t d, uint32_t s, uint32_t n);
-uint32_t memory_grow(struct exec_context *ctx, uint32_t memidx,
-                     uint32_t newsize);
+uint32_t memory_grow(struct exec_context *ctx, uint32_t memidx, uint32_t sz);
 
 int memory_notify(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
                   uint32_t offset, uint32_t count, uint32_t *nwokenp);

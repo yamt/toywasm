@@ -529,7 +529,7 @@ int check_functype_with_string(struct module *m, uint32_t funcidx,
                                const char *sig);
 
 void clear_functype(struct functype *ft);
-void clear_resulttype(struct resulttype *ft);
+void clear_resulttype(struct resulttype *rt);
 
 void set_name_cstr(struct name *name, char *cstr);
 void clear_name(struct name *name);
