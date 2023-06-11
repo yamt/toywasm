@@ -604,7 +604,7 @@ void
 test_list(void **state)
 {
         struct item {
-                int dummy1;
+                void *dummy1;
                 LIST_ENTRY(struct item) entry;
                 int dummy2;
         };

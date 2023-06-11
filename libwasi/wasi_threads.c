@@ -272,10 +272,9 @@ static int
 exec_thread_start_func(struct exec_context *ctx, const struct thread_arg *arg)
 {
         struct wasi_threads_instance *wasi = arg->wasi;
-        uint32_t tid;
 
         struct val param[2];
-        param[0].u.i32 = tid = arg->tid;
+        param[0].u.i32 = arg->tid;
         param[1].u.i32 = arg->user_arg;
 
         /* XXX should inherit exec_options from the parent? */
