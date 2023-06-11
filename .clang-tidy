@@ -1,0 +1,5 @@
+Checks: '-*,readability-*,-readability-magic-numbers,-readability-else-after-return'
+CheckOptions:
+  readability-identifier-length.MinimumVariableNameLength: '1'
+  readability-identifier-length.MinimumParameterNameLength: '1'
+  readability-function-cognitive-complexity.Threshold: '86'
