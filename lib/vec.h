@@ -15,7 +15,7 @@
 
 int __must_check _vec_resize(void *vec, size_t elem_size,
                              uint32_t new_elem_count);
-int __must_check _vec_prealloc(void *vec, size_t elem_size, uint32_t tailroom);
+int __must_check _vec_prealloc(void *vec, size_t elem_size, uint32_t count);
 void _vec_free(void *vec);
 
 #define VEC_RESIZE(v, sz) _vec_resize(&v, sizeof(*v.p), sz);

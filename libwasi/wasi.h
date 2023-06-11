@@ -11,7 +11,7 @@ struct import_object;
  * object. see wasi_threads.h.
  */
 
-int wasi_instance_create(struct wasi_instance **resultp);
+int wasi_instance_create(struct wasi_instance **instp);
 void wasi_instance_set_args(struct wasi_instance *inst, int argc,
                             char *const *argv);
 void wasi_instance_set_environ(struct wasi_instance *inst, int nenvs,
@@ -27,8 +27,8 @@ void wasi_instance_destroy(struct wasi_instance *inst);
  * wasi_instance_prestat_add(i, "dir") is mostly an equivalent of
  * wasi_instance_prestat_add_mapdir("i, "dir::dir").
  */
-int wasi_instance_prestat_add(struct wasi_instance *inst, const char *path);
-int wasi_instance_prestat_add_mapdir(struct wasi_instance *inst,
+int wasi_instance_prestat_add(struct wasi_instance *wasi, const char *path);
+int wasi_instance_prestat_add_mapdir(struct wasi_instance *wasi,
                                      const char *path);
 
 /*
@@ -53,7 +53,7 @@ int wasi_instance_populate_stdio_with_hostfd(struct wasi_instance *inst);
  * it's available only when the execution of the module ended with
  * ETOYWASMTRAP + TRAP_VOLUNTARY_EXIT.
  */
-uint32_t wasi_instance_exit_code(struct wasi_instance *inst);
+uint32_t wasi_instance_exit_code(struct wasi_instance *wasi);
 
 /*
  * import_object_create_for_wasi:

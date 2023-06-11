@@ -7,7 +7,7 @@ struct exec_context;
 struct trap_info;
 
 void wasi_threads_instance_destroy(struct wasi_threads_instance *inst);
-int wasi_threads_instance_create(struct wasi_threads_instance **resultp);
+int wasi_threads_instance_create(struct wasi_threads_instance **instp);
 
 /*
  * wasi_threads_instance_set_thread_spawn_args: set wasi-threads parameters

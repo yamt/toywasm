@@ -110,7 +110,7 @@ int instance_execute_handle_restart(struct exec_context *ctx, int exec_ret);
 int import_object_create_for_exports(struct instance *inst,
                                      const struct name *module_name,
                                      struct import_object **resultp);
-void import_object_destroy(struct import_object *export);
+void import_object_destroy(struct import_object *im);
 int import_object_alloc(uint32_t nentries, struct import_object **resultp);
 
 struct meminst;
