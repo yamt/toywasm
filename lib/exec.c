@@ -90,14 +90,17 @@ memory_getptr2(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
         if (__predict_false(last_byte >= meminst->allocated)) {
                 uint32_t need_in_pages = last_byte / WASM_PAGE_SIZE + 1;
                 if (need_in_pages > meminst->size_in_pages) {
+                        int ret;
 do_trap:
-                        return trap_with_id(
+                        ret = trap_with_id(
                                 ctx, TRAP_OUT_OF_BOUNDS_MEMORY_ACCESS,
                                 "invalid memory access at %04" PRIx32
                                 " %08" PRIx32 " + %08" PRIx32 ", size %" PRIu32
                                 ", meminst size %" PRIu32,
                                 memidx, ptr, offset, size,
                                 meminst->size_in_pages);
+                        assert(ret != 0); /* appease clang-tidy */
+                        return ret;
                 }
                 /*
                  * Note: shared memories do never come here because
@@ -163,6 +166,7 @@ memory_atomic_getptr(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
         if (((ptr + offset) % size) != 0) {
                 ret = trap_with_id(ctx, TRAP_UNALIGNED_ATOMIC_OPERATION,
                                    "unaligned atomic");
+                assert(ret != 0); /* appease clang-tidy */
                 goto fail;
         }
         if (lockp != NULL) {
