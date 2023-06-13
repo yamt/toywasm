@@ -48,6 +48,10 @@ main(int argc, char **argv)
         uint32_t nparams = 0;
         uint32_t funcidx_with_most_results = UINT32_MAX;
         uint32_t nresults = 0;
+#if defined(TOYWASM_ENABLE_WRITER)
+        uint32_t funcidx_with_max_code_size = UINT32_MAX;
+        uint32_t max_code_size = 0;
+#endif
         for (i = 0; i < m->nfuncs - m->nimportedfuncs; i++) {
                 const struct func *func = &m->funcs[i];
                 const struct localtype *lt = &func->localtype;
@@ -67,6 +71,14 @@ main(int argc, char **argv)
                         funcidx_with_most_results = i;
                         nresults = ft->result.ntypes;
                 }
+#if defined(TOYWASM_ENABLE_WRITER)
+                uint32_t code_size = func->e.end - func->e.start;
+                if (funcidx_with_max_code_size == UINT32_MAX ||
+                    code_size > max_code_size) {
+                        funcidx_with_max_code_size = i;
+                        max_code_size = code_size;
+                }
+#endif
         }
         if (funcidx_with_most_locals != UINT32_MAX) {
                 printf("func %" PRIu32 " has the most locals (%" PRIu32
@@ -84,6 +96,14 @@ main(int argc, char **argv)
                        m->nimportedfuncs + funcidx_with_most_results,
                        nresults);
         }
+#if defined(TOYWASM_ENABLE_WRITER)
+        if (funcidx_with_max_code_size != UINT32_MAX) {
+                printf("func %" PRIu32 " is largest (%" PRIu32
+                       " bytes) in this module.\n",
+                       m->nimportedfuncs + funcidx_with_max_code_size,
+                       max_code_size);
+        }
+#endif
 
         exit(0);
 }
