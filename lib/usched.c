@@ -68,7 +68,7 @@ sched_run(struct sched *sched, struct exec_context *caller)
                  * calling sched_enqueue.
                  */
                 ret = instance_execute_continue(ctx);
-                if (ret == ETOYWASMRESTART) {
+                if (IS_RESTARTABLE(ret)) {
                         xlog_trace("%s: re-enqueueing ctx %p", __func__,
                                    (void *)ctx);
                         LIST_INSERT_TAIL(q, ctx, rq);

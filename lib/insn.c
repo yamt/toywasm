@@ -490,7 +490,7 @@ read_memarg_nocheck(const uint8_t **pp, struct memarg *arg)
 #define INSN_FAIL_RESTARTABLE(NAME)                                           \
         assert(ret != 0);                                                     \
         if (EXECUTING) {                                                      \
-                if (ret == ETOYWASMRESTART) {                                 \
+                if (IS_RESTARTABLE(ret)) {                                    \
                         struct exec_context *ectx = ECTX;                     \
                         ectx->stack.lsize = saved_stack_ptr;                  \
                         ectx->event = EXEC_EVENT_RESTART_INSN;                \
@@ -501,7 +501,7 @@ read_memarg_nocheck(const uint8_t **pp, struct memarg *arg)
 #endif
 #define INSN_FAIL                                                             \
         assert(ret != 0);                                                     \
-        assert(ret != ETOYWASMRESTART);                                       \
+        assert(!IS_RESTARTABLE(ret));                                         \
         return ret
 #define STACK &VEC_NEXTELEM(ECTX->stack)
 #define STACK_ADJ(n) ECTX->stack.lsize += (n)
@@ -553,7 +553,7 @@ read_memarg_nocheck(const uint8_t **pp, struct memarg *arg)
 #define PREPARE_FOR_POSSIBLE_RESTART struct cell *saved_stack_ptr = stack
 #define INSN_FAIL_RESTARTABLE(NAME)                                           \
         assert(ret != 0);                                                     \
-        if (ret == ETOYWASMRESTART) {                                         \
+        if (IS_RESTARTABLE(ret)) {                                            \
                 ctx->p = ORIG_PC;                                             \
                 stack = saved_stack_ptr;                                      \
                 SAVE_STACK_PTR;                                               \
@@ -563,7 +563,7 @@ read_memarg_nocheck(const uint8_t **pp, struct memarg *arg)
         return ret
 #define INSN_FAIL                                                             \
         assert(ret != 0);                                                     \
-        assert(ret != ETOYWASMRESTART);                                       \
+        assert(!IS_RESTARTABLE(ret));                                         \
         return ret
 #define ep NULL
 #define STACK stack
