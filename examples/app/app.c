@@ -11,7 +11,6 @@
 int
 main(int argc, char **argv)
 {
-        xlog_printf("hello\n");
         if (argc != 2) {
                 xlog_error("unexpected number of args");
                 exit(2);
@@ -34,13 +33,11 @@ main(int argc, char **argv)
                 xlog_error("module_load failed with %d", ret);
                 exit(1);
         }
-        xlog_printf("module %s imports %" PRIu32 " functions\n", filename,
-                    m->nimportedfuncs);
-        xlog_printf("module %s contains %" PRIu32 " functions\n", filename,
-                    m->nfuncs);
         module_print_stats(m);
 
         /* perform some investigations on the loaded module */
+        printf("module imports %" PRIu32 " functions\n", m->nimportedfuncs);
+        printf("module contains %" PRIu32 " functions\n", m->nfuncs);
         uint32_t i;
         uint32_t funcidx_with_most_locals = UINT32_MAX;
         uint32_t nlocals = 0;
