@@ -540,15 +540,15 @@ do_host_call(struct exec_context *ctx, const struct funcinst *finst)
         ret = finst->u.host.func(ctx, finst->u.host.instance, ft,
                                  &VEC_NEXTELEM(ctx->stack),
                                  &VEC_NEXTELEM(ctx->stack));
-        assert(ret == ETOYWASMRESTART || ctx->restart_type == RESTART_NONE);
+        assert(IS_RESTARTABLE(ret) || ctx->restart_type == RESTART_NONE);
         if (ret != 0) {
-                if (ret == ETOYWASMRESTART) {
+                if (IS_RESTARTABLE(ret)) {
                         /*
                          * Restore the stack pointer for restarting.
                          *
                          * Note: it's a responsibility of host functions
                          * to keep function arguments on the stack intact
-                         * when returning ETOYWASMRESTART.
+                         * when returning a restartable error.
                          */
                         ctx->stack.lsize += nparams;
                         STAT_INC(ctx->stats.call_restart);
@@ -984,7 +984,7 @@ exec_expr_continue(struct exec_context *ctx)
                         assert(ctx->frames.lsize > 0);
                         ret = do_return_call(ctx, ctx->event_u.call.func);
                         if (ret != 0) {
-                                if (ret == ETOYWASMRESTART) {
+                                if (IS_RESTARTABLE(ret)) {
                                         ctx->event = EXEC_EVENT_CALL;
                                         /*
                                          * Note: because we have changed
@@ -1028,7 +1028,7 @@ exec_expr_continue(struct exec_context *ctx)
                          *
                          * Instead, this implementation relies on the
                          * opcode functions set up an explicit execution
-                         * event when returning ETOYWASMRESTART.
+                         * event when returning a restartable error.
                          */
                         ret = restart_insn(ctx);
                         goto after_insn;
@@ -1044,7 +1044,7 @@ exec_expr_continue(struct exec_context *ctx)
                         n = 0;
                         ret = check_interrupt(ctx);
                         if (ret != 0) {
-                                if (ret == ETOYWASMRESTART) {
+                                if (IS_RESTARTABLE(ret)) {
                                         STAT_INC(ctx->stats.exec_loop_restart);
                                 }
                                 return ret;
@@ -1053,7 +1053,7 @@ exec_expr_continue(struct exec_context *ctx)
                 struct cell *stack = &VEC_NEXTELEM(ctx->stack);
                 ret = fetch_exec_next_insn(ctx->p, stack, ctx);
 after_insn:
-                assert((ret == ETOYWASMRESTART) ==
+                assert(IS_RESTARTABLE(ret) ==
                        (ctx->event == EXEC_EVENT_RESTART_INSN));
                 if (ret != 0) {
                         if (ctx->trapped) {
@@ -1149,7 +1149,7 @@ exec_const_expr(const struct expr *expr, enum valtype type, struct val *result,
          * it's very unlikely for a const expr to use a restart.
          * but just in case.
          */
-        while (ret == ETOYWASMRESTART) {
+        while (IS_RESTARTABLE(ret)) {
                 xlog_trace("%s: restarting execution of a const expr\n",
                            __func__);
                 ret = exec_expr_continue(ctx);
@@ -1605,7 +1605,7 @@ retry:;
         }
         ret = 0;
 fail:
-        if (ret == ETOYWASMRESTART) {
+        if (IS_RESTARTABLE(ret)) {
                 if (abstimeout != NULL) {
                         assert(abstimeout == &ctx->restart_u.timer.abstimeout);
                         ctx->restart_type = RESTART_TIMER;

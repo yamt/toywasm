@@ -38,6 +38,8 @@ struct funcframe {
 #define ETOYWASMTRAP -1
 #define ETOYWASMRESTART -2
 
+#define IS_RESTARTABLE(error) ((error) == ETOYWASMRESTART)
+
 enum trapid {
         TRAP_MISC,
         TRAP_DIV_BY_ZERO,

@@ -48,9 +48,12 @@ void instance_destroy(struct instance *inst);
  * execute the function.
  *
  * in addition to usual <errno.h> error numbers, this function can
- * return following toywasm-specific errors:
+ * return following toywasm-specific errors.
+ * Some of them are restartable, which can be checked using
+ * the IS_RESTARTABLE macro.
  *
- * ETOYWASMRESTART: the execution has been suspended for some reasons.
+ * ETOYWASMRESTART (or other restartable error):
+ *                  the execution has been suspended for some reasons.
  *                  possible reasons include:
  *
  *                  - suspend_threads mechanism, which is used for
@@ -83,7 +86,7 @@ int instance_execute_func_nocheck(struct exec_context *ctx, uint32_t funcidx,
  * instance_execute_continue:
  *
  * when one of instance_execute_xxx functions including the following ones
- * returned ETOYWASMRESTART, the app can resume the execution by calling
+ * returned a restartable error, the app can resume the execution by calling
  * this function.
  *
  *   - instance_execute_func
@@ -97,9 +100,9 @@ int instance_execute_continue(struct exec_context *ctx);
 /*
  * instance_execute_handle_restart:
  *
- * perform the default ETOYWASMRESTART handling.
- * this function never returns ETOYWASMRESTART.
- * if the given exec_ret is not ETOYWASMRESTART, this function just
+ * perform the default handling of a restartable error.
+ * this function never returns a restartable error.
+ * if the given exec_ret is not a restartable error, this function just
  * returns it as it is.
  */
 int instance_execute_handle_restart(struct exec_context *ctx, int exec_ret);

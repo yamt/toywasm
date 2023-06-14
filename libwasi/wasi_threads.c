@@ -359,7 +359,7 @@ user_runner_exec_start(struct thread_arg *arg)
         ctx->exec_done = user_runner_exec_done;
         ctx->exec_done_arg = arg;
         ret = exec_thread_start_func(ctx, arg);
-        if (ret == ETOYWASMRESTART) {
+        if (IS_RESTARTABLE(ret)) {
                 struct sched *sched = wasi_threads_sched(arg->wasi);
                 sched_enqueue(sched, ctx);
         } else {
@@ -381,7 +381,7 @@ runner(void *vp)
         exec_context_init(ctx, arg->inst);
 
         ret = exec_thread_start_func(ctx, arg);
-        while (ret == ETOYWASMRESTART) {
+        while (IS_RESTARTABLE(ret)) {
                 suspend_parked(ctx->cluster);
                 xlog_trace("%s: restarting execution\n", __func__);
                 ret = instance_execute_continue(ctx);

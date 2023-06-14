@@ -487,7 +487,7 @@ instance_create_execute_init(struct instance *inst, struct exec_context *ctx)
                 assert(m->start < m->nimportedfuncs + m->nfuncs);
                 struct funcinst *finst = VEC_ELEM(inst->funcs, m->start);
                 ret = invoke(finst, NULL, NULL, NULL, NULL, ctx);
-                while (ret == ETOYWASMRESTART) {
+                while (IS_RESTARTABLE(ret)) {
                         xlog_trace("%s: restarting execution of the start "
                                    "function\n",
                                    __func__);
@@ -581,7 +581,7 @@ instance_execute_func(struct exec_context *ctx, uint32_t funcidx,
                      ctx);
         if (ret == 0) {
                 vals_from_cells(results, result_cells, resulttype);
-        } else if (ret == ETOYWASMRESTART) {
+        } else if (IS_RESTARTABLE(ret)) {
                 /*
                  * ctx->nresults is set by invoke().
                  * while it's redundant, it can be used by
@@ -640,7 +640,7 @@ int
 instance_execute_handle_restart(struct exec_context *ctx, int exec_ret)
 {
         int ret = exec_ret;
-        while (ret == ETOYWASMRESTART) {
+        while (IS_RESTARTABLE(ret)) {
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
                 suspend_parked(ctx->cluster);
 #endif

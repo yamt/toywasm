@@ -607,7 +607,7 @@ wasi_poll(struct exec_context *ctx, struct pollfd *fds, nfds_t nfds,
 
                 host_ret = check_interrupt(ctx);
                 if (host_ret != 0) {
-                        if (host_ret == ETOYWASMRESTART) {
+                        if (IS_RESTARTABLE(host_ret)) {
                                 if (abstimeout != NULL) {
                                         assert(abstimeout ==
                                                &ctx->restart_u.timer
@@ -656,8 +656,7 @@ wasi_poll(struct exec_context *ctx, struct pollfd *fds, nfds_t nfds,
 fail:
         assert(host_ret != 0 || ret >= 0);
         assert(host_ret != 0 || ret != 0 || *neventsp > 0);
-        assert(host_ret == ETOYWASMRESTART ||
-               ctx->restart_type == RESTART_NONE);
+        assert(IS_RESTARTABLE(host_ret) || ctx->restart_type == RESTART_NONE);
         if (host_ret == 0) {
                 *retp = ret;
         }
@@ -672,7 +671,7 @@ wait_fd_ready(struct exec_context *ctx, int hostfd, short event, int *retp)
         pfd.events = event;
         int nev;
         int ret = wasi_poll(ctx, &pfd, 1, -1, retp, &nev);
-        if (ret == ETOYWASMRESTART) {
+        if (IS_RESTARTABLE(ret)) {
                 xlog_trace("%s: restarting", __func__);
         }
         return ret;
@@ -2026,12 +2025,12 @@ fail:
                                      wasi_convert_errno(ret));
         }
         free(pollfds);
-        if (host_ret != ETOYWASMRESTART) {
+        if (!IS_RESTARTABLE(host_ret)) {
                 /*
                  * avoid leaving a stale restart state.
                  *
                  * consider:
-                 * 1. poll_oneoff returns ETOYWASMRESTART with
+                 * 1. poll_oneoff returns a restartable error with
                  *    restart_abstimeout saved.
                  * 2. exec_expr_continue restarts the poll_oneoff.
                  * 3. however, for some reasons, poll_oneoff doesn't
