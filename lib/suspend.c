@@ -2,7 +2,6 @@
 #include <inttypes.h>
 
 #include "cluster.h"
-#include "context.h"
 #include "suspend.h"
 #include "timeutil.h"
 #include "xlog.h"

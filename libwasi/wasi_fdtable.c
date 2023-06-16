@@ -3,7 +3,6 @@
 #include <inttypes.h>
 #include <stdlib.h>
 
-#include "context.h"
 #include "exec.h"
 #include "timeutil.h"
 #include "wasi_impl.h"

@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "context.h"
+#include "exec.h"
 #include "host_instance.h"
 #include "instance.h"
 #include "type.h"

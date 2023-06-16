@@ -5,7 +5,6 @@
 #include <string.h>
 
 #include "bitmap.h"
-#include "context.h"
 #include "exec.h"
 #include "instance.h"
 #include "module.h"
