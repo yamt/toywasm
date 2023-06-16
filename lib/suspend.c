@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <inttypes.h>
 
+#include "exec.h"
 #include "cluster.h"
 #include "suspend.h"
 #include "timeutil.h"
