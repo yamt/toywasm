@@ -506,6 +506,9 @@ wasi_convert_errno(int host_errno)
         case ENOENT:
                 wasmerrno = 44;
                 break;
+        case ENOMEM:
+                wasmerrno = 48;
+                break;
         case ENOTDIR:
                 wasmerrno = 54;
                 break;
