@@ -8,6 +8,7 @@
 
 #include "context.h"
 #include "options.h"
+#include "report.h"
 #include "type.h"
 #include "util.h"
 #include "validation.h"

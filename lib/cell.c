@@ -3,7 +3,7 @@
 #include <string.h>
 
 #include "cell.h"
-#include "context.h"
+#include "exec_context.h"
 #include "type.h"
 
 uint32_t

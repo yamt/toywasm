@@ -12,8 +12,8 @@
 #include <string.h>
 
 #include "cluster.h"
-#include "context.h"
 #include "endian.h"
+#include "exec.h"
 #include "idalloc.h"
 #include "instance.h"
 #include "lock.h"

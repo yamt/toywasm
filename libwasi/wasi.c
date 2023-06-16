@@ -57,7 +57,6 @@
 #include <sys/random.h> /* getrandom */
 #endif
 
-#include "context.h"
 #include "endian.h"
 #include "exec.h"
 #include "lock.h"

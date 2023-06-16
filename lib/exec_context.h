@@ -211,6 +211,12 @@ struct exec_context {
         struct exec_stat stats;
 };
 
+/* For funcframe.funcidx */
+#define FUNCIDX_INVALID UINT32_MAX
+
+/* for exec_stats */
+#define STAT_INC(s) (s)++
+
 void exec_context_init(struct exec_context *ctx, struct instance *inst);
 void exec_context_clear(struct exec_context *ctx);
 void exec_context_print_stats(struct exec_context *ctx);
