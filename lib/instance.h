@@ -49,25 +49,7 @@ void instance_destroy(struct instance *inst);
  *
  * in addition to usual <errno.h> error numbers, this function can
  * return following toywasm-specific errors.
- * Some of them are restartable, which can be checked using
- * the IS_RESTARTABLE macro.
- *
- * ETOYWASMRESTART (or other restartable error):
- *                  the execution has been suspended for some reasons.
- *                  possible reasons include:
- *
- *                  - suspend_threads mechanism, which is used for
- *                    memory.grow on multithreaded configuration.
- *
- *                  - context switch requests for TOYWASM_USE_USER_SCHED
- *
- *                  the caller should usually resume the execution by
- *                  calling instance_execute_handle_restart. or,
- *                  use instance_execute_continue if you need some
- *                  application-specific handling.
- *
- * ETOYWASMTRAP:    the exection was terminated by a wasm trap.
- *                  the caller can investigate ctx->trap for details.
+ * see the comment on ETOYWASMxxx macros in exec_context.h.
  */
 int instance_execute_func(struct exec_context *ctx, uint32_t funcidx,
                           const struct resulttype *paramtype,
