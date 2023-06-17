@@ -26,6 +26,7 @@ enum longopt {
         opt_repl,
         opt_repl_prompt,
         opt_print_stats,
+        opt_timeout,
         opt_trace,
         opt_version,
         opt_wasi,
@@ -96,6 +97,12 @@ static const struct option longopts[] = {
                 opt_print_stats,
         },
         {
+                "timeout",
+                required_argument,
+                NULL,
+                opt_timeout,
+        },
+        {
                 "trace",
                 required_argument,
                 NULL,
@@ -147,6 +154,7 @@ static const char *opt_metavars[] = {
         [opt_wasi_env] = "NAME=VAR",
         [opt_wasi_dir] = "DIR",
         [opt_wasi_mapdir] = "GUEST_DIR::HOST_DIR",
+        [opt_timeout] = "TIMEOUT_MS",
         [opt_trace] = "LEVEL",
         [opt_repl_prompt] = "STRING",
         [opt_max_frames] = "NUMBER_OF_FRAMES",
@@ -208,6 +216,7 @@ main(int argc, char *const *argv)
         bool might_need_help = true;
 
         int exit_status = 1;
+        int timeout_ms = -1;
 
 #if defined(__NuttX__)
         xlog_tracing = 0;
@@ -231,8 +240,8 @@ main(int argc, char *const *argv)
                         opts->load_options.generate_resulttype_cellidx = false;
                         break;
                 case opt_invoke:
-                        ret = toywasm_repl_invoke(state, NULL, optarg, NULL,
-                                                  true);
+                        ret = toywasm_repl_invoke(state, NULL, optarg,
+                                                  timeout_ms, NULL, true);
                         if (ret != 0) {
                                 goto fail;
                         }
@@ -264,6 +273,9 @@ main(int argc, char *const *argv)
                         break;
                 case opt_print_stats:
                         opts->print_stats = true;
+                        break;
+                case opt_timeout:
+                        timeout_ms = atoi(optarg);
                         break;
                 case opt_trace:
                         xlog_tracing = atoi(optarg);
@@ -354,8 +366,8 @@ main(int argc, char *const *argv)
         }
 #endif
         uint32_t wasi_exit_code = 0;
-        ret = toywasm_repl_invoke(state, NULL, "_start", &wasi_exit_code,
-                                  false);
+        ret = toywasm_repl_invoke(state, NULL, "_start", timeout_ms,
+                                  &wasi_exit_code, false);
         if (ret != 0) {
                 xlog_error("invoke failed with %d", ret);
                 /*

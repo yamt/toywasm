@@ -31,6 +31,7 @@
 #include "repl.h"
 #include "report.h"
 #include "suspend.h"
+#include "timeutil.h"
 #include "toywasm_version.h"
 #include "type.h"
 #include "usched.h"
@@ -809,18 +810,46 @@ unescape(char *p0, size_t *lenp)
 static int
 exec_func(struct exec_context *ctx, uint32_t funcidx,
           const struct resulttype *ptype, const struct resulttype *rtype,
-          const struct val *param, struct val *result,
+          const struct val *param, struct val *result, int timeout_ms,
           const struct trap_info **trapp)
 {
+        struct timespec abstimeout;
         int ret;
-        ret = instance_execute_func(ctx, funcidx, ptype, rtype, param, result);
-        ret = instance_execute_handle_restart(ctx, ret);
         *trapp = NULL;
+        if (timeout_ms > 0) {
+                const static atomic_uint one = 1;
+                ret = abstime_from_reltime_ms(CLOCK_MONOTONIC, &abstimeout,
+                                              timeout_ms);
+                if (ret != 0) {
+                        goto fail;
+                }
+                ctx->intrp = &one;
+        }
+        ret = instance_execute_func(ctx, funcidx, ptype, rtype, param, result);
+        do {
+                if (ret == ETOYWASMUSERINTERRUPT) {
+                        struct timespec now;
+                        int ret1;
+                        assert(timeout_ms > 0);
+                        ret1 = timespec_now(CLOCK_MONOTONIC, &now);
+                        if (ret1 != 0) {
+                                ret = ret1;
+                                goto fail;
+                        }
+                        if (timespec_cmp(&now, &abstimeout) > 0) {
+                                xlog_error("execution timed out");
+                                ret = ETIMEDOUT;
+                                goto fail;
+                        }
+                }
+                ret = instance_execute_handle_restart_once(ctx, ret);
+        } while (IS_RESTARTABLE(ret));
         if (ret == ETOYWASMTRAP) {
                 assert(ctx->trapped);
                 const struct trap_info *trap = &ctx->trap;
                 *trapp = trap;
         }
+fail:
         return ret;
 }
 
@@ -829,7 +858,8 @@ exec_func(struct exec_context *ctx, uint32_t funcidx,
  */
 int
 toywasm_repl_invoke(struct repl_state *state, const char *modname,
-                    const char *cmd, uint32_t *exitcodep, bool print_result)
+                    const char *cmd, int timeout_ms, uint32_t *exitcodep,
+                    bool print_result)
 {
         char *cmd1 = strdup(cmd);
         if (cmd1 == NULL) {
@@ -910,7 +940,8 @@ toywasm_repl_invoke(struct repl_state *state, const char *modname,
         struct wasi_threads_instance *wasi_threads = state->wasi_threads;
         wasi_threads_setup_exec_context(wasi_threads, ctx);
 #endif
-        ret = exec_func(ctx, funcidx, ptype, rtype, param, result, &trap);
+        ret = exec_func(ctx, funcidx, ptype, rtype, param, result, timeout_ms,
+                        &trap);
 #if defined(TOYWASM_ENABLE_WASI_THREADS)
         wasi_threads_complete_exec(wasi_threads, &trap);
 #endif
@@ -1097,7 +1128,7 @@ repl_module_subcmd(struct repl_state *state, const char *cmd,
                         goto fail;
                 }
         } else if (!strcmp(cmd, "invoke") && opt != NULL) {
-                ret = toywasm_repl_invoke(state, modname, opt, NULL, true);
+                ret = toywasm_repl_invoke(state, modname, opt, -1, NULL, true);
                 if (ret != 0) {
                         goto fail;
                 }
