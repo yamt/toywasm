@@ -48,7 +48,7 @@ int toywasm_repl_load(struct repl_state *state, const char *modname,
 int toywasm_repl_register(struct repl_state *state, const char *modname,
                           const char *register_name);
 int toywasm_repl_invoke(struct repl_state *state, const char *modname,
-                        const char *cmd, uint32_t *exitcodep,
+                        const char *cmd, int timeout_ms, uint32_t *exitcodep,
                         bool print_result);
 void toywasm_repl_print_version(void);
 
