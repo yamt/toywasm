@@ -100,12 +100,24 @@ int instance_execute_continue(struct exec_context *ctx);
 /*
  * instance_execute_handle_restart:
  *
- * perform the default handling of a restartable error.
- * this function never returns a restartable error.
- * if the given exec_ret is not a restartable error, this function just
- * returns it as it is.
+ * an equivalent of keep calling instance_execute_handle_restart_once
+ * until it returns a success or a non-restartable error.
  */
 int instance_execute_handle_restart(struct exec_context *ctx, int exec_ret);
+
+/*
+ * instance_execute_handle_restart_once:
+ *
+ * after performing the default handling of a restartable error,
+ * continue the execution as instance_execute_continue does.
+ *
+ * Note: this function can return a restartable error.
+ *
+ * Note: if the given exec_ret is not a restartable error, this function
+ * just returns it as it is.
+ */
+int instance_execute_handle_restart_once(struct exec_context *ctx,
+                                         int exec_ret);
 
 /*
  * see the comment in type.h about the concept of import_object.
