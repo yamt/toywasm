@@ -56,6 +56,22 @@ add_test(NAME toywasm-cli-simple-module COMMAND
 )
 set_tests_properties(toywasm-cli-simple-module PROPERTIES ENVIRONMENT "${TEST_ENV}")
 
+add_test(NAME toywasm-cli-timeout COMMAND
+	${TOYWASM_CLI} --timeout=100 infiniteloop.wasm
+)
+set_tests_properties(toywasm-cli-timeout PROPERTIES ENVIRONMENT "${TEST_ENV}")
+set_tests_properties(toywasm-cli-timeout PROPERTIES LABELS "timeout")
+set_tests_properties(toywasm-cli-timeout PROPERTIES WILL_FAIL ON)
+
+if(TOYWASM_ENABLE_WASI_THREADS)
+add_test(NAME toywasm-cli-timeout-wasi-threads COMMAND
+	${TOYWASM_CLI} --wasi --timeout=100 infiniteloops.wasm
+)
+set_tests_properties(toywasm-cli-timeout-wasi-threads PROPERTIES ENVIRONMENT "${TEST_ENV}")
+set_tests_properties(toywasm-cli-timeout-wasi-threads PROPERTIES LABELS "timeout")
+set_tests_properties(toywasm-cli-timeout-wasi-threads PROPERTIES WILL_FAIL ON)
+endif()
+
 # some tests are not compatible with multi-memory
 # (binary.wast, imports.wast, memory.wast)
 # REVISIT: disable only those tests.
@@ -169,6 +185,8 @@ endif() # TOYWASM_ENABLE_WASI
 if(BUILD_TESTING)
 set(wat_files
 	test/spectest.wat
+	wat/infiniteloop.wat
+	wat/wasi-threads/infiniteloops.wat
 )
 
 find_program(WAT2WASM wat2wasm REQUIRED)
@@ -176,7 +194,7 @@ foreach(wat ${wat_files})
 	get_filename_component(f ${wat} NAME_WLE)
 	set(wasm "${f}.wasm")
 	add_custom_command(OUTPUT ${wasm}
-		COMMAND ${WAT2WASM} -o ${wasm} ${CMAKE_CURRENT_SOURCE_DIR}/${wat}
+		COMMAND ${WAT2WASM} --enable-all -o ${wasm} ${CMAKE_CURRENT_SOURCE_DIR}/${wat}
 		MAIN_DEPENDENCY ${CMAKE_CURRENT_SOURCE_DIR}/${wat}
 		COMMENT "Building ${wasm}")
 	add_custom_target(build-${wasm} ALL DEPENDS ${wasm})
