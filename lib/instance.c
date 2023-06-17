@@ -636,10 +636,10 @@ instance_execute_func_nocheck(struct exec_context *ctx, uint32_t funcidx,
 }
 
 int
-instance_execute_handle_restart(struct exec_context *ctx, int exec_ret)
+instance_execute_handle_restart_once(struct exec_context *ctx, int exec_ret)
 {
         int ret = exec_ret;
-        while (IS_RESTARTABLE(ret)) {
+        if (IS_RESTARTABLE(ret)) {
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
                 suspend_parked(ctx->cluster);
 #endif
@@ -656,5 +656,15 @@ instance_execute_handle_restart(struct exec_context *ctx, int exec_ret)
                         ret = instance_execute_continue(ctx);
                 }
         }
+        return ret;
+}
+
+int
+instance_execute_handle_restart(struct exec_context *ctx, int exec_ret)
+{
+        int ret = exec_ret;
+        do {
+                ret = instance_execute_handle_restart_once(ctx, ret);
+        } while (IS_RESTARTABLE(ret));
         return ret;
 }
