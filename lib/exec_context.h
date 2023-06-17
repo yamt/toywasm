@@ -147,6 +147,26 @@ struct exec_context {
 #endif
 
         /* check_interrupt() */
+        /*
+         * The `intrp` field enables user-interrupts.
+         * It's intended to allow embedders to implement functionalities
+         * like async termination of the execution.
+         *
+         * To use the functionality, before starting execution of
+         * the wasm module, an embedder should set it to a memory location
+         * which describes the interrupt request state.
+         * An interrupt is level-trigger.
+         * When an embedder can request an interrupt by setting it to
+         * a non-zero value. (eg. `*intrp = 1`)
+         * If an embedder want to clear the interrupt, it can do it by
+         * setting it to zero. (ie. `*intrp = 0`)
+         *
+         * When an interrupt is requested, toywasm execution logic
+         * (eg. `instance_execute_func`) returns `ETOYWASMUSERINTERRUPT`.
+         * As `ETOYWASMUSERINTERRUPT` is a restartable error,
+         * the embedder can continue the execution after handling the
+         * interrupt.
+         */
         const atomic_uint *intrp;
         struct cluster *cluster;
 
