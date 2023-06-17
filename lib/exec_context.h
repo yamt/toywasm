@@ -34,6 +34,29 @@ struct funcframe {
 /*
  * Note: errno.h macros are positive numbers. (C, posix)
  * we use negative numbers for our purposes.
+ * some of them are restartable. (see IS_RESTARTABLE macro)
+ *
+ * ETOYWASMTRAP:
+ *
+ *   the exection was terminated by a wasm trap.
+ *   the caller can investigate ctx->trap for details.
+ *
+ * ETOYWASMRESTART:
+ *
+ *   the execution has been suspended for some reasons.
+ *   possible reasons include:
+ *
+ *   - suspend_threads mechanism, which is used for
+ *   memory.grow on multithreaded configuration.
+ *
+ *   - context switch requests for TOYWASM_USE_USER_SCHED
+ *
+ *   the caller should usually resume the execution by
+ *   calling instance_execute_handle_restart.
+ *
+ * ETOYWASMUSERINTERRUPT:
+ *
+ *   see the comment on exec_context::intrp.
  */
 #define ETOYWASMTRAP -1
 #define ETOYWASMRESTART -2
