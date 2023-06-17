@@ -189,6 +189,10 @@ struct exec_context {
          * As `ETOYWASMUSERINTERRUPT` is a restartable error,
          * the embedder can continue the execution after handling the
          * interrupt.
+         *
+         * REVISIT: this API is historical and a bit awkward. probably
+         * it's simpler to have a bit higher-level API like
+         * raise_user_interrupt(ectx).
          */
         const atomic_uint *intrp;
         struct cluster *cluster;
