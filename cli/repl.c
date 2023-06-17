@@ -823,6 +823,17 @@ exec_func(struct exec_context *ctx, uint32_t funcidx,
                 if (ret != 0) {
                         goto fail;
                 }
+                /*
+                 * keep the interrupt triggered so that we can check
+                 * timeout in the execution loop below.
+                 *
+                 * Note: if a host environment has a nice timer functionality
+                 * like alarm(3), you can make this more efficient by
+                 * requesting an interrupt only after timeout_ms. we don't
+                 * bother to make such an optimization here though because
+                 * we aim to be portable to wasm32-wasi, which doesn't have
+                 * signals.
+                 */
                 ctx->intrp = &one;
         }
         ret = instance_execute_func(ctx, funcidx, ptype, rtype, param, result);
