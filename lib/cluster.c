@@ -1,6 +1,8 @@
 #include <assert.h>
 
 #include "cluster.h"
+#include "exec.h"
+#include "suspend.h"
 
 void
 cluster_init(struct cluster *c)
@@ -55,4 +57,15 @@ cluster_remove_thread(struct cluster *c)
         if (c->suspend_state == SUSPEND_STATE_STOPPING) {
                 toywasm_cv_broadcast(&c->stop_cv, &c->lock);
         }
+}
+
+int
+cluster_check_interrupt(struct exec_context *ctx, const struct cluster *c)
+{
+        if (c->interrupt) {
+                STAT_INC(ctx->stats.interrupt_exit);
+                return trap_with_id(ctx, TRAP_VOLUNTARY_THREAD_EXIT,
+                                    "interrupt");
+        }
+        return suspend_check_interrupt(ctx, c);
 }

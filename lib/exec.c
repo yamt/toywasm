@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include "bitmap.h"
+#include "cluster.h"
 #include "context.h"
 #include "exec.h"
 #include "expr.h"
@@ -907,15 +908,13 @@ check_interrupt(struct exec_context *ctx)
          */
         if (ctx->intrp != NULL && *ctx->intrp != 0) {
                 xlog_trace("get interrupt");
-                STAT_INC(ctx->stats.interrupt_exit);
-                return trap_with_id(ctx, TRAP_VOLUNTARY_THREAD_EXIT,
-                                    "interrupt");
+                STAT_INC(ctx->stats.interrupt_user);
+                return ETOYWASMUSERINTERRUPT;
         }
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
         if (ctx->cluster != NULL) {
-                int ret = suspend_check_interrupt(ctx->cluster);
+                int ret = cluster_check_interrupt(ctx, ctx->cluster);
                 if (ret != 0) {
-                        STAT_INC(ctx->stats.interrupt_suspend);
                         return ret;
                 }
         }
@@ -1324,6 +1323,7 @@ exec_context_print_stats(struct exec_context *ctx)
         STAT_PRINT(interrupt_exit);
         STAT_PRINT(interrupt_suspend);
         STAT_PRINT(interrupt_usched);
+        STAT_PRINT(interrupt_user);
         STAT_PRINT(interrupt_debug);
         STAT_PRINT(exec_loop_restart);
         STAT_PRINT(call_restart);

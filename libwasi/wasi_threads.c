@@ -64,8 +64,6 @@ struct wasi_threads_instance {
  */
 static void wasi_threads_instance_join(struct wasi_threads_instance *wasi);
 
-static const atomic_uint *
-wasi_threads_interrupt_pointer(struct wasi_threads_instance *inst);
 static struct cluster *
 wasi_threads_cluster(struct wasi_threads_instance *inst);
 
@@ -131,7 +129,6 @@ wasi_threads_setup_exec_context(struct wasi_threads_instance *wasi_threads,
         if (wasi_threads == NULL) {
                 return;
         }
-        ctx->intrp = wasi_threads_interrupt_pointer(wasi_threads);
         ctx->cluster = wasi_threads_cluster(wasi_threads);
 #if defined(TOYWASM_USE_USER_SCHED)
         ctx->sched = wasi_threads_sched(wasi_threads);
@@ -220,12 +217,6 @@ wasi_threads_instance_join(struct wasi_threads_instance *wasi)
         cluster_join(&wasi->cluster);
 }
 
-static const atomic_uint *
-wasi_threads_interrupt_pointer(struct wasi_threads_instance *inst)
-{
-        return &inst->cluster.interrupt;
-}
-
 static struct cluster *
 wasi_threads_cluster(struct wasi_threads_instance *inst)
 {
@@ -278,7 +269,6 @@ exec_thread_start_func(struct exec_context *ctx, const struct thread_arg *arg)
         param[1].u.i32 = arg->user_arg;
 
         /* XXX should inherit exec_options from the parent? */
-        ctx->intrp = wasi_threads_interrupt_pointer(wasi);
         ctx->cluster = wasi_threads_cluster(wasi);
 #if defined(TOYWASM_USE_USER_SCHED)
         ctx->sched = wasi_threads_sched(wasi);
