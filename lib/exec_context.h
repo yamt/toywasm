@@ -37,8 +37,9 @@ struct funcframe {
  */
 #define ETOYWASMTRAP -1
 #define ETOYWASMRESTART -2
+#define ETOYWASMUSERINTERRUPT -3
 
-#define IS_RESTARTABLE(error) ((error) == ETOYWASMRESTART)
+#define IS_RESTARTABLE(error) ((error) <= ETOYWASMRESTART)
 
 enum trapid {
         TRAP_MISC,
@@ -93,6 +94,7 @@ struct exec_stat {
         uint64_t interrupt_exit;
         uint64_t interrupt_suspend;
         uint64_t interrupt_usched;
+        uint64_t interrupt_user;
         uint64_t interrupt_debug;
         uint64_t exec_loop_restart;
         uint64_t call_restart;

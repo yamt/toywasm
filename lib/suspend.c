@@ -1,8 +1,8 @@
 #include <assert.h>
 #include <inttypes.h>
 
-#include "exec.h"
 #include "cluster.h"
+#include "exec.h"
 #include "suspend.h"
 #include "timeutil.h"
 #include "xlog.h"
@@ -36,11 +36,12 @@ parked(struct cluster *c) REQUIRES(c->lock)
 #endif /* !defined(TOYWASM_USE_USER_SCHED) */
 
 int
-suspend_check_interrupt(struct cluster *c)
+suspend_check_interrupt(struct exec_context *ctx, const struct cluster *c)
 {
 #if !defined(TOYWASM_USE_USER_SCHED)
         if (c->suspend_state == SUSPEND_STATE_STOPPING) {
                 xlog_trace("%s: restart", __func__);
+                STAT_INC(ctx->stats.interrupt_suspend);
                 return ETOYWASMRESTART;
         }
 #endif /* !defined(TOYWASM_USE_USER_SCHED) */
