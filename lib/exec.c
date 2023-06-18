@@ -1074,13 +1074,6 @@ exec_expr_continue(struct exec_context *ctx)
                 }
                 n--;
                 if (__predict_false(n == 0)) {
-                        ret = check_interrupt(ctx);
-                        if (ret != 0) {
-                                if (IS_RESTARTABLE(ret)) {
-                                        STAT_INC(ctx->stats.exec_loop_restart);
-                                }
-                                return ret;
-                        }
                         struct timespec now;
                         ret = timespec_now(CLOCK_MONOTONIC, &now);
                         if (ret != 0) {
@@ -1091,6 +1084,13 @@ exec_expr_continue(struct exec_context *ctx)
                         }
                         last = now;
                         has_last = true;
+                        ret = check_interrupt(ctx);
+                        if (ret != 0) {
+                                if (IS_RESTARTABLE(ret)) {
+                                        STAT_INC(ctx->stats.exec_loop_restart);
+                                }
+                                return ret;
+                        }
                         n = ctx->check_interval;
                         assert(n > 0);
                 }
