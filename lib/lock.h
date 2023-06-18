@@ -3,6 +3,8 @@
 
 #include "toywasm_config.h"
 
+#include "timeutil.h"
+
 #if defined(TOYWASM_ENABLE_WASM_THREADS) && !defined(TOYWASM_USE_USER_SCHED)
 #define USE_PTHREAD
 #else
@@ -66,8 +68,8 @@ void toywasm_cv_broadcast(pthread_cond_t *cv, struct toywasm_mutex *lock)
 #define TOYWASM_CV_DEFINE(name) _Static_assert(1, "suppress -Wextra-semi")
 #define toywasm_cv_init(a)
 #define toywasm_cv_destroy(a)
-#define toywasm_cv_timedwait(a, lk, abs) ETIMEDOUT
-#define toywasm_cv_wait(a, lk)
+#define toywasm_cv_timedwait(a, lk, abs) timespec_sleep(CLOCK_REALTIME, abs)
+#define toywasm_cv_wait(a, lk) assert(false)
 #define toywasm_cv_signal(a, lk)
 #define toywasm_cv_broadcast(a, lk)
 #endif /* defined(USE_PTHREAD) */
