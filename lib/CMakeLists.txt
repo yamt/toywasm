@@ -69,6 +69,7 @@ set(lib_core_headers
 	"platform.h"
 	"report.h"
 	"type.h"
+	"timeutil.h"
 	"usched.h"
 	"util.h"
 	"valtype.h"
