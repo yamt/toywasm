@@ -907,9 +907,14 @@ check_interrupt(struct exec_context *ctx)
          * practically it shouldn't be a problem though.
          */
         if (ctx->intrp != NULL && *ctx->intrp != 0) {
-                xlog_trace("get interrupt");
-                STAT_INC(ctx->stats.interrupt_user);
-                return ETOYWASMUSERINTERRUPT;
+                if (ctx->user_intr_delay_count < ctx->user_intr_delay) {
+                        ctx->user_intr_delay_count++;
+                } else {
+                        ctx->user_intr_delay_count = 0;
+                        xlog_trace("get interrupt");
+                        STAT_INC(ctx->stats.interrupt_user);
+                        return ETOYWASMUSERINTERRUPT;
+                }
         }
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
         if (ctx->cluster != NULL) {
