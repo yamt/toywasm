@@ -835,6 +835,12 @@ exec_func(struct exec_context *ctx, uint32_t funcidx,
                  * signals.
                  */
                 ctx->intrp = &one;
+                /*
+                 * a hack to avoid busy loop.
+                 * maybe it's cleaner for us to provide a timer functionality
+                 * by ourselves. but i feel it's too much for now.
+                 */
+                ctx->user_intr_delay = 1;
         }
         ret = instance_execute_func(ctx, funcidx, ptype, rtype, param, result);
         do {

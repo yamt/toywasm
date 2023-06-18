@@ -196,6 +196,8 @@ struct exec_context {
          */
         const atomic_uint *intrp;
         struct cluster *cluster;
+        unsigned int user_intr_delay_count;
+        unsigned int user_intr_delay;
 
         /* scheduler */
         struct sched *sched;
