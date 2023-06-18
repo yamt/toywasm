@@ -141,16 +141,6 @@ waiter_block(struct waiter_list *l, struct toywasm_mutex *lock,
         while (!w->woken) {
                 ret = toywasm_cv_timedwait(&w->cv, lock, abstimeout);
                 if (ret == ETIMEDOUT) {
-#if defined(TOYWASM_USE_USER_SCHED)
-                        struct timespec now;
-                        int ret1 = timespec_now(CLOCK_REALTIME, &now);
-                        if (ret1 != 0) {
-                                break;
-                        }
-                        if (timespec_cmp(&now, abstimeout) < 0) {
-                                ret = ETOYWASMRESTART;
-                        }
-#endif
                         if (w->woken) {
                                 xlog_trace("%s: ignoring timeout", __func__);
                                 ret = 0;

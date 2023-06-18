@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <limits.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <time.h>
 
@@ -216,4 +217,27 @@ convert_timespec(clockid_t from_id, clockid_t to_id,
         return 0;
 fail:
         return ret;
+}
+
+int
+timespec_sleep(clockid_t id, const struct timespec *absto)
+{
+        while (true) {
+                struct timespec now;
+                int ret;
+
+                ret = timespec_now(id, &now);
+                if (ret != 0) {
+                        return ret;
+                }
+                if (timespec_cmp(absto, &now) <= 0) {
+                        return ETIMEDOUT;
+                }
+                struct timespec diff;
+                timespec_sub(absto, &now, &diff);
+                ret = nanosleep(&diff, NULL);
+                if (ret != 0) {
+                        return errno;
+                }
+        }
 }
