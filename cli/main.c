@@ -320,7 +320,7 @@ main(int argc, char *const *argv)
 #endif
                 default:
                         print_usage();
-                        exit(0);
+                        goto success;
                 }
         }
         argc -= optind;
@@ -329,15 +329,15 @@ main(int argc, char *const *argv)
         if (do_repl) {
                 ret = toywasm_repl(state);
                 if (ret != 0) {
-                        exit(1);
+                        goto fail;
                 }
-                exit(0);
+                goto success;
         }
         if (argc == 0) {
                 if (might_need_help) {
                         print_usage();
                 }
-                exit(0);
+                goto success;
         }
 #if defined(TOYWASM_ENABLE_WASI)
         ret = toywasm_repl_set_wasi_args(state, argc, argv);
@@ -410,4 +410,7 @@ fail:
 #endif
         free(state);
         exit(exit_status);
+success:
+        exit_status = 0;
+        goto fail;
 }
