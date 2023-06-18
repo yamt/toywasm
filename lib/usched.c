@@ -68,7 +68,7 @@ sched_run(struct sched *sched, struct exec_context *caller)
                  * calling sched_enqueue.
                  */
                 ret = instance_execute_continue(ctx);
-                if (IS_RESTARTABLE(ret)) {
+                if (IS_RESTARTABLE(ret) && ret != ETOYWASMUSERINTERRUPT) {
                         xlog_trace("%s: re-enqueueing ctx %p", __func__,
                                    (void *)ctx);
                         LIST_INSERT_TAIL(q, ctx, rq);
@@ -79,6 +79,7 @@ sched_run(struct sched *sched, struct exec_context *caller)
                 if (ctx == caller) {
                         break;
                 }
+                assert(ret != ETOYWASMUSERINTERRUPT);
                 ctx->exec_done(ctx);
         }
 }
