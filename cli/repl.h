@@ -26,12 +26,17 @@ struct repl_module_state {
 /* eg. const.wast has 366 modules */
 #define MAX_MODULES 500
 
+struct registered_name {
+        struct name name;
+        struct registered_name *next;
+};
+
 struct repl_state {
-        struct repl_module_state modules[MAX_MODULES];
+        struct repl_module_state *modules;
         unsigned int nmodules;
         struct import_object *imports;
         unsigned int nregister;
-        struct name registered_names[MAX_MODULES];
+        struct registered_name *registered_names;
         struct val *param;
         struct val *result;
         struct wasi_instance *wasi;

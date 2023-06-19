@@ -173,7 +173,12 @@ toywasm_repl_reset(struct repl_state *state)
                 n++;
         }
         while (state->nregister > 0) {
-                free((void *)state->registered_names[--state->nregister].data);
+                struct registered_name *rname = state->registered_names;
+                assert(rname != NULL);
+                state->registered_names = rname->next;
+                state->nregister--;
+                free((void *)rname->name.data);
+                free(rname);
                 n--;
         }
         while (state->nmodules > 0) {
@@ -183,6 +188,9 @@ toywasm_repl_reset(struct repl_state *state)
         state->param = NULL;
         free(state->result);
         state->result = NULL;
+        free(state->modules);
+        state->modules = NULL;
+        assert(state->registered_names == NULL);
 
 #if defined(TOYWASM_ENABLE_WASI_THREADS)
         if (state->wasi_threads != NULL) {
@@ -476,11 +484,14 @@ int
 toywasm_repl_load(struct repl_state *state, const char *modname,
                   const char *filename)
 {
-        if (state->nmodules == MAX_MODULES) {
-                return EOVERFLOW;
+        int ret;
+        ret = resize_array((void **)&state->modules, sizeof(*state->modules),
+                           state->nmodules + 1);
+        if (ret != 0) {
+                return ret;
         }
         struct repl_module_state *mod = &state->modules[state->nmodules];
-        int ret;
+        memset(mod, 0, sizeof(*mod));
         ret = map_file(filename, (void **)&mod->buf, &mod->bufsize);
         if (ret != 0) {
                 xlog_error("failed to map %s (error %d)", filename, ret);
@@ -502,11 +513,14 @@ int
 toywasm_repl_load_hex(struct repl_state *state, const char *modname,
                       const char *opt)
 {
-        if (state->nmodules == MAX_MODULES) {
-                return EOVERFLOW;
+        int ret;
+        ret = resize_array((void **)&state->modules, sizeof(*state->modules),
+                           state->nmodules + 1);
+        if (ret != 0) {
+                return ret;
         }
         struct repl_module_state *mod = &state->modules[state->nmodules];
-        int ret;
+        memset(mod, 0, sizeof(*mod));
         size_t sz = atoi(opt);
         mod->bufsize = sz;
         mod->buf = malloc(mod->bufsize);
@@ -563,14 +577,11 @@ int
 toywasm_repl_register(struct repl_state *state, const char *modname,
                       const char *register_name)
 {
+        int ret;
         if (state->nmodules == 0) {
                 return EPROTO;
         }
-        if (state->nregister == MAX_MODULES) {
-                return EOVERFLOW;
-        }
         struct repl_module_state *mod;
-        int ret;
         ret = find_mod(state, modname, &mod);
         if (ret != 0) {
                 goto fail;
@@ -579,19 +590,25 @@ toywasm_repl_register(struct repl_state *state, const char *modname,
         assert(inst != NULL);
         struct import_object *im;
         char *register_modname1 = strdup(register_name);
-        if (register_modname1 == NULL) {
+        struct registered_name *rname = malloc(sizeof(*rname));
+        if (register_modname1 == NULL || rname == NULL) {
+                free(rname);
+                free(register_modname1);
                 ret = ENOMEM;
                 goto fail;
         }
-        struct name *name = &state->registered_names[state->nregister];
+        struct name *name = &rname->name;
         set_name_cstr(name, register_modname1);
         ret = import_object_create_for_exports(inst, name, &im);
         if (ret != 0) {
+                free(rname);
                 free(register_modname1);
                 goto fail;
         }
         im->next = state->imports;
         state->imports = im;
+        rname->next = state->registered_names;
+        state->registered_names = rname;
         state->nregister++;
         ret = 0;
 fail:
