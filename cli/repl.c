@@ -1211,6 +1211,12 @@ toywasm_repl(struct repl_state *state)
                         toywasm_repl_print_version();
                 } else if (!strcmp(cmd, ":init")) {
                         toywasm_repl_reset(state);
+                } else if (!strcmp(cmd, ":exit")) {
+                        /*
+                         * Note: an explicit exit command is useful
+                         * where VEOF is not available. eg. nuttx
+                         */
+                        break;
                 } else if (!strcmp(cmd, ":module") && opt != NULL) {
                         char *modname = strtok(opt, " ");
                         if (modname == NULL) {
