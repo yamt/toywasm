@@ -1,5 +1,5 @@
 int
 g(int x)
 {
-	return x * x;
+        return x * x;
 }
