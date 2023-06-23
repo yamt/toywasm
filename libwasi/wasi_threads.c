@@ -98,12 +98,6 @@ wasi_threads_instance_create(struct wasi_threads_instance **instp)
          */
         idalloc_init(&inst->tids, 1, 0x1fffffff);
         cluster_init(&inst->cluster);
-        cluster_add_thread(&inst->cluster); /* count the main thread */
-        /*
-         * if none of threads explicitly exits or traps,
-         * treat as if exit(0).
-         */
-        inst->trap.trapid = TRAP_VOLUNTARY_EXIT;
 #if defined(TOYWASM_USE_USER_SCHED)
         sched_init(&inst->sched);
 #endif
@@ -129,10 +123,20 @@ wasi_threads_setup_exec_context(struct wasi_threads_instance *wasi_threads,
         if (wasi_threads == NULL) {
                 return;
         }
-        ctx->cluster = wasi_threads_cluster(wasi_threads);
+        struct cluster *c = wasi_threads_cluster(wasi_threads);
+        ctx->cluster = c;
+        toywasm_mutex_lock(&c->lock);
+        cluster_add_thread(c); /* add ourselves */
+        toywasm_mutex_unlock(&c->lock);
+        c->interrupt = 0;
 #if defined(TOYWASM_USE_USER_SCHED)
         ctx->sched = wasi_threads_sched(wasi_threads);
 #endif
+        /*
+         * if none of threads explicitly exits or traps,
+         * treat as if exit(0).
+         */
+        wasi_threads->trap.trapid = TRAP_VOLUNTARY_EXIT;
 }
 
 /*
@@ -154,6 +158,7 @@ wasi_threads_complete_exec(struct wasi_threads_instance *wasi_threads,
                 wasi_threads_propagate_trap(wasi_threads, trap);
                 wasi_threads_instance_join(wasi_threads);
                 *trapp = wasi_threads_instance_get_trap(wasi_threads);
+                xlog_trace("propagated trap: %u", (*trapp)->trapid);
         } else {
                 wasi_threads_instance_join(wasi_threads);
         }
@@ -245,9 +250,12 @@ wasi_threads_propagate_trap(struct wasi_threads_instance *wasi,
         toywasm_mutex_lock(&wasi->cluster.lock);
         /* propagate only the first one */
         if (!wasi->cluster.interrupt) {
+                xlog_trace("propagating a trap %u", trap->trapid);
                 /* tell all threads to terminate */
                 wasi->cluster.interrupt = 1;
                 wasi->trap = *trap;
+        } else {
+                xlog_trace("interrupt already active");
         }
         toywasm_mutex_unlock(&wasi->cluster.lock);
 }
