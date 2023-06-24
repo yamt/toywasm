@@ -53,7 +53,7 @@ print the `-version` message)
   difference as I expected. I'm not sure why.
 
 * Toywasm's annotations have small but measurable overheads.
-  cf. [Overhead of the annotations (ffmpeg)](../README.md#ffmpeg)
+  cf. [Overhead of the annotations (ffmpeg)](../doc/annotations.md#ffmpeg)
 
 * It's common for JIT-based runtimes to spawn many compilation threads
   to improve startup time. (thus "user" far larger than "real")
