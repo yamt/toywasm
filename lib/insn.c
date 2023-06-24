@@ -541,7 +541,7 @@ read_memarg_nocheck(const uint8_t **pp, struct memarg *arg)
 #define SAVE_STACK_PTR ctx->stack.lsize = stack - ctx->stack.p
 #define LOAD_STACK_PTR stack = &VEC_NEXTELEM(ctx->stack)
 #define ORIG_PC p0
-#if defined(TOYWASM_USE_TAILCALL) && defined(__HAVE_TAILCALL)
+#if defined(TOYWASM_USE_TAILCALL) && defined(__HAVE_MUSTTAIL)
 #define INSN_SUCCESS __musttail return fetch_exec_next_insn(p, stack, ctx)
 #else
 #define INSN_SUCCESS INSN_SUCCESS_RETURN

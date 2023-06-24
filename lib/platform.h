@@ -4,10 +4,10 @@
 
 #if defined(__clang__) && defined(__has_attribute) && __has_attribute(musttail)
 #define __musttail __attribute__((musttail))
-#define __HAVE_TAILCALL
+#define __HAVE_MUSTTAIL
 #else
 #define __musttail
-#undef __HAVE_TAILCALL
+#undef __HAVE_MUSTTAIL
 #endif
 
 #if !defined(__predict_true)
