@@ -104,6 +104,19 @@ See example apps:
 
 * [Load and execute WASI module](./examples/runwasi/runwasi.c)
 
+## Release binaries
+
+* Release binaries are built with clang, with `thin LTO` where it's
+  available.
+
+* For macOS, we ship a universal binary. (amd64 and arm64)
+
+* We only ship static libraries.
+
+* We ship binaries with two configurations for each platforms.
+  The assets with `full-` prefix have most features enabled.
+  Another one is with the default configuration.
+
 ## Build from source
 
 * To build toywasm, we recommend to use clang for the following features,
