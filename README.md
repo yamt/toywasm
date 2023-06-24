@@ -128,15 +128,15 @@ See example apps:
   While toywasm maps wasm modules read-only and never modifies them in-place,
   it still generates a few types of offline annotations on the bytecode
   to avoid being too slow. While they are smaller than a full translation,
-  you might consider them a kind of translation.
-  See [Annotations](./doc/annotations.md) for details.
+  you might consider them a kind of translation. See [Annotations] for details.
 
-* I don't like to use huge-switch statements or [labels as values],
-  which are well-known techniques to implement efficient interpreters.
+* I don't like to use huge-switch statements or
+  [labels as values GNU C extension], which are well-known techniques to
+  implement efficient interpreters.
 
 ## Internals
 
-* [Annotations](./doc/annotations.md)
+* [Annotations]
 
 * [check_interrupt and restartable errors](./doc/check_interrupt.md)
 
@@ -146,8 +146,12 @@ See example apps:
 
 * [WAMR "fast" interpreter]
 
+* [labels as values GNU C extension]
+
 [Wasm3]: https://github.com/wasm3/wasm3/blob/main/docs/Interpreter.md
 
 [WAMR "fast" interpreter]: https://www.intel.com/content/www/us/en/developer/articles/technical/webassembly-interpreter-design-wasm-micro-runtime.html
 
-[labels as values]: https://gcc.gnu.org/onlinedocs/gcc/Labels-as-Values.html
+[labels as values GNU C extension]: https://gcc.gnu.org/onlinedocs/gcc/Labels-as-Values.html
+
+[Annotations]: ./doc/annotations.md
