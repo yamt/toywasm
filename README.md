@@ -128,6 +128,9 @@ See example apps:
   a convenient script [build-wasm32-wasi.sh] to download wasi-sdk and
   build toywasm with it.
 
+* For NuttX, it's probably easiest to use [interpreters/toywasm in NuttX apps].
+  There are a few sample defconfig with toywasm enabled, including [sim:toywasm].
+
 ## How slow/fast is this?
 
 * [Computation benchmark](./benchmark/ffmpeg.md)
@@ -187,3 +190,7 @@ See example apps:
 [`musttail` attribute]: https://clang.llvm.org/docs/AttributeReference.html#musttail
 
 [LTO]: https://www.llvm.org/docs/LinkTimeOptimization.html
+
+[interpreters/toywasm in NuttX apps]: https://github.com/apache/nuttx-apps/blob/master/interpreters/toywasm/Kconfig
+
+[sim:toywasm]: https://nuttx.apache.org/docs/latest/platforms/sim/sim/boards/sim/index.html#toywasm
