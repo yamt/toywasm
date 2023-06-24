@@ -24,19 +24,21 @@ It resumes the execution of the instance after performing the default
 processing of the asyncronous requests unless it has unrestartable
 conditions like a trap.
 
-## wasm-threads
+## long-blocking operations
 
-### `memory.atomic.wait32` and `memory.atomic.wait64` instructions
+### wasm-threads
+
+#### `memory.atomic.wait32` and `memory.atomic.wait64` instructions
 
 We use a shorter timeout to emulate the user-specified timeout.
 
-## WASI
+### WASI
 
-### `fd_read` and similar functions
+#### `fd_read` and similar functions
 
 We use non-blocking I/O to emulate blocking I/O.
 
-### `poll_oneoff` 
+#### `poll_oneoff`
 
 We use a shorter timeout to emulate the user-specified timeout.
 
