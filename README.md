@@ -121,7 +121,7 @@ See example apps:
   load time.
 
   Many of interpreters out there translate wasm bytecode to their internal
-  bytecode for performance reasons. Wasm3 and WAMR "fast" interpreter
+  bytecode for performance reasons. Wasm3 and [WAMR "fast" interpreter]
   work exactly that way. Even WAMR "classic" interpreter replaces
   some critical instructions in-place.
 
@@ -131,8 +131,7 @@ See example apps:
   you might consider them a kind of translation.
   See [Annotations](./doc/annotations.md) for details.
 
-* I don't like to use huge-switch statements or
-  [labels as values](https://gcc.gnu.org/onlinedocs/gcc/Labels-as-Values.html),
+* I don't like to use huge-switch statements or [labels as values],
   which are well-known techniques to implement efficient interpreters.
 
 ## Internals
@@ -140,3 +139,9 @@ See example apps:
 * [Annotations](./doc/annotations.md)
 
 * [check_interrupt and restartable errors](./doc/check_interrupt.md)
+
+## References
+
+[WAMR "fast" interpreter]: https://www.intel.com/content/www/us/en/developer/articles/technical/webassembly-interpreter-design-wasm-micro-runtime.html
+
+[labels as values]: https://gcc.gnu.org/onlinedocs/gcc/Labels-as-Values.html
