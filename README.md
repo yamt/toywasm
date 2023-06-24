@@ -104,6 +104,30 @@ See example apps:
 
 * [Load and execute WASI module](./examples/runwasi/runwasi.c)
 
+## Build from source
+
+* To build toywasm, we recommend to use clang for the following features,
+  which some parts of toywasm codebase is kind of assuming to have.
+  They are not required for the correctness though.
+
+  * [`musttail` attribute]
+
+  * [LTO]
+
+* For macOS and similar posix-like environment, you can use cmake
+  to build toywasm.
+
+  ```
+  % cmake -B build
+  % cmake --build build
+  ```
+
+  For build options, see the [ToywasmConfig.cmake].
+
+* For `wasm32-wasi` and `wasm32-wasi-threads` targets, we provide
+  a convenient script [build-wasm32-wasi.sh] to download wasi-sdk and
+  build toywasm with it.
+
 ## How slow/fast is this?
 
 * [Computation benchmark](./benchmark/ffmpeg.md)
@@ -155,3 +179,11 @@ See example apps:
 [labels as values GNU C extension]: https://gcc.gnu.org/onlinedocs/gcc/Labels-as-Values.html
 
 [Annotations]: ./doc/annotations.md
+
+[build-wasm32-wasi.sh]: ./build-wasm32-wasi.sh
+
+[ToywasmConfig.cmake]: ./cmake/ToywasmConfig.cmake
+
+[`musttail` attribute]: https://clang.llvm.org/docs/AttributeReference.html#musttail
+
+[LTO]: https://www.llvm.org/docs/LinkTimeOptimization.html
