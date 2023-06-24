@@ -124,6 +124,14 @@ See example apps:
 
   For build options, see the [ToywasmConfig.cmake].
 
+  By default, it requires `wabt` and `cmocka` for tests. If you don't
+  want to install them, you can disable tests instead.
+
+  ```
+  % cmake -B build -D BUILD_TESTING=OFF
+  % cmake --build build
+  ```
+
 * For `wasm32-wasi` and `wasm32-wasi-threads` targets, we provide
   a convenient script [build-wasm32-wasi.sh] to download wasi-sdk and
   build toywasm with it.
