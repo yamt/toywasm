@@ -121,7 +121,7 @@ See example apps:
   load time.
 
   Many of interpreters out there translate wasm bytecode to their internal
-  bytecode for performance reasons. Wasm3 and [WAMR "fast" interpreter]
+  bytecode for performance reasons. [Wasm3] and [WAMR "fast" interpreter]
   work exactly that way. Even WAMR "classic" interpreter replaces
   some critical instructions in-place.
 
@@ -141,6 +141,12 @@ See example apps:
 * [check_interrupt and restartable errors](./doc/check_interrupt.md)
 
 ## References
+
+* [Wasm3]
+
+* [WAMR "fast" interpreter]
+
+[Wasm3]: https://github.com/wasm3/wasm3/blob/main/docs/Interpreter.md
 
 [WAMR "fast" interpreter]: https://www.intel.com/content/www/us/en/developer/articles/technical/webassembly-interpreter-design-wasm-micro-runtime.html
 
