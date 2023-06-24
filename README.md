@@ -114,22 +114,29 @@ See example apps:
 
   * [LTO]
 
-* For macOS and similar posix-like environment, you can use cmake
-  to build toywasm.
+* For macOS and similar posix-like environment, you can build it with
+  cmake in a usual way.
 
   ```
   % cmake -B build
   % cmake --build build
   ```
 
-  For build options, see the [ToywasmConfig.cmake].
+  For build-time options, see the [ToywasmConfig.cmake].
 
   By default, it requires `wabt` and `cmocka` for tests. If you don't
-  want to install them, you can disable tests instead.
+  want to install them, you can disable tests.
 
   ```
   % cmake -B build -D BUILD_TESTING=OFF
   % cmake --build build
+  ```
+
+  Otherwise, after building it, you can run tests with:
+
+  ```
+  % cd build
+  % ctest
   ```
 
 * For `wasm32-wasi` and `wasm32-wasi-threads` targets, we provide
