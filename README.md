@@ -220,3 +220,7 @@ to have.
   local type cell idx overhead       388730 bytes
  result type cell idx overhead         5882 bytes
 ```
+
+## Internals
+
+* [check_interrupt and restartable errors](./doc/check_interrupt.md)
