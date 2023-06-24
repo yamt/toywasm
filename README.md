@@ -129,7 +129,7 @@ See example apps:
   it still generates a few types of offline annotations on the bytecode
   to avoid being too slow. While they are smaller than a full translation,
   you might consider them a kind of translation.
-  See [Annotations](./doc/annotations) for details.
+  See [Annotations](./doc/annotations.md) for details.
 
 * I don't like to use huge-switch statements or
   [labels as values](https://gcc.gnu.org/onlinedocs/gcc/Labels-as-Values.html),
