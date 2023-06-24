@@ -111,11 +111,12 @@ See example apps:
 
 * For macOS, we ship a universal binary. (amd64 and arm64)
 
-* We only ship static libraries.
-
-* We ship binaries with two configurations for each platforms.
-  The assets with `full-` prefix have most features enabled.
+* We ship binaries with two configurations for each platforms/architectures.
+  The assets with `full-` in the filename have most features enabled.
   Another one is with the default configuration.
+
+* Each asset contains the `toywasm` cli command, static libraries,
+  and cmake config files.
 
 ## Build from source
 
