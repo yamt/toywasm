@@ -56,3 +56,40 @@ expensive.
 This annotation is unconditionally enabled if and only if toywasm is
 built with variable-sized values, which is the default.
 (`-D TOYWASM_USE_SMALL_CELLS=ON`)
+
+## Overhead of the annotations
+
+The memory consumption for the above mentioned annotations
+depends on the wasm bytecode to annotate.
+The following is a few examples taken with wasm modules I happened
+to have.
+
+### toywasm
+
+```
+ wasm instructions to annotate       368444 bytes
+           jump table overhead        80192 bytes
+      type annotation overhead        16568 bytes
+  local type cell idx overhead        16480 bytes
+ result type cell idx overhead         1006 bytes
+```
+
+### spidermonkey
+
+```
+ wasm instructions to annotate      4143921 bytes
+           jump table overhead      1166528 bytes
+      type annotation overhead       142304 bytes
+  local type cell idx overhead       109880 bytes
+ result type cell idx overhead         2448 bytes
+```
+
+### ffmpeg
+
+```
+ wasm instructions to annotate     15442793 bytes
+           jump table overhead      2715248 bytes
+      type annotation overhead       335344 bytes
+  local type cell idx overhead       388730 bytes
+ result type cell idx overhead         5882 bytes
+```
