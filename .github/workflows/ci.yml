@@ -402,6 +402,13 @@ jobs:
         name: ${{matrix.name}}
         path: ${{github.workspace}}/artifacts
 
+    - name: Upload the build dir for post mortem investigation
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: builddir-${{github.run_id}}-${{matrix.name}}
+        path: ${{env.builddir}}
+
   wasm-on-wasm:
     env:
       CC: ${{matrix.compiler}}
@@ -479,6 +486,13 @@ jobs:
       with:
         name: ${{matrix.name}}
         path: ${{github.workspace}}/artifacts
+
+    - name: Upload the build dir for post mortem investigation
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: builddir-${{github.run_id}}-${{matrix.name}}
+        path: ${{env.builddir}}
 
   release:
     if: github.event_name != 'pull_request'
