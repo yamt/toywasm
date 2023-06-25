@@ -106,6 +106,11 @@ See example apps:
 
 ## Release binaries
 
+> **Warning**
+> Toywasm version numbers are NOT a semver.
+> It's just an increasing number, which doesn't imply anything
+> about compatibilities or features.
+
 * Release binaries are built with clang, with `thin LTO` where it's
   available.
 
