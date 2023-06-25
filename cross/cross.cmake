@@ -50,9 +50,9 @@
 set(TRIPLET ${TRIPLET} CACHE STRING "aarch64-linux-gnu" FORCE)
 set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_C_COMPILER_TARGET ${TRIPLET})
-set(CMAKE_C_COMPILER clang-11)
+set(CMAKE_C_COMPILER clang-13)
 set(CMAKE_CXX_COMPILER_TARGET ${TRIPLET})
-set(CMAKE_CXX_COMPILER clang++-11)
+set(CMAKE_CXX_COMPILER clang++-13)
 
 set(CMAKE_AR /usr/bin/llvm-ar-11)
 set(CMAKE_RANLIB /usr/bin/llvm-ranlib-11)
