@@ -1,3 +1,19 @@
+# I was originally trying to write this as a .wat file. However, I gave up
+# because wat2wasm's relocational output support was too limited.
+#
+# On the other hand, this .S format seems to have its own limitations:
+#
+# - I couldn't really find any documentation about this .S file format,
+#   especially the wasm version of it. Probably it's considered
+#   an llvm-internal undocumented thing.
+#
+# - Also, this .S format doesn't support things which llvm doesn't
+#   support. (like multi-memory proposal)
+#   Maybe we have to write raw bytecode in hex?
+#
+# It's inconvenient to experiment as there seems to be no single tool which
+# supports everything.
+
     .text
 
     .tabletype __indirect_function_table, funcref
