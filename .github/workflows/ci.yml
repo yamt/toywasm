@@ -289,10 +289,23 @@ jobs:
       if: startsWith(matrix.os, 'ubuntu-')
       run: sudo apt-get update && sudo apt-get install -y pax virtualenv ninja-build
 
+    - name: Install dependencies (ubuntu-latest native)
+      # for cross build, cross-setup.sh takes care of the toolchain
+      if: matrix.os == 'ubuntu-latest' && matrix.arch == 'native'
+      run: sudo apt-get update && sudo apt-get install -y clang lld llvm-dev
+
+    - name: Install dependencies (ubuntu/focal native)
+      # for cross build, cross-setup.sh takes care of the toolchain
+      if: matrix.os == 'ubuntu-20.04' && matrix.arch == 'native'
+      run: |
+        sudo ./cross/setup-focal-proposed.sh
+        sudo apt-get update && sudo apt-get install -y clang-13 lld-13
+        sudo ./cross/setup-alternatives.sh
+
     - name: Install dependencies (ubuntu native)
       # for cross build, cross-setup.sh takes care of the toolchain
       if: startsWith(matrix.os, 'ubuntu-') && matrix.arch == 'native'
-      run: sudo apt-get update && sudo apt-get install -y wabt libcmocka-dev clang lld llvm-dev
+      run: sudo apt-get install -y wabt libcmocka-dev
 
     - name: Install dependencies (macOS)
       if: startsWith(matrix.os, 'macos-')
@@ -318,9 +331,9 @@ jobs:
         ARCH: ${{matrix.arch}}
         EXTRA_CMAKE_OPTIONS: -G Ninja ${{env.extra_cmake_options}} -DTOYWASM_TARBALL_SUFFIX=-${{matrix.name}}
       run: |
-        sudo -E ./cross/setup-focal-proposed.sh
+        sudo ./cross/setup-focal-proposed.sh
         sudo -E ./cross/cross-setup.sh
-        sudo -E ./cross/setup-alternatives.sh
+        sudo ./cross/setup-alternatives.sh
         ./cross/cross-cmake-configure.sh
 
     - name: cmake configure (native)
