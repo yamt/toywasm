@@ -90,14 +90,16 @@ option(TOYWASM_PREALLOC_SHARED_MEMORY "Preallocate shared memory" OFF)
 # currently it's only used by repl ":save" command.
 option(TOYWASM_ENABLE_WRITER "Enable module writer" ON)
 
-# enable wasm proposals
+# enable SIMD. we made this an option because it's large.
 option(TOYWASM_ENABLE_WASM_SIMD "Enable SIMD" ON)
+
+# enable each wasm proposals.
 option(TOYWASM_ENABLE_WASM_EXTENDED_CONST "Enable extended-const proposal" OFF)
 option(TOYWASM_ENABLE_WASM_MULTI_MEMORY "Enable multi-memory proposal" OFF)
 option(TOYWASM_ENABLE_WASM_TAILCALL "Enable WASM tail-call proposal" OFF)
 option(TOYWASM_ENABLE_WASM_THREADS "Enable WASM threads proposal" OFF)
 
-# enable WASI
+# enable WASI.
 option(TOYWASM_ENABLE_WASI "Enable WASI snapshow preview1" ON)
 
 # enable wasi-threads.
