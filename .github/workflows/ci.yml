@@ -406,7 +406,7 @@ jobs:
       if: always()
       uses: actions/upload-artifact@v3
       with:
-        name: builddir-${{github.run_id}}-${{github.job}}-${{matrix.name}}
+        name: builddir-${{github.run_id}}-${{strategy.job-index}}-${{matrix.name}}
         path: ${{env.builddir}}
 
   wasm-on-wasm:
@@ -491,7 +491,7 @@ jobs:
       if: always()
       uses: actions/upload-artifact@v3
       with:
-        name: builddir-${{github.run_id}}-${{github.job}}-${{matrix.name}}
+        name: builddir-${{github.run_id}}-${{strategy.job-index}}-${{matrix.name}}
         path: ${{env.builddir}}
 
   release:
