@@ -1,30 +1,107 @@
 if(NOT CMAKE_BUILD_TYPE)
 set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
 endif()
+
+# TOYWASM_USE_SEPARATE_EXECUTE=ON -> faster execution
+# TOYWASM_USE_SEPARATE_EXECUTE=OFF -> smaller code
 option(TOYWASM_USE_SEPARATE_EXECUTE "Use separate execute callback" ON)
+
+# TOYWASM_USE_TAILCALL=ON
+#   enable -mtail-call for wasm target
+#
+# TOYWASM_USE_SEPARATE_EXECUTE=ON
+# TOYWASM_USE_TAILCALL=ON
+# TOYWASM_FORCE_USE_TAILCALL=OFF
+#   if musttail attribute is available, use it and rely on the tail call
+#   opitimzation. it usually produces faster code.
+#
+# TOYWASM_USE_SEPARATE_EXECUTE=ON
+# TOYWASM_USE_TAILCALL=ON
+# TOYWASM_FORCE_USE_TAILCALL=ON
+#   rely on the tail call optimization even if musttail is not available.
+#   you need to investigate the generated binary to see if it was safe or not.
 option(TOYWASM_USE_TAILCALL "Rely on tail call optimization if musttail is available" ON)
 option(TOYWASM_FORCE_USE_TAILCALL "Assume tail call optimization forcibly" OFF)
+
+# TOYWASM_USE_SIMD=ON -> use -msimd128 for wasm target
 option(TOYWASM_USE_SIMD "Use SIMD" OFF)
+
+# toywasm uses a few enums like "enum valtype", for which 1 byte is enough.
 option(TOYWASM_USE_SHORT_ENUMS "Use -fshort-enum" ON)
+
+# TOYWASM_USE_USER_SCHED=ON uses a simple userland scheduler instead of pthread.
 option(TOYWASM_USE_USER_SCHED "Use userland scheduler" OFF)
+
+# options to enable/disable "toywasm --trace" stuff
 option(TOYWASM_ENABLE_TRACING "Enable xlog_trace" OFF)
 option(TOYWASM_ENABLE_TRACING_INSN "Enable per-instruction xlog_trace" OFF)
+
+# TOYWASM_USE_JUMP_BINARY_SEARCH=ON makes the jump table binary search.
+# otherwise, linear search is used.
 option(TOYWASM_USE_JUMP_BINARY_SEARCH "Enable binary search for jump tables" ON)
+
+# TOYWASM_USE_JUMP_CACHE and TOYWASM_JUMP_CACHE2_SIZE controls
+# two independent jump table caching logic.
+# there is little reasons to enable both of them.
+# (the latter can be disabled with TOYWASM_JUMP_CACHE2_SIZE=0.)
 option(TOYWASM_USE_JUMP_CACHE "Enable single-entry cache for jump tables" OFF)
 set(TOYWASM_JUMP_CACHE2_SIZE "4" CACHE STRING "The size of jump cache")
+
+# TOYWASM_USE_LOCALS_CACHE=ON -> faster execution
+# TOYWASM_USE_LOCALS_CACHE=OFF -> slightly smaller code and exec_context
 option(TOYWASM_USE_LOCALS_CACHE "Enable current_locals" ON)
+
+# use separate stack for operand stack and function locals or not
 option(TOYWASM_USE_SEPARATE_LOCALS "Separate locals and stack" ON)
+
+# control how to store values for wasm operand stack, locals, and tables.
+#
+# TOYWASM_USE_SMALL_CELLS=ON
+#    i32,f32 -> occupies 32 bit memory
+#    i64,f64 -> occupies 64 bit memory
+#    v128    -> occupies 128 bit memory
+#
+# TOYWASM_USE_SMALL_CELLS=OFF
+# TOYWASM_ENABLE_WASM_SIMD=OFF
+#    any value occupies 64 bit memory
+#
+# TOYWASM_USE_SMALL_CELLS=OFF
+# TOYWASM_ENABLE_WASM_SIMD=ON
+#    any value occupies 128 bit memory
+#
+# TOYWASM_USE_SMALL_CELLS=OFF produces simpler and in many cases faster code.
 option(TOYWASM_USE_SMALL_CELLS "Use smaller stack cells" ON)
+
+# enable indexes for faster lookup for resulttype and localtype respectively.
+# these only make sense with TOYWASM_USE_SMALL_CELLS=ON.
 option(TOYWASM_USE_RESULTTYPE_CELLIDX "Index local lookup for resulttype" ON)
 option(TOYWASM_USE_LOCALTYPE_CELLIDX "Index local lookup for localtype" ON)
+
+# TOYWASM_PREALLOC_SHARED_MEMORY=ON
+#   allocate the max possible size of shared memories on instantiation.
+#   simpler but can waste a lot of memory.
+# TOYWASM_PREALLOC_SHARED_MEMORY=OFF
+#   on-demand (on memory.grow) allocation of shared memories.
+#   can save memory, but slower and very complex memory.grow processing.
+# these only make sense with TOYWASM_ENABLE_WASM_THREADS=ON.
 option(TOYWASM_PREALLOC_SHARED_MEMORY "Preallocate shared memory" OFF)
+
+# enable logic to write a module to a file.
+# currently it's only used by repl ":save" command.
 option(TOYWASM_ENABLE_WRITER "Enable module writer" ON)
+
+# enable wasm proposals
 option(TOYWASM_ENABLE_WASM_SIMD "Enable SIMD" ON)
 option(TOYWASM_ENABLE_WASM_EXTENDED_CONST "Enable extended-const proposal" OFF)
 option(TOYWASM_ENABLE_WASM_MULTI_MEMORY "Enable multi-memory proposal" OFF)
 option(TOYWASM_ENABLE_WASM_TAILCALL "Enable WASM tail-call proposal" OFF)
 option(TOYWASM_ENABLE_WASM_THREADS "Enable WASM threads proposal" OFF)
+
+# enable WASI
 option(TOYWASM_ENABLE_WASI "Enable WASI snapshow preview1" ON)
+
+# enable wasi-threads.
+# this requires TOYWASM_ENABLE_WASM_THREADS=ON.
 option(TOYWASM_ENABLE_WASI_THREADS "Enable wasi-threads proposal" OFF)
 
 option(TOYWASM_BUILD_UNITTEST "Build toywasm-test" ON)
