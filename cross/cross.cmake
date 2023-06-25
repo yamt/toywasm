@@ -55,7 +55,9 @@ set(CMAKE_CXX_COMPILER_TARGET ${TRIPLET})
 set(CMAKE_CXX_COMPILER clang++)
 
 set(CMAKE_AR /usr/bin/llvm-ar)
+set(CMAKE_C_COMPILER_AR ${CMAKE_AR})
 set(CMAKE_RANLIB /usr/bin/llvm-ranlib)
+set(CMAKE_C_COMPILER_RANLIB ${CMAKE_RANLIB})
 
 # # dpkg -L libstdc++-9-dev-arm64-cross|grep -F c++config
 # /usr/aarch64-linux-gnu/include/c++/9/aarch64-linux-gnu/bits/c++config.h
