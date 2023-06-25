@@ -106,7 +106,7 @@ See example apps:
 
 Toywasm provides cmake config files for its libraries.
 If your app is using cmake, you can use `find_package` to find toywasm
-libraries as it's done in the [CMakeLists.txt](./examples/runwasi/CmakeLists.txt)
+libraries as it's done in the [CMakeLists.txt](./examples/runwasi/CMakeLists.txt)
 of the above example apps.
 
 ## Release binaries
