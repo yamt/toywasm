@@ -50,12 +50,12 @@
 set(TRIPLET ${TRIPLET} CACHE STRING "aarch64-linux-gnu" FORCE)
 set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_C_COMPILER_TARGET ${TRIPLET})
-set(CMAKE_C_COMPILER clang-13)
+set(CMAKE_C_COMPILER clang)
 set(CMAKE_CXX_COMPILER_TARGET ${TRIPLET})
-set(CMAKE_CXX_COMPILER clang++-13)
+set(CMAKE_CXX_COMPILER clang++)
 
-set(CMAKE_AR /usr/bin/llvm-ar-13)
-set(CMAKE_RANLIB /usr/bin/llvm-ranlib-13)
+set(CMAKE_AR /usr/bin/llvm-ar)
+set(CMAKE_RANLIB /usr/bin/llvm-ranlib)
 
 # # dpkg -L libstdc++-9-dev-arm64-cross|grep -F c++config
 # /usr/aarch64-linux-gnu/include/c++/9/aarch64-linux-gnu/bits/c++config.h

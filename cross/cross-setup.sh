@@ -2,16 +2,21 @@
 
 set -e
 
+LLVM_VERSION=13
+ALT_PRIO=100
+
 dpkg --add-architecture ${ARCH}
 apt update
-apt install -y crossbuild-essential-${ARCH} libcmocka-dev:${ARCH} wabt clang-13 lld-13
+apt install -y crossbuild-essential-${ARCH} libcmocka-dev:${ARCH} wabt clang-${LLVM_VERSION} lld-${LLVM_VERSION}
 
 if [ ${ARCH} = i386 ]; then
     apt-get install -y libc6-dev:i386
 fi
 
-update-alternatives --install /usr/bin/clang clang /usr/bin/clang-13 50
-update-alternatives --install /usr/bin/llvm-ar llvm-ar /usr/bin/llvm-ar-13 50
-update-alternatives --install /usr/bin/llvm-ranlib llvm-ranlib /usr/bin/llvm-ranlib-13 50
-update-alternatives --install /usr/bin/ld.lld ld.lld /usr/bin/ld.lld-13 50
-update-alternatives --install /usr/bin/lld lld /usr/bin/lld-13 50
+for c in clang llvm-ar llvm-ranlib ld.lld lld; do
+    update-alternatives --install \
+        /usr/bin/${c} \
+        ${c} \
+        /usr/bin/${c}-${LLVM_VERSION} \
+        ${ALT_PRIO}
+done
