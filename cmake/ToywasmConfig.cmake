@@ -62,6 +62,7 @@ endif()
 endif()
 endif()
 
+# clang-13 on ubuntu/focal:
 # ld.lld: error: lto.tmp: cannot link object files with different floating-point ABI
 #if(TRIPLET MATCHES "riscv64")
 #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-plugin-opt=-target-abi=lp64d")
