@@ -13,6 +13,9 @@ struct load_options {
 struct exec_options {
         uint32_t max_frames;
         uint32_t max_stackcells;
+        /*
+         * REVISIT: consider to have similar limits on locals and labels
+         */
 };
 
 void load_options_set_defaults(struct load_options *opts);
