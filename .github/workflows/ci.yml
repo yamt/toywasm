@@ -318,6 +318,7 @@ jobs:
         ARCH: ${{matrix.arch}}
         EXTRA_CMAKE_OPTIONS: -G Ninja ${{env.extra_cmake_options}} -DTOYWASM_TARBALL_SUFFIX=-${{matrix.name}}
       run: |
+        sudo -E ./cross/setup-focal-proposed.sh
         sudo -E ./cross/cross-setup.sh
         ./cross/cross-cmake-configure.sh
 
