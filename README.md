@@ -124,7 +124,7 @@ See example apps:
   which some parts of toywasm codebase is kind of assuming to have.
   They are not required for the correctness though.
 
-  * [`musttail` attribute]
+  * [`musttail` attribute] (LLVM 13 and later)
 
   * [LTO]
 
