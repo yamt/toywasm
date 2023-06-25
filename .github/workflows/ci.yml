@@ -294,14 +294,6 @@ jobs:
       if: matrix.os == 'ubuntu-latest' && matrix.arch == 'native'
       run: sudo apt-get update && sudo apt-get install -y clang lld llvm-dev
 
-    - name: Install dependencies (ubuntu/focal native)
-      # for cross build, cross-setup.sh takes care of the toolchain
-      if: matrix.os == 'ubuntu-20.04' && matrix.arch == 'native'
-      run: |
-        sudo ./cross/setup-focal-proposed.sh
-        sudo apt-get update && sudo apt-get install -y clang-13 lld-13
-        sudo ./cross/setup-alternatives.sh
-
     - name: Install dependencies (ubuntu native)
       # for cross build, cross-setup.sh takes care of the toolchain
       if: startsWith(matrix.os, 'ubuntu-') && matrix.arch == 'native'
@@ -319,7 +311,15 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Fix sources.list
+    - name: Install dependencies (ubuntu/focal native)
+      # for cross build, cross-setup.sh takes care of the toolchain
+      if: matrix.os == 'ubuntu-20.04' && matrix.arch == 'native'
+      run: |
+        sudo ./cross/setup-focal-proposed.sh
+        sudo apt-get update && sudo apt-get install -y clang-13 lld-13
+        sudo ./cross/setup-alternatives.sh
+
+    - name: Fix sources.list (cross)
       if: matrix.arch != 'native'
       run: |
         curl -L -O https://raw.githubusercontent.com/yamt/garbage/master/myubuntu/apt/sources.list
