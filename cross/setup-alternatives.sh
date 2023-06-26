@@ -5,7 +5,7 @@ set -e
 LLVM_VERSION=${LLVM_VERSION:-13}
 ALT_PRIO=100
 
-COMMANDS=${1:-clang llvm-ar llvm-ranlib ld.lld lld}
+COMMANDS=${1:-clang clang++ llvm-ar llvm-ranlib ld.lld lld}
 
 for c in ${COMMANDS}; do
     update-alternatives --remove-all ${c} || :
