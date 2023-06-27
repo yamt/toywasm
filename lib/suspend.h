@@ -18,14 +18,15 @@ void suspend_parked(struct cluster *c);
 /*
  * suspend_threads: request to suspend all threads in the cluster.
  *
- * when suspended, every threads in the cluster will either
- * a) block in suspend_threads
- * b) rewind the stack (by returning a restartable error) and block
- *    in suspend_parked.
+ * when suspend_threads returns, every other threads in the cluster
+ * are either:
+ * a) blocking in suspend_threads
+ * b) or, rewinded the stack (by returning a restartable error) and
+ *    blocking in suspend_parked.
  *
- * suspend_threads works as a cluster-global mutex as well.
- * that is, only one thread can execute the code between suspend_threads
- * and resume_threads in the same time.
+ * among threads calling suspend_threads, suspend_threads works as
+ * a cluster-global mutex as well. that is, only one thread can execute
+ * the code between suspend_threads and resume_threads in the same time.
  *
  * Note: this is a no-op for TOYWASM_USE_USER_SCHED=ON.
  */
