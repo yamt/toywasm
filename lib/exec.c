@@ -688,6 +688,9 @@ block_exit(struct exec_context *ctx, uint32_t blockpc, bool goto_else,
         /*
          * exit from a block.
          *
+         * "exit" here might be misleading. in the case of "loop" block,
+         * it actually loops.
+         *
          * Note: This is a bit complicated because we (ab)use
          * this for the "if" opcode as well and an "if" might or
          * might not have "else".
@@ -812,11 +815,14 @@ cached_block_exit(struct exec_context *ctx, uint32_t blockpc, bool goto_else,
 }
 
 static bool
-do_jump(struct exec_context *ctx, uint32_t labelidx, bool goto_else,
-        uint32_t *heightp, uint32_t *arityp)
+branch_to_label(struct exec_context *ctx, uint32_t labelidx, bool goto_else,
+                uint32_t *heightp, uint32_t *arityp)
 {
         /*
          * Jump to a label.
+         *
+         * A label points to the corresponding block-starting opcode.
+         * (block, loop, if, ...)
          */
         const struct label *l =
                 &VEC_ELEM(ctx->labels, ctx->labels.lsize - labelidx - 1);
@@ -863,7 +869,8 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
                 height = frame->height;
                 arity = frame->nresults;
         } else {
-                if (do_jump(ctx, labelidx, goto_else, &height, &arity)) {
+                if (branch_to_label(ctx, labelidx, goto_else, &height,
+                                    &arity)) {
                         return;
                 }
         }
