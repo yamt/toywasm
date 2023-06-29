@@ -1,10 +1,13 @@
 This directory contains a few scripts to cross build toywasm
 on ubuntu-focal/amd64.
 
+We avoid making this too toywasm-specific so that it can be
+useful to cross build other cmake-based software as well.
+
 I usually use this with a docker image built from
 https://github.com/yamt/garbage/tree/master/myubuntu.
 
-Also used by toywasm github CI jobs.
+Our github CI jobs also use these scripts.
 
 Expected usage:
 ```
