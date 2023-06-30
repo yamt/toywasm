@@ -940,7 +940,7 @@ check_interrupt(struct exec_context *ctx)
          * theoretically we probably need a memory barrier.
          * practically it shouldn't be a problem though.
          */
-        if (ctx->intrp != NULL && *ctx->intrp != 0) {
+        if (ctx->intrp != NULL && __predict_false(*ctx->intrp != 0)) {
                 if (ctx->user_intr_delay_count < ctx->user_intr_delay) {
                         ctx->user_intr_delay_count++;
                 } else {
