@@ -712,54 +712,58 @@ block_exit(struct exec_context *ctx, uint32_t blockpc, bool goto_else,
         const struct module *m = ctx->instance->module;
         const uint8_t *blockp = pc2ptr(m, blockpc);
         const uint8_t *p = blockp;
-        uint8_t op = *p++;
+        const uint8_t op = *p++;
         assert(op == FRAME_OP_LOOP || op == FRAME_OP_IF ||
                op == FRAME_OP_BLOCK);
-
-        /*
-         * do a jump. (w/ jump table)
-         */
-        const struct expr_exec_info *ei = ctx->ei;
-        if (op != FRAME_OP_LOOP && ei->jumps != NULL) {
-                xlog_trace_insn("jump w/ table");
-                bool stay_in_block = false;
-                const struct jump *jump;
-                jump = jump_lookup(ctx, ei, blockpc);
-                if (goto_else) {
-                        const struct jump *jump_to_else = jump + 1;
-                        assert(jump_to_else->pc == blockpc + 1);
-                        if (jump_to_else->targetpc != 0) {
-                                stay_in_block = true;
-                                jump = jump_to_else;
+        int64_t blocktype;
+        if (op != FRAME_OP_LOOP) {
+                /*
+                 * do a jump. (w/ jump table)
+                 */
+                const struct expr_exec_info *ei = ctx->ei;
+                if (ei->jumps != NULL) {
+                        xlog_trace_insn("jump w/ table");
+                        bool stay_in_block = false;
+                        const struct jump *jump;
+                        jump = jump_lookup(ctx, ei, blockpc);
+                        if (goto_else) {
+                                const struct jump *jump_to_else = jump + 1;
+                                assert(jump_to_else->pc == blockpc + 1);
+                                if (jump_to_else->targetpc != 0) {
+                                        stay_in_block = true;
+                                        jump = jump_to_else;
+                                }
+                        }
+                        assert(jump->targetpc != 0);
+                        ctx->p = pc2ptr(ctx->instance->module, jump->targetpc);
+                        if (stay_in_block) {
+                                xlog_trace_insn("jump inside a block");
+                                return true;
                         }
                 }
-                assert(jump->targetpc != 0);
-                ctx->p = pc2ptr(ctx->instance->module, jump->targetpc);
-                if (stay_in_block) {
-                        xlog_trace_insn("jump inside a block");
-                        return true;
-                }
-        }
 
-        int64_t blocktype = read_leb_s33_nocheck(&p);
+                blocktype = read_leb_s33_nocheck(&p);
 
-        /*
-         * do a jump. (w/o jump table)
-         */
-        if (op != FRAME_OP_LOOP && ei->jumps == NULL) {
-                xlog_trace_insn("jump w/o table");
                 /*
-                 * The only way to find out the jump target is
-                 * to parse every instructions. This is expensive.
-                 *
-                 * REVISIT: skipping LEBs can be optimized better
-                 * than the current code.
+                 * do a jump. (w/o jump table)
                  */
-                bool stay_in_block = skip_expr(&p, goto_else);
-                ctx->p = p;
-                if (stay_in_block) {
-                        return true;
+                if (op != FRAME_OP_LOOP && ei->jumps == NULL) {
+                        xlog_trace_insn("jump w/o table");
+                        /*
+                         * The only way to find out the jump target is
+                         * to parse every instructions. This is expensive.
+                         *
+                         * REVISIT: skipping LEBs can be optimized better
+                         * than the current code.
+                         */
+                        bool stay_in_block = skip_expr(&p, goto_else);
+                        ctx->p = p;
+                        if (stay_in_block) {
+                                return true;
+                        }
                 }
+        } else {
+                blocktype = read_leb_s33_nocheck(&p);
         }
         uint32_t arity;
         uint32_t param_arity;
