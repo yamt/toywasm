@@ -709,18 +709,19 @@ block_exit(struct exec_context *ctx, uint32_t blockpc, bool goto_else,
          * - if it's a "loop"
          * - blocktype
          */
-        const struct module *m = ctx->instance->module;
-        const uint8_t *blockp = pc2ptr(m, blockpc);
+        const struct module *const m = ctx->instance->module;
+        const uint8_t *const blockp = pc2ptr(m, blockpc);
         const uint8_t *p = blockp;
         const uint8_t op = *p++;
         assert(op == FRAME_OP_LOOP || op == FRAME_OP_IF ||
                op == FRAME_OP_BLOCK);
-        int64_t blocktype;
+        uint32_t param_arity;
+        uint32_t arity;
         if (op != FRAME_OP_LOOP) {
                 /*
                  * do a jump. (w/ jump table)
                  */
-                const struct expr_exec_info *ei = ctx->ei;
+                const struct expr_exec_info *const ei = ctx->ei;
                 if (ei->jumps != NULL) {
                         xlog_trace_insn("jump w/ table");
                         bool stay_in_block = false;
@@ -742,7 +743,7 @@ block_exit(struct exec_context *ctx, uint32_t blockpc, bool goto_else,
                         }
                 }
 
-                blocktype = read_leb_s33_nocheck(&p);
+                const int64_t blocktype = read_leb_s33_nocheck(&p);
 
                 /*
                  * do a jump. (w/o jump table)
@@ -762,13 +763,10 @@ block_exit(struct exec_context *ctx, uint32_t blockpc, bool goto_else,
                                 return true;
                         }
                 }
+                get_arity_for_blocktype(m, blocktype, &param_arity, &arity);
         } else {
-                blocktype = read_leb_s33_nocheck(&p);
-        }
-        uint32_t arity;
-        uint32_t param_arity;
-        get_arity_for_blocktype(m, blocktype, &param_arity, &arity);
-        if (op == FRAME_OP_LOOP) {
+                const int64_t blocktype = read_leb_s33_nocheck(&p);
+                get_arity_for_blocktype(m, blocktype, &param_arity, &arity);
                 ctx->p = blockp;
                 arity = param_arity;
         }
