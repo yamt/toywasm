@@ -765,6 +765,7 @@ block_exit(struct exec_context *ctx, uint32_t blockpc, bool goto_else,
                 }
                 get_arity_for_blocktype(m, blocktype, &param_arity, &arity);
         } else {
+                STAT_INC(ctx->stats.jump_loop);
                 const int64_t blocktype = read_leb_s33_nocheck(&p);
                 get_arity_for_blocktype(m, blocktype, &param_arity, &arity);
                 ctx->p = blockp;
@@ -1399,6 +1400,7 @@ exec_context_print_stats(struct exec_context *ctx)
         STAT_PRINT(jump_cache2_hit);
         STAT_PRINT(jump_cache_hit);
         STAT_PRINT(jump_table_search);
+        STAT_PRINT(jump_loop);
         STAT_PRINT(type_annotation_lookup1);
         STAT_PRINT(type_annotation_lookup2);
         STAT_PRINT(type_annotation_lookup3);
