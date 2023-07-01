@@ -748,7 +748,7 @@ block_exit(struct exec_context *ctx, uint32_t blockpc, bool goto_else,
                 /*
                  * do a jump. (w/o jump table)
                  */
-                if (op != FRAME_OP_LOOP && ei->jumps == NULL) {
+                if (ei->jumps == NULL) {
                         xlog_trace_insn("jump w/o table");
                         /*
                          * The only way to find out the jump target is
