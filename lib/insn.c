@@ -638,23 +638,28 @@ static int fetch_exec_next_insn_fe(const uint8_t *p, struct cell *stack,
                 .fetch_exec = fetch_exec_next_insn_##n,                       \
         },
 
-const static struct exec_instruction_desc exec_instructions_fc[] = {
+#define __exec_table_align __aligned(64)
+
+const static struct exec_instruction_desc
+        exec_instructions_fc[] __exec_table_align = {
 #include "insn_list_fc.h"
 };
 
 #if defined(TOYWASM_ENABLE_WASM_SIMD)
-const static struct exec_instruction_desc exec_instructions_fd[] = {
+const static struct exec_instruction_desc
+        exec_instructions_fd[] __exec_table_align = {
 #include "insn_list_simd.h"
 };
 #endif
 
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
-const static struct exec_instruction_desc exec_instructions_fe[] = {
+const static struct exec_instruction_desc
+        exec_instructions_fe[] __exec_table_align = {
 #include "insn_list_threads.h"
 };
 #endif
 
-const struct exec_instruction_desc exec_instructions[] = {
+const struct exec_instruction_desc exec_instructions[] __exec_table_align = {
 #include "insn_list_base.h"
 #if defined(TOYWASM_ENABLE_WASM_TAILCALL)
 #include "insn_list_tailcall.h"
