@@ -119,3 +119,11 @@
 #define __constfunc
 #endif /* defined(__GNUC__) */
 #endif /* !defined(__constfunc) */
+
+#if !defined(__aligned)
+#if defined(__GNUC__)
+#define __aligned(N) __attribute__((aligned(N)))
+#else
+#define __aligned(N)
+#endif /* defined(__GNUC__) */
+#endif /* !defined(__aligned) */
