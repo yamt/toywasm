@@ -111,6 +111,7 @@ struct exec_stat {
         uint64_t jump_cache_hit;
         uint64_t jump_cache2_hit;
         uint64_t jump_table_search;
+        uint64_t jump_loop;
         uint64_t type_annotation_lookup1;
         uint64_t type_annotation_lookup2;
         uint64_t type_annotation_lookup3;
