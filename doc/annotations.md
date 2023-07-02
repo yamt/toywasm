@@ -64,21 +64,21 @@ depends on the wasm bytecode to annotate.
 The following is a few examples taken with wasm modules I happened
 to have.
 
-### toywasm
+### toywasm (from toywasm-v28.0.0-wasm32-wasi.tgz)
 
 ```
- wasm instructions to annotate       368444 bytes
-           jump table overhead        80192 bytes
-      type annotation overhead        16568 bytes
-  local type cell idx overhead        16480 bytes
- result type cell idx overhead         1006 bytes
+ wasm instructions to annotate       477455 bytes
+           jump table overhead        87620 bytes
+      type annotation overhead        22168 bytes
+  local type cell idx overhead        23798 bytes
+ result type cell idx overhead         1042 bytes
 ```
 
 ### spidermonkey
 
 ```
  wasm instructions to annotate      4143921 bytes
-           jump table overhead      1166528 bytes
+           jump table overhead      1096632 bytes
       type annotation overhead       142304 bytes
   local type cell idx overhead       109880 bytes
  result type cell idx overhead         2448 bytes
@@ -88,7 +88,7 @@ to have.
 
 ```
  wasm instructions to annotate     15442793 bytes
-           jump table overhead      2715248 bytes
+           jump table overhead      2401600 bytes
       type annotation overhead       335344 bytes
   local type cell idx overhead       388730 bytes
  result type cell idx overhead         5882 bytes
