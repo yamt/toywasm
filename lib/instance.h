@@ -126,3 +126,5 @@ void memory_instance_destroy(struct meminst *mi);
  */
 int create_satisfying_shared_memories(const struct module *module,
                                       struct import_object **imop);
+
+void instance_print_stats(const struct instance *inst);
