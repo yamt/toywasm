@@ -981,6 +981,7 @@ toywasm_repl_invoke(struct repl_state *state, const char *modname,
 #endif
         if (state->opts.print_stats) {
                 exec_context_print_stats(ctx);
+                instance_print_stats(inst);
         }
 
         if (ret == ETOYWASMTRAP) {

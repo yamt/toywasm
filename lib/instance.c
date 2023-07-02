@@ -8,6 +8,7 @@
 #include "exec.h"
 #include "instance.h"
 #include "module.h"
+#include "nbio.h"
 #include "shared_memory_impl.h"
 #include "suspend.h"
 #include "type.h"
@@ -667,4 +668,16 @@ instance_execute_handle_restart(struct exec_context *ctx, int exec_ret)
                 ret = instance_execute_handle_restart_once(ctx, ret);
         } while (IS_RESTARTABLE(ret));
         return ret;
+}
+
+void
+instance_print_stats(const struct instance *inst)
+{
+        printf("=== instance statistics ===\n");
+        uint32_t i;
+        for (i = 0; i < inst->mems.lsize; i++) {
+                const struct meminst *mi = VEC_ELEM(inst->mems, i);
+                nbio_printf("memory[%" PRIu32 "] %zu bytes allocated\n", i,
+                            mi->allocated);
+        }
 }
