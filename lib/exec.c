@@ -35,17 +35,6 @@ vtrap(struct exec_context *ctx, enum trapid id, const char *fmt, va_list ap)
 }
 
 int
-trap(struct exec_context *ctx, const char *fmt, ...)
-{
-        int ret;
-        va_list ap;
-        va_start(ap, fmt);
-        ret = vtrap(ctx, TRAP_MISC, fmt, ap);
-        va_end(ap);
-        return ret;
-}
-
-int
 trap_with_id(struct exec_context *ctx, enum trapid id, const char *fmt, ...)
 {
         int ret;
