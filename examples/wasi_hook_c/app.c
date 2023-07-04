@@ -30,6 +30,7 @@ main()
         if (fub[sizeof(fub) - len2] == 0) {
                 len2--;
         }
+        printf("iov=%p\n", iov);
         printf("hello, \"%.*s\" (reversed)\n", (int)len2,
                &fub[sizeof(fub) - len2]);
 }
