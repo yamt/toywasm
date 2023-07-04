@@ -834,6 +834,16 @@ exec_func(struct exec_context *ctx, uint32_t funcidx,
         int ret;
         *trapp = NULL;
         if (timeout_ms > 0) {
+                /*
+                 * REVISIT: this timeout logic is a bit broken because it
+                 * assumes that, when the main thread exits, other threads
+                 * also exit soon.
+                 * right now, it happens to be true because
+                 * wasi_threads_complete_exec terminates other threads
+                 * for proc_exit anyway.
+                 * (see the comment in wasi_threads_instance_join.)
+                 */
+
                 const static atomic_uint one = 1;
                 ret = abstime_from_reltime_ms(CLOCK_MONOTONIC, &abstimeout,
                                               timeout_ms);
