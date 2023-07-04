@@ -9,6 +9,7 @@
  * available on host:
  * https://gcc.gnu.org/onlinedocs/gcc/Vector-Extensions.html
  * https://clang.llvm.org/docs/LanguageExtensions.html#vectors-and-extended-vectors
+ * https://github.com/simd-everywhere/simde
  */
 
 #define READ_LANEIDX(VAR, N)                                                  \
