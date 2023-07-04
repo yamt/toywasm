@@ -2,14 +2,12 @@
 #include "vec.h"
 
 struct ctrlframe {
-        enum ctrlframe_op op;
-        uint32_t jumpslot;
-
         struct resulttype *start_types;
         struct resulttype *end_types;
-
         uint32_t height;
         uint32_t height_cell;
+        uint32_t jumpslot;
+        enum ctrlframe_op op;
         bool unreachable;
 };
 
