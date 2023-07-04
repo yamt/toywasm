@@ -34,3 +34,4 @@ void cluster_remove_thread(struct cluster *c) REQUIRES(c->lock);
 
 struct exec_context;
 int cluster_check_interrupt(struct exec_context *ctx, const struct cluster *c);
+bool cluster_set_interrupt(struct cluster *c);

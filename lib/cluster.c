@@ -69,3 +69,13 @@ cluster_check_interrupt(struct exec_context *ctx, const struct cluster *c)
         }
         return suspend_check_interrupt(ctx, c);
 }
+
+bool
+cluster_set_interrupt(struct cluster *c)
+{
+        if (c->interrupt) {
+                return false;
+        }
+        c->interrupt = 1;
+        return true;
+}

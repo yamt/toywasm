@@ -209,9 +209,8 @@ wasi_threads_instance_join(struct wasi_threads_instance *wasi)
          * option b.
          * proc_exit(0) equivalent. terminate all other threads.
          */
-        if (!wasi->cluster.interrupt) {
+        if (cluster_set_interrupt(&wasi->cluster)) {
                 xlog_trace("Emulating proc_exit(0) on a return from _start");
-                wasi->cluster.interrupt = 1;
         }
 #endif
         cluster_remove_thread(&wasi->cluster); /* remove ourselves */
@@ -248,11 +247,12 @@ wasi_threads_propagate_trap(struct wasi_threads_instance *wasi,
                 return;
         }
         toywasm_mutex_lock(&wasi->cluster.lock);
-        /* propagate only the first one */
-        if (!wasi->cluster.interrupt) {
+        /*
+         * tell all threads to terminate.
+         * propagate only the first trap.
+         */
+        if (cluster_set_interrupt(&wasi->cluster)) {
                 xlog_trace("propagating a trap %u", trap->trapid);
-                /* tell all threads to terminate */
-                wasi->cluster.interrupt = 1;
                 wasi->trap = *trap;
         } else {
                 xlog_trace("interrupt already active");
