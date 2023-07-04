@@ -26,9 +26,10 @@ main()
         }
         len2 = readv(STDIN_FILENO, iov, sizeof(fub));
         assert(len2 == len);
-        /* skip NUL */
-        assert(fub[sizeof(fub) - len2] == 0);
-        len2--;
+        /* skip NUL if any */
+        if (fub[sizeof(fub) - len2] == 0) {
+                len2--;
+        }
         printf("hello, \"%.*s\" (reversed)\n", (int)len2,
                &fub[sizeof(fub) - len2]);
 }
