@@ -26,11 +26,6 @@
     .import_module pivot_set_func,pivot
     .import_name pivot_set_func,set_func
 
-    .globaltype sp, i32
-    .globaltype mypage, i32
-sp:
-mypage:
-
     .globl _initialize
     .type _initialize,@function
 
@@ -60,13 +55,11 @@ _initialize:
       unreachable
     end_if
     local.get 0
-    global.set mypage
-    local.get 0
     i32.const 1
     i32.add
     i32.const 65536
     i32.mul
-    global.set sp
+    global.set __stack_pointer
 
     call init_C
     end_function
