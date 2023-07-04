@@ -1,3 +1,4 @@
+#include <inttypes.h>
 #include <string.h>
 #include <sys/uio.h>
 
@@ -8,6 +9,8 @@
  * - no tls
  */
 
+void format_i32(char *p, uint32_t v);
+
 int
 my_fd_read(int fd, struct iovec *iov, size_t iovlen, size_t *retp)
 {
@@ -16,7 +19,7 @@ my_fd_read(int fd, struct iovec *iov, size_t iovlen, size_t *retp)
          * using C stack
          */
 
-        char buf[10];
+        char buf[38];
 
         /*
          * we avoid using string literals because
@@ -31,7 +34,17 @@ my_fd_read(int fd, struct iovec *iov, size_t iovlen, size_t *retp)
         memcpy(buf, &meow, 4);
         buf[4] = ' ';
         memcpy(&buf[5], &in_c, 4);
-        buf[9] = 0;
+        buf[9] = ' ';
+        buf[10] = '(';
+        unsigned int buf_eq = 0x3d667562;
+        memcpy(&buf[11], &buf_eq, 4);
+        format_i32(&buf[15], (uintptr_t)buf);
+        buf[23] = ',';
+        unsigned int iov_eq = 0x3d766f69;
+        memcpy(&buf[24], &iov_eq, 4);
+        format_i32(&buf[28], (uintptr_t)iov);
+        buf[36] = ')';
+        buf[37] = 0;
 
         const char *cp = buf;
         size_t len = strlen(cp) + 1;
