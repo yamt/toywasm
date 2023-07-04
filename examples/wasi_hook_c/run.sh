@@ -8,6 +8,7 @@ TOYWASM=${TOYWASM:-toywasm}
 wat2wasm pivot.wat
 
 ${CC} -o app.wasm app.c
+yes 0123456789|${TOYWASM} --wasi app.wasm
 
 CFLAGS="-O3 -mreference-types -Wall -Werror"
 ${CC} -c ${CFLAGS} hook-asm.S
