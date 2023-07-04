@@ -22,5 +22,12 @@ ${CC} -v \
 -nostdlib \
 -o hook.wasm hook-asm.o hook-c.o format.o -lc
 
+# note: hook.wasm shouldn't have data/bss as it borrows
+# the linear memory from app.wasm.
+if wasm2wat hook.wasm | grep '^ *(data '; then
+	echo "unexpected data segments in hook.wasm"
+	exit 1
+fi
+
 ${TOYWASM} --trace=5 --wasi --repl < repl.txt
 #${TOYWASM} --wasi --repl < repl.txt
