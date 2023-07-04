@@ -24,7 +24,7 @@ main()
                 iov[i].iov_base = &fub[sizeof(fub) - 1 - i];
                 iov[i].iov_len = 1;
         }
-        len2 = readv(STDIN_FILENO, iov, sizeof(iov));
+        len2 = readv(STDIN_FILENO, iov, sizeof(fub));
         assert(len2 == len);
         /* skip NUL */
         assert(fub[sizeof(fub) - len2] == 0);
