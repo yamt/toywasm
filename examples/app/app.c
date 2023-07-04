@@ -45,6 +45,12 @@ main(int argc, char **argv)
         uint32_t nparams = 0;
         uint32_t funcidx_with_most_results = UINT32_MAX;
         uint32_t nresults = 0;
+        uint32_t funcidx_with_largest_jump_table = UINT32_MAX;
+        uint32_t largest_jump_table = 0;
+#if defined(TOYWASM_USE_SMALL_CELLS)
+        uint32_t funcidx_with_largest_type_annotations = UINT32_MAX;
+        uint32_t largest_type_annotations = 0;
+#endif
 #if defined(TOYWASM_ENABLE_WRITER)
         uint32_t funcidx_with_max_code_size = UINT32_MAX;
         uint32_t max_code_size = 0;
@@ -52,6 +58,7 @@ main(int argc, char **argv)
         for (i = 0; i < m->nfuncs - m->nimportedfuncs; i++) {
                 const struct func *func = &m->funcs[i];
                 const struct localtype *lt = &func->localtype;
+                const struct expr_exec_info *ei = &func->e.ei;
                 if (funcidx_with_most_locals == UINT32_MAX ||
                     lt->nlocals > nlocals) {
                         funcidx_with_most_locals = i;
@@ -68,6 +75,18 @@ main(int argc, char **argv)
                         funcidx_with_most_results = i;
                         nresults = ft->result.ntypes;
                 }
+                if (funcidx_with_largest_jump_table == UINT32_MAX ||
+                    ei->njumps > largest_jump_table) {
+                        funcidx_with_largest_jump_table = i;
+                        largest_jump_table = lt->nlocals;
+                }
+#if defined(TOYWASM_USE_SMALL_CELLS)
+                if (funcidx_with_largest_type_annotations == UINT32_MAX ||
+                    ei->type_annotations.ntypes > largest_type_annotations) {
+                        funcidx_with_largest_type_annotations = i;
+                        largest_type_annotations = ei->type_annotations.ntypes;
+                }
+#endif
 #if defined(TOYWASM_ENABLE_WRITER)
                 uint32_t code_size = func->e.end - func->e.start;
                 if (funcidx_with_max_code_size == UINT32_MAX ||
@@ -93,6 +112,20 @@ main(int argc, char **argv)
                        m->nimportedfuncs + funcidx_with_most_results,
                        nresults);
         }
+        if (funcidx_with_largest_jump_table != UINT32_MAX) {
+                printf("func %" PRIu32 " has the largest jump table (%" PRIu32
+                       " entries) in this module.\n",
+                       m->nimportedfuncs + funcidx_with_largest_jump_table,
+                       largest_jump_table);
+        }
+#if defined(TOYWASM_USE_SMALL_CELLS)
+        if (funcidx_with_largest_type_annotations != UINT32_MAX) {
+                printf("func %" PRIu32 " has the largest type annotations (%" PRIu32
+                       " entries) in this module.\n",
+                       m->nimportedfuncs + funcidx_with_largest_type_annotations,
+                       largest_type_annotations);
+        }
+#endif
 #if defined(TOYWASM_ENABLE_WRITER)
         if (funcidx_with_max_code_size != UINT32_MAX) {
                 printf("func %" PRIu32 " is largest (%" PRIu32
