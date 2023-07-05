@@ -842,6 +842,12 @@ exec_func(struct exec_context *ctx, uint32_t funcidx,
                  * wasi_threads_complete_exec terminates other threads
                  * for proc_exit anyway.
                  * (see the comment in wasi_threads_instance_join.)
+                 *
+                 * possible fixes:
+                 * a. make wasi_threads_instance_join check timeout expiration
+                 * b. make the user interrutpt a cluster-wide event and handle
+                 *    it in non-main threads as well
+                 * c. give up implementing a timeout this way
                  */
 
                 const static atomic_uint one = 1;
