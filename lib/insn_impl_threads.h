@@ -215,7 +215,7 @@ INSN_IMPL(memory_atomic_notify)
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
                 uint32_t address = val_address.u.i32;
-                uint32_t count = val_address.u.i32;
+                uint32_t count = val_count.u.i32;
                 uint32_t nwoken;
                 ret = memory_notify(ectx, memarg.memidx, address,
                                     memarg.offset, count, &nwoken);
