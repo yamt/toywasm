@@ -1658,10 +1658,9 @@ retry:;
                         goto fail;
                 }
                 struct timespec next_abstimeout;
-                const uint32_t interval_ms = check_interrupt_interval_ms(ctx);
-                const int64_t interval_ns = (int64_t)interval_ms * 1000000;
-                ret = abstime_from_reltime_ns(CLOCK_REALTIME, &next_abstimeout,
-                                              interval_ns);
+                const int interval_ms = check_interrupt_interval_ms(ctx);
+                ret = abstime_from_reltime_ms(CLOCK_REALTIME, &next_abstimeout,
+                                              interval_ms);
                 if (ret != 0) {
                         goto fail;
                 }
