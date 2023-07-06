@@ -470,7 +470,7 @@ read_memarg_nocheck(const uint8_t **pp, struct memarg *arg)
 #define INSN_IMPL(NAME)                                                       \
         int process_##NAME(const uint8_t **pp, const uint8_t *ep,             \
                            struct context *ctx)
-#define LOAD_PC const uint8_t *p = *pp
+#define LOAD_PC const uint8_t *p __attribute__((__unused__)) = *pp
 #define SAVE_PC *pp = p
 #define RELOAD_PC
 #define SAVE_STACK_PTR
