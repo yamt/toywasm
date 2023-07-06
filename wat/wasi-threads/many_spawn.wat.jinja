@@ -2,6 +2,7 @@
 
 ;; linear memory usage:
 ;;   0: count
+;;   4: a value to compute
 ;;   8: dummy wait point for $nanosleep
 
 {% set NUM = NUM | default(1000) | int %}
