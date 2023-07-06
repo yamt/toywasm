@@ -1,16 +1,19 @@
-;; m4 many_spawn.wat.in|wat2wasm --enable-threads -o many_spawn.wasm -
+;; jinja2 many_spawn.wat.jinja|wat2wasm --enable-threads -o many_spawn.wasm -
 
-ifdef(`NUM',,`define(`NUM',100000)')
+;; linear memory usage:
+;;   0: count
+;;   8: dummy wait point for $nanosleep
 
-define(`_repeat',`ifelse(eval($1<=$2),1,`$3`'$0(incr($1),$2,`$3')')')dnl
-define(`repeat',`_repeat(1,$1,``$2'')')dnl
-
-define(`EXPECTED',`syscmd(echo "(NUM * (NUM + 1) / 2) % 4294967296" | bc)')
+{% set NUM = NUM | default(1000) | int %}
+{% set SLEEP_MS = SLEEP_MS | default(5000) | int %}
+{% set EXPECTED = (NUM * (NUM + 1) // 2) % 4294967296 %}
 
 (module
   (memory (export "memory") (import "env" "memory") 1 1 shared)
   (func $thread_spawn (import "wasi" "thread-spawn") (param i32) (result i32))
   (func (export "wasi_thread_start") (param $tid i32) (param $user_arg i32)
+    i64.const {{SLEEP_MS * 1000000}}
+    call $nanosleep
     local.get $user_arg
     call $notify
   )
@@ -29,6 +32,18 @@ define(`EXPECTED',`syscmd(echo "(NUM * (NUM + 1) / 2) % 4294967296" | bc)')
     i32.const 1
     memory.atomic.notify
     drop
+  )
+  (func $nanosleep (param $ns i64)
+    i32.const 8
+    i32.const 0
+    local.get $ns
+    memory.atomic.wait32
+    ;; assert a timeout
+    i32.const 2
+    i32.ne
+    if
+      unreachable
+    end
   )
   (func $spawn (param i32)
     ;; spawn a thread
@@ -83,9 +98,9 @@ define(`EXPECTED',`syscmd(echo "(NUM * (NUM + 1) / 2) % 4294967296" | bc)')
     i32.load
   )
   (func (export "_start")
-    i32.const NUM
+    i32.const {{NUM}}
     call $test
-    i32.const EXPECTED
+    i32.const {{EXPECTED}}
     i32.eq
     block (param i32)
       br_if 0
