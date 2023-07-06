@@ -26,6 +26,8 @@ assert_normalized(const struct timespec *a)
 int
 timespec_cmp(const struct timespec *a, const struct timespec *b)
 {
+        assert_normalized(a);
+        assert_normalized(b);
         if (a->tv_sec == b->tv_sec) {
                 if (a->tv_nsec == b->tv_nsec) {
                         return 0;
