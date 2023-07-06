@@ -61,6 +61,14 @@ We use non-blocking I/O to emulate blocking I/O.
 
 We use a shorter timeout to emulate the user-specified timeout.
 
+### custom host functions
+
+If you have custom host functions which can potentially block
+the calling thread for a long period, you have to implement
+the restart logic for them. Otherwise, some features relying on
+this mechanism might not work as expected. You can use WASI as
+an example.
+
 ## Users of this mechanism
 
 This mechanism is used to implement:
