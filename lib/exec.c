@@ -979,12 +979,37 @@ check_interrupt(struct exec_context *ctx)
 int
 check_interrupt_interval_ms(struct exec_context *ctx)
 {
-        /* use shorter interval for userland thread */
 #if defined(TOYWASM_USE_USER_SCHED) || !defined(TOYWASM_PREALLOC_SHARED_MEMORY)
-        return 50;
+        /* use shorter interval for userland thread */
+        int interval_ms = 50;
 #else
-        return 300;
+        int interval_ms = 300;
 #endif
+#if defined(TOYWASM_ENABLE_WASM_THREADS)
+        struct cluster *c = ctx->cluster;
+        if (c != NULL) {
+                /*
+                 * try to avoid putting too much pressure on the system.
+                 *
+                 *   checks_per_sec = (1000 ms / interval_ms) * nrunners
+                 *   interval_ms = (1000 ms / checks_per_sec) * nrunners
+                 */
+                const uint32_t nrunners = c->nrunners; /* XXX lock */
+                const int max_checks_per_sec = 100;
+                const int max_interval_ms = 5000;
+                /*
+                 * checks_per_sec = (1000 / interval_ms) * nrunners
+                 *                > max_checks_per_sec
+                 */
+                if (nrunners > max_checks_per_sec / (1000 / interval_ms)) {
+                        interval_ms = (1000 / max_checks_per_sec) * nrunners;
+                        if (interval_ms > max_interval_ms) {
+                                interval_ms = max_interval_ms;
+                        }
+                }
+        }
+#endif
+        return interval_ms;
 }
 
 #define CHECK_INTERVAL_MAX UINT32_MAX
