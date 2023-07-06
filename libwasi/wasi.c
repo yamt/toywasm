@@ -544,7 +544,7 @@ static int
 wasi_poll(struct exec_context *ctx, struct pollfd *fds, nfds_t nfds,
           int timeout_ms, int *retp, int *neventsp)
 {
-        const int interval_ms = CHECK_INTERRUPT_INTERVAL_MS;
+        const int interval_ms = check_interrupt_interval_ms(ctx);
         const struct timespec *abstimeout;
         int host_ret = 0;
         int ret;

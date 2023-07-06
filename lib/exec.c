@@ -976,6 +976,17 @@ check_interrupt(struct exec_context *ctx)
         return 0;
 }
 
+int
+check_interrupt_interval_ms(struct exec_context *ctx)
+{
+        /* use shorter interval for userland thread */
+#if defined(TOYWASM_USE_USER_SCHED) || !defined(TOYWASM_PREALLOC_SHARED_MEMORY)
+        return 50;
+#else
+        return 300;
+#endif
+}
+
 #define CHECK_INTERVAL_MAX UINT32_MAX
 #define CHECK_INTERVAL_DEFAULT 1000
 #define CHECK_INTERVAL_MIN 1
@@ -988,13 +999,14 @@ adjust_check_interval(struct exec_context *ctx, const struct timespec *now,
         timespec_sub(now, last, &diff);
         uint64_t diff_ms = timespec_to_ms(&diff);
         uint32_t check_interval = ctx->check_interval;
-        if (diff_ms < CHECK_INTERRUPT_INTERVAL_MS / 2) {
+        uint32_t interval_ms = check_interrupt_interval_ms(ctx);
+        if (diff_ms < interval_ms / 2) {
                 if (check_interval <= CHECK_INTERVAL_MAX / 2) {
                         check_interval *= 2;
                 } else {
                         check_interval = CHECK_INTERVAL_MAX;
                 }
-        } else if (diff_ms / 2 > CHECK_INTERRUPT_INTERVAL_MS) {
+        } else if (diff_ms / 2 > interval_ms) {
                 check_interval /= 2;
                 if (check_interval < CHECK_INTERVAL_MIN) {
                         check_interval = CHECK_INTERVAL_MIN;
@@ -1646,8 +1658,8 @@ retry:;
                         goto fail;
                 }
                 struct timespec next_abstimeout;
-                static const int64_t interval_ns =
-                        CHECK_INTERRUPT_INTERVAL_MS * 1000000;
+                const uint32_t interval_ms = check_interrupt_interval_ms(ctx);
+                const int64_t interval_ns = (int64_t)interval_ms * 1000000;
                 ret = abstime_from_reltime_ns(CLOCK_REALTIME, &next_abstimeout,
                                               interval_ns);
                 if (ret != 0) {
