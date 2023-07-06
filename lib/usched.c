@@ -42,7 +42,7 @@ sched_enqueue(struct sched *sched, struct exec_context *ctx)
         LIST_INSERT_TAIL(&sched->runq, ctx, rq);
 }
 
-#define RR_INTERVAL_MS (CHECK_INTERRUPT_INTERVAL_MS * 2)
+#define RR_INTERVAL_MS 100
 
 void
 sched_run(struct sched *sched, struct exec_context *caller)

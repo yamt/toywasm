@@ -5,13 +5,6 @@
 #include "exec_context.h"
 #include "valtype.h"
 
-/* use shorter interval for userland thread */
-#if defined(TOYWASM_USE_USER_SCHED) || !defined(TOYWASM_PREALLOC_SHARED_MEMORY)
-#define CHECK_INTERRUPT_INTERVAL_MS 50
-#else
-#define CHECK_INTERRUPT_INTERVAL_MS 300
-#endif
-
 struct cell;
 struct expr;
 struct exec_context;
@@ -58,6 +51,7 @@ int invoke(struct funcinst *finst, const struct resulttype *paramtype,
            struct cell *results, struct exec_context *ctx);
 
 int check_interrupt(struct exec_context *ctx);
+int check_interrupt_interval_ms(struct exec_context *ctx);
 
 int trap_with_id(struct exec_context *ctx, enum trapid id, const char *fmt,
                  ...) __attribute__((__format__(__printf__, 3, 4)));

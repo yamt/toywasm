@@ -114,8 +114,8 @@ wasi_fdinfo_wait(struct exec_context *ctx, struct wasi_instance *wasi,
         assert(fdinfo->refcount >= 2);
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
         struct timespec absto;
-        int ret = abstime_from_reltime_ms(CLOCK_REALTIME, &absto,
-                                          CHECK_INTERRUPT_INTERVAL_MS);
+        const int interval_ms = check_interrupt_interval_ms(ctx);
+        int ret = abstime_from_reltime_ms(CLOCK_REALTIME, &absto, interval_ms);
         if (ret != 0) {
                 goto fail;
         }
