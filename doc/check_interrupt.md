@@ -28,6 +28,23 @@ conditions like a trap.
 
 ## long-blocking operations
 
+We basically do never actually block for a long period.
+Long-blocking operations are emulated with a loop similar
+to the following pseudo code:
+
+```c
+    block_forever()
+    {
+        while (1) {
+            ret = check_interrupt();
+            if (ret != 0) {
+                return ret;
+            }
+            sleep(short_interval);
+        }
+    }
+```
+
 ### wasm-threads
 
 #### `memory.atomic.wait32` and `memory.atomic.wait64` instructions
