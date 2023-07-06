@@ -2,7 +2,12 @@
 INSN_IMPL(unreachable)
 {
         if (EXECUTING) {
-                return trap_with_id(ECTX, TRAP_UNREACHABLE, "unreachable");
+                LOAD_PC;
+                struct exec_context *ectx = ECTX;
+                const struct module *m = ectx->instance->module;
+                return trap_with_id(ectx, TRAP_UNREACHABLE,
+                                    "unreachable at %06" PRIx32,
+                                    ptr2pc(m, ORIG_PC - 1));
         } else if (VALIDATING) {
                 mark_unreachable(VCTX);
         }
