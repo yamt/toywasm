@@ -188,11 +188,11 @@ struct exec_context {
          * When an interrupt is requested, toywasm execution logic
          * (eg. `instance_execute_func`) returns `ETOYWASMUSERINTERRUPT`.
          * As `ETOYWASMUSERINTERRUPT` is a restartable error,
-         * the embedder can continue the execution after handling the
-         * interrupt.
+         * the embedder can either abort or continue the execution after
+         * handling the interrupt.
          *
-         * REVISIT: this API is historical and a bit awkward. probably
-         * it's simpler to have a bit higher-level API like
+         * REVISIT: this API is partly historical and a bit awkward.
+         * probably it's simpler to have a higher-level API like
          * raise_user_interrupt(ectx).
          */
         const atomic_uint *intrp;
