@@ -65,7 +65,7 @@ timespec_add(const struct timespec *a, const struct timespec *b,
          * where time_t is signed
          */
         c->tv_sec = (time_t)((uintmax_t)a->tv_sec + b->tv_sec + ovfl);
-        if (timespec_cmp(c, a) < 0) {
+        if (c->tv_sec < 0 || timespec_cmp(c, a) < 0) {
                 return EOVERFLOW;
         }
         assert_normalized(c);
