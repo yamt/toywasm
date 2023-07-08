@@ -80,3 +80,12 @@ This mechanism is used to implement:
 * shared memory reallocation (`TOYWASM_PREALLOC_SHARED_MEMORY=OFF`)
 
 * embedder-driven interrupts (`exec_context::intrp`)
+
+## Downsides of this design
+
+* Inefficient. Especially when you have many threads.
+
+* Restrictions on host functions. Restarting a complex host function
+  might be very difficult to implement properly.
+  For example, a host function calling back to the wasm module, which
+  might even call another host function.
