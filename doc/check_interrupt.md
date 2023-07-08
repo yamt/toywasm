@@ -89,3 +89,5 @@ This mechanism is used to implement:
   might be very difficult to implement properly.
   For example, a host function calling back to the wasm module, which
   might even call another host function.
+
+* Non-blocking I/O on unix is a bit awkward to handle.
