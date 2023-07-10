@@ -1178,6 +1178,32 @@ after_insn:
         return 0;
 }
 
+int
+exec_push_vals(struct exec_context *ctx, const struct resulttype *rt,
+               const struct val *vals)
+{
+        uint32_t ncells = resulttype_cellsize(rt);
+        int ret = stack_prealloc(ctx, ncells);
+        if (ret != 0) {
+                return ret;
+        }
+        struct cell *cells = &VEC_NEXTELEM(ctx->stack);
+        vals_to_cells(vals, cells, rt);
+        ctx->stack.lsize += ncells;
+        return 0;
+}
+
+void
+exec_pop_vals(struct exec_context *ctx, const struct resulttype *rt,
+              struct val *vals)
+{
+        uint32_t ncells = resulttype_cellsize(rt);
+        assert(ctx->stack.lsize >= ncells);
+        ctx->stack.lsize -= ncells;
+        const struct cell *cells = &VEC_NEXTELEM(ctx->stack);
+        vals_from_cells(vals, cells, rt);
+}
+
 bool
 skip_expr(const uint8_t **pp, bool goto_else)
 {
