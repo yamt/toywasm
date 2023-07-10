@@ -10,6 +10,8 @@
 #include "report.h"
 #include "vec.h"
 
+struct val;
+
 struct label {
         uint32_t pc;
         uint32_t height; /* saved height of operand stack */
@@ -245,12 +247,6 @@ struct exec_context {
                 } timer;
         } restart_u;
 
-        /* To simplify restart api */
-        struct cell *results;
-        const struct resulttype *resulttype;
-        struct val *results_val;
-        uint32_t nresults;
-        uint32_t nstackused_saved;
 #if defined(TOYWASM_USE_USER_SCHED)
         int exec_ret;
         void (*exec_done)(struct exec_context *);
@@ -273,3 +269,8 @@ struct exec_context {
 void exec_context_init(struct exec_context *ctx, struct instance *inst);
 void exec_context_clear(struct exec_context *ctx);
 void exec_context_print_stats(struct exec_context *ctx);
+
+int exec_push_vals(struct exec_context *ctx, const struct resulttype *rt,
+                   const struct val *params);
+void exec_pop_vals(struct exec_context *ctx, const struct resulttype *rt,
+                   struct val *results);

@@ -875,7 +875,11 @@ exec_func(struct exec_context *ctx, uint32_t funcidx,
                  */
                 ctx->user_intr_delay = 1;
         }
-        ret = instance_execute_func(ctx, funcidx, ptype, rtype, param, result);
+        ret = exec_push_vals(ctx, ptype, param);
+        if (ret != 0) {
+                goto fail;
+        }
+        ret = instance_execute_func(ctx, funcidx, ptype, rtype);
         do {
                 if (ret == ETOYWASMUSERINTERRUPT) {
                         struct timespec now;
@@ -898,6 +902,8 @@ exec_func(struct exec_context *ctx, uint32_t funcidx,
                 assert(ctx->trapped);
                 const struct trap_info *trap = &ctx->trap;
                 *trapp = trap;
+        } else if (ret == 0) {
+                exec_pop_vals(ctx, rtype, result);
         }
 fail:
         return ret;
