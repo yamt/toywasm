@@ -446,6 +446,10 @@ struct globalinst {
         const struct globaltype *type;
 };
 
+/*
+ * REVISIT: as tables can only have reference types,
+ * it isn't really worth to have the cell overhead.
+ */
 struct tableinst {
         struct cell *cells;
         uint32_t size; /* overrides type->min */
