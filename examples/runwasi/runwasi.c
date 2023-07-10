@@ -114,7 +114,7 @@ runwasi(const char *filename, unsigned int ndirs, char **dirs,
          */
         struct exec_context ectx;
         exec_context_init(&ectx, inst);
-        ret = instance_execute_func(&ectx, funcidx, pt, rt, NULL, NULL);
+        ret = instance_execute_func(&ectx, funcidx, pt, rt);
         ret = instance_execute_handle_restart(&ectx, ret);
         uint32_t wasi_exit_code = 0;
         if (ret == ETOYWASMTRAP) {
