@@ -1045,23 +1045,18 @@ int
 exec_expr(uint32_t funcidx, const struct expr *expr,
           const struct localtype *localtype,
           const struct resulttype *parametertype, uint32_t nresults,
-          const struct cell *params, struct cell *results,
-          struct exec_context *ctx)
+          const struct cell *params, struct exec_context *ctx)
 {
         int ret;
 
         assert(ctx->instance != NULL);
         assert(ctx->instance->module != NULL);
-
-        ctx->nstackused_saved = ctx->stack.lsize;
         ret = frame_enter(ctx, ctx->instance, funcidx, &expr->ei, localtype,
                           parametertype, nresults, params);
         if (ret != 0) {
                 return ret;
         }
         ctx->p = expr->start;
-        ctx->results = results;
-        ctx->nresults = nresults;
         return exec_expr_continue(ctx);
 }
 
@@ -1169,12 +1164,6 @@ after_insn:
                         return ret;
                 }
         }
-        uint32_t nresults = ctx->nresults;
-        assert(ctx->stack.lsize == ctx->nstackused_saved + nresults);
-        cells_copy(ctx->results,
-                   &VEC_ELEM(ctx->stack, ctx->stack.lsize - nresults),
-                   nresults);
-        ctx->stack.lsize -= nresults;
         return 0;
 }
 
@@ -1274,10 +1263,8 @@ exec_const_expr(const struct expr *expr, enum valtype type, struct val *result,
         };
         int ret;
         uint32_t csz = valtype_cellsize(type);
-        struct cell result_cells[4];
-        assert(ARRAYCOUNT(result_cells) >= csz);
         ret = exec_expr(FUNCIDX_INVALID, expr, &no_locals, &empty, csz, NULL,
-                        result_cells, ctx);
+                        ctx);
         /*
          * it's very unlikely for a const expr to use a restart.
          * but just in case.
@@ -1290,8 +1277,19 @@ exec_const_expr(const struct expr *expr, enum valtype type, struct val *result,
         if (ret != 0) {
                 return ret;
         }
+        struct resulttype rt = {
+                .types = &type,
+                .ntypes = 1,
+                .is_static = true,
+#if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
+                .cellidx =
+                        {
+                                NULL,
+                        },
+#endif
+        };
+        exec_pop_vals(ctx, &rt, result);
         assert(ctx->frames.lsize == saved_height);
-        val_from_cells(result, result_cells, csz);
         return 0;
 }
 
@@ -1765,8 +1763,7 @@ fail:
  */
 int
 invoke(struct funcinst *finst, const struct resulttype *paramtype,
-       const struct resulttype *resulttype, const struct cell *params,
-       struct cell *results, struct exec_context *ctx)
+       const struct resulttype *resulttype, struct exec_context *ctx)
 {
         const struct functype *ft = funcinst_functype(finst);
 
@@ -1781,27 +1778,15 @@ invoke(struct funcinst *finst, const struct resulttype *paramtype,
                 }
         }
 
-        uint32_t nresults = resulttype_cellsize(&ft->result);
-        int ret;
+        /* Sanity check */
+        assert(ctx->stack.lsize >= resulttype_cellsize(&ft->parameter));
 
         /*
          * Set up the context as if it was a restart of a "call" instruction.
          */
-        uint32_t nparams = resulttype_cellsize(&ft->parameter);
-        ret = stack_prealloc(ctx, nparams);
-        if (ret != 0) {
-                return ret;
-        }
-        struct cell *locals = &VEC_NEXTELEM(ctx->stack);
-        cells_copy(locals, params, nparams);
-        ctx->nstackused_saved = ctx->stack.lsize;
-        ctx->stack.lsize += nparams;
 
         ctx->event_u.call.func = finst;
         ctx->event = EXEC_EVENT_CALL;
-
-        ctx->nresults = nresults;
-        ctx->results = results;
 
         /*
          * and then "restart" the context execution.

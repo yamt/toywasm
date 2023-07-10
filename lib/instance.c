@@ -486,7 +486,7 @@ instance_create_execute_init(struct instance *inst, struct exec_context *ctx)
         if (m->has_start) {
                 assert(m->start < m->nimportedfuncs + m->nfuncs);
                 struct funcinst *finst = VEC_ELEM(inst->funcs, m->start);
-                ret = invoke(finst, NULL, NULL, NULL, NULL, ctx);
+                ret = invoke(finst, NULL, NULL, ctx);
                 while (IS_RESTARTABLE(ret)) {
                         xlog_trace("%s: restarting execution of the start "
                                    "function\n",
@@ -553,87 +553,26 @@ instance_destroy(struct instance *inst)
 int
 instance_execute_func(struct exec_context *ctx, uint32_t funcidx,
                       const struct resulttype *paramtype,
-                      const struct resulttype *resulttype,
-                      const struct val *params, struct val *results)
+                      const struct resulttype *resulttype)
 {
         struct funcinst *finst = VEC_ELEM(ctx->instance->funcs, funcidx);
-        uint32_t param_ncells = resulttype_cellsize(paramtype);
-        uint32_t result_ncells = resulttype_cellsize(resulttype);
-        struct cell *param_cells = NULL;
-        struct cell *result_cells = NULL;
-        int ret;
-        if (param_ncells > 0) {
-                param_cells = calloc(param_ncells, sizeof(*param_cells));
-                if (param_cells == NULL) {
-                        ret = ENOMEM;
-                        goto fail;
-                }
-        }
-        if (result_ncells > 0) {
-                result_cells = calloc(result_ncells, sizeof(*result_cells));
-                if (result_cells == NULL) {
-                        ret = ENOMEM;
-                        goto fail;
-                }
-        }
-        vals_to_cells(params, param_cells, paramtype);
-        ret = invoke(finst, paramtype, resulttype, param_cells, result_cells,
-                     ctx);
-        if (ret == 0) {
-                vals_from_cells(results, result_cells, resulttype);
-        } else if (IS_RESTARTABLE(ret)) {
-                /*
-                 * ctx->nresults is set by invoke().
-                 * while it's redundant, it can be used by
-                 * instance_exec_continue() to save
-                 * a resulttype_cellsize() call.
-                 */
-                assert(ctx->nresults == result_ncells);
-                ctx->resulttype = resulttype; /* for possible restart */
-                ctx->results_val = results;
-        }
-fail:
-        free(param_cells);
-        free(result_cells);
-        return ret;
+        return invoke(finst, paramtype, resulttype, ctx);
 }
 
 int
 instance_execute_continue(struct exec_context *ctx)
 {
-        const struct resulttype *resulttype = ctx->resulttype;
-        struct cell *result_cells = NULL;
-        uint32_t result_ncells = ctx->nresults;
-        int ret;
-
-        assert(result_ncells == resulttype_cellsize(resulttype));
-        if (result_ncells > 0) {
-                result_cells = calloc(result_ncells, sizeof(*result_cells));
-                if (result_cells == NULL) {
-                        ret = ENOMEM;
-                        goto fail;
-                }
-        }
-        ctx->results = result_cells;
-        ret = exec_expr_continue(ctx);
-        if (ret == 0 && result_ncells > 0) {
-                vals_from_cells(ctx->results_val, result_cells, resulttype);
-        }
-fail:
-        free(result_cells);
-        return ret;
+        return exec_expr_continue(ctx);
 }
 
 int
-instance_execute_func_nocheck(struct exec_context *ctx, uint32_t funcidx,
-                              const struct val *params, struct val *results)
+instance_execute_func_nocheck(struct exec_context *ctx, uint32_t funcidx)
 {
         const struct module *m = ctx->instance->module;
         const struct functype *ft = module_functype(m, funcidx);
         const struct resulttype *ptype = &ft->parameter;
         const struct resulttype *rtype = &ft->result;
-        return instance_execute_func(ctx, funcidx, ptype, rtype, params,
-                                     results);
+        return instance_execute_func(ctx, funcidx, ptype, rtype);
 }
 
 int

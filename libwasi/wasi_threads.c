@@ -286,8 +286,15 @@ exec_thread_start_func(struct exec_context *ctx, const struct thread_arg *arg)
          * Note: the type of this function has already been confirmed by
          * wasi_threads_instance_set_thread_spawn_args.
          */
-        return instance_execute_func_nocheck(ctx, wasi->thread_start_funcidx,
-                                             param, NULL);
+        const uint32_t funcidx = wasi->thread_start_funcidx;
+        const struct functype *ft =
+                module_functype(ctx->instance->module, funcidx);
+        const struct resulttype *rt = &ft->parameter;
+        int ret = exec_push_vals(ctx, rt, param);
+        if (ret != 0) {
+                return ret;
+        }
+        return instance_execute_func_nocheck(ctx, funcidx);
 }
 
 static void
