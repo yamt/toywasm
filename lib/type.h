@@ -517,6 +517,14 @@ int compare_resulttype(const struct resulttype *a, const struct resulttype *b);
 int compare_functype(const struct functype *a, const struct functype *b);
 int compare_name(const struct name *a, const struct name *b);
 
+/*
+ * note: given inst and idx, the following two are equivalent.
+ * the former is usually a little cheaper.
+ *
+ *   module_functype(inst->module, idx)
+ *   funcinst_functype(VEC_ELEM(inst->funcs, idx))
+ */
+
 const struct import *module_find_import(const struct module *m,
                                         enum importtype type, uint32_t idx);
 const struct functype *module_functype(const struct module *m, uint32_t idx);
