@@ -1,6 +1,6 @@
 ## What's this?
 
-A WebAssembly interpreter.
+A WebAssembly interpreter written in C.
 
 ## On-browser demo
 
