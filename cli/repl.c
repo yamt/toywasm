@@ -875,6 +875,7 @@ exec_func(struct exec_context *ctx, uint32_t funcidx,
                  */
                 ctx->user_intr_delay = 1;
         }
+        assert(ctx->stack.lsize == 0);
         ret = exec_push_vals(ctx, ptype, param);
         if (ret != 0) {
                 goto fail;
@@ -904,6 +905,7 @@ exec_func(struct exec_context *ctx, uint32_t funcidx,
                 *trapp = trap;
         } else if (ret == 0) {
                 exec_pop_vals(ctx, rtype, result);
+                assert(ctx->stack.lsize == 0);
         }
 fail:
         return ret;
