@@ -203,9 +203,11 @@ struct exec_context {
         unsigned int user_intr_delay;
         uint32_t check_interval;
 
+#if defined(TOYWASM_USE_USER_SCHED)
         /* scheduler */
         struct sched *sched;
         LIST_ENTRY(struct exec_context) rq;
+#endif
 
         /* Trap */
         bool trapped; /* for sanity check. apps should check ETOYWASMTRAP. */
