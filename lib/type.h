@@ -98,6 +98,26 @@ struct resulttype {
 #endif
 };
 
+#define DEFINE_TYPES(QUAL, NAME, ...) QUAL enum valtype NAME[] = {__VA_ARGS__}
+
+#if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
+#define CELLIDX_NONE                                                          \
+        .cellidx = {                                                          \
+                NULL,                                                         \
+        },
+#else
+#define CELLIDX_NONE
+#endif
+
+#define DEFINE_RESULTTYPE(QUAL, NAME, TYPES, NTYPES)                          \
+        QUAL struct resulttype NAME = {.types = (void *)TYPES,                \
+                                       .ntypes = NTYPES,                      \
+                                       .is_static = true,                     \
+                                       CELLIDX_NONE}
+
+extern const struct resulttype g_empty_rt;
+#define empty_rt ((struct resulttype *)&g_empty_rt)
+
 struct functype {
         struct resulttype parameter;
         struct resulttype result;
