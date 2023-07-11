@@ -1235,21 +1235,14 @@ skip_expr(const uint8_t **pp, bool goto_else)
         }
 }
 
+const struct resulttype g_empty_rt = {
+        .ntypes = 0, .is_static = true, CELLIDX_NONE};
+
 int
 exec_const_expr(const struct expr *expr, enum valtype type, struct val *result,
                 struct exec_context *ctx)
 {
         uint32_t saved_height = ctx->frames.lsize;
-        static struct resulttype empty = {
-                .ntypes = 0,
-                .is_static = true,
-#if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
-                .cellidx =
-                        {
-                                NULL,
-                        },
-#endif
-        };
         static const struct localtype no_locals = {
                 .nlocals = 0,
                 .nlocalchunks = 0,
@@ -1263,7 +1256,7 @@ exec_const_expr(const struct expr *expr, enum valtype type, struct val *result,
         };
         int ret;
         uint32_t csz = valtype_cellsize(type);
-        ret = exec_expr(FUNCIDX_INVALID, expr, &no_locals, &empty, csz, NULL,
+        ret = exec_expr(FUNCIDX_INVALID, expr, &no_locals, empty_rt, csz, NULL,
                         ctx);
         /*
          * it's very unlikely for a const expr to use a restart.
@@ -1277,17 +1270,7 @@ exec_const_expr(const struct expr *expr, enum valtype type, struct val *result,
         if (ret != 0) {
                 return ret;
         }
-        struct resulttype rt = {
-                .types = &type,
-                .ntypes = 1,
-                .is_static = true,
-#if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
-                .cellidx =
-                        {
-                                NULL,
-                        },
-#endif
-        };
+        DEFINE_RESULTTYPE(, rt, &type, 1);
         exec_pop_vals(ctx, &rt, result);
         assert(ctx->frames.lsize == saved_height);
         return 0;
