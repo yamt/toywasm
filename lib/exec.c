@@ -1395,6 +1395,32 @@ fail:
 }
 
 void
+table_set(struct tableinst *tinst, uint32_t elemidx, const struct val *val)
+{
+        uint32_t csz = valtype_cellsize(tinst->type->et);
+        val_to_cells(val, &tinst->cells[elemidx * csz], csz);
+}
+
+void
+table_get(struct tableinst *tinst, uint32_t elemidx, struct val *val)
+{
+        uint32_t csz = valtype_cellsize(tinst->type->et);
+        val_from_cells(val, &tinst->cells[elemidx * csz], csz);
+}
+
+void
+global_set(struct globalinst *ginst, const struct val *val)
+{
+        ginst->val = *val;
+}
+
+void
+global_get(struct globalinst *ginst, struct val *val)
+{
+        *val = ginst->val;
+}
+
+void
 exec_context_init(struct exec_context *ctx, struct instance *inst)
 {
         memset(ctx, 0, sizeof(*ctx));

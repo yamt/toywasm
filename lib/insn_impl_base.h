@@ -155,7 +155,9 @@ INSN_IMPL(global_get)
         CHECK(globalidx < m->nimportedglobals + m->nglobals);
         struct val val_c;
         if (EXECUTING) {
-                val_c = VEC_ELEM(ECTX->instance->globals, globalidx)->val;
+                struct globalinst *ginst =
+                        VEC_ELEM(ECTX->instance->globals, globalidx);
+                global_get(ginst, &val_c);
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
                 if (vctx->const_expr) {
@@ -206,7 +208,9 @@ INSN_IMPL(global_set)
         }
         POP_VAL(gt->t, a);
         if (EXECUTING) {
-                VEC_ELEM(ECTX->instance->globals, globalidx)->val = val_a;
+                struct globalinst *ginst =
+                        VEC_ELEM(ECTX->instance->globals, globalidx);
+                global_set(ginst, &val_a);
         }
         SAVE_PC;
         INSN_SUCCESS;
@@ -233,8 +237,7 @@ INSN_IMPL(table_get)
                 }
                 struct instance *inst = ectx->instance;
                 struct tableinst *t = VEC_ELEM(inst->tables, tableidx);
-                uint32_t csz = valtype_cellsize(t->type->et);
-                val_from_cells(&val_c, &t->cells[offset * csz], csz);
+                table_get(t, offset, &val_c);
         }
         PUSH_VAL(module_tabletype(m, tableidx)->et, c);
         SAVE_PC;
@@ -262,8 +265,7 @@ INSN_IMPL(table_set)
                 }
                 struct instance *inst = ectx->instance;
                 struct tableinst *t = VEC_ELEM(inst->tables, tableidx);
-                uint32_t csz = valtype_cellsize(t->type->et);
-                val_to_cells(&val_a, &t->cells[offset * csz], csz);
+                table_set(t, offset, &val_a);
         }
         SAVE_PC;
         INSN_SUCCESS;
