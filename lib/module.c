@@ -15,6 +15,7 @@
 
 #include "cell.h"
 #include "decode.h"
+#include "dylink_type.h"
 #include "expr.h"
 #include "leb128.h"
 #include "load_context.h"
@@ -1553,6 +1554,202 @@ fail:
 }
 
 static int
+read_section(const uint8_t **pp, const uint8_t *ep, const char *name,
+             int (*read_fn)(const uint8_t **pp, const uint8_t *ep,
+                            struct load_context *ctx),
+             struct load_context *ctx)
+{
+        const uint8_t *p = *pp;
+        int ret;
+        ret = read_fn(&p, ep, ctx);
+        if (ret != 0) {
+                report_error(&ctx->report,
+                             "error (%d) while decoding section (%s)", ret,
+                             name);
+                goto fail;
+        }
+        if (p != ep) {
+                report_error(&ctx->report,
+                             "section (%s) has %zu bytes extra data", name,
+                             ep - p);
+                ret = EINVAL;
+                goto fail;
+        }
+        *pp = p;
+fail:
+        return ret;
+}
+
+static int
+read_dylink_mem_info(const uint8_t **pp, const uint8_t *ep,
+                     struct load_context *ctx)
+{
+        const uint8_t *p = *pp;
+        struct dylink_mem_info *minfo = &ctx->module->dylink->mem_info;
+        int ret;
+        ret = read_leb_u32(&p, ep, &minfo->memorysize);
+        if (ret != 0) {
+                goto fail;
+        }
+        ret = read_leb_u32(&p, ep, &minfo->memoryalignment);
+        if (ret != 0) {
+                goto fail;
+        }
+        ret = read_leb_u32(&p, ep, &minfo->tablesize);
+        if (ret != 0) {
+                goto fail;
+        }
+        ret = read_leb_u32(&p, ep, &minfo->tablealignment);
+        if (ret != 0) {
+                goto fail;
+        }
+        xlog_trace("dylink memorysize %" PRIu32, minfo->memorysize);
+        xlog_trace("dylink memoryalignment %" PRIu32, minfo->memoryalignment);
+        xlog_trace("dylink tablesize %" PRIu32, minfo->tablesize);
+        xlog_trace("dylink tablealignment %" PRIu32, minfo->tablealignment);
+        *pp = p;
+fail:
+        return ret;
+}
+
+static int
+read_dylink_needs(const uint8_t **pp, const uint8_t *ep,
+                  struct load_context *ctx)
+{
+        const uint8_t *p = *pp;
+        struct dylink_needs *needs = &ctx->module->dylink->needs;
+        int ret;
+        needs->count = 0;
+        needs->names = NULL;
+        ret = read_vec(&p, ep, sizeof(*needs->names),
+                       (read_elem_func_t)read_name,
+                       (clear_elem_func_t)clear_name, &needs->count,
+                       (void *)&needs->names);
+        if (ret != 0) {
+                goto fail;
+        }
+        uint32_t i;
+        for (i = 0; i < needs->count; i++) {
+                xlog_trace("dylink needs: %.*s", CSTR(&needs->names[i]));
+        }
+        *pp = p;
+fail:
+        return ret;
+}
+
+enum dylink_subsection_type {
+        WASM_dylink_mem_info = 1,
+        WASM_dylink_needs = 2,
+        WASM_dylink_export_info = 3,
+        WASM_dylink_import_info = 4,
+};
+
+#define DYLINK_TYPE(NAME)                                                     \
+        {                                                                     \
+                .type = WASM_dylink_##NAME, .name = #NAME,                    \
+                .read = read_dylink_##NAME,                                   \
+        }
+
+static const struct dylink_subsection {
+        enum dylink_subsection_type type;
+        const char *name;
+        int (*read)(const uint8_t **pp, const uint8_t *ep,
+                    struct load_context *ctx);
+} dylink_subsections[] = {
+        DYLINK_TYPE(mem_info), DYLINK_TYPE(needs),
+        /*
+         * TODO:
+         * WASM_dylink_export_info: i'm not sure what needs this
+         * WASM_dylink_import_info: used for weak symbols at least
+         */
+};
+
+static void
+clear_dylink_needs(struct dylink_needs *needs)
+{
+        if (needs->names != NULL) {
+                uint32_t i;
+                for (i = 0; i < needs->count; i++) {
+                        clear_name(&needs->names[i]);
+                }
+                free(needs->names);
+        }
+}
+
+void
+clear_dylink(struct dylink *dy)
+{
+        clear_dylink_needs(&dy->needs);
+}
+
+/* https://github.com/WebAssembly/tool-conventions/blob/main/DynamicLinking.md
+ */
+static int
+read_dylink_0_section(const uint8_t **pp, const uint8_t *ep,
+                      struct load_context *ctx)
+{
+        const uint8_t *p = *pp;
+        struct module *m = ctx->module;
+        int ret;
+        m->dylink = zalloc(sizeof(*m->dylink));
+        if (m->dylink == NULL) {
+                ret = ENOMEM;
+                goto fail;
+        }
+        do {
+                uint8_t type;
+                uint32_t payload_len;
+                ret = read_u8(&p, ep, &type);
+                if (ret != 0) {
+                        goto fail;
+                }
+                ret = read_leb_u32(&p, ep, &payload_len);
+                if (ret != 0) {
+                        goto fail;
+                }
+                const uint8_t *sep = p + payload_len;
+                unsigned int i;
+                for (i = 0; i < ARRAYCOUNT(dylink_subsections); i++) {
+                        const struct dylink_subsection *ss =
+                                &dylink_subsections[i];
+                        if (ss->type == type) {
+                                ret = read_section(&p, sep, ss->name, ss->read,
+                                                   ctx);
+                                if (ret != 0) {
+                                        goto fail;
+                                }
+                                break;
+                        }
+                }
+                if (i >= ARRAYCOUNT(dylink_subsections)) {
+                        xlog_trace("skipping unimplemented subsection (%u)",
+                                   (unsigned int)type);
+                        p = sep;
+                        break;
+                }
+        } while (p < ep);
+        ret = 0;
+        *pp = p;
+        return 0;
+fail:
+        clear_dylink(m->dylink);
+        free(m->dylink);
+        m->dylink = NULL;
+        return ret;
+}
+
+static struct known_custom_section {
+        const char *name;
+        int (*read)(const uint8_t **pp, const uint8_t *ep,
+                    struct load_context *ctx);
+} known_custom_sections[] = {
+        {
+                .name = "dylink.0",
+                .read = read_dylink_0_section,
+        },
+};
+
+static int
 read_custom_section(const uint8_t **pp, const uint8_t *ep,
                     struct load_context *ctx)
 {
@@ -1566,12 +1763,33 @@ read_custom_section(const uint8_t **pp, const uint8_t *ep,
         if (ret != 0) {
                 goto fail;
         }
+        const struct known_custom_section *k;
+        unsigned int i;
+        for (i = 0; i < ARRAYCOUNT(known_custom_sections); i++) {
+                k = &known_custom_sections[i];
+                struct name kname = NAME_FROM_CSTR(k->name);
+                if (compare_name(&name, &kname)) {
+                        xlog_trace("skipping unknown custom section \"%.*s\"",
+                                   CSTR(&name));
+                        continue;
+                }
+                xlog_trace("known custom section %s found", k->name);
+                break;
+        }
         clear_name(&name);
-        /*
-         * unspecified bytes follow. just skip them.
-         */
-        ret = 0;
-        *pp = ep;
+        if (i < ARRAYCOUNT(known_custom_sections)) {
+                ret = read_section(&p, ep, k->name, k->read, ctx);
+                if (ret != 0) {
+                        goto fail;
+                }
+                *pp = p;
+        } else {
+                /*
+                 * unspecified bytes follow. just skip them.
+                 */
+                ret = 0;
+                *pp = ep;
+        }
 fail:
         return ret;
 }
@@ -1675,21 +1893,8 @@ module_load_into(struct module *m, const uint8_t *p, const uint8_t *ep,
                         const uint8_t *sp = s.data;
                         const uint8_t *sep = sp + s.size;
 
-                        ret = t->read(&sp, sep, ctx);
+                        ret = read_section(&sp, sep, name, t->read, ctx);
                         if (ret != 0) {
-                                report_error(&ctx->report,
-                                             "error (%d) while decoding "
-                                             "section (%s)",
-                                             ret, name);
-                                goto fail;
-                        }
-                        if (sp != sep) {
-                                report_error(
-                                        &ctx->report,
-                                        "section (%s) has %zu bytes extra "
-                                        "data",
-                                        name, sep - sp);
-                                ret = EINVAL;
                                 goto fail;
                         }
                 }
@@ -1817,6 +2022,11 @@ module_unload(struct module *m)
                 clear_export(&m->exports[i]);
         }
         free(m->exports);
+
+        if (m->dylink != NULL) {
+                clear_dylink(m->dylink);
+                free(m->dylink);
+        }
 
         memset(m, 0, sizeof(*m));
 }
