@@ -5,6 +5,7 @@ set(lib_core_sources
 	"cell.c"
 	"context.c"
 	"decode.c"
+	"dyld.c"
 	"endian.c"
 	"exec.c"
 	"expr.c"
