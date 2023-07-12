@@ -1,3 +1,5 @@
+#include <stdint.h>
+
 struct dyld_plt {
         struct finst *finst;
         struct tableinst *tableinst;
@@ -24,5 +26,7 @@ struct dyld {
         struct dyld_object *objs;
 };
 
-int dyld_resolve_symbol(dyld_object *refobj, enum importtype type,
+#if 0
+int dyld_resolve_symbol(struct dyld_object *refobj, enum importtype type,
                         const struct name *name, void **resultp);
+#endif
