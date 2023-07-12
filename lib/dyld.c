@@ -1,3 +1,5 @@
+#define _DARWIN_C_SOURCE /* snprintf */
+
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
@@ -6,38 +8,44 @@
 #include "dyld.h"
 #include "dylink_type.h"
 #include "fileio.h"
+#include "list.h"
 #include "load_context.h"
 #include "module.h"
 #include "type.h"
 #include "util.h"
 #include "xlog.h"
 
+int dyld_load_object_from_file(struct dyld *d, const char *name);
+
 void
 dyld_init(struct dyld *d)
 {
         memset(d, 0, sizeof(*d));
+        LIST_HEAD_INIT(&d->objs);
 }
 
 int
-dyld_load_needed_objects(struct dyld *d, struct dyld_object *obj)
+dyld_load_needed_objects(struct dyld *d)
 {
-        struct dylink_needs *needs = &obj->module->dylink->needs;
-        uint32_t i;
         int ret = 0;
-        for (i = 0; i < needs->count; i++) {
-                const struct name *name = &needs->names[i];
-                char filename[PATH_MAX];
-                snprintf(filename, sizeof(filename), "%.*s", CSTR(name));
-                ret = dyld_load_object_from_file(d, filename);
-                if (ret != 0) {
-                        goto fail;
+        struct dyld_object *obj;
+        LIST_FOREACH(obj, &d->objs, q) {
+                const struct dylink_needs *needs = &obj->module->dylink->needs;
+                uint32_t i;
+                for (i = 0; i < needs->count; i++) {
+                        const struct name *name = &needs->names[i];
+                        char filename[PATH_MAX];
+                        snprintf(filename, sizeof(filename), "%.*s",
+                                 CSTR(name));
+                        ret = dyld_load_object_from_file(d, filename);
+                        if (ret != 0) {
+                                goto fail;
+                        }
                 }
         }
 fail:
         return ret;
 }
-
-int dyld_load_object_from_file(struct dyld *d, const char *name);
 
 int
 dyld_load_object_from_file(struct dyld *d, const char *name)
@@ -66,7 +74,74 @@ dyld_load_object_from_file(struct dyld *d, const char *name)
                 ret = EINVAL;
                 goto fail;
         }
-        ret = dyld_load_needed_objects(d, obj);
+        LIST_INSERT_TAIL(&d->objs, obj, q);
+fail:
+        return ret;
+}
+
+static uint32_t
+align_up(uint32_t v, uint32_t palign)
+{
+        uint32_t align = 1 << palign;
+        uint32_t mask = align - 1;
+        return (v + mask) & ~mask;
+}
+
+int
+dyld_allocate_memory(struct dyld *d)
+{
+        uint32_t stack_size = 16 * 1024; /* XXX TODO guess from main obj */
+
+        d->memory_base += stack_size;
+
+        struct dyld_object *obj;
+        LIST_FOREACH(obj, &d->objs, q) {
+                const struct dylink_mem_info *minfo =
+                        &obj->module->dylink->mem_info;
+                d->memory_base =
+                        align_up(d->memory_base, minfo->memoryalignment);
+                obj->memory_base = d->memory_base;
+                d->memory_base += minfo->memorysize;
+        }
+        return 0;
+}
+
+int
+dyld_allocate_table(struct dyld *d)
+{
+        d->table_base += 1; /* do not use the first one */
+
+        struct dyld_object *obj;
+        LIST_FOREACH(obj, &d->objs, q) {
+                const struct dylink_mem_info *minfo =
+                        &obj->module->dylink->mem_info;
+                d->table_base = align_up(d->table_base, minfo->tablealignment);
+                obj->table_base = d->table_base;
+                d->table_base += minfo->tablesize;
+        }
+        return 0;
+}
+
+int
+dyld_load_main_object_from_file(struct dyld *d, const char *name)
+{
+        int ret;
+        ret = dyld_load_object_from_file(d, name);
+        if (ret != 0) {
+                goto fail;
+        }
+        ret = dyld_load_needed_objects(d);
+        if (ret != 0) {
+                goto fail;
+        }
+        ret = dyld_allocate_memory(d);
+        if (ret != 0) {
+                goto fail;
+        }
+        ret = dyld_allocate_table(d);
+        if (ret != 0) {
+                goto fail;
+        }
 fail:
         return ret;
 }
