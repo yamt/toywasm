@@ -10,6 +10,8 @@ struct expr;
 struct exec_context;
 struct instance;
 struct funcinst;
+struct tableinst;
+struct globalinst;
 struct localtype;
 struct resulttype;
 struct val;
@@ -37,6 +39,11 @@ int table_init(struct exec_context *ctx, uint32_t tableidx, uint32_t elemidx,
                uint32_t d, uint32_t s, uint32_t n);
 int table_access(struct exec_context *ectx, uint32_t tableidx, uint32_t offset,
                  uint32_t n);
+void table_set(struct tableinst *tinst, uint32_t elemidx,
+               const struct val *val);
+void table_get(struct tableinst *tinst, uint32_t elemidx, struct val *val);
+void global_set(struct globalinst *ginst, const struct val *val);
+void global_get(struct globalinst *ginst, struct val *val);
 void data_drop(struct exec_context *ectx, uint32_t dataidx);
 void elem_drop(struct exec_context *ectx, uint32_t elemidx);
 
