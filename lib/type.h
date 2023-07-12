@@ -304,6 +304,11 @@ struct name {
                 .nbytes = sizeof(C) - 1, .data = C,                           \
         }
 
+#define NAME_FROM_CSTR(C)                                                     \
+        {                                                                     \
+                .nbytes = strlen(C), .data = C,                               \
+        }
+
 struct import {
         struct name module_name;
         struct name name;
@@ -408,6 +413,8 @@ struct module {
         struct export *exports;
 
         const uint8_t *bin;
+
+        struct dylink *dylink;
 };
 
 struct exec_context;
