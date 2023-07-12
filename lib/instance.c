@@ -233,6 +233,68 @@ memory_instance_destroy(struct meminst *mi)
         free(mi);
 }
 
+int
+global_instance_create(struct globalinst **gip, const struct globaltype *gt)
+{
+        struct globalinst *ginst;
+        int ret;
+        ginst = zalloc(sizeof(*ginst));
+        if (ginst == NULL) {
+                ret = ENOMEM;
+                goto fail;
+        }
+        ginst->type = gt;
+        memset(&ginst->val, 0, sizeof(ginst->val));
+        *gip = ginst;
+        ret = 0;
+fail:
+        return ret;
+}
+
+void
+global_instance_destroy(struct globalinst *gi)
+{
+        free(gi);
+}
+
+int
+table_instance_create(struct tableinst **tip, const struct tabletype *tt)
+{
+        struct tableinst *tinst;
+        int ret;
+        tinst = zalloc(sizeof(*tinst));
+        if (tinst == NULL) {
+                ret = ENOMEM;
+                goto fail;
+        }
+        tinst->type = tt;
+        tinst->size = tinst->type->lim.min;
+        uint32_t csz = valtype_cellsize(tt->et);
+        uint32_t ncells = tinst->size * csz;
+        if (ncells / csz != tinst->size) {
+                ret = EOVERFLOW;
+                goto fail;
+        }
+        ret = ARRAY_RESIZE(tinst->cells, ncells);
+        if (ret != 0) {
+                free(tinst);
+                goto fail;
+        }
+        memset(tinst->cells, 0, ncells * sizeof(*tinst->cells));
+        *tip = tinst;
+fail:
+        return ret;
+}
+
+void
+table_instance_destroy(struct tableinst *ti)
+{
+        if (ti != NULL) {
+                free(ti->cells);
+        }
+        free(ti);
+}
+
 /* https://webassembly.github.io/spec/core/exec/modules.html#exec-instantiation
  */
 
@@ -357,13 +419,10 @@ instance_create_no_init(const struct module *m, struct instance **instp,
                         ginst = e->u.global;
                         assert(ginst != NULL);
                 } else {
-                        ginst = zalloc(sizeof(*ginst));
-                        if (ginst == NULL) {
-                                ret = ENOMEM;
+                        ret = global_instance_create(&ginst, gt);
+                        if (ret != 0) {
                                 goto fail;
                         }
-                        ginst->type = gt;
-                        memset(&ginst->val, 0, sizeof(ginst->val));
                 }
                 VEC_ELEM(inst->globals, i) = ginst;
         }
@@ -388,26 +447,10 @@ instance_create_no_init(const struct module *m, struct instance **instp,
                         tinst = e->u.table;
                         assert(tinst != NULL);
                 } else {
-                        tinst = zalloc(sizeof(*tinst));
-                        if (tinst == NULL) {
-                                ret = ENOMEM;
-                                goto fail;
-                        }
-                        tinst->type = tt;
-                        tinst->size = tinst->type->lim.min;
-                        uint32_t csz = valtype_cellsize(tt->et);
-                        uint32_t ncells = tinst->size * csz;
-                        if (ncells / csz != tinst->size) {
-                                ret = EOVERFLOW;
-                                goto fail;
-                        }
-                        ret = ARRAY_RESIZE(tinst->cells, ncells);
+                        ret = table_instance_create(&tinst, tt);
                         if (ret != 0) {
-                                free(tinst);
                                 goto fail;
                         }
-                        memset(tinst->cells, 0,
-                               ncells * sizeof(*tinst->cells));
                 }
                 VEC_ELEM(inst->tables, i) = tinst;
         }
@@ -531,7 +574,7 @@ instance_destroy(struct instance *inst)
                 if (i < m->nimportedglobals) {
                         continue;
                 }
-                free(*gp);
+                global_instance_destroy(*gp);
         }
         VEC_FREE(inst->globals);
         struct tableinst **tp;
@@ -539,10 +582,7 @@ instance_destroy(struct instance *inst)
                 if (i < m->nimportedtables) {
                         continue;
                 }
-                if (*tp != NULL) {
-                        free((*tp)->cells);
-                }
-                free(*tp);
+                table_instance_destroy(*tp);
         }
         VEC_FREE(inst->tables);
         bitmap_free(&inst->data_dropped);

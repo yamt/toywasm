@@ -112,6 +112,17 @@ struct memtype;
 int memory_instance_create(struct meminst **mip, const struct memtype *mt);
 void memory_instance_destroy(struct meminst *mi);
 
+struct globalinst;
+struct globaltype;
+int global_instance_create(struct globalinst **gip,
+                           const struct globaltype *gt);
+void global_instance_destroy(struct globalinst *gi);
+
+struct tableinst;
+struct tabletype;
+int table_instance_create(struct tableinst **tip, const struct tabletype *tt);
+void table_instance_destroy(struct tableinst *ti);
+
 /*
  * create_satisfying_shared_memories:
  *
