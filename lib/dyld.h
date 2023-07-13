@@ -4,7 +4,7 @@
 #include "type.h"
 
 struct dyld_sym {
-		const struct name *name;
+        const struct name *name;
         enum importtype type;
         uint32_t idx;
 };
