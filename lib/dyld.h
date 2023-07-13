@@ -11,6 +11,7 @@ struct dyld_sym {
 
 struct dyld_plt {
         struct finst *finst;
+        const struct name *sym;
         struct tableinst *tableinst;
         uint32_t idx_in_table;
 };
