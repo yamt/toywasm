@@ -26,8 +26,7 @@ BIN=.js.wasm/js.wasm
 if [ ! -f ${BIN} ]; then
     URL=$(python3 test/js_wasm_url.py ${JSON} mozilla-release)
     mkdir -p .js.wasm
-    curl -L -o ${BIN}.gz ${URL}
-    gunzip ${BIN}.gz
+    curl -L -o ${BIN} ${URL}
 fi
 
 TEST_RUNTIME_EXE=${TEST_RUNTIME_EXE:-"toywasm --wasi --wasi-dir=test --"}
