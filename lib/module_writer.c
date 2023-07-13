@@ -226,16 +226,16 @@ static void
 write_exportdesc(struct writer *w, const struct exportdesc *desc)
 {
         switch (desc->type) {
-        case EXPORT_FUNC:
+        case EXTERNTYPE_FUNC:
                 WRITE_U8(0x00);
                 break;
-        case EXPORT_TABLE:
+        case EXTERNTYPE_TABLE:
                 WRITE_U8(0x01);
                 break;
-        case EXPORT_MEMORY:
+        case EXTERNTYPE_MEMORY:
                 WRITE_U8(0x02);
                 break;
-        case EXPORT_GLOBAL:
+        case EXTERNTYPE_GLOBAL:
                 WRITE_U8(0x03);
                 break;
         default:

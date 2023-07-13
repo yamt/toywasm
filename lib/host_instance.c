@@ -77,7 +77,7 @@ import_object_create_for_host_funcs(const struct host_module *modules,
                         struct import_object_entry *e = &im->entries[idx];
                         e->module_name = hm->module_name;
                         e->name = &func->name;
-                        e->type = IMPORT_FUNC;
+                        e->type = EXTERNTYPE_FUNC;
                         e->u.func = fi;
                         idx++;
                 }

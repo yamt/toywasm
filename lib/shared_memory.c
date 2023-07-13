@@ -29,7 +29,7 @@ create_satisfying_shared_memories(const struct module *m,
         nsharedimports = 0;
         for (i = 0; i < m->nimports; i++) {
                 const struct import *im = &m->imports[i];
-                if (im->desc.type != IMPORT_MEMORY) {
+                if (im->desc.type != EXTERNTYPE_MEMORY) {
                         continue;
                 }
                 const struct memtype *mt = &im->desc.u.memtype;
@@ -48,7 +48,7 @@ create_satisfying_shared_memories(const struct module *m,
         uint32_t idx = 0;
         for (i = 0; i < m->nimports; i++) {
                 const struct import *im = &m->imports[i];
-                if (im->desc.type != IMPORT_MEMORY) {
+                if (im->desc.type != EXTERNTYPE_MEMORY) {
                         continue;
                 }
                 const struct memtype *mt = &im->desc.u.memtype;
@@ -63,7 +63,7 @@ create_satisfying_shared_memories(const struct module *m,
                 struct import_object_entry *e = &imo->entries[idx++];
                 e->module_name = &im->module_name;
                 e->name = &im->name;
-                e->type = IMPORT_MEMORY;
+                e->type = EXTERNTYPE_MEMORY;
                 e->u.mem = mi;
         }
 
