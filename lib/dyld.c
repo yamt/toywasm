@@ -2,6 +2,7 @@
 
 #include <errno.h>
 #include <limits.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -16,6 +17,35 @@
 #include "xlog.h"
 
 int dyld_load_object_from_file(struct dyld *d, const char *name);
+
+static const struct name name_GOT_mem = NAME_FROM_CSTR_LITERAL("GOT.mem");
+static const struct name name_GOT_func = NAME_FROM_CSTR_LITERAL("GOT.func");
+static const struct name name_env = NAME_FROM_CSTR_LITERAL("env");
+static const struct name name_table_base =
+        NAME_FROM_CSTR_LITERAL("__table_base");
+static const struct name name_memory_base =
+        NAME_FROM_CSTR_LITERAL("__memory_base");
+static const struct name name_stack_pointer =
+        NAME_FROM_CSTR_LITERAL("__stack_pointer");
+
+static bool
+is_GOT_mem_import(const struct import *im)
+{
+        return !compare_name(&name_GOT_mem, &im->module_name);
+}
+
+static bool
+is_GOT_func_import(const struct import *im)
+{
+        return !compare_name(&name_GOT_func, &im->module_name);
+}
+
+static bool
+is_env_func_import(const struct import *im)
+{
+        return im->desc.type == IMPORT_FUNC &&
+               !compare_name(&name_env, &im->module_name);
+}
 
 void
 dyld_init(struct dyld *d)
