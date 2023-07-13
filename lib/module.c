@@ -588,7 +588,7 @@ read_exportdesc(const uint8_t **pp, const uint8_t *ep, struct exportdesc *desc,
                 goto fail;
         }
         switch (desc->type) {
-        case EXPORT_FUNC:
+        case EXTERNTYPE_FUNC:
                 if (desc->idx >= m->nimportedfuncs + m->nfuncs) {
                         xlog_trace("export idx (%" PRIu32
                                    ") out of range for type %u",
@@ -598,19 +598,19 @@ read_exportdesc(const uint8_t **pp, const uint8_t *ep, struct exportdesc *desc,
                 }
                 bitmap_set(&ctx->refs, desc->idx);
                 break;
-        case EXPORT_TABLE:
+        case EXTERNTYPE_TABLE:
                 if (desc->idx >= m->nimportedtables + m->ntables) {
                         ret = EINVAL;
                         goto fail;
                 }
                 break;
-        case EXPORT_MEMORY:
+        case EXTERNTYPE_MEMORY:
                 if (desc->idx >= m->nimportedmems + m->nmems) {
                         ret = EINVAL;
                         goto fail;
                 }
                 break;
-        case EXPORT_GLOBAL:
+        case EXTERNTYPE_GLOBAL:
                 if (desc->idx >= m->nimportedglobals + m->nglobals) {
                         ret = EINVAL;
                         goto fail;

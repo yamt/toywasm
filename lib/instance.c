@@ -68,7 +68,7 @@ find_entry_for_import(
 }
 
 static int
-find_import_entry(const struct module *m, enum importtype type, uint32_t idx,
+find_import_entry(const struct module *m, enum externtype type, uint32_t idx,
                   const struct import_object *imports,
                   int (*check)(const struct import_object_entry *e,
                                const void *arg),
@@ -114,7 +114,7 @@ static int
 check_functype(const struct import_object_entry *e, const void *vp)
 {
         const struct functype *ft = vp;
-        assert(e->type == IMPORT_FUNC);
+        assert(e->type == EXTERNTYPE_FUNC);
         struct funcinst *fi = e->u.func;
         const struct functype *ft_imported = funcinst_functype(fi);
         if (compare_functype(ft, ft_imported)) {
@@ -127,7 +127,7 @@ static int
 check_tabletype(const struct import_object_entry *e, const void *vp)
 {
         const struct tabletype *tt = vp;
-        assert(e->type == IMPORT_TABLE);
+        assert(e->type == EXTERNTYPE_TABLE);
         const struct tableinst *ti = e->u.table;
         const struct tabletype *tt_imported = ti->type;
         if (!match_tabletype(tt_imported, tt, ti->size)) {
@@ -140,7 +140,7 @@ static int
 check_memtype(const struct import_object_entry *e, const void *vp)
 {
         const struct memtype *mt = vp;
-        assert(e->type == IMPORT_MEMORY);
+        assert(e->type == EXTERNTYPE_MEMORY);
         const struct meminst *mi = e->u.mem;
         const struct memtype *mt_imported = mi->type;
         if (mt_imported->flags != mt->flags) {
@@ -156,7 +156,7 @@ static int
 check_globaltype(const struct import_object_entry *e, const void *vp)
 {
         const struct globaltype *gt = vp;
-        assert(e->type == IMPORT_GLOBAL);
+        assert(e->type == EXTERNTYPE_GLOBAL);
         const struct globaltype *gt_imported = e->u.global->type;
         if (gt_imported->t != gt->t || gt_imported->mut != gt->mut) {
                 return EINVAL;
@@ -351,12 +351,12 @@ instance_create_no_init(const struct module *m, struct instance **instp,
                 if (i < m->nimportedfuncs) {
                         const struct import_object_entry *e;
                         ret = find_import_entry(
-                                m, IMPORT_FUNC, i, imports, check_functype,
+                                m, EXTERNTYPE_FUNC, i, imports, check_functype,
                                 module_functype(m, i), &e, report);
                         if (ret != 0) {
                                 goto fail;
                         }
-                        assert(e->type == IMPORT_FUNC);
+                        assert(e->type == EXTERNTYPE_FUNC);
                         fp = e->u.func;
                         assert(fp != NULL);
                 } else {
@@ -382,12 +382,13 @@ instance_create_no_init(const struct module *m, struct instance **instp,
                 const struct memtype *mt = module_memtype(m, i);
                 if (i < m->nimportedmems) {
                         const struct import_object_entry *e;
-                        ret = find_import_entry(m, IMPORT_MEMORY, i, imports,
-                                                check_memtype, mt, &e, report);
+                        ret = find_import_entry(m, EXTERNTYPE_MEMORY, i,
+                                                imports, check_memtype, mt, &e,
+                                                report);
                         if (ret != 0) {
                                 goto fail;
                         }
-                        assert(e->type == IMPORT_MEMORY);
+                        assert(e->type == EXTERNTYPE_MEMORY);
                         mp = e->u.mem;
                         assert(mp != NULL);
                 } else {
@@ -409,13 +410,13 @@ instance_create_no_init(const struct module *m, struct instance **instp,
                 const struct globaltype *gt = module_globaltype(m, i);
                 if (i < m->nimportedglobals) {
                         const struct import_object_entry *e;
-                        ret = find_import_entry(m, IMPORT_GLOBAL, i, imports,
-                                                check_globaltype, gt, &e,
-                                                report);
+                        ret = find_import_entry(m, EXTERNTYPE_GLOBAL, i,
+                                                imports, check_globaltype, gt,
+                                                &e, report);
                         if (ret != 0) {
                                 goto fail;
                         }
-                        assert(e->type == IMPORT_GLOBAL);
+                        assert(e->type == EXTERNTYPE_GLOBAL);
                         ginst = e->u.global;
                         assert(ginst != NULL);
                 } else {
@@ -437,13 +438,13 @@ instance_create_no_init(const struct module *m, struct instance **instp,
                 const struct tabletype *tt = module_tabletype(m, i);
                 if (i < m->nimportedtables) {
                         const struct import_object_entry *e;
-                        ret = find_import_entry(m, IMPORT_TABLE, i, imports,
-                                                check_tabletype, tt, &e,
-                                                report);
+                        ret = find_import_entry(m, EXTERNTYPE_TABLE, i,
+                                                imports, check_tabletype, tt,
+                                                &e, report);
                         if (ret != 0) {
                                 goto fail;
                         }
-                        assert(e->type == IMPORT_TABLE);
+                        assert(e->type == EXTERNTYPE_TABLE);
                         tinst = e->u.table;
                         assert(tinst != NULL);
                 } else {

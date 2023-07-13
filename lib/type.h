@@ -267,15 +267,15 @@ struct tabletype {
         struct limits lim;
 };
 
-enum importtype {
-        IMPORT_FUNC = 0x00,
-        IMPORT_TABLE = 0x01,
-        IMPORT_MEMORY = 0x02,
-        IMPORT_GLOBAL = 0x03,
+enum externtype {
+        EXTERNTYPE_FUNC = 0x00,
+        EXTERNTYPE_TABLE = 0x01,
+        EXTERNTYPE_MEMORY = 0x02,
+        EXTERNTYPE_GLOBAL = 0x03,
 };
 
 struct importdesc {
-        enum importtype type;
+        enum externtype type;
         union {
                 uint32_t typeidx;
                 struct memtype memtype;
@@ -284,15 +284,8 @@ struct importdesc {
         } u;
 };
 
-enum exporttype {
-        EXPORT_FUNC = 0x00,
-        EXPORT_TABLE = 0x01,
-        EXPORT_MEMORY = 0x02,
-        EXPORT_GLOBAL = 0x03,
-};
-
 struct exportdesc {
-        enum exporttype type;
+        enum externtype type;
         uint32_t idx;
 };
 
@@ -501,7 +494,7 @@ struct instance {
 struct import_object_entry {
         const struct name *module_name;
         const struct name *name;
-        enum importtype type;
+        enum externtype type;
         union {
                 struct funcinst *func;
                 struct meminst *mem;
@@ -546,7 +539,7 @@ int compare_name(const struct name *a, const struct name *b);
  */
 
 const struct import *module_find_import(const struct module *m,
-                                        enum importtype type, uint32_t idx);
+                                        enum externtype type, uint32_t idx);
 const struct functype *module_functype(const struct module *m, uint32_t idx);
 const struct memtype *module_memtype(const struct module *m, uint32_t idx);
 const struct tabletype *module_tabletype(const struct module *m, uint32_t idx);

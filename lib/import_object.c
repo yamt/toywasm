@@ -52,25 +52,22 @@ import_object_create_for_exports(struct instance *inst,
                 const struct exportdesc *d = &ex->desc;
                 struct import_object_entry *e = &im->entries[i];
                 switch (d->type) {
-                case EXPORT_FUNC:
+                case EXTERNTYPE_FUNC:
                         e->u.func = VEC_ELEM(inst->funcs, d->idx);
-                        e->type = IMPORT_FUNC;
                         break;
-                case EXPORT_TABLE:
+                case EXTERNTYPE_TABLE:
                         e->u.table = VEC_ELEM(inst->tables, d->idx);
-                        e->type = IMPORT_TABLE;
                         break;
-                case EXPORT_MEMORY:
+                case EXTERNTYPE_MEMORY:
                         e->u.mem = VEC_ELEM(inst->mems, d->idx);
-                        e->type = IMPORT_MEMORY;
                         break;
-                case EXPORT_GLOBAL:
+                case EXTERNTYPE_GLOBAL:
                         e->u.global = VEC_ELEM(inst->globals, d->idx);
-                        e->type = IMPORT_GLOBAL;
                         break;
                 default:
                         assert(false);
                 }
+                e->type = d->type;
                 e->module_name = module_name;
                 e->name = &ex->name;
                 xlog_trace("created an entry for %.*s:%.*s",

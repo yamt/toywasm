@@ -1078,7 +1078,7 @@ repl_global_get(struct repl_state *state, const char *modname,
         assert(inst != NULL);
         assert(module != NULL);
         uint32_t idx;
-        ret = module_find_export(module, &name, EXPORT_GLOBAL, &idx);
+        ret = module_find_export(module, &name, EXTERNTYPE_GLOBAL, &idx);
         if (ret != 0) {
                 xlog_error("module_find_export failed for %s", name_cstr);
                 goto fail;
