@@ -228,30 +228,7 @@ INSN_IMPL(table_grow)
                 struct instance *inst = ectx->instance;
                 struct tableinst *t = VEC_ELEM(inst->tables, tableidx);
                 uint32_t n = val_n.u.i32;
-                if (UINT32_MAX - t->size < n ||
-                    t->size + n > t->type->lim.max) {
-                        val_result.u.i32 = (uint32_t)-1;
-                } else {
-                        uint32_t newsize = t->size + n;
-                        uint32_t csz = valtype_cellsize(t->type->et);
-                        uint32_t newncells = newsize * csz;
-                        if (newncells / csz != newsize) {
-                                ret = EOVERFLOW;
-                        } else {
-                                ret = ARRAY_RESIZE(t->cells, newncells);
-                        }
-                        if (ret != 0) {
-                                val_result.u.i32 = (uint32_t)-1;
-                        } else {
-                                uint32_t i;
-                                for (i = t->size; i < newsize; i++) {
-                                        val_to_cells(&val_val,
-                                                     &t->cells[i * csz], csz);
-                                }
-                                val_result.u.i32 = t->size;
-                                t->size = newsize;
-                        }
-                }
+                val_result.u.i32 = table_grow(t, &val_val, n);
         }
         PUSH_VAL(TYPE_i32, result);
         SAVE_PC;
