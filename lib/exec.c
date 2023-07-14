@@ -1391,6 +1391,35 @@ table_get(struct tableinst *tinst, uint32_t elemidx, struct val *val)
         val_from_cells(val, &tinst->cells[elemidx * csz], csz);
 }
 
+int
+table_grow(struct tableinst *t, const struct val *val, uint32_t n)
+{
+        if (UINT32_MAX - t->size < n || t->size + n > t->type->lim.max) {
+                return (uint32_t)-1;
+        }
+
+        uint32_t newsize = t->size + n;
+        uint32_t csz = valtype_cellsize(t->type->et);
+        uint32_t newncells = newsize * csz;
+        int ret;
+        if (newncells / csz != newsize) {
+                ret = EOVERFLOW;
+        } else {
+                ret = ARRAY_RESIZE(t->cells, newncells);
+        }
+        if (ret != 0) {
+                return (uint32_t)-1;
+        }
+
+        uint32_t i;
+        for (i = t->size; i < newsize; i++) {
+                val_to_cells(val, &t->cells[i * csz], csz);
+        }
+        uint32_t oldsize = t->size;
+        t->size = newsize;
+        return oldsize;
+}
+
 void
 global_set(struct globalinst *ginst, const struct val *val)
 {

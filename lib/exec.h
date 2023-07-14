@@ -42,6 +42,7 @@ int table_access(struct exec_context *ectx, uint32_t tableidx, uint32_t offset,
 void table_set(struct tableinst *tinst, uint32_t elemidx,
                const struct val *val);
 void table_get(struct tableinst *tinst, uint32_t elemidx, struct val *val);
+int table_grow(struct tableinst *tinst, const struct val *val, uint32_t n);
 void global_set(struct globalinst *ginst, const struct val *val);
 void global_get(struct globalinst *ginst, struct val *val);
 void data_drop(struct exec_context *ectx, uint32_t dataidx);
