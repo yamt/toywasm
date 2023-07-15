@@ -18,7 +18,9 @@ enum longopt {
         opt_disable_jump_table = 0x100,
         opt_disable_localtype_cellidx,
         opt_disable_resulttype_cellidx,
+#if defined(TOYWASM_ENABLE_DYLD)
         opt_dyld,
+#endif
         opt_invoke,
         opt_load,
         opt_max_frames,
@@ -55,12 +57,14 @@ static const struct option longopts[] = {
                 NULL,
                 opt_disable_resulttype_cellidx,
         },
+#if defined(TOYWASM_ENABLE_DYLD)
         {
                 "dyld",
                 no_argument,
                 NULL,
                 opt_dyld,
         },
+#endif
         {
                 "invoke",
                 required_argument,
@@ -246,6 +250,7 @@ main(int argc, char *const *argv)
                 case opt_disable_resulttype_cellidx:
                         opts->load_options.generate_resulttype_cellidx = false;
                         break;
+#if defined(TOYWASM_ENABLE_DYLD)
                 case opt_dyld:
                         if (state->nmodules > 0) {
                                 ret = EPROTO;
@@ -253,6 +258,7 @@ main(int argc, char *const *argv)
                         }
                         opts->enable_dyld = true;
                         break;
+#endif
                 case opt_invoke:
                         ret = toywasm_repl_invoke(state, NULL, optarg,
                                                   timeout_ms, NULL, true);
