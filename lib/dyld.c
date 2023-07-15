@@ -396,6 +396,7 @@ dyld_load_object_from_file(struct dyld *d, const struct name *name,
         if (ret != 0) {
                 goto fail;
         }
+        /* instantiate here */
         LIST_INSERT_TAIL(&d->objs, obj, q);
         return 0;
 fail:
@@ -411,7 +412,7 @@ dyld_commit_allocation(struct dyld *d)
         struct tabletype *tt = &d->tt;
         tt->et = TYPE_FUNCREF;
         tt->lim.min = d->table_base;
-        tt->lim.max = d->table_base;
+        tt->lim.max = UINT32_MAX;
         ret = table_instance_create(&d->tableinst, tt);
         if (ret != 0) {
                 goto fail;
@@ -552,10 +553,6 @@ dyld_load_main_object_from_file(struct dyld *d, const char *filename)
                 goto fail;
         }
         ret = dyld_load_needed_objects(d);
-        if (ret != 0) {
-                goto fail;
-        }
-        ret = dyld_commit_allocation(d);
         if (ret != 0) {
                 goto fail;
         }
