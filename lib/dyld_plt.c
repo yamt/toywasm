@@ -35,7 +35,15 @@ dyld_plt(struct exec_context *ctx, struct host_instance *hi,
                            CSTR(objname), CSTR(sym), addr, (void *)plt->finst);
         }
 
-        /* XXX restarting on every calls might be a bit too expensive. */
+#if 0 /* a bit dirty */
+        /*
+         * modify our funcinst so that next call will have no PLT overhead.
+         * if you enable this, you need to relax the assertion in
+         * funcinst_func.
+         */
+        plt->pltfi = *plt->finst;
+#endif
+
         ctx->event_u.call.func = plt->finst;
         ctx->event = EXEC_EVENT_CALL;
         return ETOYWASMRESTART;
