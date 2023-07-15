@@ -48,9 +48,9 @@ static const struct name name_heap_base =
         NAME_FROM_CSTR_LITERAL("__heap_base");
 static const struct name name_heap_end = NAME_FROM_CSTR_LITERAL("__heap_ned");
 
-static const struct name name_main_obj = NAME_FROM_CSTR_LITERAL("main obj");
+static const struct name name_main_obj = NAME_FROM_CSTR_LITERAL("<main>");
 
-static const struct val val_zero = {
+static const struct val val_null = {
         .u.funcref.func = NULL,
 };
 
@@ -191,7 +191,6 @@ dyld_init(struct dyld *d)
 {
         memset(d, 0, sizeof(*d));
         LIST_HEAD_INIT(&d->objs);
-
         d->table_base = 1; /* do not use the first one */
         d->memory_base = 0;
 }
@@ -305,7 +304,6 @@ dyld_create_got(struct dyld *d, struct dyld_object *obj)
         struct import_object_entry *e = obj->local_import_obj->entries;
 
         obj->memory_base_global.type = &globaltype_i32_const;
-        global_set_i32(&obj->memory_base_global, obj->memory_base);
         e->module_name = &name_env;
         e->name = &name_memory_base;
         e->type = EXTERNTYPE_GLOBAL;
@@ -313,7 +311,6 @@ dyld_create_got(struct dyld *d, struct dyld_object *obj)
         e++;
 
         obj->table_base_global.type = &globaltype_i32_const;
-        global_set_i32(&obj->table_base_global, obj->table_base);
         e->module_name = &name_env;
         e->name = &name_table_base;
         e->type = EXTERNTYPE_GLOBAL;
@@ -399,7 +396,7 @@ dyld_allocate_table(struct dyld *d, uint32_t align, uint32_t sz,
         assert(newbase >= oldbase);
         if (newbase > oldbase) {
                 uint32_t ret =
-                        table_grow(d->tableinst, &val_zero, newbase - oldbase);
+                        table_grow(d->tableinst, &val_null, newbase - oldbase);
                 if (ret == (uint32_t)-1) {
                         return ENOMEM;
                 }
@@ -473,6 +470,11 @@ dyld_allocate_table_for_obj(struct dyld *d, struct dyld_object *obj)
         if (ret != 0) {
                 return ret;
         }
+        const struct name *objname = dyld_object_name(obj);
+        xlog_trace("dyld: table elem allocated for %.*s (mem_info): %08" PRIx32
+                   " - %08" PRIx32,
+                   CSTR(objname), obj->table_base,
+                   obj->table_base + minfo->tablesize);
 
         /*
          * Note: the following logic likely allocates more than
@@ -490,12 +492,29 @@ dyld_allocate_table_for_obj(struct dyld *d, struct dyld_object *obj)
                         nexports++;
                 }
         }
-        return dyld_allocate_table(d, 0, nexports, &obj->table_export_base);
+        ret = dyld_allocate_table(d, 0, nexports, &obj->table_export_base);
+        if (ret != 0) {
+                return ret;
+        }
+        obj->nexports = nexports;
+        xlog_trace("dyld: table elem allocated for %.*s (export): %08" PRIx32
+                   " - %08" PRIx32,
+                   CSTR(objname), obj->table_export_base,
+                   obj->table_export_base + nexports);
+        return ret;
 }
 
 static void
 dyld_object_destroy(struct dyld_object *obj)
 {
+#if 0
+        /*
+         * obj->name might have been freed given the order dyld_clear()
+         * frees objects
+         */
+        const struct name *objname = dyld_object_name(obj);
+        xlog_trace("dyld: destroying %.*s", CSTR(objname));
+#endif
         if (obj->local_import_obj != NULL) {
                 import_object_destroy(obj->local_import_obj);
         }
@@ -557,6 +576,8 @@ dyld_load_object_from_file(struct dyld *d, const struct name *name,
         if (ret != 0) {
                 goto fail;
         }
+        global_set_i32(&obj->memory_base_global, obj->memory_base);
+        global_set_i32(&obj->table_base_global, obj->table_base);
         assert(d->shared_import_obj != NULL);
         obj->local_import_obj->next = d->shared_import_obj;
         struct report report;
@@ -657,9 +678,13 @@ dyld_register_funcinst(struct dyld *d, struct dyld_object *obj,
                        const struct funcinst *fi)
 {
         struct tableinst *ti = d->tableinst;
+        const struct name *objname = dyld_object_name(obj);
+        xlog_trace("dyld: registering obj %.*s finst %p", CSTR(objname),
+                   (void *)fi);
+        uint32_t end = obj->table_export_base + obj->nexports;
         /* XXX dumb linear search */
         uint32_t i;
-        for (i = obj->table_export_base; i < obj->nexports; i++) {
+        for (i = obj->table_export_base; i < end; i++) {
                 struct val val;
                 table_get(ti, i, &val);
                 if (val.u.funcref.func == fi) {
@@ -671,6 +696,7 @@ dyld_register_funcinst(struct dyld *d, struct dyld_object *obj,
                         return i;
                 }
         }
+        xlog_error("dyld: failed to register a func");
         assert(false);
 }
 
@@ -805,7 +831,7 @@ void
 dyld_clear(struct dyld *d)
 {
         struct dyld_object *obj;
-        while ((obj = LIST_FIRST(&d->objs)) != 0) {
+        while ((obj = LIST_FIRST(&d->objs)) != NULL) {
                 LIST_REMOVE(&d->objs, obj, q);
                 dyld_object_destroy(obj);
         }
