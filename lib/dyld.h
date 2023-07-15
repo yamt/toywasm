@@ -9,6 +9,11 @@ struct dyld_sym {
         uint32_t idx;
 };
 
+enum symtype {
+        SYM_TYPE_FUNC,
+        SYM_TYPE_MEM,
+};
+
 struct dyld_plt {
         const struct funcinst *finst;
         const struct name *sym;
@@ -23,6 +28,8 @@ struct dyld_object {
         uint32_t memory_base;
         uint32_t table_base;
         uint32_t table_export_base;
+
+        uint32_t nexports; /* # of reserved entries from table_export_base */
 
         struct globalinst memory_base_global;
         struct globalinst table_base_global;
@@ -55,6 +62,6 @@ struct dyld {
 };
 
 int dyld_resolve_symbol(struct dyld *d, struct dyld_object *refobj,
-                        enum exporttype type, const struct name *sym,
-                        const void **resultp);
+                        enum symtype symtype, const struct name *sym,
+                        uint32_t *resultp);
 int dyld_load_main_object_from_file(struct dyld *d, const char *name);

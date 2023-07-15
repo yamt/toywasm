@@ -51,6 +51,14 @@ align_up(uint32_t v, uint32_t palign)
         return (v + mask) & ~mask;
 }
 
+static uint32_t
+global_get_i32(struct globalinst *ginst)
+{
+        struct val val;
+        global_get(ginst, &val);
+        return val.u.i32;
+}
+
 static void
 global_set_i32(struct globalinst *ginst, uint32_t v)
 {
@@ -60,13 +68,25 @@ global_set_i32(struct globalinst *ginst, uint32_t v)
 }
 
 static bool
+is_global_type_i32_const(const struct globaltype *gt)
+{
+        return gt->mut == GLOBAL_CONST && gt->t == TYPE_i32;
+}
+
+static bool
+is_global_type_i32_mut(const struct globaltype *gt)
+{
+        return gt->mut == GLOBAL_VAR && gt->t == TYPE_i32;
+}
+
+static bool
 is_global_i32_mut_import(const struct module *m, const struct import *im)
 {
         if (im->desc.type != IMPORT_GLOBAL) {
                 return false;
         }
         const struct globaltype *gt = &im->desc.u.globaltype;
-        return gt->mut == GLOBAL_VAR && gt->t == TYPE_i32;
+        return is_global_type_i32_mut(gt);
 }
 
 static bool
@@ -328,6 +348,7 @@ dyld_allocate_table(struct dyld *d, struct dyld_object *obj)
         }
         obj->table_export_base = d->table_base;
         d->table_base += nexports;
+        obj->nexports = nexports;
         return 0;
 }
 
@@ -406,38 +427,103 @@ fail:
         return ret;
 }
 
-int
-dyld_find_symbol(struct dyld_object *obj, const struct name *sym)
+uint32_t
+dyld_register_funcinst(struct dyld *d, struct dyld_object *obj,
+                       const struct funcinst *fi)
 {
-        struct module *m = obj->module;
-        struct instance *inst = obj->instance;
-
+        struct tableinst *ti = d->tableinst;
         uint32_t i;
-        for (i = 0; i < m->nexports; i++) {
+        for (i = obj->table_export_base; i < obj->nexports; i++) {
+                struct val val;
+                table_get(ti, i, &val);
+                if (val.u.funcref.func == fi) {
+                        return i;
+                }
+                if (val.u.funcref.func == NULL) {
+                        val.u.funcref.func = fi;
+                        table_set(ti, i, &val);
+                        return i;
+                }
         }
+        assert(false);
 }
 
 int
 dyld_resolve_symbol(struct dyld *d, struct dyld_object *refobj,
-                    enum exporttype type, const struct name *sym,
-                    const void **resultp)
+                    enum symtype symtype, const struct name *sym,
+                    uint32_t *resultp)
 {
         struct dyld_object *obj;
+        enum exporttype etype;
+        if (symtype == SYM_TYPE_FUNC) {
+                etype = EXPORT_FUNC;
+        } else {
+                etype = EXPORT_GLOBAL;
+        }
         LIST_FOREACH(obj, &d->objs, q) {
                 const struct module *m = obj->module;
                 uint32_t i;
                 for (i = 0; i < m->nexports; i++) {
                         const struct export *ex = &m->exports[i];
-                        const struct exportdesc *d = &ex->desc;
-                        if (d->type != type || compare_name(sym, &ex->name)) {
+                        const struct exportdesc *ed = &ex->desc;
+                        if (etype != ed->type ||
+                            compare_name(sym, &ex->name)) {
                                 continue;
                         }
                         const struct instance *inst = obj->instance;
-                        *resultp = VEC_ELEM(inst->funcs, d->idx);
+                        uint32_t addr;
+                        if (symtype == SYM_TYPE_FUNC) {
+                                /*
+                                 * XXX should check the functype
+                                 */
+                                const struct funcinst *fi =
+                                        VEC_ELEM(inst->funcs, ed->idx);
+                                addr = dyld_register_funcinst(d, obj, fi);
+                        } else {
+                                struct globalinst *gi =
+                                        VEC_ELEM(inst->globals, ed->idx);
+                                if (!is_global_type_i32_const(gi->type)) {
+                                        continue;
+                                }
+                                addr = global_get_i32(gi) + obj->memory_base;
+                        }
+                        *resultp = addr;
                         return 0;
                 }
         }
         return ENOENT;
+}
+
+int
+dyld_resolve_got_symbols(struct dyld *d, struct dyld_object *refobj)
+{
+        const struct module *m = refobj->module;
+        struct globalinst *got = refobj->gots;
+        int ret;
+        uint32_t i;
+        for (i = 0; i < m->nimports; i++) {
+                const struct import *im = &m->imports[i];
+                enum symtype symtype;
+                if (is_GOT_mem_import(m, im)) {
+                        symtype = SYM_TYPE_MEM;
+                } else if (is_GOT_func_import(m, im)) {
+                        symtype = SYM_TYPE_FUNC;
+                } else {
+                        continue;
+                }
+                uint32_t addr;
+                ret = dyld_resolve_symbol(d, refobj, symtype, &im->name,
+                                          &addr);
+                if (ret != 0) {
+                        goto fail;
+                }
+                global_set_i32(got, addr);
+                got++;
+        }
+        assert(got == obj->gots + obj->ngots);
+        return 0;
+fail:
+        return ret;
 }
 
 int
