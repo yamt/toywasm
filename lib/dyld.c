@@ -269,7 +269,8 @@ dyld_allocate_table(struct dyld *d)
                 d->table_base += minfo->tablesize;
 
                 /*
-                 * Note: the following logic allocates the max size.
+                 * Note: the following logic likely allocates more than
+                 * what's actually necessary because:
                  *
                  * - not all exported functions are actually imported
                  * - some of exported functions can refer to the same
