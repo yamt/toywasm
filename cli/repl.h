@@ -1,5 +1,6 @@
 #include <stdbool.h>
 
+#include "dyld.h"
 #include "options.h"
 #include "type.h"
 
@@ -7,6 +8,7 @@ struct repl_options {
         const char *prompt;
         struct repl_state *state;
         bool print_stats;
+        bool enable_dyld;
         struct load_options load_options;
         struct exec_options exec_options;
 };
@@ -23,6 +25,13 @@ struct repl_module_state {
 #endif
 };
 
+struct repl_module_state_u {
+        union {
+                struct dyld dyld;
+                struct repl_module_state repl;
+        } u;
+};
+
 /* eg. const.wast has 366 modules */
 #define MAX_MODULES 500
 
@@ -32,7 +41,7 @@ struct registered_name {
 };
 
 struct repl_state {
-        struct repl_module_state *modules;
+        struct repl_module_state_u *modules;
         unsigned int nmodules;
         struct import_object *imports;
         unsigned int nregister;
