@@ -30,7 +30,8 @@ dyld_plt(struct exec_context *ctx, struct host_instance *hi,
                 struct val val;
                 table_get(d->tableinst, addr, &val);
                 plt->finst = val.u.funcref.func;
-                xlog_trace("dyld: PLT resolved %.*s %.*s to %" PRIx32 " %p",
+                xlog_trace("dyld: PLT resolved %.*s %.*s to addr %08" PRIx32
+                           " finst %p",
                            CSTR(objname), CSTR(sym), addr, (void *)plt->finst);
         }
 
