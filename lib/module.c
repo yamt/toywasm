@@ -1637,6 +1637,47 @@ fail:
         return ret;
 }
 
+static int
+read_import_info(const uint8_t **pp, const uint8_t *ep,
+                 struct dylink_import_info *ii)
+{
+        const uint8_t *p = *pp;
+        int ret;
+        ret = read_name(&p, ep, &ii->module_name);
+        if (ret != 0) {
+                goto fail;
+        }
+        ret = read_name(&p, ep, &ii->name);
+        if (ret != 0) {
+                goto fail;
+        }
+        ret = read_leb_i32(&p, ep, &ii->flags);
+        if (ret != 0) {
+                goto fail;
+        }
+        *pp = p;
+fail:
+        return ret;
+}
+
+static int
+read_dylink_import_info(const uint8_t **pp, const uint8_t *ep,
+                        struct load_context *ctx)
+{
+        const uint8_t *p = *pp;
+        struct dylink *dy = ctx->module->dylink;
+        int ret;
+        ret = read_vec(&p, ep, sizeof(*dy->import_info),
+                       (read_elem_func_t)read_import_info, NULL,
+                       &dy->nimport_info, (void *)&dy->import_info);
+        if (ret != 0) {
+                goto fail;
+        }
+        *pp = p;
+fail:
+        return ret;
+}
+
 enum dylink_subsection_type {
         WASM_dylink_mem_info = 1,
         WASM_dylink_needs = 2,
@@ -1656,11 +1697,10 @@ static const struct dylink_subsection {
         int (*read)(const uint8_t **pp, const uint8_t *ep,
                     struct load_context *ctx);
 } dylink_subsections[] = {
-        DYLINK_TYPE(mem_info), DYLINK_TYPE(needs),
+        DYLINK_TYPE(mem_info), DYLINK_TYPE(needs), DYLINK_TYPE(import_info),
         /*
          * TODO:
          * WASM_dylink_export_info: i'm not sure what needs this
-         * WASM_dylink_import_info: used for weak symbols at least
          */
 };
 
@@ -1680,6 +1720,7 @@ void
 clear_dylink(struct dylink *dy)
 {
         clear_dylink_needs(&dy->needs);
+        free(dy->import_info);
 }
 
 /* https://github.com/WebAssembly/tool-conventions/blob/main/DynamicLinking.md
