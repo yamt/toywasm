@@ -11,6 +11,7 @@
 #include "dyld.h"
 #include "dylink_type.h"
 #include "fileio.h"
+#include "instance.h"
 #include "list.h"
 #include "load_context.h"
 #include "module.h"
@@ -296,7 +297,7 @@ dyld_commit_allocation(struct dyld *d)
         int ret;
 
         struct tabletype *tt = &d->tt;
-        tt->et = TYPE_funcref;
+        tt->et = TYPE_FUNCREF;
         tt->lim.min = d->table_base;
         tt->lim.max = d->table_base;
         ret = table_instance_create(&d->tableinst, tt);
