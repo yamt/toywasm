@@ -1392,6 +1392,43 @@ table_get(struct tableinst *tinst, uint32_t elemidx, struct val *val)
 }
 
 int
+table_get_func(struct exec_context *ectx, const struct tableinst *t,
+               uint32_t i, const struct functype *ft,
+               const struct funcinst **fip)
+{
+        assert(t->type->et == TYPE_FUNCREF);
+        int ret;
+        if (__predict_false(i >= t->size)) {
+                ret = trap_with_id(
+                        ectx, TRAP_CALL_INDIRECT_OUT_OF_BOUNDS_TABLE_ACCESS,
+                        "call_indirect (table idx out of range) "
+                        "%" PRIu32,
+                        i);
+                goto fail;
+        }
+        struct val val;
+        uint32_t csz = valtype_cellsize(t->type->et);
+        val_from_cells(&val, &t->cells[i * csz], csz);
+        const struct funcinst *func = val.u.funcref.func;
+        if (__predict_false(func == NULL)) {
+                ret = trap_with_id(ectx, TRAP_CALL_INDIRECT_NULL_FUNCREF,
+                                   "call_indirect (null funcref) %" PRIu32, i);
+                goto fail;
+        }
+        const struct functype *actual_ft = funcinst_functype(func);
+        if (__predict_false(compare_functype(ft, actual_ft))) {
+                ret = trap_with_id(
+                        ectx, TRAP_CALL_INDIRECT_FUNCTYPE_MISMATCH,
+                        "call_indirect (functype mismatch) %" PRIu32, i);
+                goto fail;
+        }
+        *fip = func;
+        return 0;
+fail:
+        return ret;
+}
+
+int
 table_grow(struct tableinst *t, const struct val *val, uint32_t n)
 {
         if (UINT32_MAX - t->size < n || t->size + n > t->type->lim.max) {
