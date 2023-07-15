@@ -23,12 +23,11 @@ struct dyld_object {
         uint32_t table_base;
         uint32_t table_export_base;
 
-        uint32_t n_import_got_mem;
-        uint32_t n_import_got_func;
-        uint32_t n_import_env_func;
-
-        uint32_t n_export_func;
-        uint32_t n_export_global;
+        uint32_t ngots;
+        struct globalinst *gots;
+        uint32_t nplts;
+        struct dyld_plt *plts;
+        struct import_object *local_import_obj;
 
         const uint8_t *bin;
         size_t binsz;
