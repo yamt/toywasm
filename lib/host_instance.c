@@ -98,25 +98,27 @@ host_func_dump_params(const struct functype *ft, const struct cell *params)
         }
         const struct resulttype *rt = &ft->parameter;
         uint32_t i;
+        uint32_t cidx = 0;
         for (i = 0; i < rt->ntypes; i++) {
                 enum valtype type = rt->types[i];
                 uint32_t sz = valtype_cellsize(type);
                 struct val val;
-                val_from_cells(&val, &params[i], sz);
+                val_from_cells(&val, &params[cidx], sz);
 #if defined(TOYWASM_USE_SMALL_CELLS)
                 switch (sz) {
                 case 1:
-                        xlog_trace("param[%" PRIu32 "] = %08" PRIu32, i,
+                        xlog_trace("param[%" PRIu32 "] = %08" PRIx32, i,
                                    val.u.i32);
                         break;
                 case 2:
-                        xlog_trace("param[%" PRIu32 "] = %016" PRIu64, i,
+                        xlog_trace("param[%" PRIu32 "] = %016" PRIx64, i,
                                    val.u.i64);
                         break;
                 }
 #else
                 xlog_trace("param[%" PRIu32 "] = %016" PRIu64, i, val.u.i64);
 #endif
+                cidx += sz;
         }
 }
 
