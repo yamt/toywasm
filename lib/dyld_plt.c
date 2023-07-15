@@ -2,7 +2,7 @@
 
 #include "dyld.h"
 #include "dyld_plt.h"
-#include "exec_context.h"
+#include "exec.h"
 
 int
 dyld_plt(struct exec_context *ctx, struct host_instance *hi,
