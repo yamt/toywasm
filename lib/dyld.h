@@ -55,6 +55,10 @@ struct dyld {
         struct tabletype tt;
         struct tableinst *tableinst;
 
+        struct globalinst stack_pointer;
+        struct globalinst heap_base;
+        struct globalinst heap_end;
+
         LIST_HEAD(struct dyld_object) objs;
 };
 
@@ -63,4 +67,6 @@ void dyld_clear(struct dyld *d);
 int dyld_resolve_symbol(struct dyld *d, struct dyld_object *refobj,
                         enum symtype symtype, const struct name *sym,
                         uint32_t *resultp);
+struct instance *dyld_main_object_instance(struct dyld *d);
+
 int dyld_load_main_object_from_file(struct dyld *d, const char *name);
