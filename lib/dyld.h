@@ -5,7 +5,7 @@
 
 struct dyld_sym {
         const struct name *name;
-        enum importtype type;
+        enum externtype type;
         uint32_t idx;
 };
 
