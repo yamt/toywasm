@@ -579,7 +579,7 @@ instance_destroy(struct instance *inst)
         }
         VEC_FREE(inst->globals);
         struct tableinst **tp;
-        VEC_FOREACH(tp, inst->tables) {
+        VEC_FOREACH_IDX(i, tp, inst->tables) {
                 if (i < m->nimportedtables) {
                         continue;
                 }
