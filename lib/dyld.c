@@ -779,6 +779,7 @@ dyld_resolve_got_symbols(struct dyld *d, struct dyld_object *refobj)
                 ret = dyld_resolve_symbol(d, refobj, symtype, &im->name,
                                           &addr);
                 if (ret != 0) {
+                        /* XXX implement weak symbol */
                         xlog_error("dyld: failed to resolve %.*s %.*s %.*s",
                                    CSTR(objname), CSTR(&im->module_name),
                                    CSTR(&im->name));
