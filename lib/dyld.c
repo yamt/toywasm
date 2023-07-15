@@ -82,7 +82,7 @@ is_global_type_i32_mut(const struct globaltype *gt)
 static bool
 is_global_i32_mut_import(const struct module *m, const struct import *im)
 {
-        if (im->desc.type != IMPORT_GLOBAL) {
+        if (im->desc.type != EXTERNTYPE_GLOBAL) {
                 return false;
         }
         const struct globaltype *gt = &im->desc.u.globaltype;
@@ -116,20 +116,20 @@ is_GOT_func_import(const struct module *m, const struct import *im)
 static bool
 is_env_func_import(const struct module *m, const struct import *im)
 {
-        return im->desc.type == IMPORT_FUNC &&
+        return im->desc.type == EXTERNTYPE_FUNC &&
                !compare_name(&name_env, &im->module_name);
 }
 
 static bool
 is_func_export(const struct module *m, const struct export *ex)
 {
-        return ex->desc.type == EXPORT_FUNC;
+        return ex->desc.type == EXTERNTYPE_FUNC;
 }
 
 static bool
 is_global_export(const struct module *m, const struct export *ex)
 {
-        if (ex->desc.type != EXPORT_GLOBAL) {
+        if (ex->desc.type != EXTERNTYPE_GLOBAL) {
                 return false;
         }
         const struct globaltype *gt = module_globaltype(m, ex->desc.idx);
@@ -255,7 +255,7 @@ dyld_create_got(struct dyld *d, struct dyld_object *obj)
         global_set_i32(&obj->memory_base_global, obj->memory_base);
         e->module_name = &name_env;
         e->name = &name_memory_base;
-        e->type = IMPORT_GLOBAL;
+        e->type = EXTERNTYPE_GLOBAL;
         e->u.global = &obj->memory_base_global;
         e++;
 
@@ -263,7 +263,7 @@ dyld_create_got(struct dyld *d, struct dyld_object *obj)
         global_set_i32(&obj->table_base_global, obj->table_base);
         e->module_name = &name_env;
         e->name = &name_table_base;
-        e->type = IMPORT_GLOBAL;
+        e->type = EXTERNTYPE_GLOBAL;
         e->u.global = &obj->table_base_global;
         e++;
 
@@ -277,7 +277,7 @@ dyld_create_got(struct dyld *d, struct dyld_object *obj)
 
                         e->module_name = &im->module_name;
                         e->name = &im->name;
-                        e->type = IMPORT_GLOBAL;
+                        e->type = EXTERNTYPE_GLOBAL;
                         e->u.global = got;
 
                         got++;
@@ -296,7 +296,7 @@ dyld_create_got(struct dyld *d, struct dyld_object *obj)
 
                         e->module_name = &im->module_name;
                         e->name = &im->name;
-                        e->type = IMPORT_FUNC;
+                        e->type = EXTERNTYPE_FUNC;
                         e->u.func = fi;
 
                         plt++;
@@ -454,11 +454,11 @@ dyld_resolve_symbol(struct dyld *d, struct dyld_object *refobj,
                     uint32_t *resultp)
 {
         struct dyld_object *obj;
-        enum exporttype etype;
+        enum externtype etype;
         if (symtype == SYM_TYPE_FUNC) {
-                etype = EXPORT_FUNC;
+                etype = EXTERNTYPE_FUNC;
         } else {
-                etype = EXPORT_GLOBAL;
+                etype = EXTERNTYPE_GLOBAL;
         }
         LIST_FOREACH(obj, &d->objs, q) {
                 const struct module *m = obj->module;
