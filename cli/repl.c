@@ -530,7 +530,12 @@ toywasm_repl_load(struct repl_state *state, const char *modname,
                 struct dyld *d = &mod_u->u.dyld;
                 dyld_init(d);
                 d->base_import_obj = state->imports;
-                return dyld_load_main_object_from_file(d, filename);
+                ret = dyld_load_main_object_from_file(d, filename);
+                if (ret != 0) {
+                        return ret;
+                }
+                state->nmodules++;
+                return 0;
         }
         struct repl_module_state *mod = &mod_u->u.repl;
         memset(mod, 0, sizeof(*mod));
