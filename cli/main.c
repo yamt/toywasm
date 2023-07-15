@@ -373,8 +373,9 @@ main(int argc, char *const *argv)
         }
 #if defined(TOYWASM_ENABLE_WASI_THREADS)
         if (state->wasi_threads != NULL) {
-                const struct repl_module_state *mod =
+                const struct repl_module_state_u *mod_u =
                         &state->modules[state->nmodules - 1];
+                const struct repl_module_state *mod = &mod_u->u.repl;
                 ret = wasi_threads_instance_set_thread_spawn_args(
                         state->wasi_threads, mod->module, mod->extra_import);
                 if (ret != 0) {
