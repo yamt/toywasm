@@ -46,7 +46,7 @@ static const struct name name_stack_pointer =
         NAME_FROM_CSTR_LITERAL("__stack_pointer");
 static const struct name name_heap_base =
         NAME_FROM_CSTR_LITERAL("__heap_base");
-static const struct name name_heap_end = NAME_FROM_CSTR_LITERAL("__heap_ned");
+static const struct name name_heap_end = NAME_FROM_CSTR_LITERAL("__heap_end");
 
 static const struct name name_main_obj = NAME_FROM_CSTR_LITERAL("<main>");
 
@@ -544,6 +544,7 @@ dyld_load_object_from_file(struct dyld *d, const struct name *name,
                 goto fail;
         }
         obj->name = name;
+        const struct name *objname = dyld_object_name(obj);
         ret = map_file(filename, (void *)&obj->bin, &obj->binsz);
         if (ret != 0) {
                 goto fail;
@@ -576,6 +577,9 @@ dyld_load_object_from_file(struct dyld *d, const struct name *name,
         if (ret != 0) {
                 goto fail;
         }
+        xlog_trace("dyld: obj %.*s __memory_base %" PRIx32
+                   " __table_base %" PRIx32,
+                   CSTR(objname), obj->memory_base, obj->table_base);
         global_set_i32(&obj->memory_base_global, obj->memory_base);
         global_set_i32(&obj->table_base_global, obj->table_base);
         assert(d->shared_import_obj != NULL);
@@ -592,7 +596,6 @@ dyld_load_object_from_file(struct dyld *d, const struct name *name,
         }
         report_clear(&report);
         LIST_INSERT_TAIL(&d->objs, obj, q);
-        const struct name *objname = dyld_object_name(obj);
         xlog_trace("dyld: %.*s loaded", CSTR(objname));
         return 0;
 fail:
@@ -752,7 +755,9 @@ dyld_resolve_got_symbols(struct dyld *d, struct dyld_object *refobj)
 {
         const struct module *m = refobj->module;
         struct globalinst *got = refobj->gots;
+        const struct name *objname = dyld_object_name(refobj);
         int ret;
+        xlog_trace("dyld: relocating %.*s", CSTR(objname));
         uint32_t i;
         for (i = 0; i < m->nimports; i++) {
                 const struct import *im = &m->imports[i];
@@ -768,6 +773,9 @@ dyld_resolve_got_symbols(struct dyld *d, struct dyld_object *refobj)
                 ret = dyld_resolve_symbol(d, refobj, symtype, &im->name,
                                           &addr);
                 if (ret != 0) {
+                        xlog_error("dyld: failed to resolve %.*s %.*s %.*s",
+                                   CSTR(objname), CSTR(&im->module_name),
+                                   CSTR(&im->name));
                         goto fail;
                 }
                 global_set_i32(got, addr);
