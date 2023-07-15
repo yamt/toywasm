@@ -49,6 +49,8 @@ struct dyld_object {
 };
 
 struct dyld {
+        struct import_object *global_import_obj;
+
         uint32_t memory_base;
         uint32_t table_base;
 
