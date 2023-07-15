@@ -11,6 +11,7 @@ struct exec_context;
 struct instance;
 struct funcinst;
 struct tableinst;
+struct meminst;
 struct globalinst;
 struct localtype;
 struct resulttype;
@@ -27,7 +28,8 @@ int exec_const_expr(const struct expr *expr, enum valtype type,
 
 int memory_init(struct exec_context *ctx, uint32_t memidx, uint32_t dataidx,
                 uint32_t d, uint32_t s, uint32_t n);
-uint32_t memory_grow(struct exec_context *ctx, uint32_t memidx, uint32_t sz);
+uint32_t memory_grow(struct meminst *mi, uint32_t sz);
+uint32_t memory_grow2(struct exec_context *ctx, uint32_t memidx, uint32_t sz);
 
 int memory_notify(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
                   uint32_t offset, uint32_t count, uint32_t *nwokenp);

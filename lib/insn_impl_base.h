@@ -314,7 +314,7 @@ INSN_IMPL(memory_grow)
         POP_VAL(TYPE_i32, n);
         struct val val_error;
         if (EXECUTING) {
-                val_error.u.i32 = memory_grow(ECTX, memidx, val_n.u.i32);
+                val_error.u.i32 = memory_grow2(ECTX, memidx, val_n.u.i32);
         }
         PUSH_VAL(TYPE_i32, error);
         SAVE_PC;
