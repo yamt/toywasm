@@ -164,6 +164,24 @@ is_env_func_import(const struct module *m, const struct import *im)
 }
 
 static bool
+is_binding_weak(const struct module *m, const struct name *sym)
+{
+        const struct dylink *dy = m->dylink;
+        uint32_t i;
+        for (i = 0; i < dy->nimport_info; i++) {
+                const struct dylink_import_info *ii = &dy->import_info[i];
+                if (compare_name(&ii->module_name, &name_env)) {
+                        continue;
+                }
+                if (compare_name(&ii->name, sym)) {
+                        continue;
+                }
+                return (ii->flags & WASM_SYM_BINDING_WEAK) != 0;
+        }
+        return false;
+}
+
+static bool
 is_func_export(const struct module *m, const struct export *ex)
 {
         return ex->desc.type == EXTERNTYPE_FUNC;
@@ -815,6 +833,10 @@ dyld_resolve_symbol(struct dyld *d, struct dyld_object *refobj,
                         return 0;
                 }
         }
+        if (is_binding_weak(refobj->module, sym)) {
+                *resultp = 0;
+                return 0;
+        }
         return ENOENT;
 }
 
@@ -841,7 +863,6 @@ dyld_resolve_got_symbols(struct dyld *d, struct dyld_object *refobj)
                 ret = dyld_resolve_symbol(d, refobj, symtype, &im->name,
                                           &addr);
                 if (ret != 0) {
-                        /* XXX implement weak symbol */
                         xlog_error("dyld: failed to resolve %.*s %.*s %.*s",
                                    CSTR(objname), CSTR(&im->module_name),
                                    CSTR(&im->name));
