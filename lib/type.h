@@ -414,7 +414,9 @@ struct module {
 
         const uint8_t *bin;
 
+#if defined(TOYWASM_ENABLE_DYLD)
         struct dylink *dylink;
+#endif
 };
 
 struct exec_context;
