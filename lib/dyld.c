@@ -64,14 +64,14 @@ is_GOT_func_import(const struct module *m, const struct import *im)
 }
 
 static bool
-is_env_func_import(const struct import *im)
+is_env_func_import(const struct module *m, const struct import *im)
 {
         return im->desc.type == IMPORT_FUNC &&
                !compare_name(&name_env, &im->module_name);
 }
 
 static bool
-is_func_export(const struct export *ex)
+is_func_export(const struct module *m, const struct export *ex)
 {
         return ex->desc.type == EXPORT_FUNC;
 }
@@ -216,6 +216,24 @@ dyld_allocate_table(struct dyld *d)
                 d->table_base = align_up(d->table_base, minfo->tablealignment);
                 obj->table_base = d->table_base;
                 d->table_base += minfo->tablesize;
+
+                /*
+                 * Note: the following logic allocates the max size.
+                 *
+                 * - not all exported functions are actually imported
+                 * - some of exported functions can refer to the same
+                 *   function instance.
+                 */
+                const struct module *m = obj->module;
+                uint32_t nexports = 0;
+                uint32_t i;
+                for (i = 0; i < m->nexports; i++) {
+                        if (is_func_export(m, &m->exports[i])) {
+                                nexports++;
+                        }
+                }
+                obj->table_export_base = d->table_base;
+                d->table_base += nexports;
         }
         return 0;
 }
