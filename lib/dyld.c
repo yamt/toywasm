@@ -29,6 +29,11 @@ static const struct name name_memory_base =
 static const struct name name_stack_pointer =
         NAME_FROM_CSTR_LITERAL("__stack_pointer");
 
+static const globaltype globaltype_i32_mut = {
+        .type = TYPE_i32,
+        .mut = GLOBAL_VAR,
+};
+
 static bool
 is_global_i32_mut_import(const struct module *m, const struct import *im)
 {
@@ -36,7 +41,7 @@ is_global_i32_mut_import(const struct module *m, const struct import *im)
                 return false;
         }
         const struct globaltype *gt = &im->desc.u.globaltype;
-        return gt->mut && gt->t == TYPE_i32;
+        return gt->mut == GLOBAL_VAR && gt->t == TYPE_i32;
 }
 
 static bool
@@ -83,7 +88,7 @@ is_global_export(const struct module *m, const struct export *ex)
                 return false;
         }
         const struct globaltype *gt = module_globaltype(m, ex->desc.idx);
-        return !gt->mut && gt->t == TYPE_i32;
+        return gt->mut == GLOBAL_CONST && gt->t == TYPE_i32;
 }
 
 void
