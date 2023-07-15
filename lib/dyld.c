@@ -856,7 +856,7 @@ fail:
         return ret;
 }
 
-int
+static int
 dyld_resolve_all_got_symbols(struct dyld *d)
 {
         struct dyld_object *obj;
@@ -870,7 +870,7 @@ dyld_resolve_all_got_symbols(struct dyld *d)
 }
 
 int
-dyld_load_main_object_from_file(struct dyld *d, const char *filename)
+dyld_load(struct dyld *d, const char *filename)
 {
         int ret;
         ret = dyld_create_shared_resources(d);

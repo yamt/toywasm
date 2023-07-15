@@ -64,7 +64,7 @@ struct dyld {
 
 void dyld_init(struct dyld *d);
 void dyld_clear(struct dyld *d);
-int dyld_load_main_object_from_file(struct dyld *d, const char *name);
+int dyld_load(struct dyld *d, const char *filename);
 struct instance *dyld_main_object_instance(struct dyld *d);
 
 const struct name *dyld_object_name(struct dyld_object *obj);
