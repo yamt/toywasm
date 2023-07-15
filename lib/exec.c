@@ -1555,13 +1555,9 @@ memory_unlock(struct meminst *mi) NO_THREAD_SAFETY_ANALYSIS
 #endif
 }
 
-uint32_t
-memory_grow(struct exec_context *ctx, uint32_t memidx, uint32_t sz)
+static uint32_t
+memory_grow_impl(struct exec_context *ctx, struct meminst *mi, uint32_t sz)
 {
-        struct instance *inst = ctx->instance;
-        const struct module *m = inst->module;
-        assert(memidx < m->nimportedmems + m->nmems);
-        struct meminst *mi = VEC_ELEM(inst->mems, memidx);
         const struct memtype *mt = mi->type;
         const struct limits *lim = &mt->lim;
         memory_lock(mi);
@@ -1598,7 +1594,7 @@ retry:
 
         if (do_realloc) {
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
-                struct cluster *c = ctx->cluster;
+                struct cluster *c = ctx != NULL ? ctx->cluster : NULL;
                 if (shared && c != NULL) {
                         /*
                          * suspend all other threads to ensure that no one is
@@ -1648,6 +1644,22 @@ retry:
         mi->size_in_pages = new_size;
         memory_unlock(mi);
         return orig_size; /* success */
+}
+
+uint32_t
+memory_grow2(struct exec_context *ctx, uint32_t memidx, uint32_t sz)
+{
+        struct instance *inst = ctx->instance;
+        const struct module *m = inst->module;
+        assert(memidx < m->nimportedmems + m->nmems);
+        struct meminst *mi = VEC_ELEM(inst->mems, memidx);
+        return memory_grow_impl(ctx, mi, sz);
+}
+
+uint32_t
+memory_grow(struct meminst *mi, uint32_t sz)
+{
+        return memory_grow_impl(NULL, mi, sz);
 }
 
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
