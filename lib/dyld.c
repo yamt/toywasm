@@ -43,6 +43,14 @@ static const struct globaltype globaltype_i32_const = {
         .mut = GLOBAL_CONST,
 };
 
+static uint32_t
+align_up(uint32_t v, uint32_t palign)
+{
+        uint32_t align = 1 << palign;
+        uint32_t mask = align - 1;
+        return (v + mask) & ~mask;
+}
+
 static void
 global_set_i32(struct globalinst *ginst, uint32_t v)
 {
@@ -113,6 +121,11 @@ dyld_init(struct dyld *d)
 {
         memset(d, 0, sizeof(*d));
         LIST_HEAD_INIT(&d->objs);
+
+        d->table_base = 1; /* do not use the first one */
+
+        uint32_t stack_size = 16 * 1024; /* XXX TODO guess from main obj */
+        d->memory_base = stack_size;
 }
 
 struct dyld_object *
@@ -183,7 +196,7 @@ fail:
 }
 
 int
-dyld_prepare_got(struct dyld *d, struct dyld_object *obj)
+dyld_create_got(struct dyld *d, struct dyld_object *obj)
 {
         int ret;
         const struct module *m = obj->module;
@@ -280,6 +293,45 @@ fail:
 }
 
 int
+dyld_allocate_memory(struct dyld *d, struct dyld_object *obj)
+{
+        const struct dylink_mem_info *minfo = &obj->module->dylink->mem_info;
+        d->memory_base = align_up(d->memory_base, minfo->memoryalignment);
+        obj->memory_base = d->memory_base;
+        d->memory_base += minfo->memorysize;
+        return 0;
+}
+
+int
+dyld_allocate_table(struct dyld *d, struct dyld_object *obj)
+{
+        const struct dylink_mem_info *minfo = &obj->module->dylink->mem_info;
+        d->table_base = align_up(d->table_base, minfo->tablealignment);
+        obj->table_base = d->table_base;
+        d->table_base += minfo->tablesize;
+
+        /*
+         * Note: the following logic likely allocates more than
+         * what's actually necessary because:
+         *
+         * - not all exported functions are actually imported
+         * - some of exported functions can refer to the same
+         *   function instance.
+         */
+        const struct module *m = obj->module;
+        uint32_t nexports = 0;
+        uint32_t i;
+        for (i = 0; i < m->nexports; i++) {
+                if (is_func_export(m, &m->exports[i])) {
+                        nexports++;
+                }
+        }
+        obj->table_export_base = d->table_base;
+        d->table_base += nexports;
+        return 0;
+}
+
+int
 dyld_load_object_from_file(struct dyld *d, const struct name *name,
                            const char *filename)
 {
@@ -308,71 +360,23 @@ dyld_load_object_from_file(struct dyld *d, const struct name *name,
                 ret = EINVAL;
                 goto fail;
         }
+        ret = dyld_create_got(d, obj);
+        if (ret != 0) {
+                goto fail;
+        }
+        ret = dyld_allocate_memory(d, obj);
+        if (ret != 0) {
+                goto fail;
+        }
+        ret = dyld_allocate_table(d, obj);
+        if (ret != 0) {
+                goto fail;
+        }
         LIST_INSERT_TAIL(&d->objs, obj, q);
+        return 0;
 fail:
+        /* todo: destroy obj */
         return ret;
-}
-
-static uint32_t
-align_up(uint32_t v, uint32_t palign)
-{
-        uint32_t align = 1 << palign;
-        uint32_t mask = align - 1;
-        return (v + mask) & ~mask;
-}
-
-int
-dyld_allocate_memory(struct dyld *d)
-{
-        uint32_t stack_size = 16 * 1024; /* XXX TODO guess from main obj */
-
-        d->memory_base += stack_size;
-
-        struct dyld_object *obj;
-        LIST_FOREACH(obj, &d->objs, q) {
-                const struct dylink_mem_info *minfo =
-                        &obj->module->dylink->mem_info;
-                d->memory_base =
-                        align_up(d->memory_base, minfo->memoryalignment);
-                obj->memory_base = d->memory_base;
-                d->memory_base += minfo->memorysize;
-        }
-        return 0;
-}
-
-int
-dyld_allocate_table(struct dyld *d)
-{
-        d->table_base += 1; /* do not use the first one */
-
-        struct dyld_object *obj;
-        LIST_FOREACH(obj, &d->objs, q) {
-                const struct dylink_mem_info *minfo =
-                        &obj->module->dylink->mem_info;
-                d->table_base = align_up(d->table_base, minfo->tablealignment);
-                obj->table_base = d->table_base;
-                d->table_base += minfo->tablesize;
-
-                /*
-                 * Note: the following logic likely allocates more than
-                 * what's actually necessary because:
-                 *
-                 * - not all exported functions are actually imported
-                 * - some of exported functions can refer to the same
-                 *   function instance.
-                 */
-                const struct module *m = obj->module;
-                uint32_t nexports = 0;
-                uint32_t i;
-                for (i = 0; i < m->nexports; i++) {
-                        if (is_func_export(m, &m->exports[i])) {
-                                nexports++;
-                        }
-                }
-                obj->table_export_base = d->table_base;
-                d->table_base += nexports;
-        }
-        return 0;
 }
 
 int
@@ -403,23 +407,15 @@ fail:
 }
 
 int
-dyld_load_main_object_from_file(struct dyld *d, const char *name)
+dyld_load_main_object_from_file(struct dyld *d, const char *filename)
 {
         int ret;
         /* REVISIT: name of main module */
-        ret = dyld_load_object_from_file(d, NULL, name);
+        ret = dyld_load_object_from_file(d, NULL, filename);
         if (ret != 0) {
                 goto fail;
         }
         ret = dyld_load_needed_objects(d);
-        if (ret != 0) {
-                goto fail;
-        }
-        ret = dyld_allocate_memory(d);
-        if (ret != 0) {
-                goto fail;
-        }
-        ret = dyld_allocate_table(d);
         if (ret != 0) {
                 goto fail;
         }
