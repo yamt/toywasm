@@ -169,18 +169,6 @@ is_func_export(const struct module *m, const struct export *ex)
         return ex->desc.type == EXTERNTYPE_FUNC;
 }
 
-#if 0
-static bool
-is_global_export(const struct module *m, const struct export *ex)
-{
-        if (ex->desc.type != EXTERNTYPE_GLOBAL) {
-                return false;
-        }
-        const struct globaltype *gt = module_globaltype(m, ex->desc.idx);
-        return is_global_type_i32_const(gt);
-}
-#endif
-
 const struct name *
 dyld_object_name(struct dyld_object *obj)
 {
@@ -198,18 +186,6 @@ dyld_init(struct dyld *d)
         LIST_HEAD_INIT(&d->objs);
         d->table_base = 1; /* do not use the first one */
         d->memory_base = 0;
-}
-
-struct dyld_object *
-dyld_find_object_by_instance(struct dyld *d, const struct instance *inst)
-{
-        struct dyld_object *obj;
-        LIST_FOREACH(obj, &d->objs, q) {
-                if (obj->instance == inst) {
-                        return obj;
-                }
-        }
-        return NULL;
 }
 
 struct dyld_object *
