@@ -11,6 +11,7 @@
 #include "dyld.h"
 #include "dyld_plt.h"
 #include "dylink_type.h"
+#include "exec.h"
 #include "fileio.h"
 #include "instance.h"
 #include "list.h"
