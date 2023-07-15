@@ -176,7 +176,7 @@ is_global_export(const struct module *m, const struct export *ex)
 }
 #endif
 
-static const struct name *
+const struct name *
 dyld_object_name(struct dyld_object *obj)
 {
         const struct name *objname = obj->name;
@@ -743,6 +743,12 @@ dyld_resolve_symbol(struct dyld *d, struct dyld_object *refobj,
                                 }
                                 addr = global_get_i32(gi) + obj->memory_base;
                         }
+                        const struct name *refobjname =
+                                dyld_object_name(refobj);
+                        const struct name *objname = dyld_object_name(obj);
+                        xlog_trace("dyld: resolved %.*s %.*s -> %.*s %" PRIx32,
+                                   CSTR(refobjname), CSTR(sym), CSTR(objname),
+                                   addr);
                         *resultp = addr;
                         return 0;
                 }
