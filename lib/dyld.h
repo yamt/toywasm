@@ -3,12 +3,6 @@
 #include "list.h"
 #include "type.h"
 
-struct dyld_sym {
-        const struct name *name;
-        enum externtype type;
-        uint32_t idx;
-};
-
 enum symtype {
         SYM_TYPE_FUNC,
         SYM_TYPE_MEM,
