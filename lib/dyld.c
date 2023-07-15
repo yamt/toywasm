@@ -26,8 +26,8 @@
 #warning dyld.c is not wasm-threads safe
 #endif
 
-int dyld_load_object_from_file(struct dyld *d, const struct name *name,
-                               const char *filename);
+static int dyld_load_object_from_file(struct dyld *d, const struct name *name,
+                                      const char *filename);
 
 static const struct name name_GOT_mem = NAME_FROM_CSTR_LITERAL("GOT.mem");
 static const struct name name_GOT_func = NAME_FROM_CSTR_LITERAL("GOT.func");
@@ -188,7 +188,7 @@ dyld_init(struct dyld *d)
         d->memory_base = 0;
 }
 
-struct dyld_object *
+static struct dyld_object *
 dyld_find_object_by_name(struct dyld *d, const struct name *name)
 {
         struct dyld_object *obj;
@@ -203,7 +203,7 @@ dyld_find_object_by_name(struct dyld *d, const struct name *name)
         return NULL;
 }
 
-int
+static int
 dyld_load_needed_objects(struct dyld *d)
 {
         int ret = 0;
@@ -232,7 +232,7 @@ fail:
         return ret;
 }
 
-int
+static int
 dyld_allocate_local_import_object(struct dyld *d, struct dyld_object *obj)
 {
         int ret;
@@ -249,7 +249,7 @@ fail:
         return ret;
 }
 
-int
+static int
 dyld_create_got(struct dyld *d, struct dyld_object *obj)
 {
         int ret;
@@ -344,7 +344,7 @@ fail:
         return ret;
 }
 
-int
+static int
 dyld_allocate_memory(struct dyld *d, uint32_t align, uint32_t sz,
                      uint32_t *resultp)
 {
@@ -367,7 +367,7 @@ dyld_allocate_memory(struct dyld *d, uint32_t align, uint32_t sz,
         return 0;
 }
 
-int
+static int
 dyld_allocate_table(struct dyld *d, uint32_t align, uint32_t sz,
                     uint32_t *resultp)
 {
@@ -388,7 +388,7 @@ dyld_allocate_table(struct dyld *d, uint32_t align, uint32_t sz,
         return 0;
 }
 
-int
+static int
 dyld_allocate_memory_for_obj(struct dyld *d, struct dyld_object *obj)
 {
         const struct dylink_mem_info *minfo = &obj->module->dylink->mem_info;
@@ -405,7 +405,7 @@ dyld_allocate_memory_for_obj(struct dyld *d, struct dyld_object *obj)
         return 0;
 }
 
-int
+static int
 dyld_allocate_stack(struct dyld *d, uint32_t stack_size)
 {
         uint32_t base;
@@ -427,7 +427,7 @@ dyld_allocate_stack(struct dyld *d, uint32_t stack_size)
         return 0;
 }
 
-int
+static int
 dyld_allocate_heap(struct dyld *d)
 {
         uint32_t base;
@@ -449,7 +449,7 @@ dyld_allocate_heap(struct dyld *d)
         return 0;
 }
 
-int
+static int
 dyld_allocate_table_for_obj(struct dyld *d, struct dyld_object *obj)
 {
         const struct dylink_mem_info *minfo = &obj->module->dylink->mem_info;
@@ -581,7 +581,7 @@ dyld_execute_all_init_funcs(struct dyld *d)
         return 0;
 }
 
-int
+static int
 dyld_load_object_from_file(struct dyld *d, const struct name *name,
                            const char *filename)
 {
@@ -654,7 +654,7 @@ fail:
         return ret;
 }
 
-int
+static int
 dyld_create_shared_resources(struct dyld *d)
 {
         int ret;
@@ -725,7 +725,7 @@ fail:
         return ret;
 }
 
-uint32_t
+static uint32_t
 dyld_register_funcinst(struct dyld *d, struct dyld_object *obj,
                        const struct funcinst *fi)
 {
@@ -818,7 +818,7 @@ dyld_resolve_symbol(struct dyld *d, struct dyld_object *refobj,
         return ENOENT;
 }
 
-int
+static int
 dyld_resolve_got_symbols(struct dyld *d, struct dyld_object *refobj)
 {
         const struct module *m = refobj->module;
