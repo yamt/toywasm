@@ -407,6 +407,40 @@ fail:
 }
 
 int
+dyld_find_symbol(struct dyld_object *obj, const struct name *sym)
+{
+        struct module *m = obj->module;
+        struct instance *inst = obj->instance;
+
+        uint32_t i;
+        for (i = 0; i < m->nexports; i++) {
+        }
+}
+
+int
+dyld_resolve_symbol(struct dyld *d, struct dyld_object *refobj,
+                    enum exporttype type, const struct name *sym,
+                    const void **resultp)
+{
+        struct dyld_object *obj;
+        LIST_FOREACH(obj, &d->objs, q) {
+                const struct module *m = obj->module;
+                uint32_t i;
+                for (i = 0; i < m->nexports; i++) {
+                        const struct export *ex = &m->exports[i];
+                        const struct exportdesc *d = &ex->desc;
+                        if (d->type != type || compare_name(sym, &ex->name)) {
+                                continue;
+                        }
+                        const struct instance *inst = obj->instance;
+                        *resultp = VEC_ELEM(inst->funcs, d->idx);
+                        return 0;
+                }
+        }
+        return ENOENT;
+}
+
+int
 dyld_load_main_object_from_file(struct dyld *d, const char *filename)
 {
         int ret;
@@ -420,6 +454,9 @@ dyld_load_main_object_from_file(struct dyld *d, const char *filename)
                 goto fail;
         }
         ret = dyld_commit_allocation(d);
+        if (ret != 0) {
+                goto fail;
+        }
 fail:
         return ret;
 }

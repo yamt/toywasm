@@ -12,14 +12,14 @@ dyld_plt(struct exec_context *ctx, struct host_instance *hi,
         /* resolve the index */
         struct dyld_plt *plt = (void *)hi;
         if (plt->finst == NULL) {
-                ret = dyld_symbol_resolve(dyld, plt->refobj, plt->sym);
-
-                ret = table_get_func_indirect(ctx, tinst, ft,
-                                              plt->idx_in_table, &plt->finst);
+                int ret;
+                const void *p;
+                ret = dyld_resolve_symbol(plt->dyld, plt->refobj, EXPORT_FUNC,
+                                          plt->sym, &p);
                 if (ret != 0) {
                         return ret;
                 }
-                assert(plt->finst != NULL);
+                plt->finst = p;
         }
 
         ctx->event_u.call.func = plt->finst;

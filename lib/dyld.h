@@ -10,7 +10,7 @@ struct dyld_sym {
 };
 
 struct dyld_plt {
-        struct funcinst *finst;
+        const struct funcinst *finst;
         const struct name *sym;
         struct dyld_object *refobj;
         struct dyld *dyld;
@@ -54,8 +54,7 @@ struct dyld {
         LIST_HEAD(struct dyld_object) objs;
 };
 
-#if 0
-int dyld_resolve_symbol(struct dyld_object *refobj, enum importtype type,
-                        const struct name *name, void **resultp);
-#endif
+int dyld_resolve_symbol(struct dyld *d, struct dyld_object *refobj,
+                        enum exporttype type, const struct name *sym,
+                        const void **resultp);
 int dyld_load_main_object_from_file(struct dyld *d, const char *name);
