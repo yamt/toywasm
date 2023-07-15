@@ -1,4 +1,8 @@
+#include <assert.h>
+
 #include "dyld.h"
+#include "dyld_plt.h"
+#include "exec_context.h"
 
 int
 dyld_plt(struct exec_context *ctx, struct host_instance *hi,
@@ -6,9 +10,9 @@ dyld_plt(struct exec_context *ctx, struct host_instance *hi,
          struct cell *results)
 {
         /* resolve the index */
-        struct plt *plt = (struct plt *)hi;
+        struct dyld_plt *plt = (void *)hi;
         if (plt->finst == NULL) {
-                ret = dyld_symbol_resolve(dyld, plt->sym);
+                ret = dyld_symbol_resolve(dyld, plt->refobj, plt->sym);
 
                 ret = table_get_func_indirect(ctx, tinst, ft,
                                               plt->idx_in_table, &plt->finst);
