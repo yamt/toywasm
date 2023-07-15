@@ -43,6 +43,7 @@ struct dyld_object {
 };
 
 struct dyld {
+        struct import_object *base_import_obj;
         struct import_object *shared_import_obj;
 
         uint32_t memory_base;
@@ -57,6 +58,8 @@ struct dyld {
         LIST_HEAD(struct dyld_object) objs;
 };
 
+void dyld_init(struct dyld *d);
+void dyld_clear(struct dyld *d);
 int dyld_resolve_symbol(struct dyld *d, struct dyld_object *refobj,
                         enum symtype symtype, const struct name *sym,
                         uint32_t *resultp);

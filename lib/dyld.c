@@ -36,6 +36,9 @@ static const struct name name_stack_pointer =
 static const struct name name_table =
         NAME_FROM_CSTR_LITERAL("__indirect_function_table");
 static const struct name name_memory = NAME_FROM_CSTR_LITERAL("memory");
+static const struct val val_zero = {
+        .u.funcref.func = NULL,
+};
 
 static const struct globaltype globaltype_i32_mut = {
         .t = TYPE_i32,
@@ -53,6 +56,12 @@ align_up(uint32_t v, uint32_t palign)
         uint32_t align = 1 << palign;
         uint32_t mask = align - 1;
         return (v + mask) & ~mask;
+}
+
+static uint32_t
+howmany(uint32_t a, uint32_t b)
+{
+        return (a + b - 1) / b;
 }
 
 static uint32_t
@@ -318,22 +327,66 @@ fail:
 }
 
 int
-dyld_allocate_memory(struct dyld *d, struct dyld_object *obj)
+dyld_allocate_memory(struct dyld *d, uint32_t align, uint32_t sz,
+                     uint32_t *resultp)
 {
-        const struct dylink_mem_info *minfo = &obj->module->dylink->mem_info;
-        d->memory_base = align_up(d->memory_base, minfo->memoryalignment);
-        obj->memory_base = d->memory_base;
-        d->memory_base += minfo->memorysize;
+        uint32_t oldbase = d->memory_base;
+        uint32_t aligned = align_up(oldbase, align);
+        uint32_t newbase = aligned + sz;
+        assert(newbase >= oldbase);
+        uint32_t oldnpg = howmany(oldbase, WASM_PAGE_SIZE);
+        uint32_t newnpg = howmany(newbase, WASM_PAGE_SIZE);
+        assert(newnpg >= oldnpg);
+        if (newnpg > oldnpg) {
+                uint32_t ret = memory_grow(d->meminst, newnpg - oldnpg);
+                if (ret == (uint32_t)-1) {
+                        return ENOMEM;
+                }
+                assert(ret == oldnpg);
+        }
+        d->memory_base = newbase;
+        *resultp = aligned;
         return 0;
 }
 
 int
-dyld_allocate_table(struct dyld *d, struct dyld_object *obj)
+dyld_allocate_table(struct dyld *d, uint32_t align, uint32_t sz,
+                    uint32_t *resultp)
+{
+        uint32_t oldbase = d->memory_base;
+        uint32_t aligned = align_up(oldbase, align);
+        uint32_t newbase = aligned + sz;
+        assert(newbase >= oldbase);
+        if (newbase > oldbase) {
+                uint32_t ret =
+                        table_grow(d->tableinst, &val_zero, newbase - oldbase);
+                if (ret == (uint32_t)-1) {
+                        return ENOMEM;
+                }
+                assert(ret == oldbase);
+        }
+        d->table_base = newbase;
+        *resultp = aligned;
+        return 0;
+}
+
+int
+dyld_allocate_memory_for_obj(struct dyld *d, struct dyld_object *obj)
 {
         const struct dylink_mem_info *minfo = &obj->module->dylink->mem_info;
-        d->table_base = align_up(d->table_base, minfo->tablealignment);
-        obj->table_base = d->table_base;
-        d->table_base += minfo->tablesize;
+        return dyld_allocate_memory(d, minfo->memoryalignment,
+                                    minfo->memorysize, &obj->memory_base);
+}
+
+int
+dyld_allocate_table_for_obj(struct dyld *d, struct dyld_object *obj)
+{
+        const struct dylink_mem_info *minfo = &obj->module->dylink->mem_info;
+        int ret = dyld_allocate_table(d, minfo->tablealignment,
+                                      minfo->tablesize, &obj->table_base);
+        if (ret != 0) {
+                return ret;
+        }
 
         /*
          * Note: the following logic likely allocates more than
@@ -351,10 +404,27 @@ dyld_allocate_table(struct dyld *d, struct dyld_object *obj)
                         nexports++;
                 }
         }
-        obj->table_export_base = d->table_base;
-        d->table_base += nexports;
-        obj->nexports = nexports;
-        return 0;
+        return dyld_allocate_table(d, 0, nexports, &obj->table_export_base);
+}
+
+static void
+dyld_object_destroy(struct dyld_object *obj)
+{
+        if (obj->local_import_obj != NULL) {
+                import_object_destroy(obj->local_import_obj);
+        }
+        free(obj->gots);
+        free(obj->plts);
+        if (obj->instance != NULL) {
+                instance_destroy(obj->instance);
+        }
+        if (obj->module != NULL) {
+                module_destroy(obj->module);
+        }
+        if (obj->bin != NULL) {
+                unmap_file((void *)obj->bin, obj->binsz);
+        }
+        free(obj);
 }
 
 int
@@ -390,19 +460,29 @@ dyld_load_object_from_file(struct dyld *d, const struct name *name,
         if (ret != 0) {
                 goto fail;
         }
-        ret = dyld_allocate_memory(d, obj);
+        ret = dyld_allocate_memory_for_obj(d, obj);
         if (ret != 0) {
                 goto fail;
         }
-        ret = dyld_allocate_table(d, obj);
+        ret = dyld_allocate_table_for_obj(d, obj);
         if (ret != 0) {
                 goto fail;
         }
-        /* instantiate here */
+        obj->local_import_obj->next = d->shared_import_obj;
+        struct report report;
+        report_init(&report);
+        ret = instance_create(obj->module, &obj->instance,
+                              obj->local_import_obj, &report);
+        report_clear(&report);
+        if (ret != 0) {
+                goto fail;
+        }
         LIST_INSERT_TAIL(&d->objs, obj, q);
         return 0;
 fail:
-        /* todo: destroy obj */
+        if (obj != NULL) {
+                dyld_object_destroy(obj);
+        }
         return ret;
 }
 
@@ -451,6 +531,7 @@ dyld_create_shared_resources(struct dyld *d)
         e++;
 
         assert(e == d->shared_import_obj->entries + nent);
+        d->shared_import_obj->next = d->base_import_obj;
 fail:
         return ret;
 }
@@ -571,6 +652,10 @@ int
 dyld_load_main_object_from_file(struct dyld *d, const char *filename)
 {
         int ret;
+        ret = dyld_create_shared_resources(d);
+        if (ret != 0) {
+                goto fail;
+        }
         /* REVISIT: name of main module */
         ret = dyld_load_object_from_file(d, NULL, filename);
         if (ret != 0) {
@@ -586,23 +671,6 @@ fail:
 }
 
 void
-dyld_object_destroy(struct dyld_object *obj)
-{
-        free(obj->gots);
-        free(obj->plts);
-        if (obj->instance != NULL) {
-                instance_destroy(obj->instance);
-        }
-        if (obj->module != NULL) {
-                module_destroy(obj->module);
-        }
-        if (obj->bin != NULL) {
-                unmap_file((void *)obj->bin, obj->binsz);
-        }
-        free(obj);
-}
-
-void
 dyld_clear(struct dyld *d)
 {
         struct dyld_object *obj;
@@ -615,6 +683,9 @@ dyld_clear(struct dyld *d)
         }
         if (d->tableinst != NULL) {
                 table_instance_destroy(d->tableinst);
+        }
+        if (d->shared_import_obj != NULL) {
+                import_object_destroy(d->shared_import_obj);
         }
         memset(d, 0, sizeof(*d));
 }
