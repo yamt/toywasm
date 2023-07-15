@@ -124,7 +124,7 @@ struct functype {
 };
 
 struct funcref {
-        struct funcinst *func;
+        const struct funcinst *func;
 };
 
 union v128 {
