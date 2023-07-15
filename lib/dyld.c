@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -21,21 +22,34 @@
 #include "util.h"
 #include "xlog.h"
 
+#if defined(TOYWASM_ENABLE_WASM_THREADS)
+#warning dyld.c is not wasm-threads safe
+#endif
+
 int dyld_load_object_from_file(struct dyld *d, const struct name *name,
                                const char *filename);
 
 static const struct name name_GOT_mem = NAME_FROM_CSTR_LITERAL("GOT.mem");
 static const struct name name_GOT_func = NAME_FROM_CSTR_LITERAL("GOT.func");
 static const struct name name_env = NAME_FROM_CSTR_LITERAL("env");
+
 static const struct name name_table_base =
         NAME_FROM_CSTR_LITERAL("__table_base");
 static const struct name name_memory_base =
         NAME_FROM_CSTR_LITERAL("__memory_base");
-static const struct name name_stack_pointer =
-        NAME_FROM_CSTR_LITERAL("__stack_pointer");
+
 static const struct name name_table =
         NAME_FROM_CSTR_LITERAL("__indirect_function_table");
 static const struct name name_memory = NAME_FROM_CSTR_LITERAL("memory");
+
+static const struct name name_stack_pointer =
+        NAME_FROM_CSTR_LITERAL("__stack_pointer");
+static const struct name name_heap_base =
+        NAME_FROM_CSTR_LITERAL("__heap_base");
+static const struct name name_heap_end = NAME_FROM_CSTR_LITERAL("__heap_ned");
+
+static const struct name name_main_obj = NAME_FROM_CSTR_LITERAL("main obj");
+
 static const struct val val_zero = {
         .u.funcref.func = NULL,
 };
@@ -51,11 +65,17 @@ static const struct globaltype globaltype_i32_const = {
 };
 
 static uint32_t
-align_up(uint32_t v, uint32_t palign)
+align_up(uint32_t v, uint32_t align)
 {
-        uint32_t align = 1 << palign;
         uint32_t mask = align - 1;
         return (v + mask) & ~mask;
+}
+
+static uint32_t
+align_up_log(uint32_t v, uint32_t palign)
+{
+        uint32_t align = 1 << palign;
+        return align_up(v, align);
 }
 
 static uint32_t
@@ -111,6 +131,11 @@ is_GOT_mem_import(const struct module *m, const struct import *im)
         if (compare_name(&name_GOT_mem, &im->module_name)) {
                 return false;
         }
+        /* exclude linker-provided names */
+        if (!compare_name(&im->name, &name_heap_base) ||
+            !compare_name(&im->name, &name_heap_end)) {
+                return false;
+        }
         return true;
 }
 
@@ -151,6 +176,16 @@ is_global_export(const struct module *m, const struct export *ex)
 }
 #endif
 
+static const struct name *
+dyld_object_name(struct dyld_object *obj)
+{
+        const struct name *objname = obj->name;
+        if (objname == NULL) {
+                objname = &name_main_obj;
+        }
+        return objname;
+}
+
 void
 dyld_init(struct dyld *d)
 {
@@ -158,9 +193,7 @@ dyld_init(struct dyld *d)
         LIST_HEAD_INIT(&d->objs);
 
         d->table_base = 1; /* do not use the first one */
-
-        uint32_t stack_size = 16 * 1024; /* XXX TODO guess from main obj */
-        d->memory_base = stack_size;
+        d->memory_base = 0;
 }
 
 struct dyld_object *
@@ -180,6 +213,9 @@ dyld_find_object_by_name(struct dyld *d, const struct name *name)
 {
         struct dyld_object *obj;
         LIST_FOREACH(obj, &d->objs, q) {
+                if (obj->name == NULL) { /* main module */
+                        continue;
+                }
                 if (!compare_name(obj->name, name)) {
                         return obj;
                 }
@@ -193,10 +229,13 @@ dyld_load_needed_objects(struct dyld *d)
         int ret = 0;
         struct dyld_object *obj;
         LIST_FOREACH(obj, &d->objs, q) {
+                const struct name *objname = dyld_object_name(obj);
                 const struct dylink_needs *needs = &obj->module->dylink->needs;
                 uint32_t i;
                 for (i = 0; i < needs->count; i++) {
                         const struct name *name = &needs->names[i];
+                        xlog_trace("dyld: %.*s requires %.*s", CSTR(objname),
+                                   CSTR(name));
                         if (dyld_find_object_by_name(d, name)) {
                                 continue;
                         }
@@ -320,7 +359,8 @@ dyld_create_got(struct dyld *d, struct dyld_object *obj)
 
         assert(got == obj->gots + ngots);
         assert(plt == obj->plts + nplts);
-        assert(e == obj->local_import_obj->entries + nent);
+        assert(e == obj->local_import_obj->entries +
+                            obj->local_import_obj->nentries);
         return 0;
 fail:
         return ret;
@@ -331,7 +371,7 @@ dyld_allocate_memory(struct dyld *d, uint32_t align, uint32_t sz,
                      uint32_t *resultp)
 {
         uint32_t oldbase = d->memory_base;
-        uint32_t aligned = align_up(oldbase, align);
+        uint32_t aligned = align_up_log(oldbase, align);
         uint32_t newbase = aligned + sz;
         assert(newbase >= oldbase);
         uint32_t oldnpg = howmany(oldbase, WASM_PAGE_SIZE);
@@ -353,8 +393,8 @@ int
 dyld_allocate_table(struct dyld *d, uint32_t align, uint32_t sz,
                     uint32_t *resultp)
 {
-        uint32_t oldbase = d->memory_base;
-        uint32_t aligned = align_up(oldbase, align);
+        uint32_t oldbase = d->table_base;
+        uint32_t aligned = align_up_log(oldbase, align);
         uint32_t newbase = aligned + sz;
         assert(newbase >= oldbase);
         if (newbase > oldbase) {
@@ -374,8 +414,54 @@ int
 dyld_allocate_memory_for_obj(struct dyld *d, struct dyld_object *obj)
 {
         const struct dylink_mem_info *minfo = &obj->module->dylink->mem_info;
-        return dyld_allocate_memory(d, minfo->memoryalignment,
-                                    minfo->memorysize, &obj->memory_base);
+        int ret = dyld_allocate_memory(d, minfo->memoryalignment,
+                                       minfo->memorysize, &obj->memory_base);
+        if (ret != 0) {
+                return ret;
+        }
+        const struct name *objname = dyld_object_name(obj);
+        xlog_trace("dyld: memory allocated for obj %.*s: %08" PRIx32
+                   " - %08" PRIx32,
+                   CSTR(objname), obj->memory_base,
+                   obj->memory_base + minfo->memorysize);
+        return 0;
+}
+
+int
+dyld_allocate_stack(struct dyld *d, uint32_t stack_size)
+{
+        uint32_t p;
+        int ret;
+        ret = dyld_allocate_memory(d, 0, stack_size, &p);
+        if (ret != 0) {
+                return ret;
+        }
+        global_set_i32(&d->stack_pointer, p + stack_size);
+        xlog_trace("dyld: stack allocated %08" PRIx32 " - %08" PRIx32, p,
+                   p + stack_size);
+        return 0;
+}
+
+int
+dyld_allocate_heap(struct dyld *d)
+{
+        uint32_t base;
+        uint32_t end;
+        int ret;
+        ret = dyld_allocate_memory(d, 0, 0, &base);
+        if (ret != 0) {
+                return ret;
+        }
+        assert(WASM_PAGE_SIZE == 1 << 16);
+        ret = dyld_allocate_memory(d, 16, 0, &end);
+        if (ret != 0) {
+                return ret;
+        }
+        global_set_i32(&d->heap_base, base);
+        global_set_i32(&d->heap_end, end);
+        xlog_trace("dyld: heap allocated %08" PRIx32 " - %08" PRIx32, base,
+                   end);
+        return 0;
 }
 
 int
@@ -447,10 +533,13 @@ dyld_load_object_from_file(struct dyld *d, const struct name *name,
         load_context_init(&lctx);
         ret = module_create(&obj->module, obj->bin, obj->bin + obj->binsz,
                             &lctx);
-        load_context_clear(&lctx);
         if (ret != 0) {
+                xlog_error("module_create failed with %d: %s", ret,
+                           lctx.report.msg);
+                load_context_clear(&lctx);
                 goto fail;
         }
+        load_context_clear(&lctx);
         if (obj->module->dylink == NULL) {
                 xlog_error("module %.*s doesn't have dylink.0", CSTR(name));
                 ret = EINVAL;
@@ -468,16 +557,22 @@ dyld_load_object_from_file(struct dyld *d, const struct name *name,
         if (ret != 0) {
                 goto fail;
         }
+        assert(d->shared_import_obj != NULL);
         obj->local_import_obj->next = d->shared_import_obj;
         struct report report;
         report_init(&report);
         ret = instance_create(obj->module, &obj->instance,
                               obj->local_import_obj, &report);
-        report_clear(&report);
         if (ret != 0) {
+                xlog_error("instance_create failed with %d: %s", ret,
+                           report.msg);
+                report_clear(&report);
                 goto fail;
         }
+        report_clear(&report);
         LIST_INSERT_TAIL(&d->objs, obj, q);
+        const struct name *objname = dyld_object_name(obj);
+        xlog_trace("dyld: %.*s loaded", CSTR(objname));
         return 0;
 fail:
         if (obj != NULL) {
@@ -501,8 +596,7 @@ dyld_create_shared_resources(struct dyld *d)
         }
 
         struct memtype *mt = &d->mt;
-        d->memory_base = align_up(d->memory_base, WASM_PAGE_SIZE);
-        mt->lim.min = d->memory_base / WASM_PAGE_SIZE;
+        mt->lim.min = howmany(d->memory_base, WASM_PAGE_SIZE);
         mt->lim.max = WASM_MAX_PAGES;
         mt->flags = 0;
         ret = memory_instance_create(&d->meminst, mt);
@@ -510,7 +604,11 @@ dyld_create_shared_resources(struct dyld *d)
                 goto fail;
         }
 
-        uint32_t nent = 2;
+        d->stack_pointer.type = &globaltype_i32_mut;
+        d->heap_base.type = &globaltype_i32_mut;
+        d->heap_end.type = &globaltype_i32_mut;
+
+        uint32_t nent = 5;
         ret = import_object_alloc(nent, &d->shared_import_obj);
         if (ret != 0) {
                 goto fail;
@@ -530,6 +628,24 @@ dyld_create_shared_resources(struct dyld *d)
         e->u.table = d->tableinst;
         e++;
 
+        e->module_name = &name_env;
+        e->name = &name_stack_pointer;
+        e->type = EXTERNTYPE_GLOBAL;
+        e->u.global = &d->stack_pointer;
+        e++;
+
+        e->module_name = &name_GOT_mem;
+        e->name = &name_heap_base;
+        e->type = EXTERNTYPE_GLOBAL;
+        e->u.global = &d->heap_base;
+        e++;
+
+        e->module_name = &name_GOT_mem;
+        e->name = &name_heap_end;
+        e->type = EXTERNTYPE_GLOBAL;
+        e->u.global = &d->heap_end;
+        e++;
+
         assert(e == d->shared_import_obj->entries + nent);
         d->shared_import_obj->next = d->base_import_obj;
 fail:
@@ -541,6 +657,7 @@ dyld_register_funcinst(struct dyld *d, struct dyld_object *obj,
                        const struct funcinst *fi)
 {
         struct tableinst *ti = d->tableinst;
+        /* XXX dumb linear search */
         uint32_t i;
         for (i = obj->table_export_base; i < obj->nexports; i++) {
                 struct val val;
@@ -571,6 +688,7 @@ dyld_resolve_symbol(struct dyld *d, struct dyld_object *refobj,
         }
         LIST_FOREACH(obj, &d->objs, q) {
                 const struct module *m = obj->module;
+                /* XXX dumb linear search */
                 uint32_t i;
                 for (i = 0; i < m->nexports; i++) {
                         const struct export *ex = &m->exports[i];
@@ -629,7 +747,7 @@ dyld_resolve_got_symbols(struct dyld *d, struct dyld_object *refobj)
                 global_set_i32(got, addr);
                 got++;
         }
-        assert(got == obj->gots + obj->ngots);
+        assert(got == refobj->gots + refobj->ngots);
         return 0;
 fail:
         return ret;
@@ -666,7 +784,20 @@ dyld_load_main_object_from_file(struct dyld *d, const char *filename)
                 goto fail;
         }
         ret = dyld_resolve_all_got_symbols(d);
+        if (ret != 0) {
+                goto fail;
+        }
+        ret = dyld_allocate_stack(d, 16 * 1024);
+        if (ret != 0) {
+                goto fail;
+        }
+        ret = dyld_allocate_heap(d);
+        if (ret != 0) {
+                goto fail;
+        }
+        return 0;
 fail:
+        dyld_clear(d);
         return ret;
 }
 
@@ -688,4 +819,11 @@ dyld_clear(struct dyld *d)
                 import_object_destroy(d->shared_import_obj);
         }
         memset(d, 0, sizeof(*d));
+}
+
+struct instance *
+dyld_main_object_instance(struct dyld *d)
+{
+        const struct dyld_object *obj = LIST_FIRST(&d->objs);
+        return obj->instance;
 }
