@@ -291,6 +291,33 @@ dyld_allocate_table(struct dyld *d)
 }
 
 int
+dyld_commit_allocation(struct dyld *d)
+{
+        int ret;
+
+        struct tabletype *tt = &d->tt;
+        tt->et = TYPE_funcref;
+        tt->lim.min = d->table_base;
+        tt->lim.max = d->table_base;
+        ret = table_instance_create(&d->tableinst, tt);
+        if (ret != 0) {
+                goto fail;
+        }
+
+        struct memtype *mt = &d->mt;
+        d->memory_base = align_up(d->memory_base, WASM_PAGE_SIZE);
+        mt->lim.min = d->memory_base / WASM_PAGE_SIZE;
+        mt->lim.max = WASM_MAX_PAGES;
+        mt->flags = 0;
+        ret = memory_instance_create(&d->meminst, mt);
+        if (ret != 0) {
+                goto fail;
+        }
+fail:
+        return ret;
+}
+
+int
 dyld_load_main_object_from_file(struct dyld *d, const char *name)
 {
         int ret;
@@ -311,6 +338,7 @@ dyld_load_main_object_from_file(struct dyld *d, const char *name)
         if (ret != 0) {
                 goto fail;
         }
+        ret = dyld_commit_allocation(d);
 fail:
         return ret;
 }
