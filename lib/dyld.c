@@ -703,6 +703,18 @@ dyld_register_funcinst(struct dyld *d, struct dyld_object *obj,
         assert(false);
 }
 
+__attribute__((unused)) static const char *
+symtype_str(enum symtype symtype)
+{
+        switch (symtype) {
+        case SYM_TYPE_FUNC:
+                return "func";
+        case SYM_TYPE_MEM:
+                return "mem";
+        }
+        assert(false);
+}
+
 int
 dyld_resolve_symbol(struct dyld *d, struct dyld_object *refobj,
                     enum symtype symtype, const struct name *sym,
@@ -746,9 +758,10 @@ dyld_resolve_symbol(struct dyld *d, struct dyld_object *refobj,
                         const struct name *refobjname =
                                 dyld_object_name(refobj);
                         const struct name *objname = dyld_object_name(obj);
-                        xlog_trace("dyld: resolved %.*s %.*s -> %.*s %" PRIx32,
-                                   CSTR(refobjname), CSTR(sym), CSTR(objname),
-                                   addr);
+                        xlog_trace("dyld: resolved %s %.*s %.*s -> %.*s idx "
+                                   "%" PRIu32 " addr %08" PRIx32,
+                                   symtype_str(symtype), CSTR(refobjname),
+                                   CSTR(sym), CSTR(objname), ed->idx, addr);
                         *resultp = addr;
                         return 0;
                 }
