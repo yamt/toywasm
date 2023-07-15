@@ -1580,6 +1580,7 @@ fail:
         return ret;
 }
 
+#if defined(TOYWASM_ENABLE_DYLD)
 static int
 read_dylink_mem_info(const uint8_t **pp, const uint8_t *ep,
                      struct load_context *ctx)
@@ -1789,6 +1790,7 @@ static struct known_custom_section {
                 .read = read_dylink_0_section,
         },
 };
+#endif /* defined(TOYWASM_ENABLE_DYLD) */
 
 static int
 read_custom_section(const uint8_t **pp, const uint8_t *ep,
@@ -1804,6 +1806,7 @@ read_custom_section(const uint8_t **pp, const uint8_t *ep,
         if (ret != 0) {
                 goto fail;
         }
+#if defined(TOYWASM_ENABLE_DYLD)
         const struct known_custom_section *k;
         unsigned int i;
         for (i = 0; i < ARRAYCOUNT(known_custom_sections); i++) {
@@ -1817,14 +1820,18 @@ read_custom_section(const uint8_t **pp, const uint8_t *ep,
                 xlog_trace("known custom section %s found", k->name);
                 break;
         }
+#endif
         clear_name(&name);
+#if defined(TOYWASM_ENABLE_DYLD)
         if (i < ARRAYCOUNT(known_custom_sections)) {
                 ret = read_section(&p, ep, k->name, k->read, ctx);
                 if (ret != 0) {
                         goto fail;
                 }
                 *pp = p;
-        } else {
+        } else
+#endif
+        {
                 /*
                  * unspecified bytes follow. just skip them.
                  */
@@ -2064,10 +2071,12 @@ module_unload(struct module *m)
         }
         free(m->exports);
 
+#if defined(TOYWASM_ENABLE_DYLD)
         if (m->dylink != NULL) {
                 clear_dylink(m->dylink);
                 free(m->dylink);
         }
+#endif
 
         memset(m, 0, sizeof(*m));
 }
