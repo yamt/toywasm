@@ -9,6 +9,7 @@
 #include <string.h>
 
 #include "dyld.h"
+#include "dyld_plt.h"
 #include "dylink_type.h"
 #include "fileio.h"
 #include "instance.h"
@@ -36,6 +37,19 @@ static const struct globaltype globaltype_i32_mut = {
         .t = TYPE_i32,
         .mut = GLOBAL_VAR,
 };
+
+static const struct globaltype globaltype_i32_const = {
+        .t = TYPE_i32,
+        .mut = GLOBAL_CONST,
+};
+
+static void
+global_set_i32(struct globalinst *ginst, uint32_t v)
+{
+        struct val val;
+        val.u.i32 = v;
+        global_set(ginst, &val);
+}
 
 static bool
 is_global_i32_mut_import(const struct module *m, const struct import *im)
@@ -152,8 +166,26 @@ fail:
 }
 
 int
+dyld_allocate_local_import_object(struct dyld *d, struct dyld_object *obj)
+{
+        int ret;
+        uint32_t nent = 0;
+
+        nent += 2; /* env.__table_base, env.__memory_base */
+        nent += obj->ngots;
+        nent += obj->nplts;
+        ret = import_object_alloc(nent, &obj->local_import_obj);
+        if (ret != 0) {
+                goto fail;
+        }
+fail:
+        return ret;
+}
+
+int
 dyld_prepare_got(struct dyld *d, struct dyld_object *obj)
 {
+        int ret;
         const struct module *m = obj->module;
         uint32_t ngots = 0;
         uint32_t nplts = 0;
@@ -172,27 +204,79 @@ dyld_prepare_got(struct dyld *d, struct dyld_object *obj)
         }
         obj->nplts = nplts;
         obj->ngots = ngots;
+
+        ret = dyld_allocate_local_import_object(d, obj);
+        if (ret != 0) {
+                goto fail;
+        }
         obj->plts = calloc(nplts, sizeof(*obj->plts));
         obj->gots = calloc(ngots, sizeof(*obj->gots));
         if (obj->plts == NULL || obj->gots == NULL) {
                 return ENOMEM;
         }
-        for (i = 0; i < ngots; i++) {
-                struct globalinst *g = &obj->gots[i];
-                g->type = &globaltype_i32_mut;
-        }
+
+        struct import_object_entry *e;
+        e = obj->local_import_obj->entries;
+
+        obj->memory_base_global.type = &globaltype_i32_const;
+        global_set_i32(&obj->memory_base_global, obj->memory_base);
+        e->module_name = &name_env;
+        e->name = &name_memory_base;
+        e->type = IMPORT_GLOBAL;
+        e->u.global = &obj->memory_base_global;
+        e++;
+
+        obj->table_base_global.type = &globaltype_i32_const;
+        global_set_i32(&obj->table_base_global, obj->table_base);
+        e->module_name = &name_env;
+        e->name = &name_table_base;
+        e->type = IMPORT_GLOBAL;
+        e->u.global = &obj->table_base_global;
+        e++;
+
+        struct globalinst *got = obj->gots;
         struct dyld_plt *plt = obj->plts;
+
         for (i = 0; i < m->nimports; i++) {
                 const struct import *im = &m->imports[i];
+                if (is_GOT_mem_import(m, im) || is_GOT_func_import(m, im)) {
+                        got->type = &globaltype_i32_mut;
+
+                        e->module_name = &im->module_name;
+                        e->name = &im->name;
+                        e->type = IMPORT_GLOBAL;
+                        e->u.global = got;
+
+                        got++;
+                        e++;
+                }
                 if (is_env_func_import(m, im)) {
                         plt->sym = &im->name;
                         plt->refobj = obj;
                         plt->dyld = d;
+
+                        struct funcinst *fi = &plt->pltfi;
+                        fi->is_host = true;
+                        fi->u.host.instance = (void *)plt;
+                        fi->u.host.type = &m->types[im->desc.u.typeidx];
+                        fi->u.host.func = dyld_plt;
+
+                        e->module_name = &im->module_name;
+                        e->name = &im->name;
+                        e->type = IMPORT_FUNC;
+                        e->u.func = fi;
+
                         plt++;
+                        e++;
                 }
         }
+
+        assert(got == obj->gots + ngots);
         assert(plt == obj->plts + nplts);
+        assert(e == obj->local_import_obj->entries + nent);
         return 0;
+fail:
+        return ret;
 }
 
 int

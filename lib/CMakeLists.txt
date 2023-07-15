@@ -6,6 +6,7 @@ set(lib_core_sources
 	"context.c"
 	"decode.c"
 	"dyld.c"
+	"dyld_plt.c"
 	"endian.c"
 	"exec.c"
 	"expr.c"
