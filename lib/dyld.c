@@ -1,9 +1,11 @@
 #define _DARWIN_C_SOURCE /* snprintf */
 
+#include <assert.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "dyld.h"
@@ -29,8 +31,8 @@ static const struct name name_memory_base =
 static const struct name name_stack_pointer =
         NAME_FROM_CSTR_LITERAL("__stack_pointer");
 
-static const globaltype globaltype_i32_mut = {
-        .type = TYPE_i32,
+static const struct globaltype globaltype_i32_mut = {
+        .t = TYPE_i32,
         .mut = GLOBAL_VAR,
 };
 
@@ -146,6 +148,50 @@ dyld_load_needed_objects(struct dyld *d)
         }
 fail:
         return ret;
+}
+
+int
+dyld_prepare_got(struct dyld *d, struct dyld_object *obj)
+{
+        const struct module *m = obj->module;
+        uint32_t ngots = 0;
+        uint32_t nplts = 0;
+        uint32_t i;
+        for (i = 0; i < m->nimports; i++) {
+                const struct import *im = &m->imports[i];
+                if (is_GOT_mem_import(m, im)) {
+                        ngots++;
+                }
+                if (is_GOT_func_import(m, im)) {
+                        ngots++;
+                }
+                if (is_env_func_import(m, im)) {
+                        nplts++;
+                }
+        }
+        obj->nplts = nplts;
+        obj->ngots = ngots;
+        obj->plts = calloc(nplts, sizeof(*obj->plts));
+        obj->gots = calloc(ngots, sizeof(*obj->gots));
+        if (obj->plts == NULL || obj->gots == NULL) {
+                return ENOMEM;
+        }
+        for (i = 0; i < ngots; i++) {
+                struct globalinst *g = &obj->gots[i];
+                g->type = &globaltype_i32_mut;
+        }
+        struct dyld_plt *plt = obj->plts;
+        for (i = 0; i < m->nimports; i++) {
+                const struct import *im = &m->imports[i];
+                if (is_env_func_import(m, im)) {
+                        plt->sym = &im->name;
+                        plt->refobj = obj;
+                        plt->dyld = d;
+                        plt++;
+                }
+        }
+        assert(plt == obj->plts + nplts);
+        return 0;
 }
 
 int
