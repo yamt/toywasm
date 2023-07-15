@@ -10,10 +10,11 @@ struct dyld_sym {
 };
 
 struct dyld_plt {
-        struct finst *finst;
+        struct funcinst *finst;
         const struct name *sym;
         struct dyld_object *refobj;
         struct dyld *dyld;
+        struct funcinst pltfi;
 };
 
 struct dyld_object {
@@ -22,6 +23,9 @@ struct dyld_object {
         uint32_t memory_base;
         uint32_t table_base;
         uint32_t table_export_base;
+
+        struct globalinst memory_base_global;
+        struct globalinst table_base_global;
 
         uint32_t ngots;
         struct globalinst *gots;
