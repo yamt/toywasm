@@ -5,8 +5,6 @@ set(lib_core_sources
 	"cell.c"
 	"context.c"
 	"decode.c"
-	"dyld.c"
-	"dyld_plt.c"
 	"endian.c"
 	"exec.c"
 	"expr.c"
@@ -47,6 +45,12 @@ list(APPEND lib_core_sources
 endif()
 endif()
 
+if(TOYWASM_ENABLE_DYLD)
+list(APPEND lib_core_sources
+	"dyld.c"
+	"dyld_plt.c")
+endif()
+
 if(TOYWASM_ENABLE_WRITER)
 set(lib_core_sources_writer
 	"module_writer.c"
@@ -57,6 +61,8 @@ set(lib_core_headers
 	"bitmap.h"
 	"cell.h"
 	"context.h"
+	"dyld.h"
+	"dylink_type.h"
 	"exec_context.h"
 	"fileio.h"
 	"idalloc.h"

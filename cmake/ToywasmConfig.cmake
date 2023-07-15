@@ -106,6 +106,10 @@ option(TOYWASM_ENABLE_WASI "Enable WASI snapshow preview1" ON)
 # this requires TOYWASM_ENABLE_WASM_THREADS=ON.
 option(TOYWASM_ENABLE_WASI_THREADS "Enable wasi-threads proposal" OFF)
 
+# experimental emscripten-style shared library
+# https://github.com/WebAssembly/tool-conventions/blob/main/DynamicLinking.md
+option(TOYWASM_ENABLE_DYLD "Enable shared library support" OFF)
+
 option(TOYWASM_BUILD_UNITTEST "Build toywasm-test" ON)
 
 if(NOT DEFINED USE_LSAN)

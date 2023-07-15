@@ -8,7 +8,9 @@ struct repl_options {
         const char *prompt;
         struct repl_state *state;
         bool print_stats;
+#if defined(TOYWASM_ENABLE_DYLD)
         bool enable_dyld;
+#endif
         struct load_options load_options;
         struct exec_options exec_options;
 };
@@ -27,7 +29,9 @@ struct repl_module_state {
 
 struct repl_module_state_u {
         union {
+#if defined(TOYWASM_ENABLE_DYLD)
                 struct dyld dyld;
+#endif
                 struct repl_module_state repl;
         } u;
 };
