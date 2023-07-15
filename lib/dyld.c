@@ -527,6 +527,19 @@ fail:
 }
 
 int
+dyld_resolve_all_got_symbols(struct dyld *d)
+{
+        struct dyld_object *obj;
+        LIST_FOREACH(obj, &d->objs, q) {
+                int ret = dyld_resolve_got_symbols(d, obj);
+                if (ret != 0) {
+                        return ret;
+                }
+        }
+        return 0;
+}
+
+int
 dyld_load_main_object_from_file(struct dyld *d, const char *filename)
 {
         int ret;
@@ -543,6 +556,41 @@ dyld_load_main_object_from_file(struct dyld *d, const char *filename)
         if (ret != 0) {
                 goto fail;
         }
+        ret = dyld_resolve_all_got_symbols(d);
 fail:
         return ret;
+}
+
+void
+dyld_object_destroy(struct dyld_object *obj)
+{
+        free(obj->gots);
+        free(obj->plts);
+        if (obj->instance != NULL) {
+                instance_destroy(obj->instance);
+        }
+        if (obj->module != NULL) {
+                module_destroy(obj->module);
+        }
+        if (obj->bin != NULL) {
+                unmap_file((void *)obj->bin, obj->binsz);
+        }
+        free(obj);
+}
+
+void
+dyld_clear(struct dyld *d)
+{
+        struct dyld_object *obj;
+        while ((obj = LIST_FIRST(&d->objs)) != 0) {
+                LIST_REMOVE(&d->objs, obj, q);
+                dyld_object_destroy(obj);
+        }
+        if (d->meminst != NULL) {
+                memory_instance_destroy(d->meminst);
+        }
+        if (d->tableinst != NULL) {
+                table_instance_destroy(d->tableinst);
+        }
+        memset(d, 0, sizeof(*d));
 }
