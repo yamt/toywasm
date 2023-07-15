@@ -432,15 +432,22 @@ dyld_allocate_memory_for_obj(struct dyld *d, struct dyld_object *obj)
 int
 dyld_allocate_stack(struct dyld *d, uint32_t stack_size)
 {
-        uint32_t p;
+        uint32_t base;
+        uint32_t end;
         int ret;
-        ret = dyld_allocate_memory(d, 0, stack_size, &p);
+        ret = dyld_allocate_memory(d, 0, stack_size, &base);
         if (ret != 0) {
                 return ret;
         }
-        global_set_i32(&d->stack_pointer, p + stack_size);
-        xlog_trace("dyld: stack allocated %08" PRIx32 " - %08" PRIx32, p,
-                   p + stack_size);
+        /* 16 byte alignment for __stack_pointer */
+        assert(16 == 1 << 4);
+        ret = dyld_allocate_memory(d, 4, 0, &end);
+        if (ret != 0) {
+                return ret;
+        }
+        global_set_i32(&d->stack_pointer, end);
+        xlog_trace("dyld: stack allocated %08" PRIx32 " - %08" PRIx32, base,
+                   end);
         return 0;
 }
 
