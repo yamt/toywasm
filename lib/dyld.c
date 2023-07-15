@@ -808,9 +808,6 @@ dyld_resolve_symbol(struct dyld *d, struct dyld_object *refobj,
                         const struct instance *inst = obj->instance;
                         uint32_t addr;
                         if (symtype == SYM_TYPE_FUNC) {
-                                /*
-                                 * XXX should check the functype
-                                 */
                                 const struct funcinst *fi =
                                         VEC_ELEM(inst->funcs, ed->idx);
                                 addr = dyld_register_funcinst(d, obj, fi);
