@@ -11,7 +11,6 @@ dyld_plt(struct exec_context *ctx, struct host_instance *hi,
          const struct functype *ft, const struct cell *params,
          struct cell *results)
 {
-        /* resolve the index */
         struct dyld_plt *plt = (void *)hi;
         if (plt->finst == NULL) {
                 struct dyld *d = plt->dyld;
