@@ -16,7 +16,8 @@
 #include "util.h"
 #include "xlog.h"
 
-int dyld_load_object_from_file(struct dyld *d, const char *name);
+int dyld_load_object_from_file(struct dyld *d, const struct name *name,
+                               const char *filename);
 
 static const struct name name_GOT_mem = NAME_FROM_CSTR_LITERAL("GOT.mem");
 static const struct name name_GOT_func = NAME_FROM_CSTR_LITERAL("GOT.func");
@@ -29,15 +30,37 @@ static const struct name name_stack_pointer =
         NAME_FROM_CSTR_LITERAL("__stack_pointer");
 
 static bool
-is_GOT_mem_import(const struct import *im)
+is_global_i32_mut_import(const struct module *m, const struct import *im)
 {
-        return !compare_name(&name_GOT_mem, &im->module_name);
+        if (im->desc.type != IMPORT_GLOBAL) {
+                return false;
+        }
+        const struct globaltype *gt = &im->desc.u.globaltype;
+        return gt->mut && gt->t == TYPE_i32;
 }
 
 static bool
-is_GOT_func_import(const struct import *im)
+is_GOT_mem_import(const struct module *m, const struct import *im)
 {
-        return !compare_name(&name_GOT_func, &im->module_name);
+        if (!is_global_i32_mut_import(m, im)) {
+                return false;
+        }
+        if (compare_name(&name_GOT_mem, &im->module_name)) {
+                return false;
+        }
+        return true;
+}
+
+static bool
+is_GOT_func_import(const struct module *m, const struct import *im)
+{
+        if (!is_global_i32_mut_import(m, im)) {
+                return false;
+        }
+        if (compare_name(&name_GOT_func, &im->module_name)) {
+                return false;
+        }
+        return true;
 }
 
 static bool
@@ -47,11 +70,51 @@ is_env_func_import(const struct import *im)
                !compare_name(&name_env, &im->module_name);
 }
 
+static bool
+is_func_export(const struct export *ex)
+{
+        return ex->desc.type == EXPORT_FUNC;
+}
+
+static bool
+is_global_export(const struct module *m, const struct export *ex)
+{
+        if (ex->desc.type != EXPORT_GLOBAL) {
+                return false;
+        }
+        const struct globaltype *gt = module_globaltype(m, ex->desc.idx);
+        return !gt->mut && gt->t == TYPE_i32;
+}
+
 void
 dyld_init(struct dyld *d)
 {
         memset(d, 0, sizeof(*d));
         LIST_HEAD_INIT(&d->objs);
+}
+
+struct dyld_object *
+dyld_find_object_by_instance(struct dyld *d, const struct instance *inst)
+{
+        struct dyld_object *obj;
+        LIST_FOREACH(obj, &d->objs, q) {
+                if (obj->instance == inst) {
+                        return obj;
+                }
+        }
+        return NULL;
+}
+
+struct dyld_object *
+dyld_find_object_by_name(struct dyld *d, const struct name *name)
+{
+        struct dyld_object *obj;
+        LIST_FOREACH(obj, &d->objs, q) {
+                if (!compare_name(obj->name, name)) {
+                        return obj;
+                }
+        }
+        return NULL;
 }
 
 int
@@ -64,10 +127,13 @@ dyld_load_needed_objects(struct dyld *d)
                 uint32_t i;
                 for (i = 0; i < needs->count; i++) {
                         const struct name *name = &needs->names[i];
+                        if (dyld_find_object_by_name(d, name)) {
+                                continue;
+                        }
                         char filename[PATH_MAX];
                         snprintf(filename, sizeof(filename), "%.*s",
                                  CSTR(name));
-                        ret = dyld_load_object_from_file(d, filename);
+                        ret = dyld_load_object_from_file(d, name, filename);
                         if (ret != 0) {
                                 goto fail;
                         }
@@ -78,7 +144,8 @@ fail:
 }
 
 int
-dyld_load_object_from_file(struct dyld *d, const char *name)
+dyld_load_object_from_file(struct dyld *d, const struct name *name,
+                           const char *filename)
 {
         struct dyld_object *obj;
         int ret;
@@ -87,7 +154,8 @@ dyld_load_object_from_file(struct dyld *d, const char *name)
                 ret = ENOMEM;
                 goto fail;
         }
-        ret = map_file(name, (void *)&obj->bin, &obj->binsz);
+        obj->name = name;
+        ret = map_file(filename, (void *)&obj->bin, &obj->binsz);
         if (ret != 0) {
                 goto fail;
         }
@@ -100,7 +168,7 @@ dyld_load_object_from_file(struct dyld *d, const char *name)
                 goto fail;
         }
         if (obj->module->dylink == NULL) {
-                xlog_error("module %s doesn't have dylink.0", name);
+                xlog_error("module %.*s doesn't have dylink.0", CSTR(name));
                 ret = EINVAL;
                 goto fail;
         }
@@ -156,7 +224,8 @@ int
 dyld_load_main_object_from_file(struct dyld *d, const char *name)
 {
         int ret;
-        ret = dyld_load_object_from_file(d, name);
+        /* REVISIT: name of main module */
+        ret = dyld_load_object_from_file(d, NULL, name);
         if (ret != 0) {
                 goto fail;
         }
