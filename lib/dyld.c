@@ -48,6 +48,11 @@ static const struct name name_heap_base =
         NAME_FROM_CSTR_LITERAL("__heap_base");
 static const struct name name_heap_end = NAME_FROM_CSTR_LITERAL("__heap_end");
 
+static const struct name init_funcs[] = {
+        NAME_FROM_CSTR_LITERAL("__wasm_apply_data_relocs"),
+        NAME_FROM_CSTR_LITERAL("__wasm_call_ctors"),
+};
+
 static const struct name name_main_obj = NAME_FROM_CSTR_LITERAL("<main>");
 
 static const struct val val_null = {
@@ -532,6 +537,67 @@ dyld_object_destroy(struct dyld_object *obj)
         free(obj);
 }
 
+static int
+dyld_execute_init_func(struct dyld_object *obj, const struct name *name)
+{
+        struct module *m = obj->module;
+        uint32_t funcidx;
+        int ret;
+        ret = module_find_export_func(m, name, &funcidx);
+        if (ret != 0) {
+                return ret;
+        }
+        const struct functype *ft = module_functype(m, funcidx);
+        const struct resulttype *pt = &ft->parameter;
+        const struct resulttype *rt = &ft->result;
+        if (pt->ntypes != 0 || rt->ntypes != 0) {
+                return EINVAL;
+        }
+        struct exec_context ectx;
+        exec_context_init(&ectx, obj->instance);
+        ret = instance_execute_func(&ectx, funcidx, pt, rt);
+        ret = instance_execute_handle_restart(&ectx, ret);
+        exec_context_clear(&ectx);
+        return ret;
+}
+
+static int
+dyld_execute_init_funcs(struct dyld_object *obj)
+{
+        const struct name *objname = dyld_object_name(obj);
+        unsigned int i;
+        for (i = 0; i < ARRAYCOUNT(init_funcs); i++) {
+                const struct name *funcname = &init_funcs[i];
+                int ret = dyld_execute_init_func(obj, funcname);
+                if (ret == ENOENT) {
+                        xlog_trace("dyld: %.*s doesn't have %.*s",
+                                   CSTR(objname), CSTR(funcname));
+                        continue;
+                }
+                if (ret != 0) {
+                        xlog_error("dyld: %.*s %.*s failed with %d",
+                                   CSTR(objname), CSTR(funcname), ret);
+                        return ret;
+                }
+                xlog_trace("dyld: %.*s %.*s succeeded", CSTR(objname),
+                           CSTR(funcname));
+        }
+        return 0;
+}
+
+static int
+dyld_execute_all_init_funcs(struct dyld *d)
+{
+        struct dyld_object *obj;
+        LIST_FOREACH(obj, &d->objs, q) {
+                int ret = dyld_execute_init_funcs(obj);
+                if (ret != 0) {
+                        return ret;
+                }
+        }
+        return 0;
+}
+
 int
 dyld_load_object_from_file(struct dyld *d, const struct name *name,
                            const char *filename)
@@ -577,8 +643,8 @@ dyld_load_object_from_file(struct dyld *d, const struct name *name,
         if (ret != 0) {
                 goto fail;
         }
-        xlog_trace("dyld: obj %.*s __memory_base %" PRIx32
-                   " __table_base %" PRIx32,
+        xlog_trace("dyld: obj %.*s __memory_base %08" PRIx32
+                   " __table_base %08" PRIx32,
                    CSTR(objname), obj->memory_base, obj->table_base);
         global_set_i32(&obj->memory_base_global, obj->memory_base);
         global_set_i32(&obj->table_base_global, obj->table_base);
@@ -846,6 +912,10 @@ dyld_load_main_object_from_file(struct dyld *d, const char *filename)
                 goto fail;
         }
         ret = dyld_allocate_heap(d);
+        if (ret != 0) {
+                goto fail;
+        }
+        ret = dyld_execute_all_init_funcs(d);
         if (ret != 0) {
                 goto fail;
         }
