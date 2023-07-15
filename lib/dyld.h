@@ -12,13 +12,23 @@ struct dyld_sym {
 struct dyld_plt {
         struct finst *finst;
         const struct name *sym;
-        struct tableinst *tableinst;
-        uint32_t idx_in_table;
+        struct dyld_object *refobj;
+        struct dyld *dyld;
 };
 
 struct dyld_object {
+        const struct name *name;
+
         uint32_t memory_base;
         uint32_t table_base;
+        uint32_t table_export_base;
+
+        uint32_t n_import_got_mem;
+        uint32_t n_import_got_func;
+        uint32_t n_import_env_func;
+
+        uint32_t n_export_func;
+        uint32_t n_export_global;
 
         const uint8_t *bin;
         size_t binsz;
