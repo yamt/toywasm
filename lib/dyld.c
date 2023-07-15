@@ -127,6 +127,7 @@ is_func_export(const struct module *m, const struct export *ex)
         return ex->desc.type == EXTERNTYPE_FUNC;
 }
 
+#if 0
 static bool
 is_global_export(const struct module *m, const struct export *ex)
 {
@@ -134,8 +135,9 @@ is_global_export(const struct module *m, const struct export *ex)
                 return false;
         }
         const struct globaltype *gt = module_globaltype(m, ex->desc.idx);
-        return gt->mut == GLOBAL_CONST && gt->t == TYPE_i32;
+        return is_global_type_i32_const(gt);
 }
+#endif
 
 void
 dyld_init(struct dyld *d)
