@@ -33,6 +33,9 @@ static const struct name name_memory_base =
         NAME_FROM_CSTR_LITERAL("__memory_base");
 static const struct name name_stack_pointer =
         NAME_FROM_CSTR_LITERAL("__stack_pointer");
+static const struct name name_table =
+        NAME_FROM_CSTR_LITERAL("__indirect_function_table");
+static const struct name name_memory = NAME_FROM_CSTR_LITERAL("memory");
 
 static const struct globaltype globaltype_i32_mut = {
         .t = TYPE_i32,
@@ -251,8 +254,7 @@ dyld_create_got(struct dyld *d, struct dyld_object *obj)
                 return ENOMEM;
         }
 
-        struct import_object_entry *e;
-        e = obj->local_import_obj->entries;
+        struct import_object_entry *e = obj->local_import_obj->entries;
 
         obj->memory_base_global.type = &globaltype_i32_const;
         global_set_i32(&obj->memory_base_global, obj->memory_base);
@@ -405,7 +407,7 @@ fail:
 }
 
 int
-dyld_commit_allocation(struct dyld *d)
+dyld_create_shared_resources(struct dyld *d)
 {
         int ret;
 
@@ -427,6 +429,28 @@ dyld_commit_allocation(struct dyld *d)
         if (ret != 0) {
                 goto fail;
         }
+
+        uint32_t nent = 2;
+        ret = import_object_alloc(nent, &d->shared_import_obj);
+        if (ret != 0) {
+                goto fail;
+        }
+
+        struct import_object_entry *e = d->shared_import_obj->entries;
+
+        e->module_name = &name_env;
+        e->name = &name_memory;
+        e->type = EXTERNTYPE_MEMORY;
+        e->u.mem = d->meminst;
+        e++;
+
+        e->module_name = &name_env;
+        e->name = &name_table;
+        e->type = EXTERNTYPE_TABLE;
+        e->u.table = d->tableinst;
+        e++;
+
+        assert(e == d->shared_import_obj->entries + nent);
 fail:
         return ret;
 }
