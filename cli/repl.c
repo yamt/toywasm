@@ -162,6 +162,18 @@ repl_unload(struct repl_module_state *mod)
 #endif
 }
 
+static void
+repl_unload_u(struct repl_state *state, struct repl_module_state_u *mod_u)
+{
+        if (state->opts.enable_dyld) {
+                struct dyld *d = &mod_u->u.dyld;
+                dyld_clear(d);
+        } else {
+                struct repl_module_state *mod = &mod_u->u.repl;
+                repl_unload(mod);
+        }
+}
+
 void
 toywasm_repl_reset(struct repl_state *state)
 {
@@ -182,7 +194,7 @@ toywasm_repl_reset(struct repl_state *state)
                 n--;
         }
         while (state->nmodules > 0) {
-                repl_unload(&state->modules[--state->nmodules]);
+                repl_unload_u(state, &state->modules[--state->nmodules]);
         }
         free(state->param);
         state->param = NULL;
@@ -313,8 +325,8 @@ toywasm_repl_set_wasi_prestat_mapdir(struct repl_state *state,
 #endif
 
 int
-find_mod(struct repl_state *state, const char *modname,
-         struct repl_module_state **modp)
+find_mod_u(struct repl_state *state, const char *modname,
+           struct repl_module_state_u **modp)
 {
         if (state->nmodules == 0) {
                 xlog_printf("no module loaded\n");
@@ -324,15 +336,35 @@ find_mod(struct repl_state *state, const char *modname,
                 *modp = &state->modules[state->nmodules - 1];
                 return 0;
         }
+        if (state->opts.enable_dyld) {
+                return ENOTSUP;
+        }
         uint32_t i;
         for (i = 0; i < state->nmodules; i++) {
-                struct repl_module_state *mod = &state->modules[i];
+                struct repl_module_state_u *mod_u = &state->modules[i];
+                struct repl_module_state *mod = &mod_u->u.repl;
                 if (mod->name != NULL && !strcmp(modname, mod->name)) {
-                        *modp = mod;
+                        *modp = mod_u;
                         return 0;
                 }
         }
         return ENOENT;
+}
+
+int
+find_mod(struct repl_state *state, const char *modname,
+         struct repl_module_state **modp)
+{
+        if (state->opts.enable_dyld) {
+                return ENOTSUP;
+        }
+        struct repl_module_state_u *mod_u;
+        int ret = find_mod_u(state, modname, &mod_u);
+        if (ret != 0) {
+                return ret;
+        }
+        *modp = &mod_u->u.repl;
+        return 0;
 }
 
 void
@@ -417,6 +449,9 @@ repl_load_from_buf(struct repl_state *state, const char *modname,
         int ret;
         struct load_context ctx;
         load_context_init(&ctx);
+        if (state->opts.enable_dyld) {
+                return ENOTSUP;
+        }
         ctx.options = state->opts.load_options;
         ret = module_create(&mod->module, mod->buf, mod->buf + mod->bufsize,
                             &ctx);
@@ -490,7 +525,14 @@ toywasm_repl_load(struct repl_state *state, const char *modname,
         if (ret != 0) {
                 return ret;
         }
-        struct repl_module_state *mod = &state->modules[state->nmodules];
+        struct repl_module_state_u *mod_u = &state->modules[state->nmodules];
+        if (state->opts.enable_dyld) {
+                struct dyld *d = &mod_u->u.dyld;
+                dyld_init(d);
+                d->base_import_obj = state->imports;
+                return dyld_load_main_object_from_file(d, filename);
+        }
+        struct repl_module_state *mod = &mod_u->u.repl;
         memset(mod, 0, sizeof(*mod));
         ret = map_file(filename, (void **)&mod->buf, &mod->bufsize);
         if (ret != 0) {
@@ -513,13 +555,17 @@ int
 toywasm_repl_load_hex(struct repl_state *state, const char *modname,
                       const char *opt)
 {
+        if (state->opts.enable_dyld) {
+                return ENOTSUP;
+        }
         int ret;
         ret = resize_array((void **)&state->modules, sizeof(*state->modules),
                            state->nmodules + 1);
         if (ret != 0) {
                 return ret;
         }
-        struct repl_module_state *mod = &state->modules[state->nmodules];
+        struct repl_module_state_u *mod_u = &state->modules[state->nmodules];
+        struct repl_module_state *mod = &mod_u->u.repl;
         memset(mod, 0, sizeof(*mod));
         size_t sz = atoi(opt);
         mod->bufsize = sz;
@@ -941,13 +987,20 @@ toywasm_repl_invoke(struct repl_state *state, const char *modname,
         struct name funcname_name;
         funcname_name.data = funcname;
         funcname_name.nbytes = len;
-        struct repl_module_state *mod;
-        ret = find_mod(state, modname, &mod);
+        struct repl_module_state_u *mod_u;
+        ret = find_mod_u(state, modname, &mod_u);
         if (ret != 0) {
                 goto fail;
         }
-        struct instance *inst = mod->inst;
-        struct module *module = mod->module;
+        struct instance *inst;
+        if (state->opts.enable_dyld) {
+                struct dyld *d = &mod_u->u.dyld;
+                inst = dyld_main_object_instance(d);
+        } else {
+                struct repl_module_state *mod = &mod_u->u.repl;
+                inst = mod->inst;
+        }
+        const struct module *module = inst->module;
         assert(inst != NULL);
         assert(module != NULL);
         uint32_t funcidx;
