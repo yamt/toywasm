@@ -752,7 +752,13 @@ dyld_register_funcinst(struct dyld *d, struct dyld_object *obj,
         xlog_trace("dyld: registering obj %.*s finst %p", CSTR(objname),
                    (void *)fi);
         uint32_t end = obj->table_export_base + obj->nexports;
-        /* XXX dumb linear search */
+        /*
+         * note that we should avoid creating multiple entries for
+         * a single funcinst. otherwise, it would break C function
+         * pointer comparisons in wasm.
+         *
+         * XXX dumb linear search
+         */
         uint32_t i;
         for (i = obj->table_export_base; i < end; i++) {
                 struct val val;
@@ -766,6 +772,10 @@ dyld_register_funcinst(struct dyld *d, struct dyld_object *obj,
                         return i;
                 }
         }
+        /*
+         * this should never happen becasue dyld_allocate_table_for_obj
+         * reserves enough table elements.
+         */
         xlog_error("dyld: failed to register a func");
         assert(false);
 }
