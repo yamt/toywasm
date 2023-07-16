@@ -32,6 +32,7 @@ jobs:
         MISC_FEATURES: [ON, OFF]
         TOYWASM_ENABLE_WASM_THREADS: [ON, OFF]
         TOYWASM_ENABLE_WASI_THREADS: [ON, OFF]
+        TOYWASM_ENABLE_DYLD: [OFF]
         exclude:
           # I haven't used gcc for macos
           - os: macos-latest
@@ -260,6 +261,105 @@ jobs:
             TOYWASM_ENABLE_WASM_THREADS: ON
             TOYWASM_ENABLE_WASI_THREADS: ON
 
+          # "dyld" = "full" - threads + dyld
+          - name: dyld-macos-11.0
+            os: macos-latest
+            compiler: clang
+            arch: native
+            BUILD_TYPE: Release
+            TOYWASM_USE_SEPARATE_EXECUTE: ON
+            TOYWASM_USE_TAILCALL: ON
+            TOYWASM_ENABLE_TRACING: OFF
+            TOYWASM_USE_SMALL_CELLS: ON
+            TOYWASM_USE_SEPARATE_LOCALS: ON
+            MISC_FEATURES: ON
+            TOYWASM_ENABLE_WASM_THREADS: OFF
+            TOYWASM_ENABLE_WASI_THREADS: OFF
+            TOYWASM_ENABLE_DYLD: ON
+          - name: dyld-ubuntu-20.04-amd64
+            os: ubuntu-20.04
+            compiler: clang
+            arch: native
+            BUILD_TYPE: Release
+            TOYWASM_USE_SEPARATE_EXECUTE: ON
+            TOYWASM_USE_TAILCALL: ON
+            TOYWASM_ENABLE_TRACING: OFF
+            TOYWASM_USE_SMALL_CELLS: ON
+            TOYWASM_USE_SEPARATE_LOCALS: ON
+            MISC_FEATURES: ON
+            TOYWASM_ENABLE_WASM_THREADS: OFF
+            TOYWASM_ENABLE_WASI_THREADS: OFF
+            TOYWASM_ENABLE_DYLD: ON
+          - name: dyld-ubuntu-20.04-i386
+            os: ubuntu-20.04
+            compiler: clang
+            arch: i386
+            BUILD_TYPE: Release
+            TOYWASM_USE_SEPARATE_EXECUTE: ON
+            TOYWASM_USE_TAILCALL: ON
+            TOYWASM_ENABLE_TRACING: OFF
+            TOYWASM_USE_SMALL_CELLS: ON
+            TOYWASM_USE_SEPARATE_LOCALS: ON
+            MISC_FEATURES: ON
+            TOYWASM_ENABLE_WASM_THREADS: OFF
+            TOYWASM_ENABLE_WASI_THREADS: OFF
+            TOYWASM_ENABLE_DYLD: ON
+          - name: dyld-ubuntu-20.04-arm64
+            os: ubuntu-20.04
+            compiler: clang
+            arch: arm64
+            BUILD_TYPE: Release
+            TOYWASM_USE_SEPARATE_EXECUTE: ON
+            TOYWASM_USE_TAILCALL: ON
+            TOYWASM_ENABLE_TRACING: OFF
+            TOYWASM_USE_SMALL_CELLS: ON
+            TOYWASM_USE_SEPARATE_LOCALS: ON
+            MISC_FEATURES: ON
+            TOYWASM_ENABLE_WASM_THREADS: OFF
+            TOYWASM_ENABLE_WASI_THREADS: OFF
+            TOYWASM_ENABLE_DYLD: ON
+          - name: dyld-ubuntu-20.04-armhf
+            os: ubuntu-20.04
+            compiler: clang
+            arch: armhf
+            BUILD_TYPE: Release
+            TOYWASM_USE_SEPARATE_EXECUTE: ON
+            TOYWASM_USE_TAILCALL: ON
+            TOYWASM_ENABLE_TRACING: OFF
+            TOYWASM_USE_SMALL_CELLS: ON
+            TOYWASM_USE_SEPARATE_LOCALS: ON
+            TOYWASM_ENABLE_WASM_THREADS: OFF
+            TOYWASM_ENABLE_WASI_THREADS: OFF
+            TOYWASM_ENABLE_DYLD: ON
+          - name: dyld-ubuntu-20.04-s390x
+            os: ubuntu-20.04
+            compiler: clang
+            arch: s390x
+            BUILD_TYPE: Release
+            TOYWASM_USE_SEPARATE_EXECUTE: ON
+            TOYWASM_USE_TAILCALL: ON
+            TOYWASM_ENABLE_TRACING: OFF
+            TOYWASM_USE_SMALL_CELLS: ON
+            TOYWASM_USE_SEPARATE_LOCALS: ON
+            MISC_FEATURES: ON
+            TOYWASM_ENABLE_WASM_THREADS: OFF
+            TOYWASM_ENABLE_WASI_THREADS: OFF
+            TOYWASM_ENABLE_DYLD: ON
+          - name: dyld-ubuntu-20.04-riscv64
+            os: ubuntu-20.04
+            compiler: clang
+            arch: riscv64
+            BUILD_TYPE: Release
+            TOYWASM_USE_SEPARATE_EXECUTE: ON
+            TOYWASM_USE_TAILCALL: ON
+            TOYWASM_ENABLE_TRACING: OFF
+            TOYWASM_USE_SMALL_CELLS: ON
+            TOYWASM_USE_SEPARATE_LOCALS: ON
+            MISC_FEATURES: ON
+            TOYWASM_ENABLE_WASM_THREADS: OFF
+            TOYWASM_ENABLE_WASI_THREADS: OFF
+            TOYWASM_ENABLE_DYLD: ON
+
     runs-on: ${{matrix.os}}
 
     steps:
@@ -283,6 +383,7 @@ jobs:
         echo "-DTOYWASM_ENABLE_WASM_TAILCALL=${{matrix.MISC_FEATURES}}" >> ${GITHUB_ENV}
         echo "-DTOYWASM_ENABLE_WASM_THREADS=${{matrix.TOYWASM_ENABLE_WASM_THREADS}}" >> ${GITHUB_ENV}
         echo "-DTOYWASM_ENABLE_WASI_THREADS=${{matrix.TOYWASM_ENABLE_WASI_THREADS}}"  >> ${GITHUB_ENV}
+        echo "-DTOYWASM_ENABLE_DYLD=${{matrix.TOYWASM_ENABLE_DYLD}}"  >> ${GITHUB_ENV}
         echo "EOF" >> ${GITHUB_ENV}
 
     - name: Install dependencies (ubuntu)
@@ -582,6 +683,41 @@ jobs:
     - uses: actions/download-artifact@v3
       with:
         name: full-wasm32-wasi
+        path: release_assets
+
+    - uses: actions/download-artifact@v3
+      with:
+        name: dyld-macos-11.0
+        path: release_assets
+
+    - uses: actions/download-artifact@v3
+      with:
+        name: dyld-ubuntu-20.04-amd64
+        path: release_assets
+
+    - uses: actions/download-artifact@v3
+      with:
+        name: dyld-ubuntu-20.04-i386
+        path: release_assets
+
+    - uses: actions/download-artifact@v3
+      with:
+        name: dyld-ubuntu-20.04-arm64
+        path: release_assets
+
+    - uses: actions/download-artifact@v3
+      with:
+        name: dyld-ubuntu-20.04-armhf
+        path: release_assets
+
+    - uses: actions/download-artifact@v3
+      with:
+        name: dyld-ubuntu-20.04-s390x
+        path: release_assets
+
+    - uses: actions/download-artifact@v3
+      with:
+        name: dyld-ubuntu-20.04-riscv64
         path: release_assets
 
     - name: Snapshot release
