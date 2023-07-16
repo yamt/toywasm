@@ -433,7 +433,10 @@ dyld_allocate_stack(struct dyld *d, uint32_t stack_size)
         if (ret != 0) {
                 return ret;
         }
-        /* 16 byte alignment for __stack_pointer */
+        /*
+         * __stack_pointer should have 16-byte alignment:
+         * https://github.com/WebAssembly/tool-conventions/blob/main/BasicCABI.md#the-linear-stack
+         */
         assert(16 == 1 << 4);
         ret = dyld_allocate_memory(d, 4, 0, &end);
         if (ret != 0) {
@@ -455,6 +458,9 @@ dyld_allocate_heap(struct dyld *d)
         if (ret != 0) {
                 return ret;
         }
+        /*
+         * make __heap_end the next page boundary as LLVM wasm-ld does.
+         */
         assert(WASM_PAGE_SIZE == 1 << 16);
         ret = dyld_allocate_memory(d, 16, 0, &end);
         if (ret != 0) {
