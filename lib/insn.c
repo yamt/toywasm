@@ -598,7 +598,7 @@ static int fetch_exec_next_insn_fe(const uint8_t *p, struct cell *stack,
                 .fetch_exec = fetch_exec_next_insn_##n,                       \
         },
 
-#define __exec_table_align __aligned(128)
+#define __exec_table_align
 
 const static struct exec_instruction_desc
         exec_instructions_fc[] __exec_table_align = {
