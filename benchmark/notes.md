@@ -8,6 +8,12 @@
   sudo tmutil disable
   ```
 
+* stop spotlight indexer
+
+  ```
+  sudo mdutil -a -i off
+  ```
+
 * `sync;sync;sync`
 
 ## build instructions
