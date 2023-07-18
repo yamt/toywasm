@@ -1,3 +1,19 @@
+/*
+ * https://github.com/WebAssembly/tool-conventions/blob/main/DynamicLinking.md
+ *
+ * todo:
+ *
+ * - shared library search path.
+ *   right now only the current directory is looked at.
+ *
+ * - make C stack size configurable
+ *   currently hardcoded to 16KB.
+ *
+ * - threads, tls
+ *   it's basically undefined how wasi-threads would interact with
+ *   multi-instance setups like this.
+ */
+
 #define _DARWIN_C_SOURCE /* snprintf */
 
 #include <assert.h>
