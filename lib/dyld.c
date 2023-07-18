@@ -22,10 +22,6 @@
 #include "util.h"
 #include "xlog.h"
 
-#if defined(TOYWASM_ENABLE_WASM_THREADS)
-#warning dyld.c is not wasm-threads safe
-#endif
-
 static int dyld_load_object_from_file(struct dyld *d, const struct name *name,
                                       const char *filename);
 
