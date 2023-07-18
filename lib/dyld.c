@@ -829,6 +829,11 @@ dyld_resolve_symbol(struct dyld *d, struct dyld_object *refobj,
                                 if (!is_global_type_i32_const(gi->type)) {
                                         continue;
                                 }
+                                /*
+                                 * TODO: consult WASM_DYLINK_EXPORT_INFO
+                                 * subsection to check TLS.
+                                 * for TLS, use __tls_base, not __memory_base.
+                                 */
                                 addr = global_get_i32(gi) + obj->memory_base;
                         }
                         const struct name *refobjname =
