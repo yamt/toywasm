@@ -1700,8 +1700,7 @@ static const struct dylink_subsection {
 } dylink_subsections[] = {
         DYLINK_TYPE(mem_info), DYLINK_TYPE(needs), DYLINK_TYPE(import_info),
         /*
-         * TODO:
-         * WASM_dylink_export_info: i'm not sure what needs this
+         * TODO: WASM_dylink_export_info is necessary for TLS support.
          */
 };
 
