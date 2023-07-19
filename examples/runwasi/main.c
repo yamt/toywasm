@@ -88,7 +88,7 @@ main(int argc, char **argv)
                 STDOUT_FILENO,
                 STDERR_FILENO,
         };
-        ret = runwasi(filename, ndirs, dirs, nenvs, envs, argc, argv,
+        ret = runwasi(filename, ndirs, dirs, nenvs, (const char * const *)envs, argc, (const char * const *)argv,
                       stdio_fds, &wasi_exit_code);
         free(dirs);
         free(envs);
