@@ -177,8 +177,10 @@ static const struct option longopts[] = {
 static const char *opt_metavars[] = {
         [opt_invoke] = "FUNCTION[ FUNCTION_ARGS...]",
         [opt_load] = "MODULE_PATH",
+#if defined(TOYWASM_ENABLE_DYLD)
         [opt_dyld_path] = "LIBRARY_DIR",
         [opt_dyld_stack_size] = "C_STACK_SIZE_IN_BYTES",
+#endif
         [opt_wasi_env] = "NAME=VAR",
         [opt_wasi_dir] = "DIR",
         [opt_wasi_mapdir] = "GUEST_DIR::HOST_DIR",
