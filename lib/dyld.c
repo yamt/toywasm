@@ -276,7 +276,9 @@ dyld_load_needed_objects(struct dyld *d)
         int ret = 0;
         struct dyld_object *obj;
         LIST_FOREACH(obj, &d->objs, q) {
+#if defined(TOYWASM_ENABLE_TRACING)
                 const struct name *objname = dyld_object_name(obj);
+#endif
                 const struct dylink_needs *needs = &obj->module->dylink->needs;
                 uint32_t i;
                 for (i = 0; i < needs->count; i++) {
@@ -463,7 +465,9 @@ dyld_allocate_memory_for_obj(struct dyld *d, struct dyld_object *obj)
         if (ret != 0) {
                 return ret;
         }
+#if defined(TOYWASM_ENABLE_TRACING)
         const struct name *objname = dyld_object_name(obj);
+#endif
         xlog_trace("dyld: memory allocated for obj %.*s: %08" PRIx32
                    " - %08" PRIx32,
                    CSTR(objname), obj->memory_base,
@@ -530,7 +534,9 @@ dyld_allocate_table_for_obj(struct dyld *d, struct dyld_object *obj)
         if (ret != 0) {
                 return ret;
         }
+#if defined(TOYWASM_ENABLE_TRACING)
         const struct name *objname = dyld_object_name(obj);
+#endif
         xlog_trace("dyld: table elem allocated for %.*s (mem_info): %08" PRIx32
                    " - %08" PRIx32,
                    CSTR(objname), obj->table_base,
@@ -665,7 +671,9 @@ dyld_load_object_from_file(struct dyld *d, const struct name *name,
                 goto fail;
         }
         obj->name = name;
+#if defined(TOYWASM_ENABLE_TRACING)
         const struct name *objname = dyld_object_name(obj);
+#endif
         ret = map_file(filename, (void *)&obj->bin, &obj->binsz);
         if (ret != 0) {
                 goto fail;
@@ -802,7 +810,9 @@ dyld_register_funcinst(struct dyld *d, struct dyld_object *obj,
                        const struct funcinst *fi)
 {
         struct tableinst *ti = d->tableinst;
+#if defined(TOYWASM_ENABLE_TRACING)
         const struct name *objname = dyld_object_name(obj);
+#endif
         xlog_trace("dyld: registering obj %.*s finst %p", CSTR(objname),
                    (void *)fi);
         uint32_t end = obj->table_export_base + obj->nexports;
@@ -888,9 +898,11 @@ dyld_resolve_symbol(struct dyld *d, struct dyld_object *refobj,
                                  */
                                 addr = global_get_i32(gi) + obj->memory_base;
                         }
+#if defined(TOYWASM_ENABLE_TRACING)
                         const struct name *refobjname =
                                 dyld_object_name(refobj);
                         const struct name *objname = dyld_object_name(obj);
+#endif
                         xlog_trace("dyld: resolved %s %.*s %.*s -> %.*s idx "
                                    "%" PRIu32 " addr %08" PRIx32,
                                    symtype_str(symtype), CSTR(refobjname),
