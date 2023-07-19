@@ -10,6 +10,7 @@ struct repl_options {
         bool print_stats;
 #if defined(TOYWASM_ENABLE_DYLD)
         bool enable_dyld;
+        struct dyld_options dyld_options;
 #endif
         struct load_options load_options;
         struct exec_options exec_options;
@@ -72,9 +73,9 @@ void toywasm_repl_print_version(void);
 
 int toywasm_repl_load_wasi(struct repl_state *state);
 int toywasm_repl_set_wasi_args(struct repl_state *state, int argc,
-                               char *const *argv);
+                               const char *const *argv);
 int toywasm_repl_set_wasi_environ(struct repl_state *state, int nenvs,
-                                  char *const *envs);
+                                  const char *const *envs);
 int toywasm_repl_set_wasi_prestat(struct repl_state *state, const char *path);
 int toywasm_repl_set_wasi_prestat_mapdir(struct repl_state *state,
                                          const char *path);

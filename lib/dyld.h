@@ -42,8 +42,14 @@ struct dyld_object {
         LIST_ENTRY(struct dyld_object) q;
 };
 
-struct dyld {
+struct dyld_options {
         struct import_object *base_import_obj;
+        uint32_t stack_size;
+        unsigned int npaths;
+        const char *const *paths;
+};
+
+struct dyld {
         struct import_object *shared_import_obj;
 
         uint32_t memory_base;
@@ -60,12 +66,15 @@ struct dyld {
         struct globalinst heap_end;
 
         LIST_HEAD(struct dyld_object) objs;
+
+        struct dyld_options opts;
 };
 
 void dyld_init(struct dyld *d);
 void dyld_clear(struct dyld *d);
 int dyld_load(struct dyld *d, const char *filename);
 struct instance *dyld_main_object_instance(struct dyld *d);
+void dyld_options_set_defaults(struct dyld_options *opts);
 
 const struct name *dyld_object_name(struct dyld_object *obj);
 int dyld_resolve_symbol(struct dyld *d, struct dyld_object *refobj,

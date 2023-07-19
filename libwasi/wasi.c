@@ -2125,7 +2125,7 @@ fail:
 static int
 args_environ_sizes_get(struct exec_context *ctx, struct wasi_instance *wasi,
                        const struct functype *ft, const struct cell *params,
-                       struct cell *results, int argc, char *const *argv)
+                       struct cell *results, int argc, const char *const *argv)
 {
         HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t argcp = HOST_FUNC_PARAM(ft, params, 0, i32);
@@ -2158,7 +2158,7 @@ fail:
 static int
 args_environ_get(struct exec_context *ctx, struct wasi_instance *wasi,
                  const struct functype *ft, const struct cell *params,
-                 struct cell *results, int argc, char *const *argv)
+                 struct cell *results, int argc, const char *const *argv)
 {
         HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t argvp = HOST_FUNC_PARAM(ft, params, 0, i32);
@@ -3421,7 +3421,8 @@ wasi_instance_create(struct wasi_instance **instp) NO_THREAD_SAFETY_ANALYSIS
 }
 
 void
-wasi_instance_set_args(struct wasi_instance *inst, int argc, char *const *argv)
+wasi_instance_set_args(struct wasi_instance *inst, int argc,
+                       const char *const *argv)
 {
         inst->argc = argc;
         inst->argv = argv;
@@ -3436,7 +3437,7 @@ wasi_instance_set_args(struct wasi_instance *inst, int argc, char *const *argv)
 
 void
 wasi_instance_set_environ(struct wasi_instance *inst, int nenvs,
-                          char *const *envs)
+                          const char *const *envs)
 {
         inst->nenvs = nenvs;
         inst->envs = envs;

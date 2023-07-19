@@ -286,7 +286,7 @@ fail:
 #if defined(TOYWASM_ENABLE_WASI)
 int
 toywasm_repl_set_wasi_args(struct repl_state *state, int argc,
-                           char *const *argv)
+                           const char *const *argv)
 {
         if (state->wasi == NULL) {
                 return EPROTO;
@@ -297,7 +297,7 @@ toywasm_repl_set_wasi_args(struct repl_state *state, int argc,
 
 int
 toywasm_repl_set_wasi_environ(struct repl_state *state, int nenvs,
-                              char *const *envs)
+                              const char *const *envs)
 {
         if (state->wasi == NULL) {
                 return EPROTO;
@@ -538,7 +538,8 @@ toywasm_repl_load(struct repl_state *state, const char *modname,
         if (state->opts.enable_dyld) {
                 struct dyld *d = &mod_u->u.dyld;
                 dyld_init(d);
-                d->base_import_obj = state->imports;
+                d->opts = state->opts.dyld_options;
+                d->opts.base_import_obj = state->imports;
                 ret = dyld_load(d, filename);
                 if (ret != 0) {
                         return ret;
@@ -1294,6 +1295,9 @@ repl_options_init(struct repl_options *opts)
         opts->print_stats = false;
         load_options_set_defaults(&opts->load_options);
         exec_options_set_defaults(&opts->exec_options);
+#if defined(TOYWASM_ENABLE_DYLD)
+        dyld_options_set_defaults(&opts->dyld_options);
+#endif
 }
 
 void

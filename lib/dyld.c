@@ -3,12 +3,6 @@
  *
  * todo:
  *
- * - shared library search path.
- *   right now only the current directory is looked at.
- *
- * - make C stack size configurable
- *   currently hardcoded to 16KB.
- *
  * - threads, tls
  *   it's basically undefined how wasi-threads would interact with
  *   multi-instance setups like this.
@@ -216,12 +210,24 @@ dyld_object_name(struct dyld_object *obj)
 }
 
 void
+dyld_options_set_defaults(struct dyld_options *opts)
+{
+        static const char *paths[] = {"."};
+
+        memset(opts, 0, sizeof(*opts));
+        opts->stack_size = 16 * 1024;
+        opts->npaths = ARRAYCOUNT(paths);
+        opts->paths = paths;
+}
+
+void
 dyld_init(struct dyld *d)
 {
         memset(d, 0, sizeof(*d));
         LIST_HEAD_INIT(&d->objs);
         d->table_base = 1; /* do not use the first one */
         d->memory_base = 0;
+        dyld_options_set_defaults(&d->opts);
 }
 
 static struct dyld_object *
@@ -240,6 +246,31 @@ dyld_find_object_by_name(struct dyld *d, const struct name *name)
 }
 
 static int
+dyld_search_and_load_object_from_file(struct dyld *d, const struct name *name)
+{
+        const struct dyld_options *opts = &d->opts;
+        unsigned int i;
+        for (i = 0; i < opts->npaths; i++) {
+                char filename[PATH_MAX];
+                int ret;
+                ret = snprintf(filename, sizeof(filename), "%s/%.*s",
+                               opts->paths[i], CSTR(name));
+                if (ret == -1) {
+                        return errno;
+                }
+                if (ret >= sizeof(filename)) {
+                        return ENAMETOOLONG;
+                }
+                xlog_trace("dyld: trying to open %s\n", filename);
+                ret = dyld_load_object_from_file(d, name, filename);
+                if (ret != ENOENT) {
+                        return ret;
+                }
+        }
+        return ENOENT;
+}
+
+static int
 dyld_load_needed_objects(struct dyld *d)
 {
         int ret = 0;
@@ -255,11 +286,10 @@ dyld_load_needed_objects(struct dyld *d)
                         if (dyld_find_object_by_name(d, name)) {
                                 continue;
                         }
-                        char filename[PATH_MAX];
-                        snprintf(filename, sizeof(filename), "%.*s",
-                                 CSTR(name));
-                        ret = dyld_load_object_from_file(d, name, filename);
+                        ret = dyld_search_and_load_object_from_file(d, name);
                         if (ret != 0) {
+                                xlog_error("failed to load %.*s with %d",
+                                           CSTR(name), ret);
                                 goto fail;
                         }
                 }
@@ -762,7 +792,7 @@ dyld_create_shared_resources(struct dyld *d)
         e++;
 
         assert(e == d->shared_import_obj->entries + nent);
-        d->shared_import_obj->next = d->base_import_obj;
+        d->shared_import_obj->next = d->opts.base_import_obj;
 fail:
         return ret;
 }
@@ -947,7 +977,7 @@ dyld_load(struct dyld *d, const char *filename)
         if (ret != 0) {
                 goto fail;
         }
-        ret = dyld_allocate_stack(d, 16 * 1024);
+        ret = dyld_allocate_stack(d, d->opts.stack_size);
         if (ret != 0) {
                 goto fail;
         }
