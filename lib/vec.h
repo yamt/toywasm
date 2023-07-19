@@ -18,6 +18,7 @@ int __must_check _vec_resize(void *vec, size_t elem_size,
 int __must_check _vec_prealloc(void *vec, size_t elem_size, uint32_t count);
 void _vec_free(void *vec);
 
+#define VEC_INIT(v) memset(&v, 0, sizeof(v))
 #define VEC_RESIZE(v, sz) _vec_resize(&v, sizeof(*v.p), sz);
 #define VEC_PREALLOC(v, sz) _vec_prealloc(&v, sizeof(*v.p), sz);
 #define VEC_FREE(v) _vec_free(&v)

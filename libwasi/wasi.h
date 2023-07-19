@@ -13,9 +13,9 @@ struct import_object;
 
 int wasi_instance_create(struct wasi_instance **instp);
 void wasi_instance_set_args(struct wasi_instance *inst, int argc,
-                            char *const *argv);
+                            const char *const *argv);
 void wasi_instance_set_environ(struct wasi_instance *inst, int nenvs,
-                               char *const *envs);
+                               const char *const *envs);
 void wasi_instance_destroy(struct wasi_instance *inst);
 
 /*

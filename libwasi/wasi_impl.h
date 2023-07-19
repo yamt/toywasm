@@ -39,9 +39,9 @@ struct wasi_instance {
         fdtable GUARDED_VAR(lock); /* indexed by wasi fd */
 
         int argc;
-        char *const *argv;
+        const char *const *argv;
         int nenvs;
-        char *const *envs;
+        const char *const *envs;
 
         uint32_t exit_code;
 };

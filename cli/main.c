@@ -12,6 +12,7 @@
 #if defined(TOYWASM_ENABLE_WASI_THREADS)
 #include "wasi_threads.h"
 #endif
+#include "vec.h"
 #include "xlog.h"
 
 enum longopt {
@@ -20,6 +21,8 @@ enum longopt {
         opt_disable_resulttype_cellidx,
 #if defined(TOYWASM_ENABLE_DYLD)
         opt_dyld,
+        opt_dyld_path,
+        opt_dyld_stack_size,
 #endif
         opt_invoke,
         opt_load,
@@ -63,6 +66,18 @@ static const struct option longopts[] = {
                 no_argument,
                 NULL,
                 opt_dyld,
+        },
+        {
+                "dyld-path",
+                required_argument,
+                NULL,
+                opt_dyld_path,
+        },
+        {
+                "dyld-stack-size",
+                required_argument,
+                NULL,
+                opt_dyld_stack_size,
         },
 #endif
         {
@@ -162,6 +177,8 @@ static const struct option longopts[] = {
 static const char *opt_metavars[] = {
         [opt_invoke] = "FUNCTION[ FUNCTION_ARGS...]",
         [opt_load] = "MODULE_PATH",
+        [opt_dyld_path] = "LIBRARY_DIR",
+        [opt_dyld_stack_size] = "C_STACK_SIZE_IN_BYTES",
         [opt_wasi_env] = "NAME=VAR",
         [opt_wasi_dir] = "DIR",
         [opt_wasi_mapdir] = "GUEST_DIR::HOST_DIR",
@@ -218,8 +235,12 @@ main(int argc, char *const *argv)
 {
         struct repl_state *state;
 #if defined(TOYWASM_ENABLE_WASI)
-        int nenvs = 0;
-        char **envs = NULL;
+        VEC(, const char *) wasi_envs;
+        VEC_INIT(wasi_envs);
+#endif
+#if defined(TOYWASM_ENABLE_DYLD)
+        VEC(, const char *) dyld_paths;
+        VEC_INIT(dyld_paths);
 #endif
         int ret;
         int longidx;
@@ -257,6 +278,18 @@ main(int argc, char *const *argv)
                                 goto fail;
                         }
                         opts->enable_dyld = true;
+                        break;
+                case opt_dyld_path:
+                        ret = VEC_PREALLOC(dyld_paths, 1);
+                        if (ret != 0) {
+                                goto fail;
+                        }
+                        *VEC_PUSH(dyld_paths) = optarg;
+                        opts->dyld_options.npaths = dyld_paths.lsize;
+                        opts->dyld_options.paths = dyld_paths.p;
+                        break;
+                case opt_dyld_stack_size:
+                        opts->dyld_options.stack_size = atoi(optarg);
                         break;
 #endif
                 case opt_invoke:
@@ -325,14 +358,13 @@ main(int argc, char *const *argv)
                         }
                         break;
                 case opt_wasi_env:
-                        nenvs++;
-                        envs = realloc(envs, nenvs * sizeof(*envs));
-                        if (envs == NULL) {
+                        ret = VEC_PREALLOC(wasi_envs, 1);
+                        if (ret != 0) {
                                 goto fail;
                         }
-                        envs[nenvs - 1] = optarg;
-                        ret = toywasm_repl_set_wasi_environ(state, nenvs,
-                                                            envs);
+                        *VEC_PUSH(wasi_envs) = optarg;
+                        ret = toywasm_repl_set_wasi_environ(
+                                state, wasi_envs.lsize, wasi_envs.p);
                         if (ret != 0) {
                                 goto fail;
                         }
@@ -360,7 +392,7 @@ main(int argc, char *const *argv)
                 goto success;
         }
 #if defined(TOYWASM_ENABLE_WASI)
-        ret = toywasm_repl_set_wasi_args(state, argc, argv);
+        ret = toywasm_repl_set_wasi_args(state, argc, (const char **)argv);
         if (ret != 0 && ret != EPROTO) {
                 goto fail;
         }
@@ -427,7 +459,10 @@ main(int argc, char *const *argv)
 fail:
         toywasm_repl_reset(state);
 #if defined(TOYWASM_ENABLE_WASI)
-        free(envs);
+        VEC_FREE(wasi_envs);
+#endif
+#if defined(TOYWASM_ENABLE_DYLD)
+        VEC_FREE(dyld_paths);
 #endif
         free(state);
         exit(exit_status);
