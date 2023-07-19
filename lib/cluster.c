@@ -63,7 +63,7 @@ int
 cluster_check_interrupt(struct exec_context *ctx, const struct cluster *c)
 {
         if (c->interrupt) {
-                STAT_INC(ctx->stats.interrupt_exit);
+                STAT_INC(ctx, interrupt_exit);
                 return trap_with_id(ctx, TRAP_VOLUNTARY_THREAD_EXIT,
                                     "interrupt");
         }
