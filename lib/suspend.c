@@ -41,7 +41,7 @@ suspend_check_interrupt(struct exec_context *ctx, const struct cluster *c)
 #if !defined(TOYWASM_USE_USER_SCHED)
         if (c->suspend_state == SUSPEND_STATE_STOPPING) {
                 xlog_trace("%s: restart", __func__);
-                STAT_INC(ctx->stats.interrupt_suspend);
+                STAT_INC(ctx, interrupt_suspend);
                 return ETOYWASMRESTART;
         }
 #endif /* !defined(TOYWASM_USE_USER_SCHED) */

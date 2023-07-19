@@ -461,11 +461,11 @@ jump_lookup(struct exec_context *ctx, const struct expr_exec_info *ei,
 #if defined(TOYWASM_USE_JUMP_CACHE)
         jump = ctx->jump_cache;
         if (jump != NULL && jump->pc == blockpc) {
-                STAT_INC(ctx->stats.jump_cache_hit);
+                STAT_INC(ctx, jump_cache_hit);
                 return jump;
         }
 #endif
-        STAT_INC(ctx->stats.jump_table_search);
+        STAT_INC(ctx, jump_table_search);
         jump = jump_table_lookup(ei, blockpc);
 #if defined(TOYWASM_USE_JUMP_CACHE)
         ctx->jump_cache = jump;
@@ -541,7 +541,7 @@ do_host_call(struct exec_context *ctx, const struct funcinst *finst)
                          * when returning a restartable error.
                          */
                         ctx->stack.lsize += nparams;
-                        STAT_INC(ctx->stats.call_restart);
+                        STAT_INC(ctx, call_restart);
                 }
                 return ret;
         }
@@ -553,9 +553,9 @@ do_host_call(struct exec_context *ctx, const struct funcinst *finst)
 static int
 do_call(struct exec_context *ctx, const struct funcinst *finst)
 {
-        STAT_INC(ctx->stats.call);
+        STAT_INC(ctx, call);
         if (finst->is_host) {
-                STAT_INC(ctx->stats.host_call);
+                STAT_INC(ctx, host_call);
                 return do_host_call(ctx, finst);
         } else {
                 return do_wasm_call(ctx, finst);
@@ -574,9 +574,9 @@ do_return_call(struct exec_context *ctx, const struct funcinst *finst)
         uint32_t arity = resulttype_cellsize(&ft->parameter);
         rewind_stack(ctx, height, arity);
 
-        STAT_INC(ctx->stats.tail_call);
+        STAT_INC(ctx, tail_call);
         if (finst->is_host) {
-                STAT_INC(ctx->stats.host_tail_call);
+                STAT_INC(ctx, host_tail_call);
         }
         return do_call(ctx, finst);
 }
@@ -754,7 +754,7 @@ block_exit(struct exec_context *ctx, uint32_t blockpc, bool goto_else,
                 }
                 get_arity_for_blocktype(m, blocktype, &param_arity, &arity);
         } else {
-                STAT_INC(ctx->stats.jump_loop);
+                STAT_INC(ctx, jump_loop);
                 const int64_t blocktype = read_leb_s33_nocheck(&p);
                 get_arity_for_blocktype(m, blocktype, &param_arity, &arity);
                 ctx->p = blockp;
@@ -774,7 +774,7 @@ cached_block_exit(struct exec_context *ctx, uint32_t blockpc, bool goto_else,
 #if TOYWASM_JUMP_CACHE2_SIZE > 0
         const struct jump_cache *cache;
         if ((cache = jump_cache2_lookup(ctx, blockpc, goto_else)) != NULL) {
-                STAT_INC(ctx->stats.jump_cache2_hit);
+                STAT_INC(ctx, jump_cache2_hit);
                 ctx->p = cache->target;
                 if (cache->stay_in_block) {
                         assert(cache->param_arity == 0);
@@ -846,9 +846,9 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
         uint32_t height;
         uint32_t arity; /* arity of the label */
         if (goto_else) {
-                STAT_INC(ctx->stats.branch_goto_else);
+                STAT_INC(ctx, branch_goto_else);
         } else {
-                STAT_INC(ctx->stats.branch);
+                STAT_INC(ctx, branch);
         }
         if (ctx->labels.lsize - labelidx == frame->labelidx) {
                 /*
@@ -936,7 +936,7 @@ check_interrupt(struct exec_context *ctx)
                 } else {
                         ctx->user_intr_delay_count = 0;
                         xlog_trace("get interrupt");
-                        STAT_INC(ctx->stats.interrupt_user);
+                        STAT_INC(ctx, interrupt_user);
                         return ETOYWASMUSERINTERRUPT;
                 }
         }
@@ -951,7 +951,7 @@ check_interrupt(struct exec_context *ctx)
 #if defined(TOYWASM_USE_USER_SCHED)
         if (ctx->sched != NULL && sched_need_resched(ctx->sched)) {
                 xlog_trace("%s: need resched ctx %p", __func__, (void *)ctx);
-                STAT_INC(ctx->stats.interrupt_usched);
+                STAT_INC(ctx, interrupt_usched);
                 return ETOYWASMRESTART;
         }
 #else /* defined(TOYWASM_USE_USER_SCHED) */
@@ -968,7 +968,7 @@ check_interrupt(struct exec_context *ctx)
         static int x = 0;
         x++;
         if ((x % 10) == 0) {
-                STAT_INC(ctx->stats.interrupt_debug);
+                STAT_INC(ctx, interrupt_debug);
                 return ETOYWASMRESTART;
         }
 #endif
@@ -1083,7 +1083,7 @@ exec_expr_continue(struct exec_context *ctx)
                                          * restart is counted as
                                          * tail_call_restart.
                                          */
-                                        STAT_INC(ctx->stats.tail_call_restart);
+                                        STAT_INC(ctx, tail_call_restart);
                                 }
                                 return ret;
                         }
@@ -1145,7 +1145,7 @@ exec_expr_continue(struct exec_context *ctx)
                         ret = check_interrupt(ctx);
                         if (ret != 0) {
                                 if (IS_RESTARTABLE(ret)) {
-                                        STAT_INC(ctx->stats.exec_loop_restart);
+                                        STAT_INC(ctx, exec_loop_restart);
                                 }
                                 return ret;
                         }
@@ -1548,7 +1548,7 @@ find_type_annotation(struct exec_context *ctx, const uint8_t *p)
         const struct type_annotations *an = &ei->type_annotations;
         assert(an->default_size > 0);
         if (an->ntypes == 0) {
-                STAT_INC(ctx->stats.type_annotation_lookup1);
+                STAT_INC(ctx, type_annotation_lookup1);
                 return an->default_size;
         }
         const uint32_t pc = ptr2pc(ctx->instance->module, p);
@@ -1559,11 +1559,11 @@ find_type_annotation(struct exec_context *ctx, const uint8_t *p)
                 }
         }
         if (i == 0) {
-                STAT_INC(ctx->stats.type_annotation_lookup2);
+                STAT_INC(ctx, type_annotation_lookup2);
                 return an->default_size;
         }
         assert(an->types[i - 1].size > 0);
-        STAT_INC(ctx->stats.type_annotation_lookup3);
+        STAT_INC(ctx, type_annotation_lookup3);
         return an->types[i - 1].size;
 #else
         return 1;
@@ -1830,7 +1830,7 @@ fail:
                         assert(abstimeout == &ctx->restart_u.timer.abstimeout);
                         ctx->restart_type = RESTART_TIMER;
                 }
-                STAT_INC(ctx->stats.atomic_wait_restart);
+                STAT_INC(ctx, atomic_wait_restart);
         }
         memory_atomic_unlock(lock);
         if (ret == 0) {

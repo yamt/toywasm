@@ -266,7 +266,7 @@ struct exec_context {
 #define FUNCIDX_INVALID UINT32_MAX
 
 /* for exec_stats */
-#define STAT_INC(s) (s)++
+#define STAT_INC(CTX, NAME) (CTX)->stats.NAME++
 
 void exec_context_init(struct exec_context *ctx, struct instance *inst);
 void exec_context_clear(struct exec_context *ctx);
