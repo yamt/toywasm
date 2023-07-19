@@ -120,9 +120,11 @@ main(int argc, char **argv)
         }
 #if defined(TOYWASM_USE_SMALL_CELLS)
         if (funcidx_with_largest_type_annotations != UINT32_MAX) {
-                printf("func %" PRIu32 " has the largest type annotations (%" PRIu32
+                printf("func %" PRIu32
+                       " has the largest type annotations (%" PRIu32
                        " entries) in this module.\n",
-                       m->nimportedfuncs + funcidx_with_largest_type_annotations,
+                       m->nimportedfuncs +
+                               funcidx_with_largest_type_annotations,
                        largest_type_annotations);
         }
 #endif
