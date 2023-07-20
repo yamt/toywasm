@@ -96,6 +96,21 @@ _Static_assert(sizeof(struct wasi_fd_prestat) == 8, "wasi_fd_prestat");
 
 #define WASI_PREOPEN_TYPE_DIR 0
 
+struct wasi_unstable_filestat {
+        uint64_t dev;
+        uint64_t ino;
+        uint8_t type;
+        uint8_t pad[3];
+        uint32_t linkcount;
+        uint64_t size;
+        uint64_t atim;
+        uint64_t mtim;
+        uint64_t ctim;
+};
+_Static_assert(sizeof(struct wasi_unstable_filestat) == 56,
+               "wasi_unstable_filestat");
+#define WASI_UNSTABLE_FILESTAT_ALIGN WASI_U64_ALIGN
+
 struct wasi_filestat {
         uint64_t dev;
         uint64_t ino;

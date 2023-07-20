@@ -326,6 +326,27 @@ wasi_convert_filestat(const struct stat *hst, struct wasi_filestat *wst)
 #endif
 }
 
+static void
+wasi_unstable_convert_filestat(const struct stat *hst,
+                               struct wasi_unstable_filestat *wst)
+{
+        memset(wst, 0, sizeof(*wst));
+        wst->dev = host_to_le64(hst->st_dev);
+        wst->ino = host_to_le64(hst->st_ino);
+        wst->type = wasi_convert_filetype(hst->st_mode);
+        wst->linkcount = host_to_le32(hst->st_nlink);
+        wst->size = host_to_le64(hst->st_size);
+#if defined(__APPLE__)
+        wst->atim = host_to_le64(timespec_to_ns(&hst->st_atimespec));
+        wst->mtim = host_to_le64(timespec_to_ns(&hst->st_mtimespec));
+        wst->ctim = host_to_le64(timespec_to_ns(&hst->st_ctimespec));
+#else
+        wst->atim = host_to_le64(timespec_to_ns(&hst->st_atim));
+        wst->mtim = host_to_le64(timespec_to_ns(&hst->st_mtim));
+        wst->ctim = host_to_le64(timespec_to_ns(&hst->st_ctim));
+#endif
+}
+
 static uint8_t
 wasi_convert_dirent_filetype(uint8_t hosttype)
 {
@@ -1474,6 +1495,75 @@ fail:
 }
 
 static int
+wasi_unstable_fd_seek(struct exec_context *ctx, struct host_instance *hi,
+                      const struct functype *ft, const struct cell *params,
+                      struct cell *results)
+{
+        WASI_TRACE;
+        struct wasi_instance *wasi = (void *)hi;
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
+        uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
+        int64_t offset = (int64_t)HOST_FUNC_PARAM(ft, params, 1, i64);
+        uint32_t whence = HOST_FUNC_PARAM(ft, params, 2, i32);
+        uint32_t retp = HOST_FUNC_PARAM(ft, params, 3, i32);
+        struct wasi_fdinfo *fdinfo = NULL;
+        int hostfd;
+        int host_ret = 0;
+        int ret;
+        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
+        if (ret != 0) {
+                goto fail;
+        }
+        int hostwhence;
+        switch (whence) {
+        case 0:
+                hostwhence = SEEK_CUR;
+                break;
+        case 1:
+                hostwhence = SEEK_END;
+                break;
+        case 2:
+                hostwhence = SEEK_SET;
+                break;
+        default:
+                ret = EINVAL;
+                goto fail;
+        }
+        struct stat st;
+        ret = fstat(hostfd, &st);
+        if (ret == -1) {
+                ret = errno;
+                assert(ret > 0);
+                goto fail;
+        }
+        if (S_ISDIR(st.st_mode)) {
+                /*
+                 * Note: wasmtime directory_seek.rs test expects EBADF.
+                 * Why not EISDIR?
+                 */
+                ret = EBADF;
+                goto fail;
+        }
+        off_t ret1 = lseek(hostfd, offset, hostwhence);
+        if (ret1 == -1) {
+                ret = errno;
+                assert(ret > 0);
+                goto fail;
+        }
+        uint64_t result = host_to_le64(ret1);
+        host_ret = wasi_copyout(ctx, &result, retp, sizeof(result),
+                                WASI_U64_ALIGN);
+fail:
+        wasi_fdinfo_release(wasi, fdinfo);
+        if (host_ret == 0) {
+                HOST_FUNC_RESULT_SET(ft, results, 0, i32,
+                                     wasi_convert_errno(ret));
+        }
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
+        return host_ret;
+}
+
+static int
 wasi_fd_tell(struct exec_context *ctx, struct host_instance *hi,
              const struct functype *ft, const struct cell *params,
              struct cell *results)
@@ -1680,6 +1770,46 @@ wasi_fd_filestat_get(struct exec_context *ctx, struct host_instance *hi,
         wasi_convert_filestat(&hst, &wst);
         host_ret = wasi_copyout(ctx, &wst, retp, sizeof(wst),
                                 WASI_FILESTAT_ALIGN);
+fail:
+        wasi_fdinfo_release(wasi, fdinfo);
+        if (host_ret == 0) {
+                HOST_FUNC_RESULT_SET(ft, results, 0, i32,
+                                     wasi_convert_errno(ret));
+        }
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
+        return host_ret;
+}
+
+static int
+wasi_unstable_fd_filestat_get(struct exec_context *ctx,
+                              struct host_instance *hi,
+                              const struct functype *ft,
+                              const struct cell *params, struct cell *results)
+{
+        WASI_TRACE;
+        struct wasi_instance *wasi = (void *)hi;
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
+        uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
+        uint32_t retp = HOST_FUNC_PARAM(ft, params, 1, i32);
+        struct wasi_fdinfo *fdinfo = NULL;
+        int hostfd;
+        int host_ret = 0;
+        int ret;
+        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
+        if (ret != 0) {
+                goto fail;
+        }
+        struct stat hst;
+        ret = fstat(hostfd, &hst);
+        if (ret == -1) {
+                ret = errno;
+                assert(ret > 0);
+                goto fail;
+        }
+        struct wasi_unstable_filestat wst;
+        wasi_unstable_convert_filestat(&hst, &wst);
+        host_ret = wasi_copyout(ctx, &wst, retp, sizeof(wst),
+                                WASI_UNSTABLE_FILESTAT_ALIGN);
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
         if (host_ret == 0) {
@@ -2848,6 +2978,57 @@ fail:
 }
 
 static int
+wasi_unstable_path_filestat_get(struct exec_context *ctx,
+                                struct host_instance *hi,
+                                const struct functype *ft,
+                                const struct cell *params,
+                                struct cell *results)
+{
+        WASI_TRACE;
+        struct wasi_instance *wasi = (void *)hi;
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
+        uint32_t dirwasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
+        uint32_t lookupflags = HOST_FUNC_PARAM(ft, params, 1, i32);
+        uint32_t path = HOST_FUNC_PARAM(ft, params, 2, i32);
+        uint32_t pathlen = HOST_FUNC_PARAM(ft, params, 3, i32);
+        uint32_t retp = HOST_FUNC_PARAM(ft, params, 4, i32);
+        char *hostpath = NULL;
+        char *wasmpath = NULL;
+        int host_ret = 0;
+        int ret;
+        host_ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd, path,
+                                                pathlen, &wasmpath, &hostpath,
+                                                &ret);
+        if (host_ret != 0 || ret != 0) {
+                goto fail;
+        }
+        struct stat hst;
+        if ((lookupflags & WASI_LOOKUPFLAG_SYMLINK_FOLLOW) != 0) {
+                ret = stat(hostpath, &hst);
+        } else {
+                ret = lstat(hostpath, &hst);
+        }
+        if (ret == -1) {
+                ret = errno;
+                assert(ret > 0);
+                goto fail;
+        }
+        struct wasi_unstable_filestat wst;
+        wasi_unstable_convert_filestat(&hst, &wst);
+        host_ret = wasi_copyout(ctx, &wst, retp, sizeof(wst),
+                                WASI_UNSTABLE_FILESTAT_ALIGN);
+fail:
+        free(hostpath);
+        free(wasmpath);
+        if (host_ret == 0) {
+                HOST_FUNC_RESULT_SET(ft, results, 0, i32,
+                                     wasi_convert_errno(ret));
+        }
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
+        return host_ret;
+}
+
+static int
 wasi_path_filestat_set_times(struct exec_context *ctx,
                              struct host_instance *hi,
                              const struct functype *ft,
@@ -3319,6 +3500,25 @@ const struct host_func wasi_funcs[] = {
         WASI_HOST_FUNC(sock_shutdown, "(ii)i"),
 };
 
+/*
+ * a few incompatibilities between wasi_unstable and
+ * wasi_snapshot_preview1:
+ *
+ * |                | unstable | preview1 |
+ * |----------------|----------|----------|
+ * | SEEK_CUR       | 0        | 1        |
+ * | SEEK_END       | 1        | 2        |
+ * | SEEK_SET       | 2        | 0        |
+ * | filestat nlink | 32-bit   | 64-bit   |
+ */
+const struct host_func wasi_unstable_funcs[] = {
+        WASI_HOST_FUNC2("fd_filestat_get", wasi_unstable_fd_filestat_get,
+                        "(ii)i"),
+        WASI_HOST_FUNC2("path_filestat_get", wasi_unstable_path_filestat_get,
+                        "(iiiii)i"),
+        WASI_HOST_FUNC2("fd_seek", wasi_unstable_fd_seek, "(iIii)i"),
+};
+
 int
 wasi_instance_add_hostfd(struct wasi_instance *inst, uint32_t wasmfd,
                          int hostfd)
@@ -3551,6 +3751,11 @@ static const struct host_module module_wasi[] = {
                 .module_name = &wasi_snapshot_preview1,
                 .funcs = wasi_funcs,
                 .nfuncs = ARRAYCOUNT(wasi_funcs),
+        },
+        {
+                .module_name = &wasi_unstable,
+                .funcs = wasi_unstable_funcs,
+                .nfuncs = ARRAYCOUNT(wasi_unstable_funcs),
         },
         {
                 .module_name = &wasi_unstable,
