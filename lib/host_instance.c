@@ -129,6 +129,9 @@ host_func_dump_params(const struct functype *ft, const struct cell *params)
  * cf. https://github.com/WebAssembly/WASI/pull/523
  *
  * Open question: Is this appropriate for non-WASI host calls?
+ * In general, linear memory alignment doesn't matter in wasm.
+ * eg. opcodes like i32.load. If a host function doesn't care
+ * the alignment, it can use align=1.
  */
 int
 host_func_check_align(struct exec_context *ctx, uint32_t wasmaddr,
