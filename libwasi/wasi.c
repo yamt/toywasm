@@ -1794,8 +1794,9 @@ wasi_fd_prestat_dir_name(struct exec_context *ctx, struct host_instance *hi,
                 prestat_path = fdinfo->wasm_path;
         }
         size_t len = strlen(prestat_path);
-        if (len != pathlen) {
-                xlog_trace("pathlen mismatch %zu != %" PRIu32, len, pathlen);
+        if (len > pathlen) {
+                xlog_trace("path buffer too small %zu > %" PRIu32, len,
+                           pathlen);
                 ret = EINVAL;
                 goto fail;
         }
