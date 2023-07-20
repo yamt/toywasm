@@ -1363,7 +1363,8 @@ wasi_fd_fdstat_get(struct exec_context *ctx, struct host_instance *hi,
         uint64_t all = ~UINT64_C(0);
         if (st.fs_filetype == WASI_FILETYPE_DIRECTORY) {
                 all &= ~(WASI_RIGHT_FD_READ | WASI_RIGHT_FD_WRITE |
-                         WASI_RIGHT_FD_SEEK);
+                         WASI_RIGHT_FD_SEEK | WASI_RIGHT_FD_FILESTAT_SET_SIZE |
+                         WASI_RIGHT_SOCK_SHUTDOWN | WASI_RIGHT_SOCK_ACCEPT);
         }
         st.fs_rights_base = all;
 
