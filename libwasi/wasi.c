@@ -1350,8 +1350,19 @@ wasi_fd_fdstat_get(struct exec_context *ctx, struct host_instance *hi,
          * for some reasons, old libc (eg. the one from wasi-sdk 8)
          * seems to perform ENOTCAPABLE checks for preopens by itself,
          * looking at fs_rights_base.
+         *
+         * Note: some code (eg. wasmtime wasi testsuite)
+         * passes fs_rights_base from fd_fdstat_get to path_open.
+         * our path_open uses WASI_RIGHT_FD_READ and WASI_RIGHT_FD_WRITE
+         * to decide O_RDONLY/O_WRITEONLY/O_RDWR. the underlying os
+         * and/or filesystem might reject them with EISDIR if it's
+         * a directory.
          */
-        st.fs_rights_base = ~UINT64_C(0);
+        uint64_t all = ~UINT64_C(0);
+        if (st.fs_filetype == WASI_FILETYPE_DIRECTORY) {
+                all &= ~(WASI_RIGHT_FD_READ | WASI_RIGHT_FD_WRITE);
+        }
+        st.fs_rights_base = all;
 
         /*
          * A hack to make wasm-on-wasm happier.
