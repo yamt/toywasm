@@ -385,7 +385,6 @@ dyld_create_got(struct dyld *d, struct dyld_object *obj)
                 if (is_env_func_import(m, im)) {
                         plt->sym = &im->name;
                         plt->refobj = obj;
-                        plt->dyld = d;
 
                         struct funcinst *fi = &plt->pltfi;
                         fi->is_host = true;
@@ -725,6 +724,7 @@ dyld_load_object_from_file(struct dyld *d, const struct name *name,
         }
         report_clear(&report);
         LIST_INSERT_TAIL(&d->objs, obj, q);
+        obj->dyld = d;
         xlog_trace("dyld: %.*s loaded", CSTR(objname));
         return 0;
 fail:
@@ -857,10 +857,10 @@ symtype_str(enum symtype symtype)
 }
 
 int
-dyld_resolve_symbol(struct dyld *d, struct dyld_object *refobj,
-                    enum symtype symtype, const struct name *sym,
-                    uint32_t *resultp)
+dyld_resolve_symbol(struct dyld_object *refobj, enum symtype symtype,
+                    const struct name *sym, uint32_t *resultp)
 {
+        struct dyld *d = refobj->dyld;
         struct dyld_object *obj;
         enum externtype etype;
         if (symtype == SYM_TYPE_FUNC) {
@@ -919,7 +919,7 @@ dyld_resolve_symbol(struct dyld *d, struct dyld_object *refobj,
 }
 
 static int
-dyld_resolve_got_symbols(struct dyld *d, struct dyld_object *refobj)
+dyld_resolve_got_symbols(struct dyld_object *refobj)
 {
         const struct module *m = refobj->module;
         struct globalinst *got = refobj->gots;
@@ -938,8 +938,7 @@ dyld_resolve_got_symbols(struct dyld *d, struct dyld_object *refobj)
                         continue;
                 }
                 uint32_t addr;
-                ret = dyld_resolve_symbol(d, refobj, symtype, &im->name,
-                                          &addr);
+                ret = dyld_resolve_symbol(refobj, symtype, &im->name, &addr);
                 if (ret != 0) {
                         xlog_error("dyld: failed to resolve %.*s %.*s %.*s",
                                    CSTR(objname), CSTR(&im->module_name),
@@ -960,7 +959,7 @@ dyld_resolve_all_got_symbols(struct dyld *d)
 {
         struct dyld_object *obj;
         LIST_FOREACH(obj, &d->objs, q) {
-                int ret = dyld_resolve_got_symbols(d, obj);
+                int ret = dyld_resolve_got_symbols(obj);
                 if (ret != 0) {
                         return ret;
                 }

@@ -12,7 +12,6 @@ struct dyld_plt {
         const struct funcinst *finst;
         const struct name *sym;
         struct dyld_object *refobj;
-        struct dyld *dyld;
         struct funcinst pltfi;
 };
 
@@ -39,6 +38,7 @@ struct dyld_object {
         struct module *module;
         struct instance *instance;
 
+        struct dyld *dyld;
         LIST_ENTRY(struct dyld_object) q;
 };
 
@@ -77,6 +77,5 @@ struct instance *dyld_main_object_instance(struct dyld *d);
 void dyld_options_set_defaults(struct dyld_options *opts);
 
 const struct name *dyld_object_name(struct dyld_object *obj);
-int dyld_resolve_symbol(struct dyld *d, struct dyld_object *refobj,
-                        enum symtype symtype, const struct name *sym,
-                        uint32_t *resultp);
+int dyld_resolve_symbol(struct dyld_object *refobj, enum symtype symtype,
+                        const struct name *sym, uint32_t *resultp);
