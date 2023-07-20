@@ -1324,8 +1324,13 @@ wasi_fd_fdstat_get(struct exec_context *ctx, struct host_instance *hi,
                         st.fs_flags |= WASI_FDFLAG_APPEND;
                 }
         }
-        /* TODO fs_rights_base */
-        /* TODO fs_rights_inheriting */
+
+        /*
+         * for some reasons, old libc (eg. the one from wasi-sdk 8)
+         * seems to perform ENOTCAPABLE checks for preopens by itself,
+         * looking at fs_rights_base.
+         */
+        st.fs_rights_base = ~UINT64_C(0);
 
         /*
          * A hack to make wasm-on-wasm happier.
