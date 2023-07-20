@@ -3,6 +3,7 @@ fd_flags_set
 path_open_read_without_rights
 path_filestat
 symlink_filestat
+truncation_rights
 
 # intentional limitations due to the use of legacy
 # (non openat family) functions.
