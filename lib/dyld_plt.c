@@ -13,13 +13,13 @@ dyld_plt(struct exec_context *ctx, struct host_instance *hi,
 {
         struct dyld_plt *plt = (void *)hi;
         if (plt->finst == NULL) {
-                struct dyld *d = plt->dyld;
                 struct dyld_object *refobj = plt->refobj;
+                struct dyld *d = refobj->dyld;
                 const struct name *objname = dyld_object_name(refobj);
                 const struct name *sym = plt->sym;
                 int ret;
                 uint32_t addr;
-                ret = dyld_resolve_symbol(d, plt->refobj, SYM_TYPE_FUNC, sym,
+                ret = dyld_resolve_symbol(plt->refobj, SYM_TYPE_FUNC, sym,
                                           &addr);
                 if (ret != 0) {
                         xlog_error("dyld: PLT failed to resolve %.*s %.*s",
