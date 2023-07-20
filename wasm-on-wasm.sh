@@ -18,24 +18,27 @@ cmake --build build.native
 
 EXTRA_OPTIONS=--print-stats
 
+TOYWASM_NATIVE=${TOYWASM_NATIVE:-./build.native/toywasm}
+TOYWASM_WASM=${TOYWASM_WASM:-./build.wasm/toywasm}
+
 echo "=== native ==="
 time \
-./build.native/toywasm --version
+${TOYWASM_NATIVE} --version
 
 echo "=== wasm ==="
 time \
-./build.native/toywasm ${EXTRA_OPTIONS} --wasi --wasi-dir . -- \
-./build.wasm/toywasm --version
+${TOYWASM_NATIVE} ${EXTRA_OPTIONS} --wasi --wasi-dir . -- \
+${TOYWASM_WASM} --version
 
 echo "=== wasm on wasm ==="
 time \
-./build.native/toywasm ${EXTRA_OPTIONS} --wasi --wasi-dir . -- \
-./build.wasm/toywasm ${EXTRA_OPTIONS} --wasi --wasi-dir . -- \
-./build.wasm/toywasm --version
+${TOYWASM_NATIVE} ${EXTRA_OPTIONS} --wasi --wasi-dir . -- \
+${TOYWASM_WASM} ${EXTRA_OPTIONS} --wasi --wasi-dir . -- \
+${TOYWASM_WASM} --version
 
 echo "=== wasm on wasm on wasm ==="
 time \
-./build.native/toywasm ${EXTRA_OPTIONS} --wasi --wasi-dir . -- \
-./build.wasm/toywasm ${EXTRA_OPTIONS} --wasi --wasi-dir . -- \
-./build.wasm/toywasm ${EXTRA_OPTIONS} --wasi --wasi-dir . -- \
-./build.wasm/toywasm --version
+${TOYWASM_NATIVE} ${EXTRA_OPTIONS} --wasi --wasi-dir . -- \
+${TOYWASM_WASM} ${EXTRA_OPTIONS} --wasi --wasi-dir . -- \
+${TOYWASM_WASM} ${EXTRA_OPTIONS} --wasi --wasi-dir . -- \
+${TOYWASM_WASM} --version
