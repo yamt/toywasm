@@ -1357,10 +1357,13 @@ wasi_fd_fdstat_get(struct exec_context *ctx, struct host_instance *hi,
          * to decide O_RDONLY/O_WRITEONLY/O_RDWR. the underlying os
          * and/or filesystem might reject them with EISDIR if it's
          * a directory.
+         *
+         * Note: In WASI, directories are not seekable.
          */
         uint64_t all = ~UINT64_C(0);
         if (st.fs_filetype == WASI_FILETYPE_DIRECTORY) {
-                all &= ~(WASI_RIGHT_FD_READ | WASI_RIGHT_FD_WRITE);
+                all &= ~(WASI_RIGHT_FD_READ | WASI_RIGHT_FD_WRITE |
+                         WASI_RIGHT_FD_SEEK);
         }
         st.fs_rights_base = all;
 
