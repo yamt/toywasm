@@ -32,8 +32,10 @@ void lef64_encode(void *p, double v);
  * don't have the problem, x87 ST0 register is still used to return
  * float/double function results as it's specified by the i386 ABI.
  *
- * while GCC has -mno-fp-ret-in-387 to alter the abi, Clang unfortunately
+ * while GCC has -mno-fp-ret-in-387 to alter the ABI, Clang unfortunately
  * doesn't seem to have an equivalent.
+ *
+ * here we avoid the ABI problem by inlining the functions.
  */
 #if defined(__i386__)
 __attribute__((always_inline, used)) static float
