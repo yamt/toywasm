@@ -288,9 +288,6 @@ get_functype(struct module *m, uint32_t typeidx, struct functype **ftp)
         return 0;
 }
 
-static const struct resulttype rt_empty = {
-        .ntypes = 0, .is_static = true, CELLIDX_NONE};
-
 #define BYTE_AS_S33(b) ((int)(signed char)((b) + 0x80))
 
 int
@@ -307,8 +304,8 @@ get_functype_for_blocktype(struct module *m, int64_t blocktype,
                         return EINVAL;
                 }
                 if (u8 == 0x40) {
-                        *parameter = (void *)&rt_empty; /* unconst */
-                        *result = (void *)&rt_empty;    /* unconst */
+                        *parameter = empty_rt;
+                        *result = empty_rt;
                         return 0;
                 }
                 if (is_valtype(u8)) {
@@ -319,7 +316,7 @@ get_functype_for_blocktype(struct module *m, int64_t blocktype,
                         if (ret != 0) {
                                 return ret;
                         }
-                        *parameter = (void *)&rt_empty; /* unconst */
+                        *parameter = empty_rt;
                         *result = rt;
                         return 0;
                 }
