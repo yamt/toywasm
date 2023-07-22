@@ -31,7 +31,7 @@ valtype_cellsize(enum valtype t)
                 assert(sizeof(void *) == sz * sizeof(struct cell));
                 break;
         default:
-                assert(false);
+                xassert(false);
                 sz = 0;
                 break;
         }
