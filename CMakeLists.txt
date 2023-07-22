@@ -24,6 +24,9 @@ add_subdirectory(lib)
 if(TOYWASM_ENABLE_WASI)
 add_subdirectory(libwasi)
 endif()
+if(TOYWASM_ENABLE_DYLD)
+add_subdirectory(libdyld)
+endif()
 
 if(CMAKE_C_COMPILER_TARGET MATCHES "wasm")
 set(TOYWASM_CLI "${CMAKE_CURRENT_SOURCE_DIR}/test/toywasm-on-toywasm.py")
@@ -48,7 +51,10 @@ set(cli_sources
 )
 
 add_executable(toywasm-cli ${cli_sources})
-target_link_libraries(toywasm-cli toywasm-lib-core $<$<BOOL:${TOYWASM_ENABLE_WASI}>:toywasm-lib-wasi> m)
+target_link_libraries(toywasm-cli toywasm-lib-core
+	$<$<BOOL:${TOYWASM_ENABLE_WASI}>:toywasm-lib-wasi>
+	$<$<BOOL:${TOYWASM_ENABLE_DYLD}>:toywasm-lib-dyld>
+    m)
 set_target_properties(toywasm-cli PROPERTIES OUTPUT_NAME toywasm)
 
 add_test(NAME toywasm-cli-simple-module COMMAND

@@ -1,6 +1,9 @@
 #include <stdbool.h>
 
+#include "toywasm_config.h"
+#if defined(TOYWASM_ENABLE_DYLD)
 #include "dyld.h"
+#endif
 #include "options.h"
 #include "type.h"
 
