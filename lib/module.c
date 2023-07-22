@@ -1779,7 +1779,7 @@ fail:
         return ret;
 }
 
-static struct known_custom_section {
+static const struct known_custom_section {
         const char *name;
         int (*read)(const uint8_t **pp, const uint8_t *ep,
                     struct load_context *ctx);
