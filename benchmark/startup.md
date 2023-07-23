@@ -10,10 +10,6 @@ print the `-version` message)
 
 ## Result
 
-> **Warning**
-> It's pointed out that the way I built wasmi was not ideal:
-> https://github.com/yamt/toywasm/issues/8#issuecomment-1570506209
-
 ![Result](./startup.png)
 
 * Run on a macOS/amd64 laptop:
