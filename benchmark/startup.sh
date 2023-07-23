@@ -28,6 +28,7 @@ run() {
 wasmer cache clean 2> /dev/null
 rm -rf ~/.wasmer/cache
 rm -rf ~/Library/Caches/BytecodeAlliance.wasmtime
+sync;sync;sync;sleep 3
 
 run "toywasm (default)" "../b/toywasm --wasi --"
 run "toywasm (no annotations)" "../b/toywasm --disable-jump-table --disable-localtype-cellidx --disable-resulttype-cellidx --wasi --"
