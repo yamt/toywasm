@@ -18,8 +18,9 @@ run()
 }
 
 # Remove on-disk cache for consistent results.
-# XXX what's the proper way to clear cache for wasmtime?
+# XXX what's the proper way to clear cache?
 wasmer cache clean
+rm -rf ~/.wasmer/cache
 rm -rf ~/Library/Caches/BytecodeAlliance.wasmtime
 
 # Note: toywasm uses read-only mmap to load the wasm binary.
