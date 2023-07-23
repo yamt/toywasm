@@ -26,6 +26,7 @@ run() {
 }
 
 wasmer cache clean 2> /dev/null
+rm -rf ~/.wasmer/cache
 rm -rf ~/Library/Caches/BytecodeAlliance.wasmtime
 
 run "toywasm (default)" "../b/toywasm --wasi --"
