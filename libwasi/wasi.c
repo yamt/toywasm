@@ -1360,13 +1360,38 @@ wasi_fd_fdstat_get(struct exec_context *ctx, struct host_instance *hi,
          *
          * Note: In WASI, directories are not seekable.
          */
-        uint64_t all = ~UINT64_C(0);
-        if (st.fs_filetype == WASI_FILETYPE_DIRECTORY) {
-                all &= ~(WASI_RIGHT_FD_READ | WASI_RIGHT_FD_WRITE |
-                         WASI_RIGHT_FD_SEEK | WASI_RIGHT_FD_FILESTAT_SET_SIZE |
-                         WASI_RIGHT_SOCK_SHUTDOWN | WASI_RIGHT_SOCK_ACCEPT);
+        const uint64_t seek_rights = WASI_RIGHT_FD_SEEK | WASI_RIGHT_FD_TELL;
+        const uint64_t path_rights =
+                WASI_RIGHT_PATH_CREATE_DIRECTORY |
+                WASI_RIGHT_PATH_CREATE_FILE | WASI_RIGHT_PATH_LINK_SOURCE |
+                WASI_RIGHT_PATH_LINK_TARGET | WASI_RIGHT_PATH_OPEN |
+                WASI_RIGHT_PATH_READLINK | WASI_RIGHT_PATH_RENAME_SOURCE |
+                WASI_RIGHT_PATH_RENAME_TARGET | WASI_RIGHT_PATH_FILESTAT_GET |
+                WASI_RIGHT_PATH_FILESTAT_SET_SIZE |
+                WASI_RIGHT_PATH_FILESTAT_SET_TIMES | WASI_RIGHT_PATH_SYMLINK |
+                WASI_RIGHT_PATH_REMOVE_DIRECTORY | WASI_RIGHT_PATH_UNLINK_FILE;
+        const uint64_t sock_rights =
+                WASI_RIGHT_SOCK_SHUTDOWN | WASI_RIGHT_SOCK_ACCEPT;
+        const uint64_t regfile_rights = WASI_RIGHT_FD_READ |
+                                        WASI_RIGHT_FD_WRITE |
+                                        WASI_RIGHT_FD_FILESTAT_SET_SIZE;
+        uint64_t rights = ~UINT64_C(0);
+        switch (st.fs_filetype) {
+        case WASI_FILETYPE_DIRECTORY:
+                rights = ~(regfile_rights | seek_rights | sock_rights);
+                break;
+        case WASI_FILETYPE_CHARACTER_DEVICE:
+                /*
+                 * Note: SEEK/TELL bits are important because
+                 * wasi-libc isatty() checks them.
+                 */
+                rights = ~(path_rights | seek_rights | sock_rights);
+                break;
+        case WASI_FILETYPE_REGULAR_FILE:
+                rights = ~(path_rights | sock_rights);
+                break;
         }
-        st.fs_rights_base = host_to_le64(all);
+        st.fs_rights_base = host_to_le64(rights);
 
         /*
          * A hack to make wasm-on-wasm happier.
