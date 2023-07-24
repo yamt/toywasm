@@ -177,7 +177,7 @@ add_test(NAME toywasm-cli-wcpl
 	COMMAND ./test/run-wcpl.sh
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
-set_tests_properties(toywasm-cli-wcpl PROPERTIES ENVIRONMENT "${TEST_ENV}")
+set_tests_properties(toywasm-cli-wcpl PROPERTIES ENVIRONMENT "${TEST_ENV};TEST_RUNTIME_EXE=${TOYWASM_CLI} --wasi --wasi-dir=. --")
 set_tests_properties(toywasm-cli-wcpl PROPERTIES LABELS "slow;app")
 endif() # TOYWASM_ENABLE_WASI
 
