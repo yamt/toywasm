@@ -18,11 +18,12 @@ if [ ! -d ${DIR} ]; then
 fi
 
 TOYWASM=${TOYWASM:-toywasm}
+TEST_RUNTIME_EXE=${TEST_RUNTIME_EXE:-"${TOYWASM} --wasi --wasi-dir=. --"}
 
 # https://github.com/false-schemers/wcpl#self-hosting
 set -x
 cd ${DIR}
 cc -o wcpl [wcpl].c
 ./wcpl -o wcpl.wasm [wcpl].c
-${TOYWASM} --wasi --wasi-dir=. -- wcpl.wasm -o wcpl1.wasm [wcpl].c
+${TEST_RUNTIME_EXE} wcpl.wasm -o wcpl1.wasm [wcpl].c
 diff -s wcpl.wasm wcpl1.wasm
