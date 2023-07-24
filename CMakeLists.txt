@@ -172,6 +172,13 @@ add_test(NAME toywasm-cli-ffmpeg
 )
 set_tests_properties(toywasm-cli-ffmpeg PROPERTIES ENVIRONMENT "${TEST_ENV}")
 set_tests_properties(toywasm-cli-ffmpeg PROPERTIES LABELS "slow;app")
+
+add_test(NAME toywasm-cli-wcpl
+	COMMAND ./test/run-wcpl.sh
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+set_tests_properties(toywasm-cli-wcpl PROPERTIES ENVIRONMENT "${TEST_ENV}")
+set_tests_properties(toywasm-cli-wcpl PROPERTIES LABELS "slow;app")
 endif() # TOYWASM_ENABLE_WASI
 
 if(NOT TOYWASM_ENABLE_WASM_MULTI_MEMORY)
