@@ -73,6 +73,28 @@ list_insert_tail(struct list_head *h, void *elem, struct list_entry *e)
 }
 
 void
+list_insert_head(struct list_head *h, void *elem, struct list_entry *e)
+{
+        list_check2(h, elem, e, false);
+        if (h->first == NULL) {
+                e->next = NULL;
+                h->tailnextp = &e->next;
+        } else {
+                uintptr_t offset = (uintptr_t)e - (uintptr_t)elem;
+                struct list_entry *firstentry =
+                        (void *)((uintptr_t)h->first + offset);
+                assert(firstentry->prevnextp == &h->first);
+                firstentry->prevnextp = &e->next;
+                e->next = h->first;
+                e->prevnextp = &h->first;
+        }
+        h->first = elem;
+        assert(h->first != NULL);
+        assert(*e->prevnextp == elem);
+        list_check2(h, elem, e, true);
+}
+
+void
 list_head_init(struct list_head *h)
 {
         h->first = NULL;

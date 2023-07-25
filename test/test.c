@@ -633,6 +633,7 @@ test_list(void **state)
                 LIST_INSERT_TAIL(&h, &items[i], entry);
                 assert_false(LIST_EMPTY(&h));
                 assert_null(LIST_NEXT(&items[i], entry));
+                assert_ptr_equal(LIST_LAST(&h, struct item, entry), &items[i]);
                 if (i == 0) {
                         assert_null(
                                 LIST_PREV(&items[i], &h, struct item, entry));
@@ -686,6 +687,46 @@ test_list(void **state)
                 LIST_REMOVE(&h, it, entry);
         }
         assert_int_equal(i, 5);
+        assert_true(LIST_EMPTY(&h));
+        assert_null(LIST_FIRST(&h));
+        assert_null(LIST_LAST(&h, struct item, entry));
+
+        for (i = 0; i < 10; i++) {
+                LIST_INSERT_HEAD(&h, &items[i], entry);
+                assert_false(LIST_EMPTY(&h));
+                assert_null(LIST_PREV(&items[i], &h, struct item, entry));
+                assert_ptr_equal(LIST_FIRST(&h), &items[i]);
+                if (i == 0) {
+                        assert_null(LIST_NEXT(&items[i], entry));
+                } else {
+                        assert_ptr_equal(LIST_NEXT(&items[i], entry),
+                                         &items[i - 1]);
+                        assert_ptr_equal(LIST_PREV(&items[i - 1], &h,
+                                                   struct item, entry),
+                                         &items[i]);
+                }
+        }
+        assert_ptr_equal(LIST_LAST(&h, struct item, entry), &items[0]);
+
+        i = 0;
+        LIST_FOREACH(it, &h, entry) {
+                assert_int_equal(it - items, 9 - i);
+                i++;
+        }
+        i = 0;
+        LIST_FOREACH_REVERSE(it, &h, struct item, entry)
+        {
+                assert_int_equal(it - items, i);
+                i++;
+        }
+
+        i = 0;
+        while ((it = LIST_LAST(&h, struct item, entry)) != NULL) {
+                assert_int_equal(it - items, i);
+                i++;
+                LIST_REMOVE(&h, it, entry);
+        }
+        assert_int_equal(i, 10);
         assert_true(LIST_EMPTY(&h));
         assert_null(LIST_FIRST(&h));
         assert_null(LIST_LAST(&h, struct item, entry));
