@@ -689,7 +689,7 @@ dyld_load_object_from_file(struct dyld *d, const struct name *name,
         }
         load_context_clear(&lctx);
         if (obj->module->dylink == NULL) {
-                xlog_error("module %.*s doesn't have dylink.0", CSTR(name));
+                xlog_error("module %.*s doesn't have dylink.0", CSTR(objname));
                 ret = EINVAL;
                 goto fail;
         }
