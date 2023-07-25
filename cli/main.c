@@ -406,7 +406,12 @@ main(int argc, char *const *argv)
                 goto fail;
         }
 #if defined(TOYWASM_ENABLE_WASI_THREADS)
-        if (state->wasi_threads != NULL) {
+        if (state->wasi_threads != NULL
+#if defined(TOYWASM_ENABLE_DYLD)
+            /* if dyld is enabled, make thread_spawn fail. */
+            && !opts->enable_dyld
+#endif
+        ) {
                 const struct repl_module_state_u *mod_u =
                         &state->modules[state->nmodules - 1];
                 const struct repl_module_state *mod = &mod_u->u.repl;
