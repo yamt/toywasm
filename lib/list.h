@@ -50,6 +50,7 @@ void list_insert_tail(struct list_head *h, void *elem, struct list_entry *e);
 #endif
 
 #define LIST_FIRST(HEAD) (HEAD)->first
+#define LIST_NEXT(VAR, NAME) (VAR)->NAME.next
 
 #define LIST_EMPTY(HEAD) (LIST_FIRST(HEAD) == NULL)
 
