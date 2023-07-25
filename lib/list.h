@@ -1,6 +1,8 @@
 #if !defined(_TOYWASM_LIST_H)
 #define _TOYWASM_LIST_H
 
+#include <stdint.h>
+
 #include "platform.h"
 
 struct list_elem;
@@ -39,6 +41,9 @@ void list_insert_tail(struct list_head *h, void *elem, struct list_entry *e);
 
 #define LIST_FOREACH(VAR, HEAD, NAME)                                         \
         for (VAR = LIST_FIRST(HEAD); VAR != NULL; VAR = LIST_NEXT(VAR, NAME))
+#define LIST_FOREACH_REVERSE(VAR, HEAD, TYPE, NAME)                           \
+        for (VAR = LIST_LAST(HEAD, TYPE, NAME); VAR != NULL;                  \
+             VAR = LIST_PREV(VAR, HEAD, TYPE, NAME))
 
 #if defined(toywasm_typeof)
 #define CHECK_TYPE(a, b)                                                      \
@@ -49,8 +54,19 @@ void list_insert_tail(struct list_head *h, void *elem, struct list_entry *e);
 #define CHECK_TYPE(a, b)
 #endif
 
+#define _LIST_NEXT_PTR_TO_ELEM(ELEM, TYPE, NAME)                              \
+        (TYPE *)((uintptr_t)(ELEM)-toywasm_offsetof(TYPE, NAME.next))
+
 #define LIST_FIRST(HEAD) (HEAD)->first
+#define LIST_LAST(HEAD, TYPE, NAME)                                           \
+        (LIST_EMPTY(HEAD)                                                     \
+                 ? NULL                                                       \
+                 : _LIST_NEXT_PTR_TO_ELEM((HEAD)->tailnextp, TYPE, NAME))
 #define LIST_NEXT(VAR, NAME) (VAR)->NAME.next
+#define LIST_PREV(VAR, HEAD, TYPE, NAME)                                      \
+        (LIST_FIRST(HEAD) == (VAR)                                            \
+                 ? NULL                                                       \
+                 : _LIST_NEXT_PTR_TO_ELEM((VAR)->NAME.prevnextp, TYPE, NAME))
 
 #define LIST_EMPTY(HEAD) (LIST_FIRST(HEAD) == NULL)
 
