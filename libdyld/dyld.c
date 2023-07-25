@@ -670,9 +670,7 @@ dyld_load_object_from_file(struct dyld *d, const struct name *name,
                 goto fail;
         }
         obj->name = name;
-#if defined(TOYWASM_ENABLE_TRACING)
         const struct name *objname = dyld_object_name(obj);
-#endif
         ret = map_file(filename, (void *)&obj->bin, &obj->binsz);
         if (ret != 0) {
                 goto fail;
