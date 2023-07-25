@@ -613,20 +613,36 @@ test_list(void **state)
         LIST_HEAD_INIT(&h);
         assert_true(LIST_EMPTY(&h));
         assert_null(LIST_FIRST(&h));
+        assert_null(LIST_LAST(&h, struct item, entry));
 
         struct item item;
         LIST_INSERT_TAIL(&h, &item, entry);
         assert_false(LIST_EMPTY(&h));
         assert_ptr_equal(LIST_FIRST(&h), &item);
+        assert_ptr_equal(LIST_LAST(&h, struct item, entry), &item);
+        assert_null(LIST_NEXT(&item, entry));
+        assert_null(LIST_PREV(&item, &h, struct item, entry));
         LIST_REMOVE(&h, &item, entry);
         assert_true(LIST_EMPTY(&h));
         assert_null(LIST_FIRST(&h));
+        assert_null(LIST_LAST(&h, struct item, entry));
 
         struct item items[10];
         int i;
         for (i = 0; i < 10; i++) {
                 LIST_INSERT_TAIL(&h, &items[i], entry);
                 assert_false(LIST_EMPTY(&h));
+                assert_null(LIST_NEXT(&items[i], entry));
+                if (i == 0) {
+                        assert_null(
+                                LIST_PREV(&items[i], &h, struct item, entry));
+                } else {
+                        assert_ptr_equal(
+                                LIST_PREV(&items[i], &h, struct item, entry),
+                                &items[i - 1]);
+                        assert_ptr_equal(LIST_NEXT(&items[i - 1], entry),
+                                         &items[i]);
+                }
         }
         assert_ptr_equal(LIST_FIRST(&h), &items[0]);
 
@@ -634,6 +650,12 @@ test_list(void **state)
         i = 0;
         LIST_FOREACH(it, &h, entry) {
                 assert_int_equal(it - items, i);
+                i++;
+        }
+        i = 0;
+        LIST_FOREACH_REVERSE(it, &h, struct item, entry)
+        {
+                assert_int_equal(it - items, 9 - i);
                 i++;
         }
 
@@ -649,6 +671,13 @@ test_list(void **state)
                 i++;
         }
         assert_int_equal(i, 5);
+        i = 0;
+        LIST_FOREACH_REVERSE(it, &h, struct item, entry)
+        {
+                assert_int_equal(it - items, (4 - i) * 2 + 1);
+                i++;
+        }
+        assert_int_equal(i, 5);
 
         i = 0;
         while ((it = LIST_FIRST(&h)) != NULL) {
@@ -658,6 +687,8 @@ test_list(void **state)
         }
         assert_int_equal(i, 5);
         assert_true(LIST_EMPTY(&h));
+        assert_null(LIST_FIRST(&h));
+        assert_null(LIST_LAST(&h, struct item, entry));
 }
 
 int
