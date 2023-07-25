@@ -38,7 +38,7 @@ void list_insert_tail(struct list_head *h, void *elem, struct list_entry *e);
         }
 
 #define LIST_FOREACH(VAR, HEAD, NAME)                                         \
-        for (VAR = (HEAD)->first; VAR != NULL; VAR = (VAR)->NAME.next)
+        for (VAR = LIST_FIRST(HEAD); VAR != NULL; VAR = LIST_NEXT(VAR, NAME))
 
 #if defined(toywasm_typeof)
 #define CHECK_TYPE(a, b)                                                      \
