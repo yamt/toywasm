@@ -654,8 +654,7 @@ test_list(void **state)
                 i++;
         }
         i = 0;
-        LIST_FOREACH_REVERSE(it, &h, struct item, entry)
-        {
+        LIST_FOREACH_REVERSE(it, &h, struct item, entry) {
                 assert_int_equal(it - items, 9 - i);
                 i++;
         }
@@ -673,8 +672,7 @@ test_list(void **state)
         }
         assert_int_equal(i, 5);
         i = 0;
-        LIST_FOREACH_REVERSE(it, &h, struct item, entry)
-        {
+        LIST_FOREACH_REVERSE(it, &h, struct item, entry) {
                 assert_int_equal(it - items, (4 - i) * 2 + 1);
                 i++;
         }
@@ -714,8 +712,7 @@ test_list(void **state)
                 i++;
         }
         i = 0;
-        LIST_FOREACH_REVERSE(it, &h, struct item, entry)
-        {
+        LIST_FOREACH_REVERSE(it, &h, struct item, entry) {
                 assert_int_equal(it - items, i);
                 i++;
         }
