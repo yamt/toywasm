@@ -49,7 +49,7 @@ int
 memory_getptr2(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
                uint32_t offset, uint32_t size, void **pp, bool *movedp)
 {
-        struct instance *inst = ctx->instance;
+        const struct instance *inst = ctx->instance;
         struct meminst *meminst = VEC_ELEM(inst->mems, memidx);
         assert(meminst->allocated <=
                (uint64_t)meminst->size_in_pages * WASM_PAGE_SIZE);
@@ -140,7 +140,7 @@ memory_atomic_getptr(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
                      struct toywasm_mutex **lockp)
         NO_THREAD_SAFETY_ANALYSIS /* conditionl lock */
 {
-        struct instance *inst = ctx->instance;
+        const struct instance *inst = ctx->instance;
         struct meminst *meminst = VEC_ELEM(inst->mems, memidx);
         struct shared_meminst *shared = meminst->shared;
         struct toywasm_mutex *lock = NULL;
@@ -477,7 +477,7 @@ static const struct func *
 funcinst_func(const struct funcinst *fi)
 {
         assert(!fi->is_host);
-        struct instance *inst = fi->u.wasm.instance;
+        const struct instance *inst = fi->u.wasm.instance;
         uint32_t funcidx = fi->u.wasm.funcidx;
         /*
          * Note: We do never create multiple funcinst for a func.
@@ -1280,7 +1280,7 @@ int
 memory_init(struct exec_context *ectx, uint32_t memidx, uint32_t dataidx,
             uint32_t d, uint32_t s, uint32_t n)
 {
-        struct instance *inst = ectx->instance;
+        const struct instance *inst = ectx->instance;
         const struct module *m = inst->module;
         assert(memidx < m->nimportedmems + m->nmems);
         assert(dataidx < m->ndatas);
@@ -1312,10 +1312,10 @@ int
 table_access(struct exec_context *ectx, uint32_t tableidx, uint32_t offset,
              uint32_t n)
 {
-        struct instance *inst = ectx->instance;
+        const struct instance *inst = ectx->instance;
         const struct module *m = inst->module;
         assert(tableidx < m->nimportedtables + m->ntables);
-        struct tableinst *t = VEC_ELEM(inst->tables, tableidx);
+        const struct tableinst *t = VEC_ELEM(inst->tables, tableidx);
         if (offset > t->size || n > t->size - offset) {
                 return trap_with_id(
                         ectx, TRAP_OUT_OF_BOUNDS_TABLE_ACCESS,
@@ -1330,13 +1330,13 @@ int
 table_init(struct exec_context *ectx, uint32_t tableidx, uint32_t elemidx,
            uint32_t d, uint32_t s, uint32_t n)
 {
-        struct instance *inst = ectx->instance;
+        const struct instance *inst = ectx->instance;
         const struct module *m = inst->module;
         assert(tableidx < m->nimportedtables + m->ntables);
         assert(elemidx < m->nelems);
         int ret;
         bool dropped = bitmap_test(&inst->elem_dropped, elemidx);
-        struct element *elem = &m->elems[elemidx];
+        const struct element *elem = &m->elems[elemidx];
         if ((dropped && !(s == 0 && n == 0)) || s > elem->init_size ||
             n > elem->init_size - s) {
                 ret = trap_with_id(ectx, TRAP_OUT_OF_BOUNDS_ELEMENT_ACCESS,
@@ -1686,7 +1686,7 @@ retry:
 uint32_t
 memory_grow2(struct exec_context *ctx, uint32_t memidx, uint32_t sz)
 {
-        struct instance *inst = ctx->instance;
+        const struct instance *inst = ctx->instance;
         const struct module *m = inst->module;
         assert(memidx < m->nimportedmems + m->nmems);
         struct meminst *mi = VEC_ELEM(inst->mems, memidx);
@@ -1704,7 +1704,7 @@ int
 memory_notify(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
               uint32_t offset, uint32_t count, uint32_t *nwokenp)
 {
-        struct instance *inst = ctx->instance;
+        const struct instance *inst = ctx->instance;
         const struct module *m = inst->module;
         assert(memidx < m->nimportedmems + m->nmems);
         struct meminst *mi = VEC_ELEM(inst->mems, memidx);
@@ -1737,7 +1737,7 @@ memory_wait(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
             uint32_t offset, uint64_t expected, uint32_t *resultp,
             int64_t timeout_ns, bool is64)
 {
-        struct instance *inst = ctx->instance;
+        const struct instance *inst = ctx->instance;
         const struct module *m = inst->module;
         assert(memidx < m->nimportedmems + m->nmems);
         struct meminst *mi = VEC_ELEM(inst->mems, memidx);

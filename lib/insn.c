@@ -159,7 +159,7 @@ static int
 get_func_indirect(struct exec_context *ectx, uint32_t tableidx,
                   uint32_t typeidx, uint32_t i, const struct funcinst **fip)
 {
-        struct instance *inst = ectx->instance;
+        const struct instance *inst = ectx->instance;
         const struct module *m = inst->module;
         const struct functype *ft = &m->types[typeidx];
         const struct tableinst *t = VEC_ELEM(inst->tables, tableidx);

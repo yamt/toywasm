@@ -32,7 +32,7 @@ bitmap_set(struct bitmap *b, uint32_t idx)
 }
 
 bool
-bitmap_test(struct bitmap *b, uint32_t idx)
+bitmap_test(const struct bitmap *b, uint32_t idx)
 {
         uint32_t mask = 1U << (idx % 32);
         return (b->data[idx / 32] & mask) != 0;

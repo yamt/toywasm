@@ -285,7 +285,8 @@ fail:
 }
 
 int
-check_functype_with_string(struct module *m, uint32_t funcidx, const char *sig)
+check_functype_with_string(const struct module *m, uint32_t funcidx,
+                           const char *sig)
 {
         const struct functype *ft = module_functype(m, funcidx);
         struct functype *sig_ft;
