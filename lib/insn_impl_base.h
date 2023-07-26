@@ -235,7 +235,7 @@ INSN_IMPL(table_get)
                 if (ret != 0) {
                         goto fail;
                 }
-                struct instance *inst = ectx->instance;
+                const struct instance *inst = ectx->instance;
                 struct tableinst *t = VEC_ELEM(inst->tables, tableidx);
                 table_get(t, offset, &val_c);
         }
@@ -263,7 +263,7 @@ INSN_IMPL(table_set)
                 if (ret != 0) {
                         goto fail;
                 }
-                struct instance *inst = ectx->instance;
+                const struct instance *inst = ectx->instance;
                 struct tableinst *t = VEC_ELEM(inst->tables, tableidx);
                 table_set(t, offset, &val_a);
         }
@@ -293,8 +293,8 @@ INSN_IMPL(memory_size)
         struct val val_sz;
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
-                struct instance *inst = ectx->instance;
-                struct meminst *minst = VEC_ELEM(inst->mems, memidx);
+                const struct instance *inst = ectx->instance;
+                const struct meminst *minst = VEC_ELEM(inst->mems, memidx);
                 val_sz.u.i32 = minst->size_in_pages;
         }
         PUSH_VAL(TYPE_i32, sz);

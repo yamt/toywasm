@@ -186,7 +186,7 @@ INSN_IMPL(table_copy)
         POP_VAL(TYPE_i32, d);
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
-                struct instance *inst = ectx->instance;
+                const struct instance *inst = ectx->instance;
                 uint32_t d = val_d.u.i32;
                 uint32_t s = val_s.u.i32;
                 uint32_t n = val_n.u.i32;
@@ -225,7 +225,7 @@ INSN_IMPL(table_grow)
         struct val val_result;
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
-                struct instance *inst = ectx->instance;
+                const struct instance *inst = ectx->instance;
                 struct tableinst *t = VEC_ELEM(inst->tables, tableidx);
                 uint32_t n = val_n.u.i32;
                 val_result.u.i32 = table_grow(t, &val_val, n);
@@ -247,7 +247,7 @@ INSN_IMPL(table_size)
         struct val val_n;
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
-                struct instance *inst = ectx->instance;
+                const struct instance *inst = ectx->instance;
                 struct tableinst *t = VEC_ELEM(inst->tables, tableidx);
                 val_n.u.i32 = t->size;
         }
@@ -276,7 +276,7 @@ INSN_IMPL(table_fill)
                 if (ret != 0) {
                         goto fail;
                 }
-                struct instance *inst = ectx->instance;
+                const struct instance *inst = ectx->instance;
                 struct tableinst *t = VEC_ELEM(inst->tables, tableidx);
                 uint32_t end = start + n;
                 uint32_t i;
