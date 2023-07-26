@@ -15,7 +15,6 @@ dyld_plt(struct exec_context *ctx, struct host_instance *hi,
         if (plt->finst == NULL) {
                 struct dyld_object *refobj = plt->refobj;
                 struct dyld *d = refobj->dyld;
-                const struct name *objname = dyld_object_name(refobj);
                 const struct name *sym = plt->sym;
                 int ret;
                 uint32_t addr;
@@ -23,7 +22,7 @@ dyld_plt(struct exec_context *ctx, struct host_instance *hi,
                                           &addr);
                 if (ret != 0) {
                         xlog_error("dyld: PLT failed to resolve %.*s %.*s",
-                                   CSTR(objname), CSTR(sym));
+                                   CSTR(refobj->name), CSTR(sym));
                         return ret;
                 }
                 ret = table_get_func(ctx, d->tableinst, addr, ft, &plt->finst);
@@ -32,7 +31,8 @@ dyld_plt(struct exec_context *ctx, struct host_instance *hi,
                 }
                 xlog_trace("dyld: PLT resolved %.*s %.*s to addr %08" PRIx32
                            " finst %p",
-                           CSTR(objname), CSTR(sym), addr, (void *)plt->finst);
+                           CSTR(refobj->name), CSTR(sym), addr,
+                           (void *)plt->finst);
         }
 
 #if 0 /* a bit dirty */
