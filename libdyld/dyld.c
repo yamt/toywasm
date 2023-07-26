@@ -941,6 +941,44 @@ dyld_resolve_all_got_symbols(struct dyld *d)
         return 0;
 }
 
+static int
+dyld_resolve_plt_symbols(struct dyld_object *refobj)
+{
+        uint32_t i;
+        for (i = 0; i < refobj->nplts; i++) {
+                struct dyld_plt *plt = &refobj->plts[i];
+                struct exec_context ectx;
+                exec_context_init(&ectx, refobj->instance);
+                int ret = dyld_resolve_plt(&ectx, plt);
+                exec_context_clear(&ectx);
+                if (ret != 0) {
+                        if (!is_binding_weak(refobj->module, plt->sym)) {
+                                xlog_error("dyld: failed to resolve plt "
+                                           "eagerly %.*s %.*s",
+                                           CSTR(refobj->name), CSTR(plt->sym));
+                                return ret;
+                        }
+                        xlog_trace("dyld: failed to resolve plt eagerly %.*s "
+                                   "%.*s (weak)",
+                                   CSTR(refobj->name), CSTR(plt->sym));
+                }
+        }
+        return 0;
+}
+
+static int
+dyld_resolve_all_plt_symbols(struct dyld *d)
+{
+        struct dyld_object *obj;
+        LIST_FOREACH(obj, &d->objs, q) {
+                int ret = dyld_resolve_plt_symbols(obj);
+                if (ret != 0) {
+                        return ret;
+                }
+        }
+        return 0;
+}
+
 int
 dyld_load(struct dyld *d, const char *filename)
 {
@@ -960,6 +998,12 @@ dyld_load(struct dyld *d, const char *filename)
         ret = dyld_resolve_all_got_symbols(d);
         if (ret != 0) {
                 goto fail;
+        }
+        if (d->opts.bindnow) {
+                ret = dyld_resolve_all_plt_symbols(d);
+                if (ret != 0) {
+                        goto fail;
+                }
         }
         ret = dyld_allocate_stack(d, d->opts.stack_size);
         if (ret != 0) {
