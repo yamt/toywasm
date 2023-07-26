@@ -21,6 +21,7 @@ enum longopt {
         opt_disable_resulttype_cellidx,
 #if defined(TOYWASM_ENABLE_DYLD)
         opt_dyld,
+        opt_dyld_bindnow,
         opt_dyld_path,
         opt_dyld_stack_size,
 #endif
@@ -66,6 +67,12 @@ static const struct option longopts[] = {
                 no_argument,
                 NULL,
                 opt_dyld,
+        },
+        {
+                "dyld-bindnow",
+                no_argument,
+                NULL,
+                opt_dyld_bindnow,
         },
         {
                 "dyld-path",
@@ -280,6 +287,9 @@ main(int argc, char *const *argv)
                                 goto fail;
                         }
                         opts->enable_dyld = true;
+                        break;
+                case opt_dyld_bindnow:
+                        opts->dyld_options.bindnow = true;
                         break;
                 case opt_dyld_path:
                         ret = VEC_PREALLOC(dyld_paths, 1);
