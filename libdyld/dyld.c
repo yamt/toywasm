@@ -67,8 +67,6 @@ static const struct name init_funcs[] = {
         NAME_FROM_CSTR_LITERAL("__wasm_call_ctors"),
 };
 
-static const struct name name_main_obj = NAME_FROM_CSTR_LITERAL("<main>");
-
 static const struct val val_null = {
         .u.funcref.func = NULL,
 };
