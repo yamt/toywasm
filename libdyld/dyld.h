@@ -47,6 +47,7 @@ struct dyld_options {
         uint32_t stack_size;
         unsigned int npaths;
         const char *const *paths;
+        bool bindnow;
 };
 
 struct dyld {
