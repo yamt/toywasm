@@ -44,9 +44,24 @@ struct dyld_object {
 
 struct dyld_options {
         struct import_object *base_import_obj;
+
+        /*
+         * stack size.
+         * something similar to wasm-ld's "-z stack-size=xxx" option.
+         */
         uint32_t stack_size;
+
+        /*
+         * library search path.
+         * something similar to LD_LIBRARY_PATH.
+         */
         unsigned int npaths;
         const char *const *paths;
+
+        /*
+         * disable lazy plt binding.
+         * something similar to LD_BIND_NOW.
+         */
         bool bindnow;
 };
 
