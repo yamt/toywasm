@@ -27,5 +27,6 @@
 #cmakedefine TOYWASM_ENABLE_WASI
 #cmakedefine TOYWASM_ENABLE_WASI_THREADS
 #cmakedefine TOYWASM_ENABLE_DYLD
+#cmakedefine TOYWASM_ENABLE_DYLD_DLFCN
 
 #endif /* !defined(_TOYWASM_CONFIG_H) */
