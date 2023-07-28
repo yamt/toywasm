@@ -1077,6 +1077,7 @@ dyld_clear(struct dyld *d)
         VEC_FOREACH(it, d->dynobjs) {
                 free((void *)it->name.data); /* discard const */
         }
+        VEC_FREE(d->dynobjs);
 #endif
         memset(d, 0, sizeof(*d));
 }
