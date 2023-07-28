@@ -62,6 +62,11 @@ dyld_dlfcn_load_object(struct exec_context *ctx, struct host_instance *hi,
         uint32_t user_ret; /* app-level error. just 0/1 for now. */
         int ret;
 
+        if (mode != 0) { /* not used yet */
+                user_ret = 1;
+                goto fail;
+        }
+
         void *vp;
         ret = memory_getptr(ctx, 0, namep, 0, namelen, &vp);
         if (ret != 0) {
