@@ -20,6 +20,7 @@
 #include <string.h>
 
 #include "dyld.h"
+#include "dyld_impl.h"
 #include "dyld_plt.h"
 #include "dylink_type.h"
 #include "exec.h"
@@ -33,7 +34,8 @@
 #include "xlog.h"
 
 static int dyld_load_object_from_file(struct dyld *d, const struct name *name,
-                                      const char *filename);
+                                      const char *filename,
+                                      struct dyld_object **objp);
 
 static const struct name name_GOT_mem = NAME_FROM_CSTR_LITERAL("GOT.mem");
 static const struct name name_GOT_func = NAME_FROM_CSTR_LITERAL("GOT.func");
@@ -242,8 +244,9 @@ dyld_find_object_by_name(struct dyld *d, const struct name *name)
         return NULL;
 }
 
-static int
-dyld_search_and_load_object_from_file(struct dyld *d, const struct name *name)
+int
+dyld_search_and_load_object_from_file(struct dyld *d, const struct name *name,
+                                      struct dyld_object **objp)
 {
         const struct dyld_options *opts = &d->opts;
         unsigned int i;
@@ -259,7 +262,7 @@ dyld_search_and_load_object_from_file(struct dyld *d, const struct name *name)
                         return ENAMETOOLONG;
                 }
                 xlog_trace("dyld: trying to open %s\n", filename);
-                ret = dyld_load_object_from_file(d, name, filename);
+                ret = dyld_load_object_from_file(d, name, filename, objp);
                 if (ret != ENOENT) {
                         return ret;
                 }
@@ -268,11 +271,11 @@ dyld_search_and_load_object_from_file(struct dyld *d, const struct name *name)
 }
 
 static int
-dyld_load_needed_objects(struct dyld *d)
+dyld_load_needed_objects(struct dyld *d, struct dyld_object *start)
 {
         int ret = 0;
         struct dyld_object *obj;
-        LIST_FOREACH(obj, &d->objs, q) {
+        for (obj = start; obj != NULL; obj = LIST_NEXT(obj, q)) {
                 const struct dylink_needs *needs = &obj->module->dylink->needs;
                 uint32_t i;
                 for (i = 0; i < needs->count; i++) {
@@ -282,7 +285,8 @@ dyld_load_needed_objects(struct dyld *d)
                         if (dyld_find_object_by_name(d, name)) {
                                 continue;
                         }
-                        ret = dyld_search_and_load_object_from_file(d, name);
+                        ret = dyld_search_and_load_object_from_file(d, name,
+                                                                    NULL);
                         if (ret != 0) {
                                 xlog_error("failed to load %.*s with %d",
                                            CSTR(name), ret);
@@ -631,11 +635,11 @@ dyld_execute_init_funcs(struct dyld_object *obj)
         return 0;
 }
 
-static int
-dyld_execute_all_init_funcs(struct dyld *d)
+int
+dyld_execute_all_init_funcs(struct dyld *d, struct dyld_object *start)
 {
         struct dyld_object *obj;
-        LIST_FOREACH(obj, &d->objs, q) {
+        for (obj = start; obj != NULL; obj = LIST_NEXT(obj, q)) {
                 int ret = dyld_execute_init_funcs(obj);
                 if (ret != 0) {
                         return ret;
@@ -646,7 +650,7 @@ dyld_execute_all_init_funcs(struct dyld *d)
 
 static int
 dyld_load_object_from_file(struct dyld *d, const struct name *name,
-                           const char *filename)
+                           const char *filename, struct dyld_object **objp)
 {
         struct dyld_object *obj;
         int ret;
@@ -709,6 +713,9 @@ dyld_load_object_from_file(struct dyld *d, const struct name *name,
         LIST_INSERT_TAIL(&d->objs, obj, q);
         obj->dyld = d;
         xlog_trace("dyld: %.*s loaded", CSTR(name));
+        if (objp != NULL) {
+                *objp = obj;
+        }
         return 0;
 fail:
         if (obj != NULL) {
@@ -784,6 +791,16 @@ dyld_create_shared_resources(struct dyld *d)
 
         assert(e == d->shared_import_obj->entries + nent);
         d->shared_import_obj->next = d->opts.base_import_obj;
+
+#if 1 /* shouldn't be here */
+        struct import_object *imp;
+        ret = import_object_create_for_dyld(d, &imp);
+        if (ret != 0) {
+                goto fail;
+        }
+        imp->next = d->shared_import_obj;
+        d->shared_import_obj = imp;
+#endif
 fail:
         return ret;
 }
@@ -929,10 +946,10 @@ fail:
 }
 
 static int
-dyld_resolve_all_got_symbols(struct dyld *d)
+dyld_resolve_all_got_symbols(struct dyld *d, struct dyld_object *start)
 {
         struct dyld_object *obj;
-        LIST_FOREACH(obj, &d->objs, q) {
+        for (obj = start; obj != NULL; obj = LIST_NEXT(obj, q)) {
                 int ret = dyld_resolve_got_symbols(obj);
                 if (ret != 0) {
                         return ret;
@@ -967,16 +984,40 @@ dyld_resolve_plt_symbols(struct dyld_object *refobj)
 }
 
 static int
-dyld_resolve_all_plt_symbols(struct dyld *d)
+dyld_resolve_all_plt_symbols(struct dyld *d, struct dyld_object *start)
 {
         struct dyld_object *obj;
-        LIST_FOREACH(obj, &d->objs, q) {
+        for (obj = start; obj != NULL; obj = LIST_NEXT(obj, q)) {
                 int ret = dyld_resolve_plt_symbols(obj);
                 if (ret != 0) {
                         return ret;
                 }
         }
         return 0;
+}
+
+int
+dyld_resolve_dependencies(struct dyld *d, struct dyld_object *obj,
+                          bool bindnow)
+{
+        int ret;
+        ret = dyld_load_needed_objects(d, obj);
+        if (ret != 0) {
+                goto fail;
+        }
+        ret = dyld_resolve_all_got_symbols(d, obj);
+        if (ret != 0) {
+                goto fail;
+        }
+        if (bindnow) {
+                ret = dyld_resolve_all_plt_symbols(d, obj);
+                if (ret != 0) {
+                        goto fail;
+                }
+        }
+        return 0;
+fail:
+        return ret;
 }
 
 int
@@ -987,23 +1028,14 @@ dyld_load(struct dyld *d, const char *filename)
         if (ret != 0) {
                 goto fail;
         }
-        ret = dyld_load_object_from_file(d, &name_main_object, filename);
+        struct dyld_object *obj;
+        ret = dyld_load_object_from_file(d, &name_main_object, filename, &obj);
         if (ret != 0) {
                 goto fail;
         }
-        ret = dyld_load_needed_objects(d);
+        ret = dyld_resolve_dependencies(d, obj, d->opts.bindnow);
         if (ret != 0) {
                 goto fail;
-        }
-        ret = dyld_resolve_all_got_symbols(d);
-        if (ret != 0) {
-                goto fail;
-        }
-        if (d->opts.bindnow) {
-                ret = dyld_resolve_all_plt_symbols(d);
-                if (ret != 0) {
-                        goto fail;
-                }
         }
         ret = dyld_allocate_stack(d, d->opts.stack_size);
         if (ret != 0) {
@@ -1013,7 +1045,7 @@ dyld_load(struct dyld *d, const char *filename)
         if (ret != 0) {
                 goto fail;
         }
-        ret = dyld_execute_all_init_funcs(d);
+        ret = dyld_execute_all_init_funcs(d, obj);
         if (ret != 0) {
                 goto fail;
         }
@@ -1040,6 +1072,12 @@ dyld_clear(struct dyld *d)
         if (d->shared_import_obj != NULL) {
                 import_object_destroy(d->shared_import_obj);
         }
+#if defined(TOYWASM_ENABLE_DYLD_DLFCN)
+        struct dyld_dynamic_object *it;
+        VEC_FOREACH(it, d->dynobjs) {
+                free((void *)it->name.data); /* discard const */
+        }
+#endif
         memset(d, 0, sizeof(*d));
 }
 

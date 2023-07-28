@@ -2,6 +2,7 @@
 #include <inttypes.h>
 
 #include "dyld.h"
+#include "dyld_impl.h"
 #include "dyld_plt.h"
 #include "exec.h"
 #include "xlog.h"

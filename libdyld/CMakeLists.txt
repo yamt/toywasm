@@ -5,6 +5,11 @@ set(lib_dyld_sources
 	"dyld_plt.c"
 )
 
+if(TOYWASM_ENABLE_DYLD_DLFCN)
+list(APPEND lib_dyld_sources
+	"dyld_dlfcn.c")
+endif()
+
 set(lib_dyld_headers
 	"dyld.h"
 )
