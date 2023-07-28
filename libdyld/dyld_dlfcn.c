@@ -1,3 +1,5 @@
+#define _DARWIN_C_SOURCE /* strnstr */
+
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
@@ -86,7 +88,8 @@ dyld_dlfcn_load_object(struct exec_context *ctx, struct host_instance *hi,
         memcpy(name_data, vp, namelen);
         name_data[namelen] = 0;
         /* simple security check */
-        if (strnstr(name_data, "/", namelen) || strnstr(name_data, "..", namelen) {
+        if (strnstr(name_data, "/", namelen) ||
+            strnstr(name_data, "..", namelen)) {
                 free(name_data);
                 user_ret = 1;
                 goto fail;
