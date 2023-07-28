@@ -181,7 +181,7 @@ dyld_dlfcn_resolve_symbol(struct exec_context *ctx, struct host_instance *hi,
                 "dyld: dyld:resolve_symbol succeeded for %.*s, addr %" PRIu32,
                 CSTR(&name), addr);
         uint32_t addr_le = host_to_le32(addr);
-        host_ret = host_func_copyout(ctx, &addr, retp, sizeof(addr), 4);
+        host_ret = host_func_copyout(ctx, &addr_le, retp, sizeof(addr_le), 4);
         user_ret = 0;
 fail:
         if (host_ret == 0) {
