@@ -109,6 +109,7 @@ option(TOYWASM_ENABLE_WASI_THREADS "Enable wasi-threads proposal" OFF)
 # experimental emscripten-style shared library
 # https://github.com/WebAssembly/tool-conventions/blob/main/DynamicLinking.md
 option(TOYWASM_ENABLE_DYLD "Enable shared library support" OFF)
+option(TOYWASM_ENABLE_DYLD_DLFCN "Enable dlopen-like host API" OFF)
 
 option(TOYWASM_BUILD_UNITTEST "Build toywasm-test" ON)
 
