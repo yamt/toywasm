@@ -1,7 +1,9 @@
 #include <stdint.h>
 
 #include "list.h"
+#include "toywasm_config.h"
 #include "type.h"
+#include "vec.h"
 
 enum symtype {
         SYM_TYPE_FUNC,
@@ -40,6 +42,11 @@ struct dyld_object {
 
         struct dyld *dyld;
         LIST_ENTRY(struct dyld_object) q;
+};
+
+struct dyld_dynamic_object {
+        struct name name;
+        struct dyld_object *obj;
 };
 
 struct dyld_options {
@@ -84,13 +91,17 @@ struct dyld {
         LIST_HEAD(struct dyld_object) objs;
 
         struct dyld_options opts;
+
+#if defined(TOYWASM_ENABLE_DYLD_DLFCN)
+        VEC(, struct dyld_dynamic_object) dynobjs;
+#endif
 };
+
+struct import_object;
 
 void dyld_init(struct dyld *d);
 void dyld_clear(struct dyld *d);
 int dyld_load(struct dyld *d, const char *filename);
 struct instance *dyld_main_object_instance(struct dyld *d);
 void dyld_options_set_defaults(struct dyld_options *opts);
-
-int dyld_resolve_symbol(struct dyld_object *refobj, enum symtype symtype,
-                        const struct name *sym, uint32_t *resultp);
+int import_object_create_for_dyld(struct dyld *d, struct import_object **impp);
