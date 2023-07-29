@@ -177,8 +177,16 @@ dyld_dlfcn_resolve_symbol(struct exec_context *ctx, struct host_instance *hi,
         struct name name;
         name.data = vp;
         name.nbytes = namelen;
+
+        /*
+         * Note: this implementation only searches the symbols in
+         * the object itself.
+         * Typical dlsym implementions look at symbols in dependency
+         * libraries as well.
+         */
         uint32_t addr;
-        ret = dyld_resolve_symbol(dobj->obj, type, &name, &addr);
+        ret = dyld_resolve_symbol_in_obj(LIST_FIRST(&d->objs), dobj->obj, type,
+                                         &name, &addr);
         if (ret != 0) {
                 xlog_trace("dyld: dyld:resolve_symbol dyld_resolve_symbol "
                            "failed for %.*s with %d",

@@ -856,52 +856,65 @@ symtype_str(enum symtype symtype)
 }
 
 int
-dyld_resolve_symbol(struct dyld_object *refobj, enum symtype symtype,
-                    const struct name *sym, uint32_t *resultp)
+dyld_resolve_symbol_in_obj(struct dyld_object *refobj, struct dyld_object *obj,
+                           enum symtype symtype, const struct name *sym,
+                           uint32_t *resultp)
 {
         struct dyld *d = refobj->dyld;
-        struct dyld_object *obj;
         enum externtype etype;
         if (symtype == SYM_TYPE_FUNC) {
                 etype = EXTERNTYPE_FUNC;
         } else {
                 etype = EXTERNTYPE_GLOBAL;
         }
-        LIST_FOREACH(obj, &d->objs, q) {
-                const struct module *m = obj->module;
-                /* XXX dumb linear search */
-                uint32_t i;
-                for (i = 0; i < m->nexports; i++) {
-                        const struct export *ex = &m->exports[i];
-                        const struct exportdesc *ed = &ex->desc;
-                        if (etype != ed->type ||
-                            compare_name(sym, &ex->name)) {
+        const struct module *m = obj->module;
+        /* XXX dumb linear search */
+        uint32_t i;
+        for (i = 0; i < m->nexports; i++) {
+                const struct export *ex = &m->exports[i];
+                const struct exportdesc *ed = &ex->desc;
+                if (etype != ed->type || compare_name(sym, &ex->name)) {
+                        continue;
+                }
+                const struct instance *inst = obj->instance;
+                uint32_t addr;
+                if (symtype == SYM_TYPE_FUNC) {
+                        const struct funcinst *fi =
+                                VEC_ELEM(inst->funcs, ed->idx);
+                        addr = dyld_register_funcinst(d, obj, fi);
+                } else {
+                        struct globalinst *gi =
+                                VEC_ELEM(inst->globals, ed->idx);
+                        if (!is_global_type_i32_const(gi->type)) {
                                 continue;
                         }
-                        const struct instance *inst = obj->instance;
-                        uint32_t addr;
-                        if (symtype == SYM_TYPE_FUNC) {
-                                const struct funcinst *fi =
-                                        VEC_ELEM(inst->funcs, ed->idx);
-                                addr = dyld_register_funcinst(d, obj, fi);
-                        } else {
-                                struct globalinst *gi =
-                                        VEC_ELEM(inst->globals, ed->idx);
-                                if (!is_global_type_i32_const(gi->type)) {
-                                        continue;
-                                }
-                                /*
-                                 * TODO: consult WASM_DYLINK_EXPORT_INFO
-                                 * subsection to check TLS.
-                                 * for TLS, use __tls_base, not __memory_base.
-                                 */
-                                addr = global_get_i32(gi) + obj->memory_base;
-                        }
-                        xlog_trace("dyld: resolved %s %.*s %.*s -> %.*s idx "
-                                   "%" PRIu32 " addr %08" PRIx32,
-                                   symtype_str(symtype), CSTR(refobj->name),
-                                   CSTR(sym), CSTR(obj->name), ed->idx, addr);
-                        *resultp = addr;
+                        /*
+                         * TODO: consult WASM_DYLINK_EXPORT_INFO
+                         * subsection to check TLS.
+                         * for TLS, use __tls_base, not __memory_base.
+                         */
+                        addr = global_get_i32(gi) + obj->memory_base;
+                }
+                xlog_trace("dyld: resolved %s %.*s %.*s -> %.*s idx "
+                           "%" PRIu32 " addr %08" PRIx32,
+                           symtype_str(symtype), CSTR(refobj->name), CSTR(sym),
+                           CSTR(obj->name), ed->idx, addr);
+                *resultp = addr;
+                return 0;
+        }
+        return ENOENT;
+}
+
+int
+dyld_resolve_symbol(struct dyld_object *refobj, enum symtype symtype,
+                    const struct name *sym, uint32_t *resultp)
+{
+        struct dyld *d = refobj->dyld;
+        struct dyld_object *obj;
+        LIST_FOREACH(obj, &d->objs, q) {
+                int ret = dyld_resolve_symbol_in_obj(refobj, obj, symtype, sym,
+                                                     resultp);
+                if (ret == 0) {
                         return 0;
                 }
         }
