@@ -180,19 +180,19 @@ jobs:
             MISC_FEATURES: OFF
             TOYWASM_ENABLE_WASM_THREADS: OFF
             TOYWASM_ENABLE_WASI_THREADS: OFF
-          #- name: ubuntu-20.04-riscv64
-          #  os: ubuntu-20.04
-          #  compiler: clang
-          #  arch: riscv64
-          #  BUILD_TYPE: Release
-          #  TOYWASM_USE_SEPARATE_EXECUTE: ON
-          #  TOYWASM_USE_TAILCALL: ON
-          #  TOYWASM_ENABLE_TRACING: OFF
-          #  TOYWASM_USE_SMALL_CELLS: ON
-          #  TOYWASM_USE_SEPARATE_LOCALS: ON
-          #  MISC_FEATURES: OFF
-          #  TOYWASM_ENABLE_WASM_THREADS: OFF
-          #  TOYWASM_ENABLE_WASI_THREADS: OFF
+          - name: ubuntu-20.04-riscv64
+            os: ubuntu-20.04
+            compiler: clang
+            arch: riscv64
+            BUILD_TYPE: Release
+            TOYWASM_USE_SEPARATE_EXECUTE: ON
+            TOYWASM_USE_TAILCALL: ON
+            TOYWASM_ENABLE_TRACING: OFF
+            TOYWASM_USE_SMALL_CELLS: ON
+            TOYWASM_USE_SEPARATE_LOCALS: ON
+            MISC_FEATURES: OFF
+            TOYWASM_ENABLE_WASM_THREADS: OFF
+            TOYWASM_ENABLE_WASI_THREADS: OFF
 
           - name: full-ubuntu-20.04-i386
             os: ubuntu-20.04
@@ -246,19 +246,19 @@ jobs:
             MISC_FEATURES: ON
             TOYWASM_ENABLE_WASM_THREADS: ON
             TOYWASM_ENABLE_WASI_THREADS: ON
-          #- name: full-ubuntu-20.04-riscv64
-          #  os: ubuntu-20.04
-          #  compiler: clang
-          #  arch: riscv64
-          #  BUILD_TYPE: Release
-          #  TOYWASM_USE_SEPARATE_EXECUTE: ON
-          #  TOYWASM_USE_TAILCALL: ON
-          #  TOYWASM_ENABLE_TRACING: OFF
-          #  TOYWASM_USE_SMALL_CELLS: ON
-          #  TOYWASM_USE_SEPARATE_LOCALS: ON
-          #  MISC_FEATURES: ON
-          #  TOYWASM_ENABLE_WASM_THREADS: ON
-          #  TOYWASM_ENABLE_WASI_THREADS: ON
+          - name: full-ubuntu-20.04-riscv64
+            os: ubuntu-20.04
+            compiler: clang
+            arch: riscv64
+            BUILD_TYPE: Release
+            TOYWASM_USE_SEPARATE_EXECUTE: ON
+            TOYWASM_USE_TAILCALL: ON
+            TOYWASM_ENABLE_TRACING: OFF
+            TOYWASM_USE_SMALL_CELLS: ON
+            TOYWASM_USE_SEPARATE_LOCALS: ON
+            MISC_FEATURES: ON
+            TOYWASM_ENABLE_WASM_THREADS: ON
+            TOYWASM_ENABLE_WASI_THREADS: ON
 
     runs-on: ${{matrix.os}}
 
@@ -546,10 +546,10 @@ jobs:
         name: ubuntu-20.04-s390x
         path: release_assets
 
-    #- uses: actions/download-artifact@v3
-    #  with:
-    #    name: ubuntu-20.04-riscv64
-    #    path: release_assets
+    - uses: actions/download-artifact@v3
+      with:
+        name: ubuntu-20.04-riscv64
+        path: release_assets
 
     - uses: actions/download-artifact@v3
       with:
@@ -571,10 +571,10 @@ jobs:
         name: full-ubuntu-20.04-s390x
         path: release_assets
 
-    #- uses: actions/download-artifact@v3
-    #  with:
-    #    name: full-ubuntu-20.04-riscv64
-    #    path: release_assets
+    - uses: actions/download-artifact@v3
+      with:
+        name: full-ubuntu-20.04-riscv64
+        path: release_assets
 
     - uses: actions/download-artifact@v3
       with:
