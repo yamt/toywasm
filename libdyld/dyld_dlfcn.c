@@ -1,3 +1,11 @@
+/*
+ * simple host functions to allow dlopen/dlsym.
+ *
+ * Note: real module unloading is not possible w/o garbage collector
+ * because linked wasm modules can easily form circlular dependencies
+ * with funcrefs.
+ */
+
 #define _DARWIN_C_SOURCE /* strnstr */
 
 #include <assert.h>
