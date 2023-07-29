@@ -248,6 +248,12 @@ int
 dyld_search_and_load_object_from_file(struct dyld *d, const struct name *name,
                                       struct dyld_object **objp)
 {
+        /* simple security check */
+        if (strnstr(name->data, "/", name->nbytes) ||
+            strnstr(name->data, "..", name->nbytes)) {
+                return EPERM;
+        }
+
         const struct dyld_options *opts = &d->opts;
         unsigned int i;
         for (i = 0; i < opts->npaths; i++) {
