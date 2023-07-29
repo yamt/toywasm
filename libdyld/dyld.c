@@ -836,11 +836,14 @@ dyld_register_funcinst(struct dyld *d, struct dyld_object *obj,
                 }
         }
         /*
-         * this should never happen becasue dyld_allocate_table_for_obj
+         * this should never happen because dyld_allocate_table_for_obj
          * reserves enough table elements.
+         *
+         * however, assert(false) is not appropriate because modules
+         * themselves can freely modify the table elements.
          */
-        xlog_error("dyld: failed to register a func");
-        assert(false);
+        xlog_trace("dyld: failed to register a func");
+        return 0;
 }
 
 __attribute__((unused)) static const char *
