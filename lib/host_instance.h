@@ -8,6 +8,12 @@ struct host_func {
         host_func_t func;
 };
 
+#define HOST_FUNC(FUNC_PREFIX, NAME, TYPE)                                    \
+        {                                                                     \
+                .name = NAME_FROM_CSTR_LITERAL(#NAME), .type = TYPE,          \
+                .func = FUNC_PREFIX##NAME,                                    \
+        }
+
 #define HOST_FUNC_CONVERT_PARAMS(FT, PARAMS)                                  \
         struct val *converted_params =                                        \
                 calloc((FT)->parameter.ntypes, sizeof(*converted_params));    \
