@@ -19,3 +19,5 @@ void *__must_check zalloc(size_t sz) __malloc_like __alloc_size(1);
 #define ZERO(p) memset(p, 0, sizeof(*p))
 
 #define HOWMANY(a, b) ((a + (b - 1)) / b)
+
+char *xstrnstr(const char *haystack, const char *needle, size_t len);
