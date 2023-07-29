@@ -791,16 +791,6 @@ dyld_create_shared_resources(struct dyld *d)
 
         assert(e == d->shared_import_obj->entries + nent);
         d->shared_import_obj->next = d->opts.base_import_obj;
-
-#if 1 /* shouldn't be here */
-        struct import_object *imp;
-        ret = import_object_create_for_dyld(d, &imp);
-        if (ret != 0) {
-                goto fail;
-        }
-        imp->next = d->shared_import_obj;
-        d->shared_import_obj = imp;
-#endif
 fail:
         return ret;
 }
