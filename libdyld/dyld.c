@@ -8,7 +8,7 @@
  *   multi-instance setups like this.
  */
 
-#define _DARWIN_C_SOURCE /* snprintf */
+#define _DARWIN_C_SOURCE /* snprintf, strnstr */
 
 #include <assert.h>
 #include <errno.h>
