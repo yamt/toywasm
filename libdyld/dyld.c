@@ -8,7 +8,7 @@
  *   multi-instance setups like this.
  */
 
-#define _DARWIN_C_SOURCE /* snprintf, strnstr */
+#define _DARWIN_C_SOURCE /* snprintf */
 
 #include <assert.h>
 #include <errno.h>
@@ -249,8 +249,8 @@ dyld_search_and_load_object_from_file(struct dyld *d, const struct name *name,
                                       struct dyld_object **objp)
 {
         /* simple security check */
-        if (strnstr(name->data, "/", name->nbytes) ||
-            strnstr(name->data, "..", name->nbytes)) {
+        if (xstrnstr(name->data, "/", name->nbytes) ||
+            xstrnstr(name->data, "..", name->nbytes)) {
                 return EPERM;
         }
 
