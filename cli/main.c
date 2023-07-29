@@ -22,6 +22,9 @@ enum longopt {
 #if defined(TOYWASM_ENABLE_DYLD)
         opt_dyld,
         opt_dyld_bindnow,
+#if defined(TOYWASM_ENABLE_DYLD_DLFCN)
+        opt_dyld_dlfcn,
+#endif
         opt_dyld_path,
         opt_dyld_stack_size,
 #endif
@@ -74,6 +77,14 @@ static const struct option longopts[] = {
                 NULL,
                 opt_dyld_bindnow,
         },
+#if defined(TOYWASM_ENABLE_DYLD_DLFCN)
+        {
+                "dyld-dlfcn",
+                no_argument,
+                NULL,
+                opt_dyld_dlfcn,
+        },
+#endif
         {
                 "dyld-path",
                 required_argument,
@@ -291,6 +302,11 @@ main(int argc, char *const *argv)
                 case opt_dyld_bindnow:
                         opts->dyld_options.bindnow = true;
                         break;
+#if defined(TOYWASM_ENABLE_DYLD_DLFCN)
+                case opt_dyld_dlfcn:
+                        opts->dyld_options.enable_dlfcn = true;
+                        break;
+#endif
                 case opt_dyld_path:
                         ret = VEC_PREALLOC(dyld_paths, 1);
                         if (ret != 0) {
