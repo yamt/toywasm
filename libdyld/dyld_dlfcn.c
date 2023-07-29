@@ -209,12 +209,6 @@ fail:
         return host_ret;
 }
 
-#define HOST_FUNC(FUNC_PREFIX, NAME, TYPE)                                    \
-        {                                                                     \
-                .name = NAME_FROM_CSTR_LITERAL(#NAME), .type = TYPE,          \
-                .func = FUNC_PREFIX##NAME,                                    \
-        }
-
 static const struct host_func dyld_funcs[] = {
         HOST_FUNC(dyld_dlfcn_, load_object, "(iiii)i"),
         HOST_FUNC(dyld_dlfcn_, resolve_symbol, "(iiiii)i"),
