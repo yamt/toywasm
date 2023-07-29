@@ -284,6 +284,7 @@ jobs:
         echo "-DTOYWASM_ENABLE_WASM_THREADS=${{matrix.TOYWASM_ENABLE_WASM_THREADS}}" >> ${GITHUB_ENV}
         echo "-DTOYWASM_ENABLE_WASI_THREADS=${{matrix.TOYWASM_ENABLE_WASI_THREADS}}"  >> ${GITHUB_ENV}
         echo "-DTOYWASM_ENABLE_DYLD=${{matrix.MISC_FEATURES}}" >> ${GITHUB_ENV}
+        echo "-DTOYWASM_ENABLE_DYLD_DLFCN=${{matrix.MISC_FEATURES}}" >> ${GITHUB_ENV}
         echo "EOF" >> ${GITHUB_ENV}
 
     - name: Install dependencies (ubuntu)
