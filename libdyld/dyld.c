@@ -791,6 +791,18 @@ dyld_create_shared_resources(struct dyld *d)
 
         assert(e == d->shared_import_obj->entries + nent);
         d->shared_import_obj->next = d->opts.base_import_obj;
+
+#if defined(TOYWASM_ENABLE_DYLD_DLFCN)
+        if (d->opts.enable_dlfcn) {
+                struct import_object *imp;
+                ret = import_object_create_for_dyld(d, &imp);
+                if (ret != 0) {
+                        goto fail;
+                }
+                imp->next = d->shared_import_obj;
+                d->shared_import_obj = imp;
+        }
+#endif
 fail:
         return ret;
 }
@@ -1059,8 +1071,10 @@ dyld_clear(struct dyld *d)
         if (d->tableinst != NULL) {
                 table_instance_destroy(d->tableinst);
         }
-        if (d->shared_import_obj != NULL) {
-                import_object_destroy(d->shared_import_obj);
+        struct import_object *imp;
+        while ((imp = d->shared_import_obj) != d->opts.base_import_obj) {
+                d->shared_import_obj = imp->next;
+                import_object_destroy(imp);
         }
 #if defined(TOYWASM_ENABLE_DYLD_DLFCN)
         struct dyld_dynamic_object *it;

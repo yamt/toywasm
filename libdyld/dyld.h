@@ -70,6 +70,10 @@ struct dyld_options {
          * something similar to LD_BIND_NOW.
          */
         bool bindnow;
+
+#if defined(TOYWASM_ENABLE_DYLD_DLFCN)
+        bool enable_dlfcn;
+#endif
 };
 
 struct dyld {
