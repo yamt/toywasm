@@ -1,3 +1,6 @@
+#define _DARWIN_C_SOURCE /* strnstr */
+#define _GNU_SOURCE      /* strnlen */
+
 #include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -41,3 +44,25 @@ zalloc(size_t sz)
         return p;
 }
 #endif
+
+char *
+xstrnstr(const char *haystack, const char *needle, size_t len)
+{
+#if defined(__APPLE__)
+        return strnstr(haystack, needle, len);
+#else
+        size_t haystack_len = strnlen(haystack, len);
+        size_t needle_len = strlen(needle);
+        if (needle_len > haystack_len) {
+                return NULL;
+        }
+        size_t max_offset = haystack_len - needle_len;
+        size_t i;
+        for (i = 0; i <= max_offset; i++) {
+                if (!memcmp(&haystack[i], needle, needle_len)) {
+                        return (char *)&haystack[i]; /* discard const */
+                }
+        }
+        return NULL;
+#endif
+}
