@@ -6,8 +6,6 @@
  * with funcrefs.
  */
 
-#define _DARWIN_C_SOURCE /* strnstr */
-
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
