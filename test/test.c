@@ -13,6 +13,7 @@
 #include "list.h"
 #include "timeutil.h"
 #include "type.h"
+#include "util.h"
 
 #define TEST_OK(type, encoded_bytes, expected_value)                          \
         p = encoded_bytes;                                                    \
@@ -729,6 +730,52 @@ test_list(void **state)
         assert_null(LIST_LAST(&h, struct item, entry));
 }
 
+void
+test_xstrnstr(void **state)
+{
+        const char *abcd = "abcd";
+        const char *abab = "abab";
+        const char *ab = "ab";
+        const char *bc = "bc";
+        const char *cd = "cd";
+
+        assert_null(xstrnstr(abcd, ab, 0));
+        assert_null(xstrnstr(abcd, ab, 1));
+        assert_ptr_equal(xstrnstr(abcd, ab, 2), abcd);
+        assert_ptr_equal(xstrnstr(abcd, ab, 3), abcd);
+        assert_ptr_equal(xstrnstr(abcd, ab, 4), abcd);
+        assert_ptr_equal(xstrnstr(abcd, ab, 5), abcd);
+
+        assert_null(xstrnstr(abcd, bc, 0));
+        assert_null(xstrnstr(abcd, bc, 1));
+        assert_null(xstrnstr(abcd, bc, 2));
+        assert_ptr_equal(xstrnstr(abcd, bc, 3), abcd + 1);
+        assert_ptr_equal(xstrnstr(abcd, bc, 4), abcd + 1);
+        assert_ptr_equal(xstrnstr(abcd, bc, 5), abcd + 1);
+
+        assert_null(xstrnstr(abcd, cd, 0));
+        assert_null(xstrnstr(abcd, cd, 1));
+        assert_null(xstrnstr(abcd, cd, 2));
+        assert_null(xstrnstr(abcd, cd, 3));
+        assert_ptr_equal(xstrnstr(abcd, cd, 4), abcd + 2);
+        assert_ptr_equal(xstrnstr(abcd, cd, 5), abcd + 2);
+
+        assert_null(xstrnstr(abab, ab, 0));
+        assert_null(xstrnstr(abab, ab, 1));
+        assert_ptr_equal(xstrnstr(abab, ab, 2), abab);
+        assert_ptr_equal(xstrnstr(abab, ab, 3), abab);
+        assert_ptr_equal(xstrnstr(abab, ab, 4), abab);
+        assert_ptr_equal(xstrnstr(abab, ab, 4), abab);
+        assert_ptr_equal(xstrnstr(abab, ab, 5), abab);
+
+        assert_null(xstrnstr(abab, bc, 0));
+        assert_null(xstrnstr(abab, bc, 1));
+        assert_null(xstrnstr(abab, bc, 2));
+        assert_null(xstrnstr(abab, bc, 3));
+        assert_null(xstrnstr(abab, bc, 4));
+        assert_null(xstrnstr(abab, bc, 5));
+}
+
 int
 main(int argc, char **argv)
 {
@@ -740,6 +787,7 @@ main(int argc, char **argv)
                 cmocka_unit_test(test_timeutil),
                 cmocka_unit_test(test_timeutil_int64),
                 cmocka_unit_test(test_list),
+                cmocka_unit_test(test_xstrnstr),
         };
         return cmocka_run_group_tests(tests, NULL, NULL);
 }
