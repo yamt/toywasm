@@ -124,6 +124,7 @@ fail:
         if (host_ret == 0) {
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32, user_ret);
         }
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return host_ret;
 }
 
@@ -195,6 +196,7 @@ fail:
         if (host_ret == 0) {
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32, user_ret);
         }
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
         return host_ret;
 }
 
