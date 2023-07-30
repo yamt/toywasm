@@ -63,6 +63,9 @@ dlclose(void *handle)
          *
          * a real unloading is difficult without garbage collector
          * as linked modules can have circular dependencies via funcrefs.
-         * probably should mark the object "unloaded" at least?
+         *
+         * probably we can mark the objects "unloaded" at least
+         * so that they will be ignored for subsequent symbol lookup
+         * attempts.
          */
 }
