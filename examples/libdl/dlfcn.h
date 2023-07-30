@@ -5,10 +5,10 @@
 #if !defined(_DLFCN_H)
 #define _DLFCN_H
 
-#define RTLD_LAZY 0x1
-#undef RTLD_NOW /* unimplemented */
-#define RTLD_GLOBAL 0x4
-#undef RTLD_LOCAL /* unimplemented */
+#define RTLD_LAZY 0x0001
+#define RTLD_NOW 0x0002
+#define RTLD_GLOBAL 0x0100
+#define RTLD_LOCAL 0
 
 void *dlopen(const char *name, int mode);
 void *dlsym(void *h, const char *name);
