@@ -4,7 +4,7 @@ A runtime linker for [WebAssembly Dynamic Linking].
 
 * Compatible with WASI
 
-* Optional [dlopen-like API](../examples/libdl).
+* Optional [dlopen-like API](../examples/libdl)
 
 # Portability notes
 
@@ -24,7 +24,7 @@ and making it call the corresponding wasm function (with `wasm_func_call`)
 is enough for most cases. The approach is not compatible with tail call
 though.
 
-## WASI and other host functions, including our dlopen-like API.
+## WASI and other host functions, including our dlopen-like API
 
 The import/export API of [wasm-c-api] is a bit low-level and cumbersome
 to use.
