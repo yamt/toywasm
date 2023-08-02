@@ -621,6 +621,8 @@ dyld_execute_init_func(struct dyld_object *obj, const struct name *name)
 static int
 dyld_execute_init_funcs(struct dyld_object *obj)
 {
+        xlog_trace("dyld: executing init funcs for object %.*s",
+                   CSTR(obj->name));
         unsigned int i;
         for (i = 0; i < ARRAYCOUNT(init_funcs); i++) {
                 const struct name *funcname = &init_funcs[i];
@@ -641,11 +643,44 @@ dyld_execute_init_funcs(struct dyld_object *obj)
         return 0;
 }
 
+LIST_HEAD_NAMED(struct dyld_object, tsort_list);
+
+static void
+tsort_visit(struct dyld_object *obj, struct tsort_list *list)
+{
+        if (obj->visited) {
+                return;
+        }
+        obj->visited = true;
+
+        struct dyld *d = obj->dyld;
+        const struct dylink_needs *needs = &obj->module->dylink->needs;
+        uint32_t i;
+        for (i = 0; i < needs->count; i++) {
+                const struct name *name = &needs->names[i];
+                struct dyld_object *needed_obj =
+                        dyld_find_object_by_name(d, name);
+                assert(needed_obj != NULL);
+                tsort_visit(needed_obj, list);
+        }
+        LIST_INSERT_TAIL(list, obj, tq);
+}
+
 int
 dyld_execute_all_init_funcs(struct dyld *d, struct dyld_object *start)
 {
+        /* topological sort */
+        struct tsort_list list;
+        LIST_HEAD_INIT(&list);
         struct dyld_object *obj;
         for (obj = start; obj != NULL; obj = LIST_NEXT(obj, q)) {
+                assert(!obj->visited);
+        }
+        for (obj = start; obj != NULL; obj = LIST_NEXT(obj, q)) {
+                tsort_visit(obj, &list);
+        }
+
+        LIST_FOREACH(obj, &list, tq) {
                 int ret = dyld_execute_init_funcs(obj);
                 if (ret != 0) {
                         return ret;

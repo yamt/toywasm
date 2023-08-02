@@ -42,6 +42,10 @@ struct dyld_object {
 
         struct dyld *dyld;
         LIST_ENTRY(struct dyld_object) q;
+
+        /* for tsort */
+        bool visited;
+        LIST_ENTRY(struct dyld_object) tq;
 };
 
 struct dyld_dynamic_object {
