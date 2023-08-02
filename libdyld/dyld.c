@@ -66,7 +66,17 @@ static const struct name name_main_object = NAME_FROM_CSTR_LITERAL("<main>");
  */
 static const struct name init_funcs[] = {
         NAME_FROM_CSTR_LITERAL("__wasm_apply_data_relocs"),
+        /*
+         * wasm-ld synthesize __wasm_call_ctors.
+         *
+         * if crt1 is linked to the library, _initialize calls
+         * __wasm_call_ctors. in that case, usually __wasm_call_ctors
+         * is not exported.
+         *
+         * otherwise, wasm-ld exports __wasm_call_ctors.
+         */
         NAME_FROM_CSTR_LITERAL("__wasm_call_ctors"),
+        NAME_FROM_CSTR_LITERAL("_initialize"),
 };
 
 static const struct val val_null = {
