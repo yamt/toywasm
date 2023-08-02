@@ -235,6 +235,9 @@ set_current_frame(struct exec_context *ctx, const struct funcframe *frame,
                 assert(ei != NULL);
                 ctx->paramtype = NULL;
                 ctx->localtype = NULL;
+                ctx->nparams = 0;
+                ctx->paramcsz = 0;
+                ctx->fast = false;
                 ctx->ei = ei;
         } else {
                 const struct module *m = inst->module;
@@ -245,6 +248,12 @@ set_current_frame(struct exec_context *ctx, const struct funcframe *frame,
                 assert(frame->nresults == resulttype_cellsize(&ft->result));
                 ctx->localtype = &func->localtype;
                 assert(ei == NULL || ei == &func->e.ei);
+                ctx->nparams = ft->parameter.ntypes;
+                ctx->paramcsz = resulttype_cellsize(&ft->parameter);
+                ctx->fast = ctx->paramtype->cellidx.cellidxes != NULL &&
+                            ctx->localtype->cellidx.cellidxes != NULL;
+                ctx->paramtype_cellidxes = ctx->paramtype->cellidx.cellidxes;
+                ctx->localtype_cellidxes = ctx->localtype->cellidx.cellidxes;
                 ctx->ei = &func->e.ei;
         }
 #if defined(TOYWASM_USE_LOCALS_CACHE)

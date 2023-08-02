@@ -149,6 +149,11 @@ struct exec_context {
         const struct resulttype *paramtype;
         const struct localtype *localtype;
         const struct expr_exec_info *ei;
+        uint32_t nparams;
+        uint32_t paramcsz;
+        const uint16_t *paramtype_cellidxes;
+        const uint16_t *localtype_cellidxes;
+        bool fast;
 
         /* The instruction pointer */
         const uint8_t *p;
