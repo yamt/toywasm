@@ -67,13 +67,15 @@ static const struct name name_main_object = NAME_FROM_CSTR_LITERAL("<main>");
 static const struct name init_funcs[] = {
         NAME_FROM_CSTR_LITERAL("__wasm_apply_data_relocs"),
         /*
-         * wasm-ld synthesize __wasm_call_ctors.
+         * wasm-ld synthesizes __wasm_call_ctors.
          *
-         * if crt1 is linked to the library, _initialize calls
-         * __wasm_call_ctors. in that case, usually __wasm_call_ctors
-         * is not exported.
+         * wasi reactor exec model uses _initialize as the entry point.
+         * crt1 provides _initialize, which calls __wasm_call_ctors.
+         * in that case, usually __wasm_call_ctors is not exported.
+         * cf. https://reviews.llvm.org/D156205
          *
-         * otherwise, wasm-ld exports __wasm_call_ctors.
+         * otherwise, wasm-ld exports __wasm_call_ctors as it's
+         * the default entry point for -shared.
          */
         NAME_FROM_CSTR_LITERAL("__wasm_call_ctors"),
         NAME_FROM_CSTR_LITERAL("_initialize"),
