@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <stdalign.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,6 +23,27 @@
 #include "usched.h"
 #include "util.h"
 #include "xlog.h"
+
+/*
+ * Note: The C standard allows _Atomic types to have a different
+ * size/alignment from their base types:
+ *
+ * > The size, representation, and alignment of an atomic type need not be
+ * > the same as those of the corresponding unqualified type.
+ *
+ * We assume the same representation in a few places.
+ */
+_Static_assert(sizeof(_Atomic uint8_t) == sizeof(uint8_t), "atomic 8 size");
+_Static_assert(sizeof(_Atomic uint16_t) == sizeof(uint16_t), "atomic 16 size");
+_Static_assert(sizeof(_Atomic uint32_t) == sizeof(uint32_t), "atomic 32 size");
+_Static_assert(sizeof(_Atomic uint64_t) == sizeof(uint64_t), "atomic 64 size");
+_Static_assert(alignof(_Atomic uint8_t) == alignof(uint8_t), "atomic 8 align");
+_Static_assert(alignof(_Atomic uint16_t) == alignof(uint16_t),
+               "atomic 16 align");
+_Static_assert(alignof(_Atomic uint32_t) == alignof(uint32_t),
+               "atomic 32 align");
+_Static_assert(alignof(_Atomic uint64_t) == alignof(uint64_t),
+               "atomic 64 align");
 
 int
 vtrap(struct exec_context *ctx, enum trapid id, const char *fmt, va_list ap)
