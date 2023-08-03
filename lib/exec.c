@@ -31,19 +31,22 @@
  * > The size, representation, and alignment of an atomic type need not be
  * > the same as those of the corresponding unqualified type.
  *
- * We assume the same representation in a few places.
+ * Our atomic opcode implementation in insn_impl_threads.h have a stronger
+ * assumptions. We tries to assert them below.
+ *
+ * Note: on WASM, atomic opcodes traps when the address is not a multiple
+ * of the size of value.
+ *
+ * Note: on i386, alignof(uint64_t) == 4.
  */
 _Static_assert(sizeof(_Atomic uint8_t) == sizeof(uint8_t), "atomic 8 size");
 _Static_assert(sizeof(_Atomic uint16_t) == sizeof(uint16_t), "atomic 16 size");
 _Static_assert(sizeof(_Atomic uint32_t) == sizeof(uint32_t), "atomic 32 size");
 _Static_assert(sizeof(_Atomic uint64_t) == sizeof(uint64_t), "atomic 64 size");
-_Static_assert(alignof(_Atomic uint8_t) == alignof(uint8_t), "atomic 8 align");
-_Static_assert(alignof(_Atomic uint16_t) == alignof(uint16_t),
-               "atomic 16 align");
-_Static_assert(alignof(_Atomic uint32_t) == alignof(uint32_t),
-               "atomic 32 align");
-_Static_assert(alignof(_Atomic uint64_t) == alignof(uint64_t),
-               "atomic 64 align");
+_Static_assert(alignof(_Atomic uint8_t) <= 1, "atomic 8 align");
+_Static_assert(alignof(_Atomic uint16_t) <= 2, "atomic 16 align");
+_Static_assert(alignof(_Atomic uint32_t) <= 4, "atomic 32 align");
+_Static_assert(alignof(_Atomic uint64_t) <= 8, "atomic 64 align");
 
 int
 vtrap(struct exec_context *ctx, enum trapid id, const char *fmt, va_list ap)
