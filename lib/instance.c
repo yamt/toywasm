@@ -26,34 +26,14 @@ find_entry_for_import(
         const struct import_object *impobj = imports;
         bool mismatch = false;
         while (impobj != NULL) {
-                size_t j;
-                for (j = 0; j < impobj->nentries; j++) {
-                        const struct import_object_entry *e =
-                                &impobj->entries[j];
-                        if (!compare_name(e->module_name, &im->module_name) &&
-                            !compare_name(e->name, &im->name)) {
-                                if (e->type != im->desc.type) {
-                                        report_error(
-                                                report,
-                                                "Type mismatch for import "
-                                                "%.*s:%.*s (%u != %u)",
-                                                CSTR(&im->module_name),
-                                                CSTR(&im->name),
-                                                (unsigned int)e->type,
-                                                (unsigned int)im->desc.type);
-                                        return EINVAL;
-                                }
-                                int ret = check(e, checkarg);
-                                if (ret == 0) {
-                                        xlog_trace("Found an entry for import "
-                                                   "%.*s:%.*s",
-                                                   CSTR(&im->module_name),
-                                                   CSTR(&im->name));
-                                        *resultp = e;
-                                        return 0;
-                                }
-                                mismatch = true;
-                        }
+                const struct import_object_entry *e;
+                int ret = import_object_find_entry(impobj, im, check, checkarg,
+                                                   &e, report);
+                if (ret == EINVAL) {
+                        mismatch = true;
+                } else if (ret != ENOENT) {
+                        *resultp = e;
+                        return ret;
                 }
                 impobj = impobj->next;
         }

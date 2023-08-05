@@ -5,7 +5,9 @@ struct instance;
 struct exec_context;
 struct resulttype;
 struct val;
+struct import;
 struct import_object;
+struct import_object_entry;
 struct report;
 struct name;
 
@@ -106,6 +108,11 @@ int import_object_create_for_exports(struct instance *inst,
                                      struct import_object **resultp);
 void import_object_destroy(struct import_object *im);
 int import_object_alloc(uint32_t nentries, struct import_object **resultp);
+int import_object_find_entry(
+        const struct import_object *impobj, const struct import *im,
+        int (*check)(const struct import_object_entry *e, const void *arg),
+        const void *checkarg, const struct import_object_entry **resultp,
+        struct report *report);
 
 struct meminst;
 struct memtype;
