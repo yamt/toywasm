@@ -23,7 +23,11 @@ option(TOYWASM_USE_SEPARATE_EXECUTE "Use separate execute callback" ON)
 #   rely on the tail call optimization even if musttail is not available.
 #   you need to investigate the generated binary to see if it was safe or not.
 option(TOYWASM_USE_TAILCALL "Rely on tail call optimization if musttail is available" ON)
-option(TOYWASM_FORCE_USE_TAILCALL "Assume tail call optimization forcibly" OFF)
+cmake_dependent_option(TOYWASM_FORCE_USE_TAILCALL
+    "Assume tail call optimization forcibly"
+    OFF
+    "TOYWASM_USE_TAILCALL"
+    OFF)
 
 # TOYWASM_USE_SIMD=ON -> use -msimd128 for wasm target
 option(TOYWASM_USE_SIMD "Use SIMD" OFF)
@@ -36,7 +40,11 @@ option(TOYWASM_USE_USER_SCHED "Use userland scheduler" OFF)
 
 # options to enable/disable "toywasm --trace" stuff
 option(TOYWASM_ENABLE_TRACING "Enable xlog_trace" OFF)
-option(TOYWASM_ENABLE_TRACING_INSN "Enable per-instruction xlog_trace" OFF)
+cmake_dependent_option(TOYWASM_ENABLE_TRACING_INSN
+    "Enable per-instruction xlog_trace"
+    OFF
+    "TOYWASM_ENABLE_TRACING"
+    OFF)
 
 # TOYWASM_USE_JUMP_BINARY_SEARCH=ON makes the jump table binary search.
 # otherwise, linear search is used.
@@ -75,13 +83,24 @@ option(TOYWASM_USE_SEPARATE_LOCALS "Separate locals and stack" ON)
 option(TOYWASM_USE_SMALL_CELLS "Use smaller stack cells" ON)
 
 # enable indexes for faster lookup for resulttype and localtype respectively.
-# these only make sense with TOYWASM_USE_SMALL_CELLS=ON.
-option(TOYWASM_USE_RESULTTYPE_CELLIDX "Index local lookup for resulttype" ON)
-option(TOYWASM_USE_LOCALTYPE_CELLIDX "Index local lookup for localtype" ON)
+cmake_dependent_option(TOYWASM_USE_RESULTTYPE_CELLIDX
+    "Index local lookup for resulttype"
+    ON
+    "TOYWASM_USE_SMALL_CELLS"
+    OFF)
+cmake_dependent_option(TOYWASM_USE_LOCALTYPE_CELLIDX
+    "Index local lookup for localtype"
+    ON
+    "TOYWASM_USE_SMALL_CELLS"
+    OFF)
 
 # TOYWASM_USE_LOCALS_FAST_PATH=ON -> faster execution
 # TOYWASM_USE_LOCALS_FAST_PATH=OFF -> slightly smaller code and exec_context
-cmake_dependent_option(TOYWASM_USE_LOCALS_FAST_PATH "Enable fast path of frame_locals_cellidx" ON "TOYWASM_USE_RESULTTYPE_CELLIDX;TOYWASM_USE_LOCALTYPE_CELLIDX" OFF)
+cmake_dependent_option(TOYWASM_USE_LOCALS_FAST_PATH
+    "Enable fast path of frame_locals_cellidx"
+    ON
+    "TOYWASM_USE_RESULTTYPE_CELLIDX;TOYWASM_USE_LOCALTYPE_CELLIDX"
+    OFF)
 
 # TOYWASM_PREALLOC_SHARED_MEMORY=ON
 #   allocate the max possible size of shared memories on instantiation.
@@ -89,8 +108,11 @@ cmake_dependent_option(TOYWASM_USE_LOCALS_FAST_PATH "Enable fast path of frame_l
 # TOYWASM_PREALLOC_SHARED_MEMORY=OFF
 #   on-demand (on memory.grow) allocation of shared memories.
 #   can save memory, but slower and very complex memory.grow processing.
-# these only make sense with TOYWASM_ENABLE_WASM_THREADS=ON.
-option(TOYWASM_PREALLOC_SHARED_MEMORY "Preallocate shared memory" OFF)
+cmake_dependent_option(TOYWASM_PREALLOC_SHARED_MEMORY
+    "Preallocate shared memory"
+    OFF
+    "TOYWASM_ENABLE_WASM_THREADS"
+    OFF)
 
 # enable logic to write a module to a file.
 # currently it's only used by repl ":save" command.
@@ -109,13 +131,20 @@ option(TOYWASM_ENABLE_WASM_THREADS "Enable WASM threads proposal" OFF)
 option(TOYWASM_ENABLE_WASI "Enable WASI snapshow preview1" ON)
 
 # enable wasi-threads.
-# this requires TOYWASM_ENABLE_WASM_THREADS=ON.
-option(TOYWASM_ENABLE_WASI_THREADS "Enable wasi-threads proposal" OFF)
+cmake_dependent_option(TOYWASM_ENABLE_WASI_THREADS
+    "Enable wasi-threads proposal"
+    OFF
+    "TOYWASM_ENABLE_WASM_THREADS"
+    OFF)
 
 # experimental emscripten-style shared library
 # https://github.com/WebAssembly/tool-conventions/blob/main/DynamicLinking.md
 option(TOYWASM_ENABLE_DYLD "Enable shared library support" OFF)
-option(TOYWASM_ENABLE_DYLD_DLFCN "Enable dlopen-like host API" OFF)
+cmake_dependent_option(TOYWASM_ENABLE_DYLD_DLFCN
+    "Enable dlopen-like host API"
+    OFF
+    "TOYWASM_ENABLE_DYLD"
+    OFF)
 
 option(TOYWASM_BUILD_UNITTEST "Build toywasm-test" ON)
 
