@@ -146,14 +146,24 @@ struct context;
 struct exec_context {
         /* Some cached info about the current frame. */
         struct instance *instance;
-        const struct resulttype *paramtype;
-        const struct localtype *localtype;
         const struct expr_exec_info *ei;
-        uint32_t nparams;
-        uint32_t paramcsz;
-        const uint16_t *paramtype_cellidxes;
-        const uint16_t *localtype_cellidxes;
+#if defined(TOYWASM_USE_LOCALS_FAST_PATH)
         bool fast;
+#endif
+        union {
+#if defined(TOYWASM_USE_LOCALS_FAST_PATH)
+                struct local_info_fast {
+                        const uint16_t *paramtype_cellidxes;
+                        const uint16_t *localtype_cellidxes;
+                        uint32_t nparams;
+                        uint32_t paramcsz;
+                } fast;
+#endif
+                struct local_info_slow {
+                        const struct resulttype *paramtype;
+                        const struct localtype *localtype;
+                } slow;
+        } local_u;
 
         /* The instruction pointer */
         const uint8_t *p;
