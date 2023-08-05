@@ -187,7 +187,6 @@ frame_locals_cellidx_fast(struct exec_context *ctx, uint32_t localidx,
                 cidx = cellidx_lookup(fast->paramtype_cellidxes, localidx,
                                       cszp);
         } else {
-                assert(localidx < nparams + ctx->localtype->nlocals);
                 cidx = fast->paramcsz;
                 cidx += cellidx_lookup(fast->localtype_cellidxes,
                                        localidx - nparams, cszp);
