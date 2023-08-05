@@ -231,29 +231,43 @@ set_current_frame(struct exec_context *ctx, const struct funcframe *frame,
                  *
                  * Note: such exprs do never have function calls.
                  * (thus ei != NULL)
+                 *
+                 * Note: such exprs do never have parameters or locals.
+                 * (thus no need to set ctx->fast or ctx->local_u)
                  */
                 assert(ei != NULL);
-                ctx->paramtype = NULL;
-                ctx->localtype = NULL;
-                ctx->nparams = 0;
-                ctx->paramcsz = 0;
-                ctx->fast = false;
                 ctx->ei = ei;
         } else {
                 const struct module *m = inst->module;
                 const struct functype *ft = module_functype(m, funcidx);
                 const struct func *func =
                         &m->funcs[funcidx - m->nimportedfuncs];
-                ctx->paramtype = &ft->parameter;
                 assert(frame->nresults == resulttype_cellsize(&ft->result));
-                ctx->localtype = &func->localtype;
                 assert(ei == NULL || ei == &func->e.ei);
-                ctx->nparams = ft->parameter.ntypes;
-                ctx->paramcsz = resulttype_cellsize(&ft->parameter);
-                ctx->fast = ctx->paramtype->cellidx.cellidxes != NULL &&
-                            ctx->localtype->cellidx.cellidxes != NULL;
-                ctx->paramtype_cellidxes = ctx->paramtype->cellidx.cellidxes;
-                ctx->localtype_cellidxes = ctx->localtype->cellidx.cellidxes;
+#if defined(TOYWASM_USE_LOCALS_FAST_PATH)
+                const uint16_t *paramtype_cellidxes =
+                        ft->parameter.cellidx.cellidxes;
+                const uint16_t *localtype_cellidxes =
+                        func->localtype.cellidx.cellidxes;
+                /*
+                 * if we have both of indexes, use the fast path.
+                 */
+                ctx->fast = paramtype_cellidxes != NULL &&
+                            localtype_cellidxes != NULL;
+                if (ctx->fast) {
+                        struct local_info_fast *fast = &ctx->local_u.fast;
+                        fast->nparams = ft->parameter.ntypes;
+                        fast->paramcsz = resulttype_cellsize(&ft->parameter);
+                        fast->paramtype_cellidxes = paramtype_cellidxes;
+                        fast->localtype_cellidxes = localtype_cellidxes;
+                } else {
+#endif
+                        struct local_info_slow *slow = &ctx->local_u.slow;
+                        slow->paramtype = &ft->parameter;
+                        slow->localtype = &func->localtype;
+#if defined(TOYWASM_USE_LOCALS_FAST_PATH)
+                }
+#endif
                 ctx->ei = &func->e.ei;
         }
 #if defined(TOYWASM_USE_LOCALS_CACHE)
