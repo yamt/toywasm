@@ -216,7 +216,7 @@ frame_locals_cellidx(struct exec_context *ctx, uint32_t localidx,
         }
 #endif
         return frame_locals_cellidx_slow(ctx, localidx, cszp);
-#else /* defined(TOYWASM_USE_SMALL_CELLS) */
+#else  /* defined(TOYWASM_USE_SMALL_CELLS) */
         *cszp = 1;
         return localidx;
 #endif /* defined(TOYWASM_USE_SMALL_CELLS) */
