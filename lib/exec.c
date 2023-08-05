@@ -407,8 +407,6 @@ frame_enter(struct exec_context *ctx, struct instance *inst, uint32_t funcidx,
         ctx->stack.lsize += nlocals;
 #endif
         set_current_frame(ctx, frame, ei);
-        assert(funcidx == FUNCIDX_INVALID || ctx->paramtype == paramtype);
-        assert(funcidx == FUNCIDX_INVALID || ctx->localtype == localtype);
         assert(ctx->ei == ei);
         return 0;
 }
