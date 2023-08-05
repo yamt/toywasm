@@ -56,6 +56,28 @@ int
 module_find_export(const struct module *m, const struct name *name,
                    uint32_t type, uint32_t *idxp)
 {
+#if defined(TOYWASM_SORT_EXPORTS)
+        uint32_t left = 0;
+        uint32_t right = m->nexports;
+        while (left < right) {
+                uint32_t mid = left + (right - left) / 2;
+                const struct export *ex = &m->exports[mid];
+                int cmp = compare_name(&ex->name, name);
+                if (cmp == 0) {
+                        const struct exportdesc *exd = &ex->desc;
+                        if (exd->type == type) {
+                                *idxp = exd->idx;
+                                return 0;
+                        }
+                        break;
+                } else if (cmp < 0) {
+                        left = mid + 1;
+                } else {
+                        right = mid;
+                }
+        }
+        return ENOENT;
+#else
         uint32_t i;
         for (i = 0; i < m->nexports; i++) {
                 const struct export *ex = &m->exports[i];
@@ -68,6 +90,7 @@ module_find_export(const struct module *m, const struct name *name,
                 }
         }
         return ENOENT;
+#endif
 }
 
 int
