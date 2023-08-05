@@ -950,7 +950,7 @@ dyld_resolve_symbol_in_obj(struct dyld_object *refobj, struct dyld_object *obj,
         xlog_trace("dyld: resolved %s %.*s %.*s -> %.*s idx %" PRIu32
                    " addr %08" PRIx32,
                    symtype_str(symtype), CSTR(refobj->name), CSTR(sym),
-                   CSTR(obj->name), ed->idx, addr);
+                   CSTR(obj->name), idx, addr);
         *resultp = addr;
         return 0;
 }
