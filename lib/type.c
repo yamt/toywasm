@@ -190,6 +190,9 @@ int
 compare_name(const struct name *a, const struct name *b)
 {
         if (a->nbytes != b->nbytes) {
+                if (a->nbytes < b->nbytes) {
+                        return -1;
+                }
                 return 1;
         }
         return memcmp(a->data, b->data, a->nbytes);
