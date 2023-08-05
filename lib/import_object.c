@@ -74,6 +74,9 @@ import_object_create_for_exports(struct instance *inst,
                 xlog_trace("created an entry for %.*s:%.*s",
                            CSTR(e->module_name), CSTR(e->name));
         }
+#if defined(TOYWASM_SORT_EXPORTS)
+        im->use_binary_search = true;
+#endif
         im->next = NULL;
         *resultp = im;
         return 0;
@@ -96,13 +99,68 @@ import_object_find_entry(
         const void *checkarg, const struct import_object_entry **resultp,
         struct report *report)
 {
+        const struct import_object_entry *e;
+#if defined(TOYWASM_SORT_EXPORTS)
+        if (impobj->use_binary_search) {
+                /*
+                 * perform binary search as we know entries are unique
+                 * and sorted.
+                 *
+                 * Note: all entries in an import_object created by
+                 * import_object_create_for_exports have the same
+                 * module_name. It's enough to check the first one.
+                 *
+                 * Note: while this is O(log(n)), this would have
+                 * rather large constant factor because of string
+                 * comparisons. if we really care the performance here,
+                 * it's better to use a hash or something instead.
+                 */
+                if (impobj->nentries == 0) {
+                        return ENOENT;
+                }
+                e = &impobj->entries[0];
+                xlog_trace("looking for %.*s", CSTR(&im->name));
+                if (compare_name(e->module_name, &im->module_name)) {
+                        return ENOENT;
+                }
+                size_t left = 0;
+                size_t right = impobj->nentries;
+                while (left < right) {
+                        size_t mid = (left + right) / 2;
+                        e = &impobj->entries[mid];
+                        assert(!compare_name(e->module_name,
+                                             &im->module_name));
+                        int cmp = compare_name(e->name, &im->name);
+                        xlog_trace("comparing with [%zu] %.*s -> %d", mid,
+                                   CSTR(e->name), cmp);
+                        if (cmp == 0) {
+                                if (e->type != im->desc.type) {
+                                        goto type_mismatch;
+                                }
+                                int ret = check(e, checkarg);
+                                if (ret == 0) {
+                                        goto found;
+                                }
+                                return EINVAL;
+                        } else if (cmp < 0) {
+                                left = mid + 1;
+                        } else {
+                                right = mid;
+                        }
+                }
+                return ENOENT;
+        }
+#endif
         int result = ENOENT;
         size_t i;
         for (i = 0; i < impobj->nentries; i++) {
-                const struct import_object_entry *e = &impobj->entries[i];
+                e = &impobj->entries[i];
                 if (!compare_name(e->module_name, &im->module_name) &&
                     !compare_name(e->name, &im->name)) {
                         if (e->type != im->desc.type) {
+#if defined(TOYWASM_SORT_EXPORTS)
+type_mismatch:
+#endif
                                 report_error(report,
                                              "Type mismatch for import "
                                              "%.*s:%.*s (%u != %u)",
@@ -114,6 +172,9 @@ import_object_find_entry(
                         }
                         int ret = check(e, checkarg);
                         if (ret == 0) {
+#if defined(TOYWASM_SORT_EXPORTS)
+found:
+#endif
                                 xlog_trace("Found an entry for import "
                                            "%.*s:%.*s",
                                            CSTR(&im->module_name),
