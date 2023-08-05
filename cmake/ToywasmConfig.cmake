@@ -46,6 +46,10 @@ cmake_dependent_option(TOYWASM_ENABLE_TRACING_INSN
     "TOYWASM_ENABLE_TRACING"
     OFF)
 
+# Sort module exports to speed up the uniqueness check.
+# O(n^2) -> O(n*log(n))
+option(TOYWASM_SORT_EXPORTS "Sort module export" ON)
+
 # TOYWASM_USE_JUMP_BINARY_SEARCH=ON makes the jump table binary search.
 # otherwise, linear search is used.
 option(TOYWASM_USE_JUMP_BINARY_SEARCH "Enable binary search for jump tables" ON)
