@@ -1,0 +1,45 @@
+;; Note: toywasm import logic is not scalable
+;; * export uniqueness check is O(n^2) where n is the number of exports
+;; * import resolution is O(n^2) where n is the number of imports
+
+{% set NUM = NUM | default(20000) | int %}
+
+;; the first module exports {{NUM}} functions
+
+;; the next module imports and export {{NUM + 2 * NUM}} functions
+;; ({{NUM}} unique functions)
+
+(module
+  ;; export {{NUM}} functions{% for x in range(NUM) %}
+  (func (export "add_{{x}}") (param i32) (result i32)
+    local.get 0
+    i32.const {{x}}
+    i32.add
+  )
+  {%- endfor %}
+)
+
+(register "test")
+
+(module
+  ;; import and export {{NUM}} functions{% for x in range(NUM) %}
+  (func (export "reexported_add_{{x}}") (import "test" "add_{{x}}") (param i32) (result i32))
+  {%- endfor %}
+
+  ;; Note: it's ok to import the same resource multiple times{% for x in range(NUM) %}
+  (func (export "reexported{{x}}_add_0") (import "test" "add_0") (param i32) (result i32))
+  (func (export "reexported{{x}}_add_{{NUM - 1}}") (import "test" "add_{{NUM - 1}}") (param i32) (result i32))
+  {%- endfor %}
+)
+
+(assert_return (invoke "reexported_add_0" (i32.const 100)) (i32.const 100))
+(assert_return (invoke "reexported_add_{{NUM // 2}}" (i32.const 100)) (i32.const {{100 + NUM // 2}}))
+(assert_return (invoke "reexported_add_{{NUM - 1}}" (i32.const 100)) (i32.const {{100 + NUM - 1}}))
+
+(assert_return (invoke "reexported0_add_0" (i32.const 100)) (i32.const 100))
+(assert_return (invoke "reexported{{NUM // 2}}_add_0" (i32.const 100)) (i32.const 100))
+(assert_return (invoke "reexported{{NUM - 1}}_add_0" (i32.const 100)) (i32.const 100))
+
+(assert_return (invoke "reexported0_add_{{NUM - 1}}" (i32.const 100)) (i32.const {{100 + NUM - 1}}))
+(assert_return (invoke "reexported{{NUM // 2}}_add_{{NUM - 1}}" (i32.const 100)) (i32.const {{100 + NUM - 1}}))
+(assert_return (invoke "reexported{{NUM - 1}}_add_{{NUM - 1}}" (i32.const 100)) (i32.const {{100 + NUM - 1}}))
