@@ -1,3 +1,5 @@
+include(CMakeDependentOption)
+
 if(NOT CMAKE_BUILD_TYPE)
 set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
 endif()
@@ -76,6 +78,10 @@ option(TOYWASM_USE_SMALL_CELLS "Use smaller stack cells" ON)
 # these only make sense with TOYWASM_USE_SMALL_CELLS=ON.
 option(TOYWASM_USE_RESULTTYPE_CELLIDX "Index local lookup for resulttype" ON)
 option(TOYWASM_USE_LOCALTYPE_CELLIDX "Index local lookup for localtype" ON)
+
+# TOYWASM_USE_LOCALS_FAST_PATH=ON -> faster execution
+# TOYWASM_USE_LOCALS_FAST_PATH=OFF -> slightly smaller code and exec_context
+cmake_dependent_option(TOYWASM_USE_LOCALS_FAST_PATH "Enable fast path of frame_locals_cellidx" ON "TOYWASM_USE_RESULTTYPE_CELLIDX;TOYWASM_USE_LOCALTYPE_CELLIDX" OFF)
 
 # TOYWASM_PREALLOC_SHARED_MEMORY=ON
 #   allocate the max possible size of shared memories on instantiation.
