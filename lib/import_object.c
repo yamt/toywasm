@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include "instance.h"
+#include "report.h"
 #include "type.h"
 #include "xlog.h"
 
@@ -86,4 +87,42 @@ import_object_destroy(struct import_object *im)
         }
         free(im->entries);
         free(im);
+}
+
+int
+import_object_find_entry(
+        const struct import_object *impobj, const struct import *im,
+        int (*check)(const struct import_object_entry *e, const void *arg),
+        const void *checkarg, const struct import_object_entry **resultp,
+        struct report *report)
+{
+        int result = ENOENT;
+        size_t i;
+        for (i = 0; i < impobj->nentries; i++) {
+                const struct import_object_entry *e = &impobj->entries[i];
+                if (!compare_name(e->module_name, &im->module_name) &&
+                    !compare_name(e->name, &im->name)) {
+                        if (e->type != im->desc.type) {
+                                report_error(report,
+                                             "Type mismatch for import "
+                                             "%.*s:%.*s (%u != %u)",
+                                             CSTR(&im->module_name),
+                                             CSTR(&im->name),
+                                             (unsigned int)e->type,
+                                             (unsigned int)im->desc.type);
+                                return EINVAL;
+                        }
+                        int ret = check(e, checkarg);
+                        if (ret == 0) {
+                                xlog_trace("Found an entry for import "
+                                           "%.*s:%.*s",
+                                           CSTR(&im->module_name),
+                                           CSTR(&im->name));
+                                *resultp = e;
+                                return 0;
+                        }
+                        result = EINVAL;
+                }
+        }
+        return result;
 }
