@@ -36,6 +36,10 @@ option(TOYWASM_USE_USER_SCHED "Use userland scheduler" OFF)
 option(TOYWASM_ENABLE_TRACING "Enable xlog_trace" OFF)
 option(TOYWASM_ENABLE_TRACING_INSN "Enable per-instruction xlog_trace" OFF)
 
+# Sort module exports to speed up the uniqueness check.
+# O(n^2) -> O(n*log(n))
+option(TOYWASM_SORT_EXPORTS "Sort module export" ON)
+
 # TOYWASM_USE_JUMP_BINARY_SEARCH=ON makes the jump table binary search.
 # otherwise, linear search is used.
 option(TOYWASM_USE_JUMP_BINARY_SEARCH "Enable binary search for jump tables" ON)
