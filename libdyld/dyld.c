@@ -924,41 +924,35 @@ dyld_resolve_symbol_in_obj(struct dyld_object *refobj, struct dyld_object *obj,
                 etype = EXTERNTYPE_GLOBAL;
         }
         const struct module *m = obj->module;
-        /* XXX dumb linear search */
-        uint32_t i;
-        for (i = 0; i < m->nexports; i++) {
-                const struct export *ex = &m->exports[i];
-                const struct exportdesc *ed = &ex->desc;
-                if (etype != ed->type || compare_name(sym, &ex->name)) {
-                        continue;
-                }
-                const struct instance *inst = obj->instance;
-                uint32_t addr;
-                if (symtype == SYM_TYPE_FUNC) {
-                        const struct funcinst *fi =
-                                VEC_ELEM(inst->funcs, ed->idx);
-                        addr = dyld_register_funcinst(d, obj, fi);
-                } else {
-                        struct globalinst *gi =
-                                VEC_ELEM(inst->globals, ed->idx);
-                        if (!is_global_type_i32_const(gi->type)) {
-                                continue;
-                        }
-                        /*
-                         * TODO: consult WASM_DYLINK_EXPORT_INFO
-                         * subsection to check TLS.
-                         * for TLS, use __tls_base, not __memory_base.
-                         */
-                        addr = global_get_i32(gi) + obj->memory_base;
-                }
-                xlog_trace("dyld: resolved %s %.*s %.*s -> %.*s idx "
-                           "%" PRIu32 " addr %08" PRIx32,
-                           symtype_str(symtype), CSTR(refobj->name), CSTR(sym),
-                           CSTR(obj->name), ed->idx, addr);
-                *resultp = addr;
-                return 0;
+        uint32_t idx;
+        int ret;
+        ret = module_find_export(m, sym, etype, &idx);
+        if (ret != 0) {
+                return ENOENT;
         }
-        return ENOENT;
+        const struct instance *inst = obj->instance;
+        uint32_t addr;
+        if (symtype == SYM_TYPE_FUNC) {
+                const struct funcinst *fi = VEC_ELEM(inst->funcs, idx);
+                addr = dyld_register_funcinst(d, obj, fi);
+        } else {
+                struct globalinst *gi = VEC_ELEM(inst->globals, idx);
+                if (!is_global_type_i32_const(gi->type)) {
+                        return ENOENT;
+                }
+                /*
+                 * TODO: consult WASM_DYLINK_EXPORT_INFO
+                 * subsection to check TLS.
+                 * for TLS, use __tls_base, not __memory_base.
+                 */
+                addr = global_get_i32(gi) + obj->memory_base;
+        }
+        xlog_trace("dyld: resolved %s %.*s %.*s -> %.*s idx %" PRIu32
+                   " addr %08" PRIx32,
+                   symtype_str(symtype), CSTR(refobj->name), CSTR(sym),
+                   CSTR(obj->name), ed->idx, addr);
+        *resultp = addr;
+        return 0;
 }
 
 int
