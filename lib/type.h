@@ -524,6 +524,9 @@ struct import_object_entry {
  * If there are multiple matching entries, the first one is used.
  */
 struct import_object {
+#if defined(TOYWASM_SORT_EXPORTS)
+        bool use_binary_search;
+#endif
         size_t nentries;
         struct import_object_entry *entries;
         void (*dtor)(struct import_object *im);
