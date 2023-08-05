@@ -1872,6 +1872,16 @@ get_section_type(uint8_t id)
         return &section_types[id];
 }
 
+#if defined(TOYWASM_SORT_EXPORTS)
+static int
+cmp_export(const void *vp_a, const void *vp_b)
+{
+        const struct export *a = vp_a;
+        const struct export *b = vp_b;
+        return compare_name(&a->name, &b->name);
+}
+#endif
+
 static int
 module_load_into(struct module *m, const uint8_t *p, const uint8_t *ep,
                  struct load_context *ctx)
@@ -1973,10 +1983,32 @@ module_load_into(struct module *m, const uint8_t *p, const uint8_t *ep,
         /*
          * export names should be unique.
          * https://webassembly.github.io/spec/core/syntax/modules.html#exports
-         * TODO use something which is not O(n^2)
          *
          * Note: on the other hand, import names are not necessarily unique.
          * https://webassembly.github.io/spec/core/syntax/modules.html#imports
+         */
+#if defined(TOYWASM_SORT_EXPORTS)
+        /*
+         * Note: this version is O(n*log(n)).
+         *
+         * sort exports to make the uniqueness check cheaper.
+         *
+         * in-place sort should be ok because the order of exports
+         * in a module doesn't have any meanings.
+         */
+        qsort(m->exports, m->nexports, sizeof(*m->exports), cmp_export);
+        uint32_t i;
+        for (i = 0; i < m->nexports; i++) {
+                if (i + 1 < m->nexports &&
+                    !compare_name(&m->exports[i].name,
+                                  &m->exports[i + 1].name)) {
+                        ret = EINVAL;
+                        goto fail;
+                }
+        }
+#else
+        /*
+         * Note: this version is O(n^2).
          */
         uint32_t i;
         for (i = 0; i < m->nexports; i++) {
@@ -1989,6 +2021,7 @@ module_load_into(struct module *m, const uint8_t *p, const uint8_t *ep,
                         }
                 }
         }
+#endif
 
         ret = 0;
 fail:
