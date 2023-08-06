@@ -1995,6 +1995,10 @@ module_load_into(struct module *m, const uint8_t *p, const uint8_t *ep,
          *
          * in-place sort should be ok because the order of exports
          * in a module doesn't have any meanings.
+         *
+         * Note: Naive implementions of qsort can be attacked with
+         * a crafted input.
+         * cf. https://www.cs.dartmouth.edu/~doug/mdmspe.pdf
          */
         qsort(m->exports, m->nexports, sizeof(*m->exports), cmp_export);
         uint32_t i;
