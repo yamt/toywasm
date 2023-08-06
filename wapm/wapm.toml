@@ -2,7 +2,7 @@
 
 [package]
 name = "yamt/toywasm"
-version = "30.0.0"
+version = "31.0.0"
 description = "A WebAssembly interpreter"
 readme = "../README.md"
 license = "BSD-2-Clause"
