@@ -158,7 +158,7 @@ frame_locals_cellidx_slow(struct exec_context *ctx, uint32_t localidx,
                           uint32_t *cszp)
 {
         xassert(cszp != NULL);
-        struct local_info_slow *slow = &ctx->local_u.slow;
+        const struct local_info_slow *slow = &ctx->local_u.slow;
         uint32_t cidx;
         uint32_t nparams = slow->paramtype->ntypes;
         if (localidx < nparams) {
