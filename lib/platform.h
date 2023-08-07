@@ -1,8 +1,12 @@
+#if !defined(__has_attribute)
+#define __has_attribute(a) 0
+#endif
+
 #if !defined(__has_extension)
 #define __has_extension(a) 0
 #endif
 
-#if defined(__clang__) && defined(__has_attribute) && __has_attribute(musttail)
+#if defined(__clang__) && __has_attribute(musttail)
 #define __musttail __attribute__((musttail))
 #define __HAVE_MUSTTAIL
 #else
