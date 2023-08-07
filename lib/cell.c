@@ -153,7 +153,7 @@ localtype_cellsize(const struct localtype *lt)
 }
 
 #if defined(TOYWASM_USE_SMALL_CELLS)
-static uint32_t
+static __noinline uint32_t
 frame_locals_cellidx_slow(struct exec_context *ctx, uint32_t localidx,
                           uint32_t *cszp)
 {
