@@ -131,3 +131,11 @@
 #define __aligned(N)
 #endif /* defined(__GNUC__) */
 #endif /* !defined(__aligned) */
+
+#if !defined(__noinline)
+#if __has_attribute(noinline)
+#define __noinline __attribute__((noinline))
+#else
+#define __noinline
+#endif
+#endif /* !defined(__noinline) */
