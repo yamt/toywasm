@@ -67,6 +67,8 @@ static const struct name name_main_object = NAME_FROM_CSTR_LITERAL("<main>");
 static const struct name init_funcs[] = {
         NAME_FROM_CSTR_LITERAL("__wasm_apply_data_relocs"),
         /*
+         * A note about __wasm_call_ctors and _initialize:
+         *
          * wasm-ld synthesizes __wasm_call_ctors.
          *
          * wasi reactor exec model uses _initialize as the entry point.
@@ -76,6 +78,8 @@ static const struct name init_funcs[] = {
          *
          * otherwise, wasm-ld exports __wasm_call_ctors as it's
          * the default entry point for -shared.
+         *
+         * here we assume a module only exports at most one of them.
          */
         NAME_FROM_CSTR_LITERAL("__wasm_call_ctors"),
         NAME_FROM_CSTR_LITERAL("_initialize"),
