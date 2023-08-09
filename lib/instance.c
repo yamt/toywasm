@@ -321,6 +321,12 @@ instance_create_no_init(const struct module *m, struct instance **instp,
         }
         inst->module = m;
 
+        /*
+         * REVISIT: it would be more scalable to iterate over m->imports
+         * than looking up imports by per-sort indexes as the current
+         * implementation below does.
+         */
+
         uint32_t nfuncs = m->nimportedfuncs + m->nfuncs;
         ret = VEC_RESIZE(inst->funcs, nfuncs);
         if (ret != 0) {
