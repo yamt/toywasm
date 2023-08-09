@@ -5,6 +5,10 @@
 #if !defined(_DLFCN_H)
 #define _DLFCN_H
 
+/*
+ * The following definitions are intended to be
+ * ABI-compatible with musl.
+ */
 #define RTLD_LAZY 0x0001
 #define RTLD_NOW 0x0002
 #define RTLD_GLOBAL 0x0100
