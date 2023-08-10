@@ -1,0 +1,61 @@
+;; Note: wasmparser-based runtimes can't handle NUM > 131072
+;; (MAX_WASM_BR_TABLE_SIZE)
+;;
+;; Note: wasm-micro-runtime can't handle NUM > 65533
+;; ("label stack depth limit exceeded")
+;;
+;; % jinja2 large_br_table.wat.jinja|wasm-tools parse -o large_br_table.wasm
+;; % jinja2 -DNUM=131072 large_br_table.wat.jinja|wasm-tools parse -o large_br_table131072.wasm
+;; % jinja2 -DNUM=65533 large_br_table.wat.jinja|wasm-tools parse -o large_br_table65533.wasm
+;; %
+
+{% set NUM = NUM | default(10000000) | int %}
+
+;; Note: with TEST_STEP=1, _start would be O(NUM^2) for
+;; naive interpreters like toywasm.
+;; (just because of the total number of "block" instructions to
+;; execute.)
+{% set TEST_STEP = TEST_STEP | default(NUM // 10) | int %}
+
+(module
+  ;; a complex way to implement max(x, NUM)
+  (func $test (export "test") (param i32) (result i32)
+    i32.const {{NUM}}
+    {% for x in range(NUM) %}
+    block (param i32) (result i32)
+    {% endfor %}
+    block (param i32) (result i32)
+    local.get 0
+    br_table
+    {% for x in range(NUM + 1) -%}
+    {{x}}
+    {% endfor %}
+    end
+    {% for x in range(NUM) %}
+    i32.const {{x}}
+    br {{NUM - x - 1}}
+    end
+    {% endfor %}
+  )
+  (func (export "_start")
+    block
+    {% for x in range(0, NUM, TEST_STEP) %}
+    i32.const {{x}}
+    call $test
+    i32.const {{x}}
+    i32.ne
+    br_if 0
+    {% endfor %}
+    {% for x in range(NUM, NUM * 2, TEST_STEP) %}
+    i32.const {{x}}
+    call $test
+    i32.const {{NUM}}
+    i32.ne
+    br_if 0
+    {% endfor %}
+    return
+    end
+    unreachable
+  )
+  (memory (export "memory") 0)
+)
