@@ -55,7 +55,7 @@ main(int argc, char **argv)
         uint32_t funcidx_with_max_code_size = UINT32_MAX;
         uint32_t max_code_size = 0;
 #endif
-        for (i = 0; i < m->nfuncs - m->nimportedfuncs; i++) {
+        for (i = 0; i < m->nfuncs; i++) {
                 const struct func *func = &m->funcs[i];
                 const struct localtype *lt = &func->localtype;
                 const struct expr_exec_info *ei = &func->e.ei;
