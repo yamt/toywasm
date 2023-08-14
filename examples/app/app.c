@@ -78,7 +78,7 @@ main(int argc, char **argv)
                 if (funcidx_with_largest_jump_table == UINT32_MAX ||
                     ei->njumps > largest_jump_table) {
                         funcidx_with_largest_jump_table = i;
-                        largest_jump_table = lt->nlocals;
+                        largest_jump_table = ei->njumps;
                 }
 #if defined(TOYWASM_USE_SMALL_CELLS)
                 if (funcidx_with_largest_type_annotations == UINT32_MAX ||
