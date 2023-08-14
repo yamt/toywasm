@@ -104,8 +104,7 @@ const struct import *
 module_find_import(const struct module *m, enum externtype type, uint32_t idx)
 {
         /*
-         * REVISIT: this is O(n) and thus some of users
-         * (eg. instance_create) are O(n^2).
+         * REVISIT: this is O(n) and can make some of users O(n^2).
          */
         uint32_t i;
         for (i = 0; i < m->nimports; i++) {
