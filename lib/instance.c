@@ -47,21 +47,6 @@ find_entry_for_import(
         return ENOENT;
 }
 
-static int
-find_import_entry(const struct module *m, enum externtype type, uint32_t idx,
-                  const struct import_object *imports,
-                  int (*check)(const struct import_object_entry *e,
-                               const void *arg),
-                  const void *checkarg,
-                  const struct import_object_entry **resultp,
-                  struct report *report)
-{
-        const struct import *im = module_find_import(m, type, idx);
-        assert(im != NULL);
-        return find_entry_for_import(imports, im, check, checkarg, resultp,
-                                     report);
-}
-
 /*
  * https://webassembly.github.io/spec/core/exec/modules.html#external-typing
  * https://webassembly.github.io/spec/core/valid/types.html#import-subtyping
@@ -305,6 +290,78 @@ instance_create(const struct module *m, struct instance **instp,
         return ret;
 }
 
+static int
+resolve_imports(struct instance *inst, const struct import_object *imports,
+                struct report *report)
+{
+        const struct module *m = inst->module;
+        uint32_t i;
+        int ret;
+
+        uint32_t funcidx = 0;
+        uint32_t memidx = 0;
+        uint32_t globalidx = 0;
+        uint32_t tableidx = 0;
+        for (i = 0; i < m->nimports; i++) {
+                const struct import *im = &m->imports[i];
+                const struct importdesc *imd = &im->desc;
+                int (*check)(const struct import_object_entry *e,
+                             const void *);
+                const void *type;
+                switch (imd->type) {
+                case EXTERNTYPE_FUNC:
+                        check = check_functype;
+                        type = &m->types[imd->u.typeidx];
+                        break;
+                case EXTERNTYPE_TABLE:
+                        check = check_tabletype;
+                        type = &imd->u.tabletype;
+                        break;
+                case EXTERNTYPE_MEMORY:
+                        check = check_memtype;
+                        type = &imd->u.memtype;
+                        break;
+                case EXTERNTYPE_GLOBAL:
+                        check = check_globaltype;
+                        type = &imd->u.globaltype;
+                        break;
+                }
+                const struct import_object_entry *e;
+                ret = find_entry_for_import(imports, im, check, type, &e,
+                                            report);
+                if (ret != 0) {
+                        goto fail;
+                }
+                assert(e->type == imd->type);
+                switch (imd->type) {
+                case EXTERNTYPE_FUNC:
+                        VEC_ELEM(inst->funcs, funcidx) = e->u.func;
+                        funcidx++;
+                        break;
+                case EXTERNTYPE_TABLE:
+                        VEC_ELEM(inst->tables, tableidx) = e->u.table;
+                        tableidx++;
+                        break;
+                case EXTERNTYPE_MEMORY:
+                        VEC_ELEM(inst->mems, memidx) = e->u.mem;
+                        memidx++;
+                        break;
+                case EXTERNTYPE_GLOBAL:
+                        VEC_ELEM(inst->globals, globalidx) = e->u.global;
+                        globalidx++;
+                        break;
+                }
+        }
+        assert(funcidx == m->nimportedfuncs);
+        assert(tableidx == m->nimportedtables);
+        assert(memidx == m->nimportedmems);
+        assert(globalidx == m->nimportedglobals);
+
+        return 0;
+fail:
+        return ret;
+}
+
 int
 instance_create_no_init(const struct module *m, struct instance **instp,
                         const struct import_object *imports,
@@ -321,123 +378,70 @@ instance_create_no_init(const struct module *m, struct instance **instp,
         }
         inst->module = m;
 
-        /*
-         * REVISIT: it would be more scalable to iterate over m->imports
-         * than looking up imports by per-sort indexes as the current
-         * implementation below does.
-         */
-
         uint32_t nfuncs = m->nimportedfuncs + m->nfuncs;
         ret = VEC_RESIZE(inst->funcs, nfuncs);
         if (ret != 0) {
                 goto fail;
         }
-        for (i = 0; i < nfuncs; i++) {
-                struct funcinst *fp;
-                if (i < m->nimportedfuncs) {
-                        const struct import_object_entry *e;
-                        ret = find_import_entry(
-                                m, EXTERNTYPE_FUNC, i, imports, check_functype,
-                                module_functype(m, i), &e, report);
-                        if (ret != 0) {
-                                goto fail;
-                        }
-                        assert(e->type == EXTERNTYPE_FUNC);
-                        fp = e->u.func;
-                        assert(fp != NULL);
-                } else {
-                        fp = zalloc(sizeof(*fp));
-                        if (fp == NULL) {
-                                ret = ENOMEM;
-                                goto fail;
-                        }
-                        fp->is_host = false;
-                        fp->u.wasm.instance = inst;
-                        fp->u.wasm.funcidx = i;
-                }
-                VEC_ELEM(inst->funcs, i) = fp;
-        }
-
         uint32_t nmems = m->nimportedmems + m->nmems;
         ret = VEC_RESIZE(inst->mems, nmems);
         if (ret != 0) {
                 goto fail;
         }
-        for (i = 0; i < nmems; i++) {
-                struct meminst *mp;
-                const struct memtype *mt = module_memtype(m, i);
-                if (i < m->nimportedmems) {
-                        const struct import_object_entry *e;
-                        ret = find_import_entry(m, EXTERNTYPE_MEMORY, i,
-                                                imports, check_memtype, mt, &e,
-                                                report);
-                        if (ret != 0) {
-                                goto fail;
-                        }
-                        assert(e->type == EXTERNTYPE_MEMORY);
-                        mp = e->u.mem;
-                        assert(mp != NULL);
-                } else {
-                        ret = memory_instance_create(&mp, mt);
-                        if (ret != 0) {
-                                goto fail;
-                        }
-                }
-                VEC_ELEM(inst->mems, i) = mp;
-        }
-
         uint32_t nglobals = m->nimportedglobals + m->nglobals;
         ret = VEC_RESIZE(inst->globals, nglobals);
         if (ret != 0) {
                 goto fail;
         }
-        for (i = 0; i < nglobals; i++) {
-                struct globalinst *ginst;
-                const struct globaltype *gt = module_globaltype(m, i);
-                if (i < m->nimportedglobals) {
-                        const struct import_object_entry *e;
-                        ret = find_import_entry(m, EXTERNTYPE_GLOBAL, i,
-                                                imports, check_globaltype, gt,
-                                                &e, report);
-                        if (ret != 0) {
-                                goto fail;
-                        }
-                        assert(e->type == EXTERNTYPE_GLOBAL);
-                        ginst = e->u.global;
-                        assert(ginst != NULL);
-                } else {
-                        ret = global_instance_create(&ginst, gt);
-                        if (ret != 0) {
-                                goto fail;
-                        }
-                }
-                VEC_ELEM(inst->globals, i) = ginst;
-        }
-
         uint32_t ntables = m->nimportedtables + m->ntables;
         ret = VEC_RESIZE(inst->tables, ntables);
         if (ret != 0) {
                 goto fail;
         }
-        for (i = 0; i < ntables; i++) {
+
+        ret = resolve_imports(inst, imports, report);
+        if (ret != 0) {
+                goto fail;
+        }
+
+        for (i = m->nimportedfuncs; i < nfuncs; i++) {
+                struct funcinst *fp = zalloc(sizeof(*fp));
+                if (fp == NULL) {
+                        ret = ENOMEM;
+                        goto fail;
+                }
+                fp->is_host = false;
+                fp->u.wasm.instance = inst;
+                fp->u.wasm.funcidx = i;
+                VEC_ELEM(inst->funcs, i) = fp;
+        }
+
+        for (i = m->nimportedmems; i < nmems; i++) {
+                struct meminst *mp;
+                const struct memtype *mt = module_memtype(m, i);
+                ret = memory_instance_create(&mp, mt);
+                if (ret != 0) {
+                        goto fail;
+                }
+                VEC_ELEM(inst->mems, i) = mp;
+        }
+
+        for (i = m->nimportedglobals; i < nglobals; i++) {
+                struct globalinst *ginst;
+                const struct globaltype *gt = module_globaltype(m, i);
+                ret = global_instance_create(&ginst, gt);
+                if (ret != 0) {
+                        goto fail;
+                }
+                VEC_ELEM(inst->globals, i) = ginst;
+        }
+
+        for (i = m->nimportedtables; i < ntables; i++) {
                 struct tableinst *tinst;
                 const struct tabletype *tt = module_tabletype(m, i);
-                if (i < m->nimportedtables) {
-                        const struct import_object_entry *e;
-                        ret = find_import_entry(m, EXTERNTYPE_TABLE, i,
-                                                imports, check_tabletype, tt,
-                                                &e, report);
-                        if (ret != 0) {
-                                goto fail;
-                        }
-                        assert(e->type == EXTERNTYPE_TABLE);
-                        tinst = e->u.table;
-                        assert(tinst != NULL);
-                } else {
-                        ret = table_instance_create(&tinst, tt);
-                        if (ret != 0) {
-                                goto fail;
-                        }
+                ret = table_instance_create(&tinst, tt);
+                if (ret != 0) {
+                        goto fail;
                 }
                 VEC_ELEM(inst->tables, i) = tinst;
         }
