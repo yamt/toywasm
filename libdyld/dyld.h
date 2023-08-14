@@ -40,6 +40,9 @@ struct dyld {
         uint32_t memory_base;
         uint32_t table_base;
 
+        bool meminst_own;
+        bool tableinst_own;
+
         struct memtype mt;
         struct meminst *meminst;
 
