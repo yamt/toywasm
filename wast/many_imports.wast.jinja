@@ -1,7 +1,3 @@
-;; Note: toywasm import logic is not scalable
-;; * export uniqueness check is O(n^2) where n is the number of exports
-;; * import resolution is O(n^2) where n is the number of imports
-
 {% set NUM = NUM | default(20000) | int %}
 
 ;; the first module exports {{NUM}} functions
