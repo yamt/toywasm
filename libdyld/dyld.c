@@ -937,6 +937,18 @@ dyld_create_shared_resources(struct dyld *d)
 {
         int ret;
 
+        /*
+         * REVISIT: should we use these from the main module when
+         * it's non-pie?
+         *
+         * - these globals are usually not exported.
+         *
+         * - using separate __stack_pointer for the main module and
+         *   libraries doesn't seem too bad.
+         *
+         * - __heap_base/__heap_end basically belong to libc malloc,
+         *   not the main module.
+         */
         d->stack_pointer.type = &globaltype_i32_mut;
         d->heap_base.type = &globaltype_i32_mut;
         d->heap_end.type = &globaltype_i32_mut;
