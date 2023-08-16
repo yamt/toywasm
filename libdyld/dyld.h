@@ -40,19 +40,25 @@ struct dyld {
         uint32_t memory_base;
         uint32_t table_base;
 
-        bool meminst_own;
-        bool tableinst_own;
+        bool pie; /* the main module is pie */
 
-        struct memtype mt;
         struct meminst *meminst;
-
-        struct tabletype tt;
         struct tableinst *tableinst;
-
         struct globalinst *stack_pointer;
-        struct globalinst stack_pointer0;
         struct globalinst heap_base;
         struct globalinst heap_end;
+
+        union {
+                struct {
+                        struct globalinst *heap_base;
+                        struct globalinst *heap_end;
+                } nonpie;
+                struct {
+                        struct memtype mt;
+                        struct tabletype tt;
+                        struct globalinst stack_pointer;
+                } pie;
+        } u;
 
         LIST_HEAD(struct dyld_object) objs;
 
