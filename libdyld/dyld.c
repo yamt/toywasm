@@ -36,9 +36,9 @@
 static int dyld_load_object_from_file(struct dyld *d, const struct name *name,
                                       const char *filename,
                                       struct dyld_object **objp);
-static int dyld_create_shared_memory_and_table(struct dyld *d);
-static int dyld_adopt_shared_memory_and_table(struct dyld *d,
-                                              const struct dyld_object *obj);
+static int dyld_create_shared_resources(struct dyld *d);
+static int dyld_adopt_shared_resources(struct dyld *d,
+                                       const struct dyld_object *obj);
 
 static const struct name name_GOT_mem = NAME_FROM_CSTR_LITERAL("GOT.mem");
 static const struct name name_GOT_func = NAME_FROM_CSTR_LITERAL("GOT.func");
@@ -727,7 +727,6 @@ static int
 dyld_load_object_from_file(struct dyld *d, const struct name *name,
                            const char *filename, struct dyld_object **objp)
 {
-        bool pie = true;
         struct dyld_object *obj;
         int ret;
         obj = zalloc(sizeof(*obj));
@@ -770,21 +769,24 @@ dyld_load_object_from_file(struct dyld *d, const struct name *name,
          * if the module is importing env.memory, probably it's a pie.
          * otherwise, it's probably non-pie.
          */
+        bool pie_or_lib;
         if (LIST_EMPTY(&d->objs)) {
-                if (module_imports_env_memory(obj->module)) {
-                        ret = dyld_create_shared_memory_and_table(d);
+                /* the main module */
+                d->pie = pie_or_lib = module_imports_env_memory(obj->module);
+                if (d->pie) {
+                        ret = dyld_create_shared_resources(d);
                         if (ret != 0) {
                                 goto fail;
                         }
-                } else {
-                        pie = false;
                 }
+        } else {
+                pie_or_lib = true;
         }
         ret = dyld_create_got(d, obj);
         if (ret != 0) {
                 goto fail;
         }
-        if (pie) {
+        if (pie_or_lib) {
                 ret = dyld_allocate_memory_for_obj(d, obj);
                 if (ret != 0) {
                         goto fail;
@@ -812,12 +814,16 @@ dyld_load_object_from_file(struct dyld *d, const struct name *name,
                 goto fail;
         }
         report_clear(&report);
-        if (!pie) {
-                ret = dyld_adopt_shared_memory_and_table(d, obj);
+        if (!pie_or_lib) {
+                /*
+                 * non-pie main module should export certain resources.
+                 * adopt them.
+                 */
+                ret = dyld_adopt_shared_resources(d, obj);
                 if (ret != 0) {
                         goto fail;
                 }
-                ret = dyld_create_shared_memory_and_table(d);
+                ret = dyld_create_shared_resources(d);
                 if (ret != 0) {
                         goto fail;
                 }
@@ -841,14 +847,14 @@ fail:
 }
 
 static int
-dyld_create_shared_memory_and_table(struct dyld *d)
+dyld_create_shared_resources(struct dyld *d)
 {
         int ret;
 
-        if (d->tableinst == NULL) {
+        if (d->pie) {
                 assert(d->table_base == 0);
                 d->table_base = 1; /* do not use the first one */
-                struct tabletype *tt = &d->tt;
+                struct tabletype *tt = &d->u.pie.tt;
                 tt->et = TYPE_FUNCREF;
                 tt->lim.min = d->table_base;
                 tt->lim.max = UINT32_MAX;
@@ -856,12 +862,9 @@ dyld_create_shared_memory_and_table(struct dyld *d)
                 if (ret != 0) {
                         goto fail;
                 }
-                d->tableinst_own = true;
-        }
 
-        if (d->meminst == NULL) {
                 assert(d->memory_base == 0);
-                struct memtype *mt = &d->mt;
+                struct memtype *mt = &d->u.pie.mt;
                 mt->lim.min = howmany(d->memory_base, WASM_PAGE_SIZE);
                 mt->lim.max = WASM_MAX_PAGES;
                 mt->flags = 0;
@@ -869,18 +872,21 @@ dyld_create_shared_memory_and_table(struct dyld *d)
                 if (ret != 0) {
                         goto fail;
                 }
-                d->meminst_own = true;
-        }
 
-        if (d->stack_pointer == NULL) {
-                d->stack_pointer = &d->stack_pointer0;
+                d->stack_pointer = &d->u.pie.stack_pointer;
                 d->stack_pointer->type = &globaltype_i32_mut;
         }
 
-        /* Note: dyld_create_shared_resources reserved entries for us */
-        assert(d->shared_import_obj->nentries + 3 == num_shared_entries);
-        struct import_object_entry *e =
-                d->shared_import_obj->entries + d->shared_import_obj->nentries;
+        d->heap_base.type = &globaltype_i32_mut;
+        d->heap_end.type = &globaltype_i32_mut;
+
+        struct import_object *imp;
+        ret = import_object_alloc(num_shared_entries, &imp);
+        if (ret != 0) {
+                goto fail;
+        }
+
+        struct import_object_entry *e = imp->entries;
 
         e->module_name = &name_env;
         e->name = &name_memory;
@@ -900,22 +906,68 @@ dyld_create_shared_memory_and_table(struct dyld *d)
         e->u.global = d->stack_pointer;
         e++;
 
-        assert(e == d->shared_import_obj->entries + num_shared_entries);
-        d->shared_import_obj->nentries = e - d->shared_import_obj->entries;
-        assert(d->shared_import_obj->nentries == num_shared_entries);
+        e->module_name = &name_GOT_mem;
+        e->name = &name_heap_base;
+        e->type = EXTERNTYPE_GLOBAL;
+        e->u.global = &d->heap_base;
+        e++;
 
-        return 0;
+        e->module_name = &name_GOT_mem;
+        e->name = &name_heap_end;
+        e->type = EXTERNTYPE_GLOBAL;
+        e->u.global = &d->heap_end;
+        e++;
+
+        assert(e == imp->entries + num_shared_entries);
+        imp->next = d->shared_import_obj;
+        d->shared_import_obj = imp;
+
+#if defined(TOYWASM_ENABLE_DYLD_DLFCN)
+        if (d->opts.enable_dlfcn) {
+                struct import_object *imp;
+                ret = import_object_create_for_dyld(d, &imp);
+                if (ret != 0) {
+                        goto fail;
+                }
+                imp->next = d->shared_import_obj;
+                d->shared_import_obj = imp;
+        }
+#endif
 fail:
         return ret;
 }
 
 static int
-dyld_adopt_shared_memory_and_table(struct dyld *d,
-                                   const struct dyld_object *obj)
+find_global(const struct dyld_object *obj, const struct name *name,
+            const struct globaltype *type, struct globalinst **gp)
 {
-        int ret;
         const struct module *m = obj->module;
         const struct instance *inst = obj->instance;
+        uint32_t globalidx;
+        int ret;
+
+        ret = module_find_export(m, name, EXTERNTYPE_GLOBAL, &globalidx);
+        if (ret != 0) {
+                xlog_trace("dyld: failed to find global %.*s in %.*s",
+                           CSTR(name), CSTR(obj->name));
+                return ret;
+        }
+        struct globalinst *g = VEC_ELEM(inst->globals, globalidx);
+        if (g->type->mut != type->mut || g->type->t != type->t) {
+                xlog_trace("dyld: unexpected type of global %.*s in %.*s",
+                           CSTR(name), CSTR(obj->name));
+                return EINVAL;
+        }
+        *gp = g;
+        return 0;
+}
+
+static int
+dyld_adopt_shared_resources(struct dyld *d, const struct dyld_object *obj)
+{
+        const struct module *m = obj->module;
+        const struct instance *inst = obj->instance;
+        int ret;
 
         uint32_t memidx;
         ret = module_find_export(m, &name_memory, EXTERNTYPE_MEMORY, &memidx);
@@ -939,81 +991,22 @@ dyld_adopt_shared_memory_and_table(struct dyld *d,
         /* todo: check type */
         d->table_base = d->tableinst->type->lim.min;
 
-        uint32_t globalidx;
-        ret = module_find_export(m, &name_stack_pointer, EXTERNTYPE_GLOBAL,
-                                 &globalidx);
+        ret = find_global(obj, &name_stack_pointer, &globaltype_i32_mut,
+                          &d->stack_pointer);
         if (ret != 0) {
-                xlog_trace("dyld: failed to adopt global %.*s from %.*s",
-                           CSTR(&name_stack_pointer), CSTR(obj->name));
                 return ret;
         }
-        d->stack_pointer = VEC_ELEM(inst->globals, globalidx);
-        /* todo: check type */
-
-        return 0;
-fail:
-        return ret;
-}
-
-static int
-dyld_create_shared_resources(struct dyld *d)
-{
-        int ret;
-
-        /*
-         * REVISIT: should we use these from the main module when
-         * it's non-pie?
-         *
-         * - these globals are usually not exported.
-         *
-         * - using separate __stack_pointer for the main module and
-         *   libraries doesn't seem too bad.
-         *
-         * - __heap_base/__heap_end basically belong to libc malloc,
-         *   not the main module.
-         */
-        d->heap_base.type = &globaltype_i32_mut;
-        d->heap_end.type = &globaltype_i32_mut;
-
-        ret = import_object_alloc(num_shared_entries, &d->shared_import_obj);
+        ret = find_global(obj, &name_heap_base, &globaltype_i32_const,
+                          &d->u.nonpie.heap_base);
         if (ret != 0) {
-                goto fail;
+                return ret;
         }
-
-        struct import_object_entry *e = d->shared_import_obj->entries;
-
-        e->module_name = &name_GOT_mem;
-        e->name = &name_heap_base;
-        e->type = EXTERNTYPE_GLOBAL;
-        e->u.global = &d->heap_base;
-        e++;
-
-        e->module_name = &name_GOT_mem;
-        e->name = &name_heap_end;
-        e->type = EXTERNTYPE_GLOBAL;
-        e->u.global = &d->heap_end;
-        e++;
-
-        assert(e < d->shared_import_obj->entries + num_shared_entries);
-        d->shared_import_obj->nentries = e - d->shared_import_obj->entries;
-        assert(d->shared_import_obj->nentries + 3 == num_shared_entries);
-        d->shared_import_obj->next = d->opts.base_import_obj;
-
-#if defined(TOYWASM_ENABLE_DYLD_DLFCN)
-        if (d->opts.enable_dlfcn) {
-                struct import_object *imp;
-                ret = import_object_create_for_dyld(d, &imp);
-                if (ret != 0) {
-                        goto fail;
-                }
-                /*
-                 * Note: don't modify d->shared_import_obj as it will be
-                 * used by dyld_create_shared_memory_and_table later.
-                 */
-                imp->next = d->shared_import_obj->next;
-                d->shared_import_obj->next = imp;
+        ret = find_global(obj, &name_heap_end, &globaltype_i32_const,
+                          &d->u.nonpie.heap_end);
+        if (ret != 0) {
+                return ret;
         }
-#endif
+        return 0;
 fail:
         return ret;
 }
@@ -1246,12 +1239,10 @@ fail:
 int
 dyld_load(struct dyld *d, const char *filename)
 {
-        int ret;
-        ret = dyld_create_shared_resources(d);
-        if (ret != 0) {
-                goto fail;
-        }
         struct dyld_object *obj;
+        int ret;
+
+        d->shared_import_obj = d->opts.base_import_obj;
         ret = dyld_load_object_from_file(d, &name_main_object, filename, &obj);
         if (ret != 0) {
                 goto fail;
@@ -1260,20 +1251,32 @@ dyld_load(struct dyld *d, const char *filename)
         if (ret != 0) {
                 goto fail;
         }
-        if (d->stack_pointer == &d->stack_pointer0) {
+        if (d->pie) {
                 ret = dyld_allocate_stack(d, d->opts.stack_size);
+                if (ret != 0) {
+                        goto fail;
+                }
+                ret = dyld_allocate_heap(d);
                 if (ret != 0) {
                         goto fail;
                 }
         } else {
                 uint32_t sp = global_get_i32(d->stack_pointer);
-                xlog_trace(
-                        "dyld: stack pointer from the main module %08" PRIx32,
-                        sp);
-        }
-        ret = dyld_allocate_heap(d);
-        if (ret != 0) {
-                goto fail;
+                uint32_t base = global_get_i32(d->u.nonpie.heap_base);
+                uint32_t end = global_get_i32(d->u.nonpie.heap_end);
+                xlog_trace("dyld: globals from the non-pie main module sp "
+                           "%08" PRIx32 " heap_base %08" PRIx32
+                           " heap_end %08" PRIx32,
+                           sp, base, end);
+
+                /*
+                 * Note: we don't share "__heap_base" from the main module
+                 * as "GOT.mem __heap_base" directly because they are
+                 * different on mutability. Instead, we copy their values
+                 * here.
+                 */
+                global_set_i32(&d->heap_base, base);
+                global_set_i32(&d->heap_end, end);
         }
         ret = dyld_execute_all_init_funcs(d, obj);
         if (ret != 0) {
@@ -1293,11 +1296,13 @@ dyld_clear(struct dyld *d)
                 LIST_REMOVE(&d->objs, obj, q);
                 dyld_object_destroy(obj);
         }
-        if (d->meminst_own && d->meminst != NULL) {
-                memory_instance_destroy(d->meminst);
-        }
-        if (d->tableinst_own && d->tableinst != NULL) {
-                table_instance_destroy(d->tableinst);
+        if (d->pie) {
+                if (d->meminst != NULL) {
+                        memory_instance_destroy(d->meminst);
+                }
+                if (d->tableinst != NULL) {
+                        table_instance_destroy(d->tableinst);
+                }
         }
         struct import_object *imp;
         while ((imp = d->shared_import_obj) != d->opts.base_import_obj) {
