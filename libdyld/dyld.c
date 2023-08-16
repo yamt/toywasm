@@ -948,13 +948,13 @@ find_global(const struct dyld_object *obj, const struct name *name,
 
         ret = module_find_export(m, name, EXTERNTYPE_GLOBAL, &globalidx);
         if (ret != 0) {
-                xlog_trace("dyld: failed to find global %.*s in %.*s",
+                xlog_error("dyld: failed to find global %.*s in %.*s",
                            CSTR(name), CSTR(obj->name));
                 return ret;
         }
         struct globalinst *g = VEC_ELEM(inst->globals, globalidx);
         if (g->type->mut != type->mut || g->type->t != type->t) {
-                xlog_trace("dyld: unexpected type of global %.*s in %.*s",
+                xlog_error("dyld: unexpected type of global %.*s in %.*s",
                            CSTR(name), CSTR(obj->name));
                 return EINVAL;
         }
@@ -977,18 +977,21 @@ dyld_adopt_shared_resources(struct dyld *d, const struct dyld_object *obj)
                 goto fail;
         }
         d->meminst = VEC_ELEM(inst->mems, memidx);
-        /* todo: check type */
         d->memory_base = d->meminst->type->lim.min * WASM_PAGE_SIZE;
 
         uint32_t tableidx;
         ret = module_find_export(m, &name_table, EXTERNTYPE_TABLE, &tableidx);
         if (ret != 0) {
-                xlog_trace("dyld: failed to adopt table from %.*s",
+                xlog_error("dyld: failed to adopt table from %.*s",
                            CSTR(obj->name));
                 return ret;
         }
         d->tableinst = VEC_ELEM(inst->tables, tableidx);
-        /* todo: check type */
+        if (d->tableinst->type->et != TYPE_FUNCREF) {
+                xlog_error("dyld: unexpected type of table from %.*s",
+                           CSTR(obj->name));
+                return EINVAL;
+        }
         d->table_base = d->tableinst->type->lim.min;
 
         ret = find_global(obj, &name_stack_pointer, &globaltype_i32_mut,
