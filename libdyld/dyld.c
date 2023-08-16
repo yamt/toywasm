@@ -1264,7 +1264,9 @@ dyld_load(struct dyld *d, const char *filename)
                         goto fail;
                 }
         } else {
+#if defined(TOYWASM_ENABLE_TRACING)
                 uint32_t sp = global_get_i32(d->stack_pointer);
+#endif
                 uint32_t base = global_get_i32(d->u.nonpie.heap_base);
                 uint32_t end = global_get_i32(d->u.nonpie.heap_end);
                 xlog_trace("dyld: globals from the non-pie main module sp "
