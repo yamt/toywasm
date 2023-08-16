@@ -522,7 +522,7 @@ dyld_allocate_stack(struct dyld *d, uint32_t stack_size)
         if (ret != 0) {
                 return ret;
         }
-        global_set_i32(&d->stack_pointer, end);
+        global_set_i32(d->stack_pointer, end);
         xlog_trace("dyld: stack allocated %08" PRIx32 " - %08" PRIx32, base,
                    end);
         return 0;
@@ -872,8 +872,13 @@ dyld_create_shared_memory_and_table(struct dyld *d)
                 d->meminst_own = true;
         }
 
+        if (d->stack_pointer == NULL) {
+                d->stack_pointer = &d->stack_pointer0;
+                d->stack_pointer->type = &globaltype_i32_mut;
+        }
+
         /* Note: dyld_create_shared_resources reserved entries for us */
-        assert(d->shared_import_obj->nentries + 2 == num_shared_entries);
+        assert(d->shared_import_obj->nentries + 3 == num_shared_entries);
         struct import_object_entry *e =
                 d->shared_import_obj->entries + d->shared_import_obj->nentries;
 
@@ -887,6 +892,12 @@ dyld_create_shared_memory_and_table(struct dyld *d)
         e->name = &name_table;
         e->type = EXTERNTYPE_TABLE;
         e->u.table = d->tableinst;
+        e++;
+
+        e->module_name = &name_env;
+        e->name = &name_stack_pointer;
+        e->type = EXTERNTYPE_GLOBAL;
+        e->u.global = d->stack_pointer;
         e++;
 
         assert(e == d->shared_import_obj->entries + num_shared_entries);
@@ -922,11 +933,23 @@ dyld_adopt_shared_memory_and_table(struct dyld *d,
         if (ret != 0) {
                 xlog_trace("dyld: failed to adopt table from %.*s",
                            CSTR(obj->name));
-                return 0; /* this is not fatal */
+                return ret;
         }
         d->tableinst = VEC_ELEM(inst->tables, tableidx);
         /* todo: check type */
         d->table_base = d->tableinst->type->lim.min;
+
+        uint32_t globalidx;
+        ret = module_find_export(m, &name_stack_pointer, EXTERNTYPE_GLOBAL,
+                                 &globalidx);
+        if (ret != 0) {
+                xlog_trace("dyld: failed to adopt global %.*s from %.*s",
+                           CSTR(&name_stack_pointer), CSTR(obj->name));
+                return ret;
+        }
+        d->stack_pointer = VEC_ELEM(inst->globals, globalidx);
+        /* todo: check type */
+
         return 0;
 fail:
         return ret;
@@ -949,7 +972,6 @@ dyld_create_shared_resources(struct dyld *d)
          * - __heap_base/__heap_end basically belong to libc malloc,
          *   not the main module.
          */
-        d->stack_pointer.type = &globaltype_i32_mut;
         d->heap_base.type = &globaltype_i32_mut;
         d->heap_end.type = &globaltype_i32_mut;
 
@@ -959,12 +981,6 @@ dyld_create_shared_resources(struct dyld *d)
         }
 
         struct import_object_entry *e = d->shared_import_obj->entries;
-
-        e->module_name = &name_env;
-        e->name = &name_stack_pointer;
-        e->type = EXTERNTYPE_GLOBAL;
-        e->u.global = &d->stack_pointer;
-        e++;
 
         e->module_name = &name_GOT_mem;
         e->name = &name_heap_base;
@@ -979,9 +995,8 @@ dyld_create_shared_resources(struct dyld *d)
         e++;
 
         assert(e < d->shared_import_obj->entries + num_shared_entries);
-        assert(e + 2 == d->shared_import_obj->entries + num_shared_entries);
         d->shared_import_obj->nentries = e - d->shared_import_obj->entries;
-        assert(d->shared_import_obj->nentries + 2 == num_shared_entries);
+        assert(d->shared_import_obj->nentries + 3 == num_shared_entries);
         d->shared_import_obj->next = d->opts.base_import_obj;
 
 #if defined(TOYWASM_ENABLE_DYLD_DLFCN)
@@ -1245,9 +1260,16 @@ dyld_load(struct dyld *d, const char *filename)
         if (ret != 0) {
                 goto fail;
         }
-        ret = dyld_allocate_stack(d, d->opts.stack_size);
-        if (ret != 0) {
-                goto fail;
+        if (d->stack_pointer == &d->stack_pointer0) {
+                ret = dyld_allocate_stack(d, d->opts.stack_size);
+                if (ret != 0) {
+                        goto fail;
+                }
+        } else {
+                uint32_t sp = global_get_i32(d->stack_pointer);
+                xlog_trace(
+                        "dyld: stack pointer from the main module %08" PRIx32,
+                        sp);
         }
         ret = dyld_allocate_heap(d);
         if (ret != 0) {

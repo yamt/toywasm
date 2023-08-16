@@ -49,7 +49,8 @@ struct dyld {
         struct tabletype tt;
         struct tableinst *tableinst;
 
-        struct globalinst stack_pointer;
+        struct globalinst *stack_pointer;
+        struct globalinst stack_pointer0;
         struct globalinst heap_base;
         struct globalinst heap_end;
 
