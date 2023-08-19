@@ -1,6 +1,6 @@
 # What's this
 
-A simple dlopen/dlsym implementation backed by host functions.
+A simple `dlopen`/`dlsym` implementation backed by host functions.
 
 # Prerequisites
 
