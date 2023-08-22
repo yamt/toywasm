@@ -937,7 +937,6 @@ dyld_create_shared_resources(struct dyld *d)
 
 #if defined(TOYWASM_ENABLE_DYLD_DLFCN)
         if (d->opts.enable_dlfcn) {
-                struct import_object *imp;
                 ret = import_object_create_for_dyld(d, &imp);
                 if (ret != 0) {
                         goto fail;
