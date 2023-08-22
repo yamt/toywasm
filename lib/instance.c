@@ -325,6 +325,8 @@ resolve_imports(struct instance *inst, const struct import_object *imports,
                         check = check_globaltype;
                         type = &imd->u.globaltype;
                         break;
+                default:
+                        assert(false);
                 }
                 const struct import_object_entry *e;
                 ret = find_entry_for_import(imports, im, check, type, &e,
