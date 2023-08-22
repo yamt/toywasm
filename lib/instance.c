@@ -308,6 +308,10 @@ resolve_imports(struct instance *inst, const struct import_object *imports,
                 int (*check)(const struct import_object_entry *e,
                              const void *);
                 const void *type;
+#if defined(__GNUC__) && !defined(__clang__)
+                check = NULL;
+                type = NULL;
+#endif
                 switch (imd->type) {
                 case EXTERNTYPE_FUNC:
                         check = check_functype;
