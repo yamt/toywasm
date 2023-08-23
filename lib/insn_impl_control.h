@@ -314,13 +314,26 @@ INSN_IMPL(br_if)
                 if (ret != 0) {
                         goto fail;
                 }
-                ret = pop_valtypes(rt, vctx);
-                if (ret != 0) {
-                        goto fail;
-                }
-                ret = push_valtypes(rt, vctx);
-                if (ret != 0) {
-                        goto fail;
+                const struct ctrlframe *cframe = &VEC_LASTELEM(vctx->cframes);
+                if (!cframe->unreachable) {
+                        /*
+                         * this is just a small optimization.
+                         * usually doesn't matter. but "rt" theoretically
+                         * can have a ton of types.
+                         */
+                        ret = peek_valtypes(rt, vctx);
+                        if (ret != 0) {
+                                goto fail;
+                        }
+                } else {
+                        ret = pop_valtypes(rt, vctx);
+                        if (ret != 0) {
+                                goto fail;
+                        }
+                        ret = push_valtypes(rt, vctx);
+                        if (ret != 0) {
+                                goto fail;
+                        }
                 }
         }
         SAVE_PC;
@@ -415,7 +428,7 @@ fail:
         INSN_FAIL;
 }
 
-INSN_IMPL(return )
+INSN_IMPL(return)
 {
         int ret;
         if (EXECUTING) {
