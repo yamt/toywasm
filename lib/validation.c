@@ -21,6 +21,20 @@ push_valtype(enum valtype type, struct validation_context *ctx)
         int ret;
 
         assert(type != TYPE_ANYREF);
+        /*
+         * we sometimes push TYPE_UNKNOWN onto the stack.
+         *
+         * eg.
+         *    block (result i32)
+         *      i32.const 0
+         *      br 0
+         *      i32.const 0
+         *      select ;; here
+         *    end
+         */
+        assert(ctx->cframes.lsize > 0);
+        const struct ctrlframe *cframe = &VEC_LASTELEM(ctx->cframes);
+        assert(type != TYPE_UNKNOWN || cframe->unreachable);
         if (nsize == 0) {
                 return EOVERFLOW;
         }
@@ -29,8 +43,6 @@ push_valtype(enum valtype type, struct validation_context *ctx)
                 return ret;
         }
         *VEC_PUSH(ctx->valtypes) = type;
-        assert(ctx->cframes.lsize > 0);
-        const struct ctrlframe *cframe = &VEC_LASTELEM(ctx->cframes);
         if (!cframe->unreachable) {
                 ctx->ncells += valtype_cellsize(type);
                 if (ctx->ncells > ctx->ei->maxcells) {
@@ -60,6 +72,7 @@ pop_valtype(enum valtype expected_type, enum valtype *typep,
         }
         enum valtype t = *VEC_POP(ctx->valtypes);
         assert(t != TYPE_ANYREF);
+        assert(t != TYPE_UNKNOWN || cframe->unreachable);
         if (!cframe->unreachable) {
                 uint32_t csz = valtype_cellsize(t);
                 assert(ctx->ncells >= csz);
