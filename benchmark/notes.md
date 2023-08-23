@@ -64,10 +64,18 @@ cp target/release/wasmi_cli ~/bin
 ### wasmedge
 
 ```
-git checkout 0.12.1
+brew uninstall spdlog
+git checkout 0.13.3
 mkdir build
 cd build
-cmake .. -DWASMEDGE_BUILD_AOT_RUNTIME=OFF -DWASMEDGE_BUILD_SHARED_LIB=OFF
+cmake \
+-DCMAKE_BUILD_TYPE=Release \
+-DWASMEDGE_BUILD_AOT_RUNTIME=OFF \
+-DWASMEDGE_BUILD_SHARED_LIB=OFF \
+-DWASMEDGE_BUILD_STATIC_LIB=ON \
+-DWASMEDGE_LINK_TOOLS_STATIC=ON \
+-DWASMEDGE_BUILD_PLUGINS=OFF \
+..
 make
 cp ./tools/wasmedge/wasmedge ~/bin
 ```
