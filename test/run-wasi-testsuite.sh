@@ -37,7 +37,7 @@ done
 # the test runner. https://github.com/WebAssembly/wasi-testsuite/issues/81
 # until it gets fixed in the upstream, use find, which doesn't follow
 # symlinks.
-find ${DIR}/tests -name "*.cleanup" | xargs rm -r
+find ${DIR}/tests -name "*.cleanup" | xargs rm -rf
 
 virtualenv venv
 . ./venv/bin/activate
