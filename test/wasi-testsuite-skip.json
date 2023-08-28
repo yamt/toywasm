@@ -7,6 +7,7 @@
         "path_filestat": "rights system not implemented.",
         "path_link": "intentional limitations due to the use of legacy (non openat family) functions.",
         "path_open_read_without_rights": "rights system not implemented.",
+        "path_symlink_trailing_slashes": "EEXIST on linux",
         "symlink_create": "this implementation doesn't care symlink contents",
         "symlink_filestat": "rights system not implemented.",
         "truncation_rights": "rights system not implemented."
