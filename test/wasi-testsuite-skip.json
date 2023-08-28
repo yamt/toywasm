@@ -3,6 +3,12 @@
         "fd_filestat_get": "https://github.com/WebAssembly/wasi-testsuite/pull/59",
         "fd_filestat_set": "intentional limitations due to the use of legacy (non openat family) functions.",
         "fd_flags_set": "rights system not implemented.",
-        "interesting_paths": "loose implementation of path_open."
+        "interesting_paths": "loose implementation of path_open.",
+        "path_filestat": "rights system not implemented.",
+        "path_link": "intentional limitations due to the use of legacy (non openat family) functions.",
+        "path_open_read_without_rights": "rights system not implemented.",
+        "symlink_create": "this implementation doesn't care symlink contents",
+        "symlink_filestat": "rights system not implemented.",
+        "truncation_rights": "rights system not implemented."
     }
 }
