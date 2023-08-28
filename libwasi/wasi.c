@@ -3083,7 +3083,7 @@ wasi_path_filestat_set_times(struct exec_context *ctx,
         uint32_t pathlen = HOST_FUNC_PARAM(ft, params, 3, i32);
         uint64_t atim = HOST_FUNC_PARAM(ft, params, 4, i64);
         uint64_t mtim = HOST_FUNC_PARAM(ft, params, 5, i64);
-        uint32_t fstflags = HOST_FUNC_PARAM(ft, params, 7, i32);
+        uint32_t fstflags = HOST_FUNC_PARAM(ft, params, 6, i32);
         char *hostpath = NULL;
         char *wasmpath = NULL;
         int host_ret;
