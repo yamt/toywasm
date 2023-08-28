@@ -33,6 +33,12 @@ for t in ${TESTS}; do
     TESTDIRS="${TESTDIRS} ${DIR}/tests/${t}"
 done
 
+# Note: test directories left from the previous runs can confuse
+# the test runner. https://github.com/WebAssembly/wasi-testsuite/issues/81
+# until it gets fixed in the upstream, use find, which doesn't follow
+# symlinks.
+find ${DIR}/tests -name "*.cleanup" | xargs rm -r
+
 virtualenv venv
 . ./venv/bin/activate
 python3 -m pip install -r ${DIR}/test-runner/requirements.txt
