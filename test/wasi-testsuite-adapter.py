@@ -6,7 +6,16 @@ import argparse
 import os
 import shlex
 import sys
+import signal
 import subprocess
+
+
+def handler(a, b):
+    sys.exit(1)  # this terminates subrpocess.run
+
+
+signal.signal(signal.SIGTERM, handler)
+
 
 # https://github.com/WebAssembly/wasi-testsuite/pull/46
 executable = os.getenv("TEST_RUNTIME_EXE")
