@@ -7,6 +7,8 @@ set(lib_core_sources
 	"decode.c"
 	"endian.c"
 	"exec.c"
+	"exec_debug.c"
+	"exec_insn_subr.c"
 	"expr.c"
 	"fileio.c"
 	"host_instance.c"
