@@ -559,6 +559,7 @@ const struct globaltype *module_globaltype(const struct module *m,
                                            uint32_t idx);
 
 const struct functype *funcinst_functype(const struct funcinst *fi);
+const struct func *funcinst_func(const struct funcinst *fi);
 
 int functype_from_string(const char *p, struct functype **resultp);
 void functype_free(struct functype *ft);
