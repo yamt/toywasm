@@ -47,6 +47,7 @@ print the `-version` message)
   Unlike wasm3, it doesn't defer the validation though. Disabling
   the lazy compilation (`-DWAMR_BUILD_LAZY_JIT=0`) doesn't make a much
   difference as I expected. I'm not sure why.
+  Probably it's because of [a naive locking](https://github.com/bytecodealliance/wasm-micro-runtime/issues/2499).
 
 * Toywasm's annotations have small but measurable overheads.
   cf. [Overhead of the annotations (ffmpeg)](../doc/annotations.md#ffmpeg)
