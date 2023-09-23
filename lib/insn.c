@@ -167,6 +167,12 @@ get_func_indirect(struct exec_context *ectx, uint32_t tableidx,
 }
 
 /*
+ * Note: WASM floating point operations involve some non-deterministic
+ * behaviors.
+ * https://webassembly.github.io/spec/core/bikeshed/index.html#nan-propagation%E2%91%A0
+ */
+
+/*
  * WASM float min/max follow IEEE 754-2019 minimum/maximum
  * semantics:
  *
