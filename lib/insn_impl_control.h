@@ -202,7 +202,8 @@ INSN_IMPL(end)
                                frame->height + frame->nresults);
 #endif
                         rewind_stack(ectx, frame->height, frame->nresults);
-                        LOAD_STACK_PTR;
+                        frame_clear(frame);
+                        LOAD_STACK_PTR; /* after rewind_stack */
                         if (__predict_false(ectx->frames.lsize == 0)) {
                                 INSN_SUCCESS_RETURN;
                         }

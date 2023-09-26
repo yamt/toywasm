@@ -204,6 +204,15 @@ frame_enter(struct exec_context *ctx, struct instance *inst, uint32_t funcidx,
                  * frame->instance here.
                  */
                 frame->callerpc = ptr2pc(ctx->instance->module, ctx->p);
+        } else {
+                /*
+                 * Note: callerpc of the first frame is unused right now.
+                 * Poison it with an invalid value to ensure no one is
+                 * relying on the value.
+                 */
+#if !defined(NDEBUG)
+                frame->callerpc = 0xdeadbeef;
+#endif
         }
         frame->height = ctx->stack.lsize;
 #if defined(TOYWASM_USE_SEPARATE_LOCALS)
@@ -292,6 +301,10 @@ frame_exit(struct exec_context *ctx)
         if (ctx->frames.lsize > 0) {
                 const struct funcframe *pframe = &VEC_LASTELEM(ctx->frames);
                 set_current_frame(ctx, pframe, NULL);
+                /*
+                 * Note: frame->callerpc belongs to the module of pframe,
+                 * which we have just restored by the set_current_frame above.
+                 */
                 ctx->p = pc2ptr(ctx->instance->module, frame->callerpc);
         }
         assert(frame->labelidx <= ctx->labels.lsize);
@@ -300,7 +313,6 @@ frame_exit(struct exec_context *ctx)
         assert(frame->localidx <= ctx->locals.lsize);
         ctx->locals.lsize = frame->localidx;
 #endif
-        frame_clear(frame);
 }
 
 static const struct jump *
@@ -454,6 +466,7 @@ do_return_call(struct exec_context *ctx, const struct funcinst *finst)
         const struct funcframe *frame = &VEC_LASTELEM(ctx->frames);
         uint32_t height = frame->height;
         frame_exit(ctx);
+        frame_clear(frame);
 
         const struct functype *ft = funcinst_functype(finst);
         uint32_t arity = resulttype_cellsize(&ft->parameter);
@@ -743,6 +756,7 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
                 frame_exit(ctx);
                 height = frame->height;
                 arity = frame->nresults;
+                frame_clear(frame);
         } else {
                 if (branch_to_label(ctx, labelidx, goto_else, &height,
                                     &arity)) {
