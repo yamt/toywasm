@@ -463,7 +463,7 @@ do_call(struct exec_context *ctx, const struct funcinst *finst)
 static int
 do_return_call(struct exec_context *ctx, const struct funcinst *finst)
 {
-        const struct funcframe *frame = &VEC_LASTELEM(ctx->frames);
+        struct funcframe *frame = &VEC_LASTELEM(ctx->frames);
         uint32_t height = frame->height;
         frame_exit(ctx);
         frame_clear(frame);
