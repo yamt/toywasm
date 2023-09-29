@@ -290,6 +290,11 @@ frame_exit(struct exec_context *ctx)
         /*
          * Note: it's caller's responsibility to move results
          * on the operand stack if necessary.
+         *
+         * Note: while this function pops a frame from ctx->frames,
+         * it leaves the contents of the frame intact.
+         * Some of the callers actually rely on the behavior and use
+         * the frame after calling this function.
          */
         struct funcframe *frame;
         assert(ctx->frames.lsize > 0);
