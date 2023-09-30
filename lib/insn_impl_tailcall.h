@@ -13,9 +13,8 @@ INSN_IMPL(return_call)
         CHECK(funcidx < m->nimportedfuncs + m->nfuncs);
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
-                ectx->event_u.call.func =
-                        VEC_ELEM(ectx->instance->funcs, funcidx);
-                ectx->event = EXEC_EVENT_RETURN_CALL;
+                schedule_return_call(ectx,
+                                     VEC_ELEM(ectx->instance->funcs, funcidx));
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
                 const struct functype *ft = module_functype(m, funcidx);

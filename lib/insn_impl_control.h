@@ -107,9 +107,7 @@ INSN_IMPL(if)
                 struct exec_context *ectx = ECTX;
                 push_label(ORIG_PC, STACK, ECTX);
                 if (val_c.u.i32 == 0) {
-                        ectx->event_u.branch.index = 0;
-                        ectx->event_u.branch.goto_else = true;
-                        ectx->event = EXEC_EVENT_BRANCH;
+                        schedule_goto_else(ectx);
                         /*
                          * Note: We don't bother to call SAVE_PC as we will
                          * jump anyway.
@@ -150,9 +148,7 @@ INSN_IMPL(else)
         if (EXECUTING) {
                 /* equivalent of "br 0" */
                 struct exec_context *ectx = ECTX;
-                ectx->event_u.branch.index = 0;
-                ectx->event_u.branch.goto_else = false;
-                ectx->event = EXEC_EVENT_BRANCH;
+                schedule_br(ectx, 0);
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
                 struct ctrlframe cframe;
@@ -188,26 +184,8 @@ INSN_IMPL(end)
                 if (__predict_true(ectx->labels.lsize > frame->labelidx)) {
                         VEC_POP_DROP(ectx->labels);
                 } else {
-                        frame_exit(ectx);
-                        SAVE_STACK_PTR;
-#if defined(TOYWASM_USE_SEPARATE_LOCALS)
-                        assert(ectx->stack.lsize ==
-                               frame->height + frame->nresults);
-#else
-                        /*
-                         * Note: stack contains >=0 locals.
-                         * rewind_stack() "frees" them as well.
-                         */
-                        assert(ectx->stack.lsize >=
-                               frame->height + frame->nresults);
-#endif
-                        rewind_stack(ectx, frame->height, frame->nresults);
-                        frame_clear(frame);
-                        LOAD_STACK_PTR; /* after rewind_stack */
-                        if (__predict_false(ectx->frames.lsize == 0)) {
-                                INSN_SUCCESS_RETURN;
-                        }
-                        RELOAD_PC; /* after frame_exit */
+                        schedule_return(ectx);
+                        INSN_SUCCESS_RETURN;
                 }
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
@@ -262,9 +240,7 @@ INSN_IMPL(br)
         READ_LEB_U32(labelidx);
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
-                ectx->event_u.branch.index = labelidx;
-                ectx->event_u.branch.goto_else = false;
-                ectx->event = EXEC_EVENT_BRANCH;
+                schedule_br(ectx, labelidx);
                 /*
                  * Note: We don't bother to call SAVE_PC as we will
                  * jump anyway.
@@ -299,9 +275,7 @@ INSN_IMPL(br_if)
         if (EXECUTING) {
                 if (val_l.u.i32 != 0) {
                         struct exec_context *ectx = ECTX;
-                        ectx->event_u.branch.index = labelidx;
-                        ectx->event_u.branch.goto_else = false;
-                        ectx->event = EXEC_EVENT_BRANCH;
+                        schedule_br(ectx, labelidx);
                         /*
                          * Note: We don't bother to call SAVE_PC as we will
                          * jump anyway.
@@ -377,9 +351,7 @@ INSN_IMPL(br_table)
                         }
                         l--;
                 }
-                ectx->event_u.branch.index = idx;
-                ectx->event_u.branch.goto_else = false;
-                ectx->event = EXEC_EVENT_BRANCH;
+                schedule_br(ectx, idx);
                 /*
                  * Note: We don't bother to call SAVE_PC as we will
                  * jump anyway.
@@ -434,13 +406,7 @@ INSN_IMPL(return)
         int ret;
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
-                assert(ectx->frames.lsize > 0);
-                const struct funcframe *frame = &VEC_LASTELEM(ectx->frames);
-                uint32_t nlabels = ectx->labels.lsize - frame->labelidx;
-                xlog_trace_insn("return as br %" PRIu32, nlabels);
-                ectx->event_u.branch.index = nlabels;
-                ectx->event_u.branch.goto_else = false;
-                ectx->event = EXEC_EVENT_BRANCH;
+                schedule_return(ectx);
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
                 ret = pop_valtypes(returntype(vctx), vctx);
@@ -465,9 +431,7 @@ INSN_IMPL(call)
         CHECK(funcidx < m->nimportedfuncs + m->nfuncs);
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
-                ectx->event_u.call.func =
-                        VEC_ELEM(ectx->instance->funcs, funcidx);
-                ectx->event = EXEC_EVENT_CALL;
+                schedule_call(ectx, VEC_ELEM(ectx->instance->funcs, funcidx));
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
                 const struct functype *ft = module_functype(m, funcidx);
@@ -508,8 +472,7 @@ INSN_IMPL(call_indirect)
                 if (__predict_false(ret != 0)) {
                         goto fail;
                 }
-                ectx->event_u.call.func = func;
-                ectx->event = EXEC_EVENT_CALL;
+                schedule_call(ectx, func);
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
                 const struct tabletype *tab = module_tabletype(m, tableidx);
