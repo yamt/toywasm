@@ -21,10 +21,15 @@
 #define _GNU_SOURCE      /* asprintf, realpath, O_DIRECTORY */
 #define _NETBSD_SOURCE   /* asprintf, DT_REG, etc */
 
-#if defined(__wasi__)
+#if defined(__wasi__) && (!defined(__clang_major__) || __clang_major__ < 17)
 /*
  * wasi-libc bug workaround.
  * https://github.com/WebAssembly/wasi-libc/pull/375
+ *
+ * LLVM 17 complains when you undefine builtin macros like __STDC_VERSION__.
+ * (-Wbuiltin-macro-redefined)
+ * if you are using LLVM 17, you probably are using a recent enough version
+ * of wasi-libc which doesn't require the workaround.
  */
 #undef __STDC_VERSION__
 #define __STDC_VERSION__ 201112L
