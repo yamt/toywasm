@@ -402,6 +402,49 @@ read_memarg_nocheck(const uint8_t **pp, struct memarg *arg)
         arg->align = align;
 }
 
+static void
+schedule_br(struct exec_context *ectx, uint32_t labelidx)
+{
+        ectx->event_u.branch.index = labelidx;
+        ectx->event_u.branch.goto_else = false;
+        ectx->event = EXEC_EVENT_BRANCH;
+}
+
+static void
+schedule_goto_else(struct exec_context *ectx)
+{
+        ectx->event_u.branch.index = 0;
+        ectx->event_u.branch.goto_else = true;
+        ectx->event = EXEC_EVENT_BRANCH;
+}
+
+static void
+schedule_call(struct exec_context *ectx, const struct funcinst *fi)
+{
+        ectx->event_u.call.func = fi;
+        ectx->event = EXEC_EVENT_CALL;
+}
+
+static void
+schedule_return(struct exec_context *ectx)
+{
+        assert(ectx->frames.lsize > 0);
+        const struct funcframe *frame = &VEC_LASTELEM(ectx->frames);
+        uint32_t nlabels = ectx->labels.lsize - frame->labelidx;
+        xlog_trace_insn("return as br %" PRIu32, nlabels);
+        schedule_br(ectx, nlabels);
+}
+
+#if defined(TOYWASM_ENABLE_WASM_TAILCALL)
+static void
+schedule_return_call(struct exec_context *ectx, const struct funcinst *fi)
+{
+        assert(ectx->frames.lsize > 0);
+        ectx->event_u.call.func = fi;
+        ectx->event = EXEC_EVENT_RETURN_CALL;
+}
+#endif
+
 /*
  * LOAD_PC: prepare PC on the entry of the function.
  *
