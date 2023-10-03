@@ -25,10 +25,10 @@
  * > The size, representation, and alignment of an atomic type need not be
  * > the same as those of the corresponding unqualified type.
  *
- * Our atomic opcode implementation in insn_impl_threads.h have a stronger
- * assumptions. We tries to assert them below.
+ * Our atomic opcode implementation in insn_impl_threads.h have stronger
+ * assumptions. We try to assert them below.
  *
- * Note: on WASM, atomic opcodes traps when the address is not a multiple
+ * Note: on WASM, atomic opcodes trap when the address is not a multiple
  * of the size of value.
  *
  * Note: on i386, alignof(uint64_t) == 4.
