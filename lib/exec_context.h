@@ -143,6 +143,20 @@ struct trap_info {
 struct sched;
 struct context;
 
+struct restart_info {
+        enum restart_type restart_type;
+        union {
+                /*
+                 * RESTART_TIMER
+                 * fd_poll_oneoff
+                 * memory.atomic.wait32/64
+                 */
+                struct {
+                        struct timespec abstimeout;
+                } timer;
+        } restart_u;
+};
+
 struct exec_context {
         /* Some cached info about the current frame. */
         struct instance *instance;
@@ -252,17 +266,7 @@ struct exec_context {
         } event_u;
 
         /* Restart */
-        enum restart_type restart_type;
-        union {
-                /*
-                 * RESTART_TIMER
-                 * fd_poll_oneoff
-                 * memory.atomic.wait32/64
-                 */
-                struct {
-                        struct timespec abstimeout;
-                } timer;
-        } restart_u;
+        VEC(, struct restart_info) restarts;
 
 #if defined(TOYWASM_USE_USER_SCHED)
         int exec_ret;

@@ -66,6 +66,7 @@
 #include "exec.h"
 #include "lock.h"
 #include "nbio.h"
+#include "restart.h"
 #include "timeutil.h"
 #include "type.h"
 #include "util.h"
@@ -613,23 +614,28 @@ wasi_poll(struct exec_context *ctx, struct pollfd *fds, nfds_t nfds,
          * https://github.com/bytecodealliance/wasmtime/blob/93ae9078c5a2588b5241bd7221ace459d2b04d54/crates/test-programs/wasi-tests/src/bin/poll_oneoff_files.rs#L86-L89
          */
 
-        assert(ctx->restart_type == RESTART_NONE ||
-               ctx->restart_type == RESTART_TIMER);
-        if (ctx->restart_type == RESTART_TIMER) {
-                abstimeout = &ctx->restart_u.timer.abstimeout;
-                ctx->restart_type = RESTART_NONE;
+        ret = restart_info_prealloc(ctx);
+        if (ret != 0) {
+                return ret;
+        }
+        struct restart_info *restart = &VEC_NEXTELEM(ctx->restarts);
+        assert(restart->restart_type == RESTART_NONE ||
+               restart->restart_type == RESTART_TIMER);
+        if (restart->restart_type == RESTART_TIMER) {
+                abstimeout = &restart->restart_u.timer.abstimeout;
+                restart->restart_type = RESTART_NONE;
         } else if (timeout_ms < 0) {
                 abstimeout = NULL;
         } else {
-                ret = abstime_from_reltime_ms(CLOCK_REALTIME,
-                                              &ctx->restart_u.timer.abstimeout,
-                                              timeout_ms);
+                ret = abstime_from_reltime_ms(
+                        CLOCK_REALTIME, &restart->restart_u.timer.abstimeout,
+                        timeout_ms);
                 if (ret != 0) {
                         goto fail;
                 }
-                abstimeout = &ctx->restart_u.timer.abstimeout;
+                abstimeout = &restart->restart_u.timer.abstimeout;
         }
-        assert(ctx->restart_type == RESTART_NONE);
+        assert(restart->restart_type == RESTART_NONE);
         while (true) {
                 int next_timeout_ms;
 
@@ -638,9 +644,9 @@ wasi_poll(struct exec_context *ctx, struct pollfd *fds, nfds_t nfds,
                         if (IS_RESTARTABLE(host_ret)) {
                                 if (abstimeout != NULL) {
                                         assert(abstimeout ==
-                                               &ctx->restart_u.timer
+                                               &restart->restart_u.timer
                                                         .abstimeout);
-                                        ctx->restart_type = RESTART_TIMER;
+                                        restart->restart_type = RESTART_TIMER;
                                 }
                         }
                         goto fail;
@@ -684,7 +690,8 @@ wasi_poll(struct exec_context *ctx, struct pollfd *fds, nfds_t nfds,
 fail:
         assert(host_ret != 0 || ret >= 0);
         assert(host_ret != 0 || ret != 0 || *neventsp > 0);
-        assert(IS_RESTARTABLE(host_ret) || ctx->restart_type == RESTART_NONE);
+        assert(IS_RESTARTABLE(host_ret) ||
+               restart->restart_type == RESTART_NONE);
         if (host_ret == 0) {
                 *retp = ret;
         }
@@ -2222,7 +2229,7 @@ fail:
                  * 4. the subsequent restartable operation gets confused
                  *    by the saved timeout.
                  */
-                ctx->restart_type = RESTART_NONE;
+                restart_info_clear(ctx);
         } else {
                 xlog_trace("%s: restarting", __func__);
         }

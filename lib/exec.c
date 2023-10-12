@@ -11,6 +11,7 @@
 #include "insn.h"
 #include "leb128.h"
 #include "platform.h"
+#include "restart.h"
 #include "suspend.h"
 #include "timeutil.h"
 #include "type.h"
@@ -432,7 +433,7 @@ do_host_call(struct exec_context *ctx, const struct funcinst *finst)
         ret = finst->u.host.func(ctx, finst->u.host.instance, ft,
                                  &VEC_NEXTELEM(ctx->stack),
                                  &VEC_NEXTELEM(ctx->stack));
-        assert(IS_RESTARTABLE(ret) || ctx->restart_type == RESTART_NONE);
+        assert(IS_RESTARTABLE(ret) || restart_info_is_none(ctx));
         if (ret != 0) {
                 if (IS_RESTARTABLE(ret)) {
                         /*
@@ -1187,7 +1188,6 @@ exec_context_init(struct exec_context *ctx, struct instance *inst)
         ctx->instance = inst;
         report_init(&ctx->report0);
         ctx->report = &ctx->report0;
-        ctx->restart_type = RESTART_NONE;
         ctx->check_interval = CHECK_INTERVAL_DEFAULT;
         exec_options_set_defaults(&ctx->options);
 }
@@ -1205,6 +1205,7 @@ exec_context_clear(struct exec_context *ctx)
 #if defined(TOYWASM_USE_SEPARATE_LOCALS)
         VEC_FREE(ctx->locals);
 #endif
+        VEC_FREE(ctx->restarts);
         report_clear(&ctx->report0);
         ctx->report = NULL;
 }
