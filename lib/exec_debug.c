@@ -23,6 +23,7 @@ exec_context_print_stats(struct exec_context *ctx)
 #endif
         VEC_PRINT_USAGE("labels", &ctx->labels);
         VEC_PRINT_USAGE("frames", &ctx->frames);
+        VEC_PRINT_USAGE("restarts", &ctx->restarts);
 
         STAT_PRINT(call);
         STAT_PRINT(host_call);

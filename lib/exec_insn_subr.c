@@ -9,6 +9,7 @@
 #include "exec.h"
 #include "leb128.h"
 #include "platform.h"
+#include "restart.h"
 #include "shared_memory_impl.h"
 #include "suspend.h"
 #include "timeutil.h"
@@ -548,21 +549,26 @@ memory_wait(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
          * Note: it's important to always consume restart_abstimeout.
          */
         const struct timespec *abstimeout = NULL;
-        assert(ctx->restart_type == RESTART_NONE ||
-               ctx->restart_type == RESTART_TIMER);
-        if (ctx->restart_type == RESTART_TIMER) {
-                abstimeout = &ctx->restart_u.timer.abstimeout;
-                ctx->restart_type = RESTART_NONE;
+        ret = restart_info_prealloc(ctx);
+        if (ret != 0) {
+                return ret;
+        }
+        struct restart_info *restart = &VEC_NEXTELEM(ctx->restarts);
+        assert(restart->restart_type == RESTART_NONE ||
+               restart->restart_type == RESTART_TIMER);
+        if (restart->restart_type == RESTART_TIMER) {
+                abstimeout = &restart->restart_u.timer.abstimeout;
+                restart->restart_type = RESTART_NONE;
         } else if (timeout_ns >= 0) {
-                ret = abstime_from_reltime_ns(CLOCK_REALTIME,
-                                              &ctx->restart_u.timer.abstimeout,
-                                              timeout_ns);
+                ret = abstime_from_reltime_ns(
+                        CLOCK_REALTIME, &restart->restart_u.timer.abstimeout,
+                        timeout_ns);
                 if (ret != 0) {
                         goto fail;
                 }
-                abstimeout = &ctx->restart_u.timer.abstimeout;
+                abstimeout = &restart->restart_u.timer.abstimeout;
         }
-        assert(ctx->restart_type == RESTART_NONE);
+        assert(restart->restart_type == RESTART_NONE);
         const uint32_t sz = is64 ? 8 : 4;
         void *p;
         ret = memory_atomic_getptr(ctx, memidx, addr, offset, sz, &p, &lock);
@@ -621,8 +627,9 @@ retry:;
 fail:
         if (IS_RESTARTABLE(ret)) {
                 if (abstimeout != NULL) {
-                        assert(abstimeout == &ctx->restart_u.timer.abstimeout);
-                        ctx->restart_type = RESTART_TIMER;
+                        assert(abstimeout ==
+                               &restart->restart_u.timer.abstimeout);
+                        restart->restart_type = RESTART_TIMER;
                 }
                 STAT_INC(ctx, atomic_wait_restart);
         }

@@ -23,6 +23,7 @@ set(lib_core_sources
 	"nbio.c"
 	"options.c"
 	"report.c"
+	"restart.c"
 	"shared_memory.c"
 	"timeutil.c"
 	"type.c"
