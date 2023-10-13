@@ -429,10 +429,8 @@ do_host_call(struct exec_context *ctx, const struct funcinst *finst)
                         return ret;
                 }
         }
-        ctx->stack.lsize -= nparams;
-        ret = finst->u.host.func(ctx, finst->u.host.instance, ft,
-                                 &VEC_NEXTELEM(ctx->stack),
-                                 &VEC_NEXTELEM(ctx->stack));
+        struct cell *p = &VEC_ELEM(ctx->stack, ctx->stack.lsize - nparams);
+        ret = finst->u.host.func(ctx, finst->u.host.instance, ft, p, p);
         assert(IS_RESTARTABLE(ret) || restart_info_is_none(ctx));
         if (ret != 0) {
                 if (IS_RESTARTABLE(ret)) {
@@ -448,6 +446,7 @@ do_host_call(struct exec_context *ctx, const struct funcinst *finst)
                 }
                 return ret;
         }
+        ctx->stack.lsize -= nparams;
         ctx->stack.lsize += nresults;
         assert(ctx->stack.lsize <= ctx->stack.psize);
         return 0;
