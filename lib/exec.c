@@ -435,13 +435,10 @@ do_host_call(struct exec_context *ctx, const struct funcinst *finst)
         if (ret != 0) {
                 if (IS_RESTARTABLE(ret)) {
                         /*
-                         * Restore the stack pointer for restarting.
-                         *
                          * Note: it's a responsibility of host functions
                          * to keep function arguments on the stack intact
                          * when returning a restartable error.
                          */
-                        ctx->stack.lsize += nparams;
                         STAT_INC(ctx, call_restart);
                 }
                 return ret;
