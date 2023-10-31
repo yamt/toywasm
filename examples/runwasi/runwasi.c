@@ -14,7 +14,7 @@ int
 runwasi(const char *filename, unsigned int ndirs, char **dirs,
         unsigned int nenvs, const char *const *envs, int argc,
         const char *const *argv, const int stdio_fds[3],
-        uint32_t *wasi_exit_code_p)
+        struct import_object *base_imports, uint32_t *wasi_exit_code_p)
 {
         struct module *m = NULL;
         struct wasi_instance *wasi = NULL;
@@ -102,6 +102,7 @@ runwasi(const char *filename, unsigned int ndirs, char **dirs,
          */
         struct report report;
         report_init(&report);
+        wasi_import_object->next = base_imports;
         ret = instance_create(m, &inst, wasi_import_object, &report);
         if (ret != 0) {
                 xlog_error("instance_create failed with %d", ret);
