@@ -9,6 +9,7 @@ find_package(toywasm-lib-wasi REQUIRED)
 
 set(sources
 	"runwasi.c"
+	"runwasi_cli_args.c"
 	"main.c"
 )
 
