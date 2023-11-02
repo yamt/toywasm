@@ -2,6 +2,7 @@
 
 set(lib_core_sources
 	"bitmap.c"
+	"cconv.c"
 	"cell.c"
 	"context.c"
 	"decode.c"
@@ -56,6 +57,7 @@ endif()
 
 set(lib_core_headers
 	"bitmap.h"
+	"cconv.h"
 	"cell.h"
 	"context.h"
 	"dylink_type.h"
