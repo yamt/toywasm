@@ -24,12 +24,18 @@ load_add(const uintptr_t **p)
 
 typedef uintptr_t (*fn_t)(const uintptr_t **p);
 
+#if defined(USE_HOST_LOAD_CALL)
+uintptr_t load_call(const uintptr_t **p)
+        __attribute__((__import_module__("my-host-func")))
+        __attribute__((__import_name__("load_call")));
+#else
 uintptr_t
 load_call(const uintptr_t **p)
 {
         fn_t f = (void *)load(p);
         return f(p);
 }
+#endif
 
 uintptr_t
 load_call_add(const uintptr_t **p)
