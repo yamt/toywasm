@@ -37,6 +37,11 @@ load_call(const uintptr_t **p)
 }
 #endif
 
+#if defined(USE_HOST_LOAD_CALL_ADD)
+uintptr_t load_call_add(const uintptr_t **p)
+        __attribute__((__import_module__("my-host-func")))
+        __attribute__((__import_name__("load_call_add")));
+#else
 uintptr_t
 load_call_add(const uintptr_t **p)
 {
@@ -44,6 +49,7 @@ load_call_add(const uintptr_t **p)
         uintptr_t b = load_call(p);
         return a + b;
 }
+#endif
 
 // sum([1..16]) = 136
 const uintptr_t table[] = {
