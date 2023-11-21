@@ -8,14 +8,14 @@
 #include <toywasm/host_instance.h>
 
 static int
-my_host_inst_load(struct exec_context *ctx, struct host_instance *hi,
-                  const struct functype *ft, const struct cell *params,
-                  struct cell *results)
+load(struct exec_context *ctx, uint32_t pp, uint32_t *resultp)
 {
-        HOST_FUNC_CONVERT_PARAMS(ft, params);
-        uint32_t pp = HOST_FUNC_PARAM(ft, params, 0, i32);
         int host_ret;
         uint32_t le32;
+
+        /*
+         * *resultp = *(*pp)++
+         */
 
         host_ret = host_func_copyin(ctx, &le32, pp, 4, 4);
         if (host_ret != 0) {
@@ -33,7 +33,22 @@ my_host_inst_load(struct exec_context *ctx, struct host_instance *hi,
         if (host_ret != 0) {
                 goto fail;
         }
+        *resultp = result;
 fail:
+        return host_ret;
+}
+
+static int
+my_host_inst_load(struct exec_context *ctx, struct host_instance *hi,
+                  const struct functype *ft, const struct cell *params,
+                  struct cell *results)
+{
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
+        uint32_t pp = HOST_FUNC_PARAM(ft, params, 0, i32);
+        int host_ret;
+
+        uint32_t result;
+        host_ret = load(ctx, pp, &result);
         if (host_ret == 0) {
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32, result);
         }
@@ -49,21 +64,9 @@ my_host_inst_load_call(struct exec_context *ctx, struct host_instance *hi,
         HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t pp = HOST_FUNC_PARAM(ft, params, 0, i32);
         int host_ret;
-        uint32_t le32;
 
-        host_ret = host_func_copyin(ctx, &le32, pp, 4, 4);
-        if (host_ret != 0) {
-                goto fail;
-        }
-        uint32_t p = le32_to_host(le32);
-        host_ret = host_func_copyin(ctx, &le32, p, 4, 4);
-        if (host_ret != 0) {
-                goto fail;
-        }
-        uint32_t funcptr = le32_to_host(le32);
-        p += 4;
-        le32 = host_to_le32(p);
-        host_ret = host_func_copyout(ctx, &le32, pp, 4, 4);
+        uint32_t funcptr;
+        host_ret = load(ctx, pp, &funcptr);
         if (host_ret != 0) {
                 goto fail;
         }
