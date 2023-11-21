@@ -39,6 +39,27 @@ fail:
 }
 
 static int
+load_func(struct exec_context *ctx, const struct functype *ft, uint32_t pp,
+          const struct funcinst **fip)
+{
+        int host_ret;
+        uint32_t funcptr;
+        host_ret = load(ctx, pp, &funcptr);
+        if (host_ret != 0) {
+                goto fail;
+        }
+        const struct funcinst *func;
+        host_ret =
+                cconv_deref_func_ptr(ctx, ctx->instance, funcptr, ft, &func);
+        if (host_ret != 0) {
+                goto fail;
+        }
+        *fip = func;
+fail:
+        return host_ret;
+}
+
+static int
 my_host_inst_load(struct exec_context *ctx, struct host_instance *hi,
                   const struct functype *ft, const struct cell *params,
                   struct cell *results)
@@ -65,14 +86,8 @@ my_host_inst_load_call(struct exec_context *ctx, struct host_instance *hi,
         uint32_t pp = HOST_FUNC_PARAM(ft, params, 0, i32);
         int host_ret;
 
-        uint32_t funcptr;
-        host_ret = load(ctx, pp, &funcptr);
-        if (host_ret != 0) {
-                goto fail;
-        }
         const struct funcinst *func;
-        host_ret =
-                cconv_deref_func_ptr(ctx, ctx->instance, funcptr, ft, &func);
+        host_ret = load_func(ctx, ft, pp, &func);
         if (host_ret != 0) {
                 goto fail;
         }
