@@ -100,9 +100,33 @@ fail:
         return host_ret;
 }
 
+static int
+my_host_inst_load_call_add(struct exec_context *ctx, struct host_instance *hi,
+                           const struct functype *ft,
+                           const struct cell *params, struct cell *results)
+{
+        HOST_FUNC_CONVERT_PARAMS(ft, params);
+        uint32_t pp = HOST_FUNC_PARAM(ft, params, 0, i32);
+        int host_ret;
+
+        const struct funcinst *func;
+        host_ret = load_func(ctx, ft, pp, &func);
+        if (host_ret != 0) {
+                goto fail;
+        }
+        /* tail call with the same argument */
+        ctx->event_u.call.func = func;
+        ctx->event = EXEC_EVENT_CALL;
+        host_ret = ETOYWASMRESTART;
+fail:
+        HOST_FUNC_FREE_CONVERTED_PARAMS();
+        return host_ret;
+}
+
 static const struct host_func my_host_inst_funcs[] = {
         HOST_FUNC(my_host_inst_, load, "(i)i"),
         HOST_FUNC(my_host_inst_, load_call, "(i)i"),
+        HOST_FUNC(my_host_inst_, load_call_add, "(i)i"),
 };
 
 static const struct name name_my_host_inst =
