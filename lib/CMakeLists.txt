@@ -106,6 +106,10 @@ target_link_options(toywasm-lib-core INTERFACE "-fuse-ld=lld")
 endif() # Clang
 endif() # Linux
 endif() # USE_IPO
+
+foreach(F IN LISTS SANITIZER_FLAGS)
+    target_link_options(toywasm-lib-core INTERFACE ${F})
+endforeach()
 set_property(TARGET toywasm-lib-core PROPERTY PUBLIC_HEADER ${lib_core_headers})
 if(TOYWASM_USE_SHORT_ENUMS)
 target_compile_options(toywasm-lib-core PUBLIC "-fshort-enums")
