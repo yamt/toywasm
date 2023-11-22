@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include <toywasm/cconv.h>
+#include <toywasm/cell.h>
 #include <toywasm/endian.h>
 #include <toywasm/exec_context.h>
 #include <toywasm/host_instance.h>
@@ -174,7 +175,7 @@ my_host_inst_load_call_add(struct exec_context *ctx, struct host_instance *hi,
                 hf = &restart->restart_u.hostfunc;
                 hf->func = ctx->event_u.call.func; /* this func */
                 hf->saved_bottom = ctx->bottom;
-                hf->stack_adj = ft->result.ntypes;
+                hf->stack_adj = resulttype_cellsize(&ft->result);
                 hf->user1 = i + 1;
                 hf->user2 = sum;
                 ctx->event_u.call.func = func;
