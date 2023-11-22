@@ -86,8 +86,11 @@ This mechanism is used to implement:
 * Inefficient. Especially when you have many threads.
 
 * Restrictions on host functions. Restarting a complex host function
-  might be very difficult to implement properly.
+  might be difficult to implement properly.
   For example, a host function calling back to the wasm module, which
   might even call another host function.
+  You can find such host functions in the [hostfunc example app].
 
 * Non-blocking I/O on unix is a bit awkward to handle.
+
+[hostfunc example app]: ../examples/hostfunc/hostfunc.c
