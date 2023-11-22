@@ -1,5 +1,5 @@
-#if !defined(_ENDIAN_H)
-#define _ENDIAN_H
+#if !defined(_TOYWASM_ENDIAN_H)
+#define _TOYWASM_ENDIAN_H
 #include <stdint.h>
 
 uint8_t le8_to_host(uint8_t v);
@@ -67,4 +67,4 @@ lef64_decode(const void *p)
 double lef64_decode(const void *p);
 #endif
 
-#endif /* !defined(_ENDIAN_H) */
+#endif /* !defined(_TOYWASM_ENDIAN_H) */

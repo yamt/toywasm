@@ -1,5 +1,5 @@
-#if !defined(_LOCK_H)
-#define _LOCK_H
+#if !defined(_TOYWASM_LOCK_H)
+#define _TOYWASM_LOCK_H
 
 #include "toywasm_config.h"
 
@@ -73,4 +73,4 @@ void toywasm_cv_broadcast(pthread_cond_t *cv, struct toywasm_mutex *lock)
 #define toywasm_cv_signal(a, lk)
 #define toywasm_cv_broadcast(a, lk)
 #endif /* defined(USE_PTHREAD) */
-#endif /* !defined(_LOCK_H) */
+#endif /* !defined(_TOYWASM_LOCK_H) */

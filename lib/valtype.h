@@ -1,5 +1,5 @@
-#if !defined(_VALTYPE_H)
-#define _VALTYPE_H
+#if !defined(_TOYWASM_VALTYPE_H)
+#define _TOYWASM_VALTYPE_H
 
 enum valtype {
         /* numtype */
@@ -20,4 +20,4 @@ enum valtype {
         TYPE_UNKNOWN = 0xff,
 };
 
-#endif /* !defined(_VALTYPE_H) */
+#endif /* !defined(_TOYWASM_VALTYPE_H) */
