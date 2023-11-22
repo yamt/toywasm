@@ -417,7 +417,7 @@ jobs:
     - name: Test "hostfunc" example with the library we built
       if: matrix.BUILD_TYPE == 'Release' && matrix.arch == 'native'
       run: |
-        ./test/build-example.sh hostfunc ${{env.builddir}}/toywasm-v*.tgz example-build-hostfunc
+        ./test/build-example.sh hostfunc ${{env.builddir}}/toywasm-v*.tgz build
         cd examples/hostfunc/wasm
         pax -rvzf hostfunc-test-wasm.tgz
         cd ..
