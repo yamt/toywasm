@@ -7,5 +7,5 @@ cd wasm
 cd ..
 
 # use a debug build to enable assertions for now
-EXTRA_CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Debug -DUSE_ASAN=OFF -DUSE_UBSAN=OFF" \
+EXTRA_CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Debug" \
 ../build-toywasm-and-app.sh
