@@ -321,6 +321,16 @@ jobs:
         sudo apt-get update && sudo apt-get install -y clang-13 lld-13
         sudo ./cross/setup-alternatives.sh
 
+    # This list seems to use the PPA repo.
+    # https://launchpad.net/~ubuntu-toolchain-r/+archive/ubuntu/test
+    # For some reasons, it interferes our scripts to install libcmocka for
+    # riscv64.
+    # https://github.com/yamt/toywasm/issues/80
+    - name: Remove ubuntu-toolchain-r-ubuntu-test-focal.list (cross)
+      if: matrix.os == 'ubuntu-20.04'
+      run: |
+        sudo rm /etc/apt/sources.list.d/ubuntu-toolchain-r-ubuntu-test-focal.list
+
     - name: Fix sources.list (cross)
       if: matrix.arch != 'native'
       run: |
