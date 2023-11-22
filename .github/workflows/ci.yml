@@ -404,13 +404,15 @@ jobs:
     - name: Test "app" example with the library we built
       if: matrix.BUILD_TYPE == 'Release' && matrix.arch == 'native'
       run: |
-        ./test/test-example.sh app ${{env.builddir}}/toywasm-v*.tgz ${{env.builddir}}/spectest.wasm
+        ./test/build-example.sh app ${{env.builddir}}/toywasm-v*.tgz example-build-app
+        ./example-build-app/app ${{env.builddir}}/spectest.wasm
 
     - name: Test "runwasi" example with the library we built
       if: matrix.BUILD_TYPE == 'Release' && matrix.arch == 'native'
       run: |
         wat2wasm wat/wasi/hello.wat
-        ./test/test-example.sh runwasi ${{env.builddir}}/toywasm-v*.tgz $(pwd)/hello.wasm
+        ./test/build-example.sh runwasi ${{env.builddir}}/toywasm-v*.tgz example-build-runwasi
+        ./example-build-runwasi/runwasi $(pwd)/hello.wasm
 
     - name: Upload artifacts
       if: matrix.name != 'noname'
