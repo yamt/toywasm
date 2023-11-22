@@ -1,4 +1,4 @@
-
+#include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
 
@@ -6,6 +6,7 @@
 #include <toywasm/endian.h>
 #include <toywasm/exec_context.h>
 #include <toywasm/host_instance.h>
+#include <toywasm/restart.h>
 
 static int
 load(struct exec_context *ctx, uint32_t pp, uint32_t *resultp)
@@ -105,20 +106,97 @@ my_host_inst_load_call_add(struct exec_context *ctx, struct host_instance *hi,
                            const struct functype *ft,
                            const struct cell *params, struct cell *results)
 {
+        /*
+         * this function is a bit complicated as it calls other functions.
+         * the callee functions can be wasm functions or host functions.
+         *
+         *    sum = 0;
+         *    f1 = load_func(pp);
+         *    v1 = f1(pp); // this might need a restart
+         * step1:
+         *    sum += v1;
+         *    f2 = load_func(pp);
+         *    v2 = f2(pp); // this might need a restart
+         * step2:
+         *    sum += v2;
+         *    return sum;
+         */
+
         HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t pp = HOST_FUNC_PARAM(ft, params, 0, i32);
         int host_ret;
+        struct restart_hostfunc *hf;
+        uint32_t result;
+        uint32_t sum = 0;
+        uint32_t i;
 
-        const struct funcinst *func;
-        host_ret = load_func(ctx, ft, pp, &func);
+        host_ret = restart_info_prealloc(ctx);
         if (host_ret != 0) {
-                goto fail;
+                return host_ret;
         }
-        /* tail call with the same argument */
-        ctx->event_u.call.func = func;
-        ctx->event = EXEC_EVENT_CALL;
-        host_ret = ETOYWASMRESTART;
+        struct restart_info *restart = &VEC_NEXTELEM(ctx->restarts);
+        if (restart->restart_type != RESTART_NONE) {
+                assert(restart->restart_type == RESTART_HOSTFUNC);
+                hf = &restart->restart_u.hostfunc;
+                uint32_t step = hf->user1;
+                sum = hf->user2;
+                restart_info_clear(ctx);
+                switch (step) {
+                case 1:
+                case 2:
+                        assert(ctx->stack.psize - ctx->stack.lsize >=
+                               hf->stack_adj);
+                        i = step - 1;
+                        ctx->stack.lsize += hf->stack_adj;
+                        goto after_return;
+                default:
+                        assert(false);
+                }
+                assert(false);
+        }
+        sum = 0;
+        for (i = 0; i < 2; i++) {
+                const struct funcinst *func;
+                host_ret = load_func(ctx, ft, pp, &func);
+                if (host_ret != 0) {
+                        goto fail;
+                }
+                struct val a[1] = {
+                        {
+                                .u.i32 = pp,
+                        },
+                };
+                host_ret = exec_push_vals(ctx, &ft->parameter, a);
+                if (host_ret != 0) {
+                        goto fail;
+                }
+                restart->restart_type = RESTART_HOSTFUNC;
+                hf = &restart->restart_u.hostfunc;
+                hf->func = ctx->event_u.call.func; /* this func */
+                hf->saved_bottom = ctx->bottom;
+                hf->stack_adj = ft->result.ntypes;
+                hf->user1 = i + 1;
+                hf->user2 = sum;
+                ctx->event_u.call.func = func;
+                ctx->event = EXEC_EVENT_CALL;
+                ctx->bottom = ctx->frames.lsize;
+                ctx->restarts.lsize++;
+                host_ret = ETOYWASMRESTART;
+                goto fail; /* not a failure */
+after_return:;
+                struct val r[1];
+                exec_pop_vals(ctx, &ft->result, r);
+                uint32_t v1 = r[0].u.i32;
+                sum += v1;
+        }
+        result = sum;
+        host_ret = 0;
 fail:
+        assert(IS_RESTARTABLE(host_ret) ||
+               restart->restart_type == RESTART_NONE);
+        if (host_ret == 0) {
+                HOST_FUNC_RESULT_SET(ft, results, 0, i32, result);
+        }
         HOST_FUNC_FREE_CONVERTED_PARAMS();
         return host_ret;
 }
