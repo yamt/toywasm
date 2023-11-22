@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
+include(../../cmake/HomebrewLLVM.cmake)
+
 project(app LANGUAGES C)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wvla -Werror")
