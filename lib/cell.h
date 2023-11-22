@@ -1,5 +1,5 @@
-#if !defined(_CELL_H)
-#define _CELL_H
+#if !defined(_TOYWASM_CELL_H)
+#define _TOYWASM_CELL_H
 
 #include <stdint.h>
 
@@ -52,4 +52,4 @@ void cells_zero(struct cell *cells, uint32_t ncells);
 void cells_copy(struct cell *dst, const struct cell *src, uint32_t ncells);
 void cells_move(struct cell *dst, const struct cell *src, uint32_t ncells);
 
-#endif /* !defined(_CELL_H) */
+#endif /* !defined(_TOYWASM_CELL_H) */

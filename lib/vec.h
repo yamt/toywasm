@@ -1,5 +1,5 @@
-#if !defined(_VEC_H)
-#define _VEC_H
+#if !defined(_TOYWASM_VEC_H)
+#define _TOYWASM_VEC_H
 
 #include <stdint.h>
 
@@ -42,4 +42,4 @@ void _vec_free(void *vec);
 #define VEC_POP(v) (&v.p[--v.lsize])
 #define VEC_POP_DROP(v) v.lsize--
 
-#endif /* !defined(_VEC_H) */
+#endif /* !defined(_TOYWASM_VEC_H) */

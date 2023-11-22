@@ -1,5 +1,5 @@
-#if !defined(_OPTIONS_H)
-#define _OPTIONS_H
+#if !defined(_TOYWASM_OPTIONS_H)
+#define _TOYWASM_OPTIONS_H
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -20,4 +20,4 @@ struct exec_options {
 
 void load_options_set_defaults(struct load_options *opts);
 void exec_options_set_defaults(struct exec_options *opts);
-#endif /* !defined(_OPTIONS_H) */
+#endif /* !defined(_TOYWASM_OPTIONS_H) */

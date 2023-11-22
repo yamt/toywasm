@@ -1,5 +1,5 @@
-#if !defined(_TYPE_H)
-#define _TYPE_H
+#if !defined(_TOYWASM_TYPE_H)
+#define _TOYWASM_TYPE_H
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -572,4 +572,4 @@ void clear_resulttype(struct resulttype *rt);
 void set_name_cstr(struct name *name, char *cstr);
 void clear_name(struct name *name);
 
-#endif /* defined(_TYPE_H) */
+#endif /* defined(_TOYWASM_TYPE_H) */
