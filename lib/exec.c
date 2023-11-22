@@ -942,6 +942,25 @@ adjust_check_interval(struct exec_context *ctx, const struct timespec *now,
         ctx->check_interval = check_interval;
 }
 
+/*
+ * REVISIT: probably it's cleaner to integrate into frame_exit
+ */
+static void
+return_to_hostfunc(struct exec_context *ctx)
+{
+        assert(ctx->frames.lsize == ctx->bottom);
+        assert(ctx->restarts.lsize > 0);
+        struct restart_info *restart = VEC_POP(ctx->restarts);
+        assert(restart->restart_type == RESTART_HOSTFUNC);
+        struct restart_hostfunc *hf = &restart->restart_u.hostfunc;
+        assert(ctx->bottom >= hf->saved_bottom);
+        assert(ctx->stack.lsize >= hf->stack_adj);
+        ctx->bottom = hf->saved_bottom;
+        ctx->stack.lsize -= hf->stack_adj;
+        ctx->event_u.call.func = hf->func;
+        ctx->event = EXEC_EVENT_CALL;
+}
+
 int
 exec_expr(uint32_t funcidx, const struct expr *expr,
           const struct localtype *localtype,
@@ -1028,8 +1047,12 @@ exec_expr_continue(struct exec_context *ctx)
                         break;
                 }
                 ctx->event = EXEC_EVENT_NONE;
-                if (ctx->frames.lsize == 0) {
-                        break;
+                if (ctx->frames.lsize == ctx->bottom) {
+                        if (ctx->restarts.lsize == 0) {
+                                break;
+                        }
+                        return_to_hostfunc(ctx);
+                        continue;
                 }
                 n--;
                 if (__predict_false(n == 0)) {

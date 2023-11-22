@@ -102,6 +102,7 @@ enum exec_event {
 enum restart_type {
         RESTART_NONE,
         RESTART_TIMER,
+        RESTART_HOSTFUNC,
 };
 
 struct exec_stat {
@@ -155,6 +156,20 @@ struct restart_info {
                 struct {
                         struct timespec abstimeout;
                 } timer;
+
+                /*
+                 * RESTART_HOSTFUNC
+                 *
+                 * REVISIT: this structure is a bit too large to have
+                 * in a union for my taste
+                 */
+                struct restart_hostfunc {
+                        const struct funcinst *func;
+                        uint32_t saved_bottom;
+                        uint32_t stack_adj;
+                        uint32_t user1;
+                        uint32_t user2;
+                } hostfunc;
         } restart_u;
 };
 
@@ -268,6 +283,7 @@ struct exec_context {
 
         /* Restart */
         VEC(, struct restart_info) restarts;
+        uint32_t bottom;
 
 #if defined(TOYWASM_USE_USER_SCHED)
         int exec_ret;
