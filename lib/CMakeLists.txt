@@ -76,6 +76,7 @@ set(lib_core_headers
 	"options.h"
 	"platform.h"
 	"report.h"
+	"restart.h"
 	"type.h"
 	"timeutil.h"
 	"usched.h"
