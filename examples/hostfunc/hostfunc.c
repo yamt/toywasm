@@ -148,6 +148,10 @@ my_host_inst_load_call_add(struct exec_context *ctx, struct host_instance *hi,
                         assert(ctx->stack.psize - ctx->stack.lsize >=
                                hf->stack_adj);
                         i = step - 1;
+                        /*
+                         * adjust the stack offset to make exec_pop_vals
+                         * below pop the correct values.
+                         */
                         ctx->stack.lsize += hf->stack_adj;
                         goto after_return;
                 default:
@@ -157,11 +161,19 @@ my_host_inst_load_call_add(struct exec_context *ctx, struct host_instance *hi,
         }
         sum = 0;
         for (i = 0; i < 2; i++) {
+                /*
+                 * Note: we know the function has the same type as
+                 * ours. (ft)
+                 */
                 const struct funcinst *func;
                 host_ret = load_func(ctx, ft, pp, &func);
                 if (host_ret != 0) {
                         goto fail;
                 }
+
+                /*
+                 * call the function
+                 */
                 struct val a[1] = {
                         {
                                 .u.i32 = pp,
@@ -171,17 +183,21 @@ my_host_inst_load_call_add(struct exec_context *ctx, struct host_instance *hi,
                 if (host_ret != 0) {
                         goto fail;
                 }
+                /*
+                 * set up the restart info so that the function can
+                 * return to us.
+                 */
                 restart->restart_type = RESTART_HOSTFUNC;
                 hf = &restart->restart_u.hostfunc;
                 hf->func = ctx->event_u.call.func; /* this func */
                 hf->saved_bottom = ctx->bottom;
                 hf->stack_adj = resulttype_cellsize(&ft->result);
-                hf->user1 = i + 1;
+                hf->user1 = i + 1; /* step */
                 hf->user2 = sum;
                 ctx->event_u.call.func = func;
                 ctx->event = EXEC_EVENT_CALL;
                 ctx->bottom = ctx->frames.lsize;
-                ctx->restarts.lsize++;
+                ctx->restarts.lsize++; /* make restart possibly nest */
                 host_ret = ETOYWASMRESTART;
                 goto fail; /* not a failure */
 after_return:;
