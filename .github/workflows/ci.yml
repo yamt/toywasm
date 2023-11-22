@@ -404,15 +404,15 @@ jobs:
     - name: Test "app" example with the library we built
       if: matrix.BUILD_TYPE == 'Release' && matrix.arch == 'native'
       run: |
-        ./test/build-example.sh app ${{env.builddir}}/toywasm-v*.tgz example-build-app
-        ./example-build-app/app ${{env.builddir}}/spectest.wasm
+        ./test/build-example.sh app ${{env.builddir}}/toywasm-v*.tgz build
+        ./examples/app/build/app ${{env.builddir}}/spectest.wasm
 
     - name: Test "runwasi" example with the library we built
       if: matrix.BUILD_TYPE == 'Release' && matrix.arch == 'native'
       run: |
         wat2wasm wat/wasi/hello.wat
-        ./test/build-example.sh runwasi ${{env.builddir}}/toywasm-v*.tgz example-build-runwasi
-        ./example-build-runwasi/runwasi $(pwd)/hello.wasm
+        ./test/build-example.sh runwasi ${{env.builddir}}/toywasm-v*.tgz build
+        ./examples/runwasi/build/runwasi $(pwd)/hello.wasm
 
     - name: Test "hostfunc" example with the library we built
       if: matrix.BUILD_TYPE == 'Release' && matrix.arch == 'native'
@@ -421,7 +421,7 @@ jobs:
         cd examples/hostfunc/wasm
         pax -rvzf hostfunc-test-wasm.tgz
         cd ..
-        BIN=../../example-build-hostfunc/hostfunc ./run.sh
+        BIN=./build/hostfunc ./run.sh
 
     - name: Upload artifacts
       if: matrix.name != 'noname'
