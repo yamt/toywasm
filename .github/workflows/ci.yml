@@ -414,6 +414,15 @@ jobs:
         ./test/build-example.sh runwasi ${{env.builddir}}/toywasm-v*.tgz example-build-runwasi
         ./example-build-runwasi/runwasi $(pwd)/hello.wasm
 
+    - name: Test "hostfunc" example with the library we built
+      if: matrix.BUILD_TYPE == 'Release' && matrix.arch == 'native'
+      run: |
+        ./test/build-example.sh hostfunc ${{env.builddir}}/toywasm-v*.tgz example-build-hostfunc
+        cd examples/hostfunc/wasm
+        pax -rvzf hostfunc-test-wasm.tgz
+        cd ..
+        BIN=../../example-build-hostfunc/hostfunc ./run.sh
+
     - name: Upload artifacts
       if: matrix.name != 'noname'
       uses: actions/upload-artifact@v3
