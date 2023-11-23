@@ -102,6 +102,25 @@ fail:
         return host_ret;
 }
 
+int
+schedule_call_from_hostfunc(struct exec_context *ctx,
+                            struct restart_info *restart,
+                            const struct funcinst *func)
+{
+        restart->restart_type = RESTART_HOSTFUNC;
+        struct restart_hostfunc *hf = &restart->restart_u.hostfunc;
+        const struct functype *ft = funcinst_functype(func);
+        hf->func = ctx->event_u.call.func; /* caller hostfunc */
+        assert(hf->func->is_host);
+        hf->saved_bottom = ctx->bottom;
+        hf->stack_adj = resulttype_cellsize(&ft->result);
+        ctx->event_u.call.func = func;
+        ctx->event = EXEC_EVENT_CALL;
+        ctx->bottom = ctx->frames.lsize;
+        ctx->restarts.lsize++; /* make restart possibly nest */
+        return ETOYWASMRESTART;
+}
+
 static int
 my_host_inst_load_call_add(struct exec_context *ctx, struct host_instance *hi,
                            const struct functype *ft,
@@ -187,18 +206,12 @@ my_host_inst_load_call_add(struct exec_context *ctx, struct host_instance *hi,
                  * set up the restart info so that the function can
                  * return to us.
                  */
-                restart->restart_type = RESTART_HOSTFUNC;
+                host_ret = schedule_call_from_hostfunc(ctx, restart, func);
+                /* save extra context */
                 hf = &restart->restart_u.hostfunc;
-                hf->func = ctx->event_u.call.func; /* this func */
-                hf->saved_bottom = ctx->bottom;
-                hf->stack_adj = resulttype_cellsize(&ft->result);
                 hf->user1 = i + 1; /* step */
                 hf->user2 = sum;
-                ctx->event_u.call.func = func;
-                ctx->event = EXEC_EVENT_CALL;
-                ctx->bottom = ctx->frames.lsize;
-                ctx->restarts.lsize++; /* make restart possibly nest */
-                host_ret = ETOYWASMRESTART;
+                assert(host_ret == ETOYWASMRESTART);
                 goto fail; /* not a failure */
 after_return:;
                 struct val r[1];
