@@ -57,3 +57,7 @@ int host_func_copyout(struct exec_context *ctx, const void *hostaddr,
                       uint32_t wasmaddr, size_t len, size_t align);
 int host_func_copyin(struct exec_context *ctx, void *hostaddr,
                      uint32_t wasmaddr, size_t len, size_t align);
+struct restart_info;
+int schedule_call_from_hostfunc(struct exec_context *ctx,
+                                struct restart_info *restart,
+                                const struct funcinst *func);
