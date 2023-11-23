@@ -1,6 +1,6 @@
 #! /bin/sh
 
-CC=/opt/wasi-sdk/bin/clang
+CC="/opt/wasi-sdk/bin/clang -Os"
 
 ${CC} \
 -o test.wasm \
