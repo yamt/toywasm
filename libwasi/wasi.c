@@ -1437,12 +1437,15 @@ wasi_fd_fdstat_set_flags(struct exec_context *ctx, struct host_instance *hi,
         uint32_t fdflags = HOST_FUNC_PARAM(ft, params, 1, i32);
         struct wasi_fdinfo *fdinfo = NULL;
         int ret;
+        if ((fdflags & ~WASI_FDFLAG_NONBLOCK) != 0) {
+                ret = ENOTSUP;
+                goto fail;
+        }
         ret = wasi_fd_lookup(wasi, wasifd, &fdinfo);
         if (ret != 0) {
                 goto fail;
         }
         fdinfo->blocking = ((fdflags & WASI_FDFLAG_NONBLOCK) == 0);
-        /* TODO implement other flags */
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
