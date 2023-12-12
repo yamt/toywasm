@@ -10,13 +10,26 @@
 bool
 wasi_fdinfo_is_prestat(const struct wasi_fdinfo *fdinfo)
 {
-        return fdinfo->hostfd == -1 && fdinfo->prestat_path != NULL;
+        return fdinfo->type == WASI_FDINFO_PRESTAT;
 }
 
 bool
 wasi_fdinfo_unused(struct wasi_fdinfo *fdinfo)
 {
-        return fdinfo->hostfd == -1 && fdinfo->prestat_path == NULL;
+        return fdinfo->type == WASI_FDINFO_UNUSED;
+}
+
+const char *
+wasi_fdinfo_path(struct wasi_fdinfo *fdinfo)
+{
+        switch (fdinfo->type) {
+        case WASI_FDINFO_PRESTAT:
+                return fdinfo->u.u_prestat.prestat_path;
+        case WASI_FDINFO_USER:
+                return fdinfo->u.u_user.path;
+        case WASI_FDINFO_UNUSED:
+                return NULL;
+        }
 }
 
 struct wasi_fdinfo *
@@ -26,10 +39,7 @@ wasi_fdinfo_alloc(void)
         if (fdinfo == NULL) {
                 return NULL;
         }
-        fdinfo->hostfd = -1;
-        fdinfo->dir = NULL;
-        fdinfo->prestat_path = NULL;
-        fdinfo->wasm_path = NULL;
+        fdinfo->type = WASI_FDINFO_UNUSED;
         fdinfo->refcount = 0;
         fdinfo->blocking = 1;
         assert(wasi_fdinfo_unused(fdinfo));
@@ -98,9 +108,19 @@ wasi_fdinfo_release(struct wasi_instance *wasi, struct wasi_fdinfo *fdinfo)
         }
 #endif
         if (fdinfo->refcount == 0) {
-                assert(fdinfo->hostfd == -1);
-                free(fdinfo->prestat_path);
-                free(fdinfo->wasm_path);
+                switch (fdinfo->type) {
+                case WASI_FDINFO_PRESTAT:
+                        free(fdinfo->u.u_prestat.prestat_path);
+                        free(fdinfo->u.u_prestat.wasm_path);
+                        break;
+                case WASI_FDINFO_USER:
+                        assert(fdinfo->u.u_user.hostfd == -1);
+                        assert(fdinfo->u.u_user.path == NULL);
+                        assert(fdinfo->u.u_user.dir == NULL);
+                        break;
+                case WASI_FDINFO_UNUSED:
+                        break;
+                }
                 free(fdinfo);
         }
         toywasm_mutex_unlock(&wasi->lock);
@@ -192,11 +212,12 @@ wasi_hostfd_lookup(struct wasi_instance *wasi, uint32_t wasifd, int *hostfdp,
         if (ret != 0) {
                 return ret;
         }
-        if (info->hostfd == -1) {
+        if (info->type != WASI_FDINFO_USER) {
                 wasi_fdinfo_release(wasi, info);
                 return EBADF;
         }
-        *hostfdp = info->hostfd;
+        assert(info->u.u_user.hostfd != -1);
+        *hostfdp = info->u.u_user.hostfd;
         *fdinfop = info;
         return 0;
 }
@@ -282,10 +303,10 @@ wasi_fd_add(struct wasi_instance *wasi, int hostfd, char *path,
                 free(path);
                 return ENOMEM;
         }
-        fdinfo->hostfd = hostfd;
-        fdinfo->dir = NULL;
-        fdinfo->prestat_path = path;
-        fdinfo->wasm_path = NULL;
+        fdinfo->type = WASI_FDINFO_USER;
+        fdinfo->u.u_user.hostfd = hostfd;
+        fdinfo->u.u_user.dir = NULL;
+        fdinfo->u.u_user.path = path;
         fdinfo->blocking = (fdflags & WASI_FDFLAG_NONBLOCK) == 0;
         toywasm_mutex_lock(&wasi->lock);
         ret = wasi_fd_alloc(wasi, &wasifd);
