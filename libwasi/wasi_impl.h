@@ -7,25 +7,27 @@
 #include "wasi_abi.h"
 #include "xlog.h"
 
+enum wasi_fdinfo_type {
+        WASI_FDINFO_UNUSED,
+        WASI_FDINFO_PRESTAT,
+        WASI_FDINFO_USER,
+};
+
 struct wasi_fdinfo {
-        /*
-         * - directories added by wasi_instance_prestat_add
-         *   prestat_path != NULL
-         *   hostfd == -1 (for now)
-         *
-         * - files opened by user
-         *   prestat_path != NULL (DIR)
-         *   prestat_path == NULL (!DIR)
-         *   hostfd != -1
-         *
-         * - closed descriptors (EBADF)
-         *   prestat_path == NULL
-         *   hostfd == -1
-         */
-        char *prestat_path;
-        char *wasm_path; /* NULL means same as prestat_path */
-        int hostfd;
-        DIR *dir;
+        enum wasi_fdinfo_type type;
+        union {
+                /* WASI_FDINFO_PRESTAT */
+                struct {
+                        char *prestat_path;
+                        char *wasm_path; /* NULL means same as prestat_path */
+                } u_prestat;
+                /* WASI_FDINFO_USER */
+                struct {
+                        int hostfd;
+                        DIR *dir;
+                        char *path;
+                } u_user;
+        } u;
         uint32_t refcount;
         uint32_t blocking;
 };
@@ -78,6 +80,7 @@ uint32_t wasi_convert_errno(int host_errno);
 struct exec_context;
 bool wasi_fdinfo_is_prestat(const struct wasi_fdinfo *fdinfo);
 bool wasi_fdinfo_unused(struct wasi_fdinfo *fdinfo);
+const char *wasi_fdinfo_path(struct wasi_fdinfo *fdinfo);
 struct wasi_fdinfo *wasi_fdinfo_alloc(void);
 void wasi_fd_affix(struct wasi_instance *wasi, uint32_t wasifd,
                    struct wasi_fdinfo *fdinfo) REQUIRES(wasi->lock);

@@ -257,31 +257,50 @@ fail:
         return host_ret;
 }
 
-int
-wasi_fdinfo_close(struct wasi_fdinfo *fdinfo)
+static int
+wasi_fdinfo_close_user(struct wasi_fdinfo *fdinfo)
 {
+        assert(fdinfo->type == WASI_FDINFO_USER);
         int ret = 0;
-        int hostfd = fdinfo->hostfd;
+        int hostfd = fdinfo->u.u_user.hostfd;
 #if defined(__wasi__) /* wasi has no dup */
         if (hostfd != -1 && hostfd >= 3) {
 #else
         if (hostfd != -1) {
 #endif
-                ret = close(fdinfo->hostfd);
+                ret = close(hostfd);
                 if (ret != 0) {
                         ret = errno;
                         assert(ret > 0);
                 }
         }
-        fdinfo->hostfd = -1;
-        if (fdinfo->dir != NULL) {
-                closedir(fdinfo->dir);
+        free(fdinfo->u.u_user.path);
+        if (fdinfo->u.u_user.dir != NULL) {
+                closedir(fdinfo->u.u_user.dir);
         }
-        fdinfo->dir = NULL;
-        free(fdinfo->prestat_path);
-        free(fdinfo->wasm_path);
-        fdinfo->prestat_path = NULL;
-        fdinfo->wasm_path = NULL;
+        fdinfo->u.u_user.hostfd = -1;
+        fdinfo->u.u_user.path = NULL;
+        fdinfo->u.u_user.dir = NULL;
+        return ret;
+}
+
+int
+wasi_fdinfo_close(struct wasi_fdinfo *fdinfo)
+{
+        int ret = 0;
+        switch (fdinfo->type) {
+        case WASI_FDINFO_PRESTAT:
+                free(fdinfo->u.u_prestat.prestat_path);
+                free(fdinfo->u.u_prestat.wasm_path);
+                fdinfo->u.u_prestat.prestat_path = NULL;
+                fdinfo->u.u_prestat.wasm_path = NULL;
+                break;
+        case WASI_FDINFO_USER:
+                ret = wasi_fdinfo_close_user(fdinfo);
+                break;
+        case WASI_FDINFO_UNUSED:
+                break;
+        }
         return ret;
 }
 
@@ -454,11 +473,12 @@ wasi_copyin_and_convert_path(struct exec_context *ctx,
         if (ret != 0) {
                 goto fail;
         }
-        if (dirfdinfo->prestat_path == NULL) {
+        const char *dirpath = wasi_fdinfo_path(dirfdinfo);
+        if (dirpath == NULL) {
                 ret = ENOTDIR;
                 goto fail;
         }
-        ret = asprintf(&hostpath, "%s/%s", dirfdinfo->prestat_path, wasmpath);
+        ret = asprintf(&hostpath, "%s/%s", dirpath, wasmpath);
         if (ret < 0) {
                 ret = errno;
                 assert(ret > 0);
@@ -750,7 +770,8 @@ static bool
 emulate_blocking(struct exec_context *ctx, struct wasi_fdinfo *fdinfo,
                  short poll_event, int orig_ret, int *host_retp, int *retp)
 {
-        int hostfd = fdinfo->hostfd;
+        assert(fdinfo->type == WASI_FDINFO_USER);
+        int hostfd = fdinfo->u.u_user.hostfd;
         assert(hostfd != -1);
         /* See the comment in wasi_instance_create */
         assert(isatty(hostfd) ||
@@ -1264,7 +1285,8 @@ wasi_fd_readdir(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        DIR *dir = fdinfo->dir;
+        assert(fdinfo->type == WASI_FDINFO_USER);
+        DIR *dir = fdinfo->u.u_user.dir;
         if (dir == NULL) {
                 xlog_trace("fd_readdir: fdopendir");
                 dir = fdopendir(hostfd);
@@ -1273,7 +1295,7 @@ wasi_fd_readdir(struct exec_context *ctx, struct host_instance *hi,
                         assert(ret > 0);
                         goto fail;
                 }
-                fdinfo->dir = dir;
+                fdinfo->u.u_user.dir = dir;
         }
         if (cookie == WASI_DIRCOOKIE_START) {
                 /*
@@ -1373,13 +1395,17 @@ wasi_fd_fdstat_get(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
+        if (wasi_fdinfo_unused(fdinfo)) {
+                ret = EBADF;
+                goto fail;
+        }
         struct wasi_fdstat st;
         memset(&st, 0, sizeof(st));
         if (wasi_fdinfo_is_prestat(fdinfo)) {
                 st.fs_filetype = WASI_FILETYPE_DIRECTORY;
         } else {
                 struct stat stat;
-                int hostfd = fdinfo->hostfd;
+                int hostfd = fdinfo->u.u_user.hostfd;
                 ret = fstat(hostfd, &stat);
                 if (ret != 0) {
                         ret = errno;
@@ -1783,8 +1809,8 @@ wasi_fd_renumber(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail_locked;
         }
-        if (!wasi_fdinfo_is_prestat(fdinfo_from) &&
-            fdinfo_from->hostfd == -1) {
+        if (fdinfo_from->type == WASI_FDINFO_USER &&
+            fdinfo_from->u.u_user.hostfd == -1) {
                 ret = EBADF;
                 goto fail_locked;
         }
@@ -1954,16 +1980,16 @@ wasi_fd_prestat_get(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        if (fdinfo->prestat_path == NULL) {
+        if (!wasi_fdinfo_is_prestat(fdinfo)) {
                 ret = EBADF;
                 goto fail;
         }
         struct wasi_fd_prestat st;
         memset(&st, 0, sizeof(st));
         st.type = WASI_PREOPEN_TYPE_DIR;
-        const char *prestat_path = fdinfo->prestat_path;
-        if (fdinfo->wasm_path != NULL) {
-                prestat_path = fdinfo->wasm_path;
+        const char *prestat_path = fdinfo->u.u_prestat.prestat_path;
+        if (fdinfo->u.u_prestat.wasm_path != NULL) {
+                prestat_path = fdinfo->u.u_prestat.wasm_path;
         }
         st.dir_name_len = host_to_le32(strlen(prestat_path));
         host_ret =
@@ -1996,7 +2022,7 @@ wasi_fd_prestat_dir_name(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        if (fdinfo->prestat_path == NULL) {
+        if (!wasi_fdinfo_is_prestat(fdinfo)) {
                 xlog_trace("wasm fd %" PRIu32 " is not prestat", wasifd);
                 ret = EBADF;
                 goto fail;
@@ -2004,9 +2030,9 @@ wasi_fd_prestat_dir_name(struct exec_context *ctx, struct host_instance *hi,
         xlog_trace("wasm fd %" PRIu32 " is prestat %s", wasifd,
                    fdinfo->prestat_path);
 
-        const char *prestat_path = fdinfo->prestat_path;
-        if (fdinfo->wasm_path != NULL) {
-                prestat_path = fdinfo->wasm_path;
+        const char *prestat_path = fdinfo->u.u_prestat.prestat_path;
+        if (fdinfo->u.u_prestat.wasm_path != NULL) {
+                prestat_path = fdinfo->u.u_prestat.wasm_path;
         }
         size_t len = strlen(prestat_path);
         if (len > pathlen) {
@@ -3643,8 +3669,8 @@ wasi_instance_add_hostfd(struct wasi_instance *inst, uint32_t wasmfd,
 #else
         dupfd = dup(hostfd);
 #endif
-        assert(fdinfo->hostfd == -1);
-        fdinfo->hostfd = dupfd;
+        fdinfo->type = WASI_FDINFO_USER;
+        fdinfo->u.u_user.hostfd = dupfd;
         if (dupfd == -1) {
                 xlog_trace("failed to dup: wasm fd %" PRIu32
                            " host fd %u with errno %d",
@@ -3756,8 +3782,9 @@ wasi_instance_prestat_add_common(struct wasi_instance *wasi, const char *path,
                 ret = ENOMEM;
                 goto fail;
         }
-        fdinfo->prestat_path = host_path;
-        fdinfo->wasm_path = wasm_path;
+        fdinfo->type = WASI_FDINFO_PRESTAT;
+        fdinfo->u.u_prestat.prestat_path = host_path;
+        fdinfo->u.u_prestat.wasm_path = wasm_path;
         toywasm_mutex_lock(&wasi->lock);
         ret = wasi_fd_alloc(wasi, &wasifd);
         if (ret != 0) {
