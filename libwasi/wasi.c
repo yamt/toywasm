@@ -431,11 +431,28 @@ wasi_convert_dirent_filetype(uint8_t hosttype)
         return t;
 }
 
+struct path_info {
+        char *hostpath;
+        char *wasmpath;
+};
+
+#define PATH_INITIALIZER                                                      \
+        {                                                                     \
+                NULL, NULL,                                                   \
+        }
+
+static void
+path_clear(struct path_info *pi)
+{
+        free(pi->hostpath);
+        free(pi->wasmpath);
+}
+
 static int
 wasi_copyin_and_convert_path(struct exec_context *ctx,
                              struct wasi_instance *wasi, uint32_t dirwasifd,
-                             uint32_t path, uint32_t pathlen, char **wasmpathp,
-                             char **hostpathp, int *usererrorp)
+                             uint32_t path, uint32_t pathlen,
+                             struct path_info *pi, int *usererrorp)
 {
         /*
          * TODO: somehow prevent it from escaping the dirwasifd directory.
@@ -487,8 +504,8 @@ wasi_copyin_and_convert_path(struct exec_context *ctx,
         wasi_fdinfo_release(wasi, dirfdinfo);
         xlog_trace("%s: wasifd %d wasmpath %s hostpath %s", __func__,
                    dirwasifd, wasmpath, hostpath);
-        *hostpathp = hostpath;
-        *wasmpathp = wasmpath;
+        pi->hostpath = hostpath;
+        pi->wasmpath = wasmpath;
         *usererrorp = 0;
         return 0;
 fail:
@@ -2554,8 +2571,7 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
 #endif
         uint32_t fdflags = HOST_FUNC_PARAM(ft, params, 7, i32);
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 8, i32);
-        char *hostpath = NULL;
-        char *wasmpath = NULL;
+        struct path_info pi = PATH_INITIALIZER;
         int hostfd = -1;
         int host_ret = 0;
         int ret = 0;
@@ -2610,12 +2626,11 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
                 break;
         }
         host_ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd, path,
-                                                pathlen, &wasmpath, &hostpath,
-                                                &ret);
+                                                pathlen, &pi, &ret);
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
-        xlog_trace("open %s oflags %x", hostpath, oflags);
+        xlog_trace("open %s oflags %x", path.hostpath, oflags);
         /*
          * TODO: avoid blocking on fifos for wasi-threads.
          */
@@ -2628,7 +2643,7 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
          * wasmtime uses the default of the underlying library:
          * https://doc.rust-lang.org/nightly/std/os/unix/fs/trait.OpenOptionsExt.html#tymethod.mode
          */
-        hostfd = open(hostpath, oflags | O_NONBLOCK, 0666);
+        hostfd = open(pi.hostpath, oflags | O_NONBLOCK, 0666);
         if (hostfd == -1) {
                 ret = errno;
                 assert(ret > 0);
@@ -2644,16 +2659,16 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         if (!S_ISDIR(stat.st_mode)) {
-                free(hostpath);
-                hostpath = NULL;
+                free(pi.hostpath);
+                pi.hostpath = NULL;
         }
         uint32_t wasifd;
-        ret = wasi_fd_add(wasi, hostfd, hostpath,
+        ret = wasi_fd_add(wasi, hostfd, pi.hostpath,
                           fdflags & WASI_FDFLAG_NONBLOCK, &wasifd);
         if (ret != 0) {
                 goto fail;
         }
-        hostpath = NULL; /* consumed by wasi_fd_add */
+        pi.hostpath = NULL; /* consumed by wasi_fd_add */
         hostfd = -1;
         xlog_trace("-> new wasi fd %" PRIu32, wasifd);
         uint32_t r = host_to_le32(wasifd);
@@ -2663,11 +2678,10 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
 fail:
+        path_clear(&pi);
         if (hostfd != -1) {
                 close(hostfd);
         }
-        free(hostpath);
-        free(wasmpath);
         if (host_ret == 0) {
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
@@ -2685,27 +2699,24 @@ wasi_path_unlink_file(struct exec_context *ctx, struct host_instance *hi,
         struct wasi_instance *wasi = (void *)hi;
         HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t dirwasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
-        uint32_t path = HOST_FUNC_PARAM(ft, params, 1, i32);
+        uint32_t pathstr = HOST_FUNC_PARAM(ft, params, 1, i32);
         uint32_t pathlen = HOST_FUNC_PARAM(ft, params, 2, i32);
-        char *hostpath = NULL;
-        char *wasmpath = NULL;
+        struct path_info pi = PATH_INITIALIZER;
         int host_ret;
         int ret = 0;
-        host_ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd, path,
-                                                pathlen, &wasmpath, &hostpath,
-                                                &ret);
+        host_ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd, pathstr,
+                                                pathlen, &pi, &ret);
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
-        ret = unlink(hostpath);
+        ret = unlink(pi.hostpath);
         if (ret != 0) {
                 ret = errno;
                 assert(ret > 0);
                 goto fail;
         }
 fail:
-        free(hostpath);
-        free(wasmpath);
+        path_clear(&pi);
         if (host_ret == 0) {
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
@@ -2725,25 +2736,22 @@ wasi_path_create_directory(struct exec_context *ctx, struct host_instance *hi,
         uint32_t dirwasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         uint32_t path = HOST_FUNC_PARAM(ft, params, 1, i32);
         uint32_t pathlen = HOST_FUNC_PARAM(ft, params, 2, i32);
-        char *hostpath = NULL;
-        char *wasmpath = NULL;
         int host_ret;
         int ret = 0;
+        struct path_info pi;
         host_ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd, path,
-                                                pathlen, &wasmpath, &hostpath,
-                                                &ret);
+                                                pathlen, &pi, &ret);
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
-        ret = mkdir(hostpath, 0777);
+        ret = mkdir(pi.hostpath, 0777);
         if (ret != 0) {
                 ret = errno;
                 assert(ret > 0);
                 goto fail;
         }
 fail:
-        free(hostpath);
-        free(wasmpath);
+        path_clear(&pi);
         if (host_ret == 0) {
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
@@ -2763,25 +2771,22 @@ wasi_path_remove_directory(struct exec_context *ctx, struct host_instance *hi,
         uint32_t dirwasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         uint32_t path = HOST_FUNC_PARAM(ft, params, 1, i32);
         uint32_t pathlen = HOST_FUNC_PARAM(ft, params, 2, i32);
-        char *hostpath = NULL;
-        char *wasmpath = NULL;
         int host_ret;
         int ret = 0;
+        struct path_info pi = PATH_INITIALIZER;
         host_ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd, path,
-                                                pathlen, &wasmpath, &hostpath,
-                                                &ret);
+                                                pathlen, &pi, &ret);
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
-        ret = rmdir(hostpath);
+        ret = rmdir(pi.hostpath);
         if (ret != 0) {
                 ret = errno;
                 assert(ret > 0);
                 goto fail;
         }
 fail:
-        free(hostpath);
-        free(wasmpath);
+        path_clear(&pi);
         if (host_ret == 0) {
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
@@ -2804,8 +2809,7 @@ wasi_path_symlink(struct exec_context *ctx, struct host_instance *hi,
         uint32_t path = HOST_FUNC_PARAM(ft, params, 3, i32);
         uint32_t pathlen = HOST_FUNC_PARAM(ft, params, 4, i32);
         char *target_buf;
-        char *hostpath = NULL;
-        char *wasmpath = NULL;
+        struct path_info pi = PATH_INITIALIZER;
         int host_ret = 0;
         int ret = 0;
         target_buf = malloc(targetlen + 1);
@@ -2819,12 +2823,11 @@ wasi_path_symlink(struct exec_context *ctx, struct host_instance *hi,
         }
         target_buf[targetlen] = 0;
         host_ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd, path,
-                                                pathlen, &wasmpath, &hostpath,
-                                                &ret);
+                                                pathlen, &pi, &ret);
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
-        ret = symlink(target_buf, hostpath);
+        ret = symlink(target_buf, pi.hostpath);
         if (ret != 0) {
                 ret = errno;
                 assert(ret > 0);
@@ -2832,8 +2835,7 @@ wasi_path_symlink(struct exec_context *ctx, struct host_instance *hi,
         }
 fail:
         free(target_buf);
-        free(hostpath);
-        free(wasmpath);
+        path_clear(&pi);
         if (host_ret == 0) {
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
@@ -2856,13 +2858,12 @@ wasi_path_readlink(struct exec_context *ctx, struct host_instance *hi,
         uint32_t buf = HOST_FUNC_PARAM(ft, params, 3, i32);
         uint32_t buflen = HOST_FUNC_PARAM(ft, params, 4, i32);
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 5, i32);
-        char *hostpath = NULL;
-        char *wasmpath = NULL;
+        void *tmpbuf = NULL;
+        struct path_info pi = PATH_INITIALIZER;
         int host_ret = 0;
         int ret = 0;
         host_ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd, path,
-                                                pathlen, &wasmpath, &hostpath,
-                                                &ret);
+                                                pathlen, &pi, &ret);
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
@@ -2884,7 +2885,7 @@ wasi_path_readlink(struct exec_context *ctx, struct host_instance *hi,
         if (host_ret != 0) {
                 goto fail;
         }
-        ssize_t ret1 = readlink(hostpath, p, buflen);
+        ssize_t ret1 = readlink(pi.hostpath, p, buflen);
         if (ret1 == -1) {
                 ret = errno;
                 assert(ret > 0);
@@ -2897,8 +2898,7 @@ wasi_path_readlink(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
 fail:
-        free(hostpath);
-        free(wasmpath);
+        path_clear(&pi);
         if (host_ret == 0) {
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
@@ -2922,10 +2922,8 @@ wasi_path_link(struct exec_context *ctx, struct host_instance *hi,
         uint32_t dirwasifd2 = HOST_FUNC_PARAM(ft, params, 4, i32);
         uint32_t path2 = HOST_FUNC_PARAM(ft, params, 5, i32);
         uint32_t pathlen2 = HOST_FUNC_PARAM(ft, params, 6, i32);
-        char *hostpath1 = NULL;
-        char *wasmpath1 = NULL;
-        char *hostpath2 = NULL;
-        char *wasmpath2 = NULL;
+        struct path_info pi1 = PATH_INITIALIZER;
+        struct path_info pi2 = PATH_INITIALIZER;
         int host_ret = 0;
         int ret = 0;
         if ((lookupflags & WASI_LOOKUPFLAG_SYMLINK_FOLLOW) == 0) {
@@ -2938,28 +2936,24 @@ wasi_path_link(struct exec_context *ctx, struct host_instance *hi,
 #endif
         }
         host_ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd1, path1,
-                                                pathlen1, &wasmpath1,
-                                                &hostpath1, &ret);
+                                                pathlen1, &pi1, &ret);
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
         host_ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd2, path2,
-                                                pathlen2, &wasmpath2,
-                                                &hostpath2, &ret);
+                                                pathlen2, &pi2, &ret);
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
-        ret = link(hostpath1, hostpath2);
+        ret = link(pi1.hostpath, pi2.hostpath);
         if (ret == -1) {
                 ret = errno;
                 assert(ret > 0);
                 goto fail;
         }
 fail:
-        free(hostpath1);
-        free(wasmpath1);
-        free(hostpath2);
-        free(wasmpath2);
+        path_clear(&pi1);
+        path_clear(&pi2);
         if (host_ret == 0) {
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
@@ -2982,35 +2976,29 @@ wasi_path_rename(struct exec_context *ctx, struct host_instance *hi,
         uint32_t dirwasifd2 = HOST_FUNC_PARAM(ft, params, 3, i32);
         uint32_t path2 = HOST_FUNC_PARAM(ft, params, 4, i32);
         uint32_t pathlen2 = HOST_FUNC_PARAM(ft, params, 5, i32);
-        char *hostpath1 = NULL;
-        char *wasmpath1 = NULL;
-        char *hostpath2 = NULL;
-        char *wasmpath2 = NULL;
+        struct path_info pi1 = PATH_INITIALIZER;
+        struct path_info pi2 = PATH_INITIALIZER;
         int host_ret;
         int ret = 0;
         host_ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd1, path1,
-                                                pathlen1, &wasmpath1,
-                                                &hostpath1, &ret);
+                                                pathlen1, &pi1, &ret);
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
         host_ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd2, path2,
-                                                pathlen2, &wasmpath2,
-                                                &hostpath2, &ret);
+                                                pathlen2, &pi2, &ret);
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
-        ret = rename(hostpath1, hostpath2);
+        ret = rename(pi1.hostpath, pi2.hostpath);
         if (ret == -1) {
                 ret = errno;
                 assert(ret > 0);
                 goto fail;
         }
 fail:
-        free(hostpath1);
-        free(wasmpath1);
-        free(hostpath2);
-        free(wasmpath2);
+        path_clear(&pi1);
+        path_clear(&pi2);
         if (host_ret == 0) {
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
@@ -3032,21 +3020,19 @@ wasi_path_filestat_get(struct exec_context *ctx, struct host_instance *hi,
         uint32_t path = HOST_FUNC_PARAM(ft, params, 2, i32);
         uint32_t pathlen = HOST_FUNC_PARAM(ft, params, 3, i32);
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 4, i32);
-        char *hostpath = NULL;
-        char *wasmpath = NULL;
+        struct path_info pi = PATH_INITIALIZER;
         int host_ret = 0;
         int ret;
         host_ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd, path,
-                                                pathlen, &wasmpath, &hostpath,
-                                                &ret);
+                                                pathlen, &pi, &ret);
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
         struct stat hst;
         if ((lookupflags & WASI_LOOKUPFLAG_SYMLINK_FOLLOW) != 0) {
-                ret = stat(hostpath, &hst);
+                ret = stat(pi.hostpath, &hst);
         } else {
-                ret = lstat(hostpath, &hst);
+                ret = lstat(pi.hostpath, &hst);
         }
         if (ret == -1) {
                 ret = errno;
@@ -3058,8 +3044,7 @@ wasi_path_filestat_get(struct exec_context *ctx, struct host_instance *hi,
         host_ret = wasi_copyout(ctx, &wst, retp, sizeof(wst),
                                 WASI_FILESTAT_ALIGN);
 fail:
-        free(hostpath);
-        free(wasmpath);
+        path_clear(&pi);
         if (host_ret == 0) {
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
@@ -3083,21 +3068,19 @@ wasi_unstable_path_filestat_get(struct exec_context *ctx,
         uint32_t path = HOST_FUNC_PARAM(ft, params, 2, i32);
         uint32_t pathlen = HOST_FUNC_PARAM(ft, params, 3, i32);
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 4, i32);
-        char *hostpath = NULL;
-        char *wasmpath = NULL;
+        struct path_info pi = PATH_INITIALIZER;
         int host_ret = 0;
         int ret;
         host_ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd, path,
-                                                pathlen, &wasmpath, &hostpath,
-                                                &ret);
+                                                pathlen, &pi, &ret);
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
         struct stat hst;
         if ((lookupflags & WASI_LOOKUPFLAG_SYMLINK_FOLLOW) != 0) {
-                ret = stat(hostpath, &hst);
+                ret = stat(pi.hostpath, &hst);
         } else {
-                ret = lstat(hostpath, &hst);
+                ret = lstat(pi.hostpath, &hst);
         }
         if (ret == -1) {
                 ret = errno;
@@ -3109,8 +3092,7 @@ wasi_unstable_path_filestat_get(struct exec_context *ctx,
         host_ret = wasi_copyout(ctx, &wst, retp, sizeof(wst),
                                 WASI_UNSTABLE_FILESTAT_ALIGN);
 fail:
-        free(hostpath);
-        free(wasmpath);
+        path_clear(&pi);
         if (host_ret == 0) {
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
@@ -3135,13 +3117,11 @@ wasi_path_filestat_set_times(struct exec_context *ctx,
         uint64_t atim = HOST_FUNC_PARAM(ft, params, 4, i64);
         uint64_t mtim = HOST_FUNC_PARAM(ft, params, 5, i64);
         uint32_t fstflags = HOST_FUNC_PARAM(ft, params, 6, i32);
-        char *hostpath = NULL;
-        char *wasmpath = NULL;
+        struct path_info pi = PATH_INITIALIZER;
         int host_ret;
         int ret = 0;
         host_ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd, path,
-                                                pathlen, &wasmpath, &hostpath,
-                                                &ret);
+                                                pathlen, &pi, &ret);
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
@@ -3156,22 +3136,21 @@ wasi_path_filestat_set_times(struct exec_context *ctx,
                 errno = ENOSYS;
                 ret = -1;
 #else
-                ret = utimes(hostpath, tvp);
+                ret = utimes(pi.hostpath, tvp);
 #endif
         } else {
-                ret = lutimes(hostpath, tvp);
+                ret = lutimes(pi.hostpath, tvp);
         }
         if (ret == -1) {
                 ret = errno;
                 assert(ret > 0);
         }
 fail:
+        path_clear(&pi);
         if (host_ret == 0) {
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
         }
-        free(hostpath);
-        free(wasmpath);
         HOST_FUNC_FREE_CONVERTED_PARAMS();
         return host_ret;
 }
