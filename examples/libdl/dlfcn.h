@@ -7,12 +7,12 @@
 
 /*
  * The following definitions are intended to be
- * ABI-compatible with musl.
+ * ABI-compatible with wasi-libc.
  */
 #define RTLD_LAZY 0x0001
 #define RTLD_NOW 0x0002
 #define RTLD_GLOBAL 0x0100
-#define RTLD_LOCAL 0
+#define RTLD_LOCAL 0x0008
 
 void *dlopen(const char *name, int mode);
 void *dlsym(void *h, const char *name);
