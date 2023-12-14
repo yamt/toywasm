@@ -272,6 +272,9 @@ wasi_fdinfo_close_user(struct wasi_fdinfo *fdinfo)
                 if (ret != 0) {
                         ret = errno;
                         assert(ret > 0);
+                        xlog_trace("failed to close: host fd %" PRIu32
+                                   " with errno %d",
+                                   hostfd, ret);
                 }
         }
         free(fdinfo->u.u_user.path);
@@ -2044,13 +2047,11 @@ wasi_fd_prestat_dir_name(struct exec_context *ctx, struct host_instance *hi,
                 ret = EBADF;
                 goto fail;
         }
-        xlog_trace("wasm fd %" PRIu32 " is prestat %s", wasifd,
-                   fdinfo->prestat_path);
-
         const char *prestat_path = fdinfo->u.u_prestat.prestat_path;
         if (fdinfo->u.u_prestat.wasm_path != NULL) {
                 prestat_path = fdinfo->u.u_prestat.wasm_path;
         }
+        xlog_trace("wasm fd %" PRIu32 " is prestat %s", wasifd, prestat_path);
         size_t len = strlen(prestat_path);
         if (len > pathlen) {
                 xlog_trace("path buffer too small %zu > %" PRIu32, len,
@@ -2630,7 +2631,7 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
-        xlog_trace("open %s oflags %x", path.hostpath, oflags);
+        xlog_trace("open %s oflags %x", pi.hostpath, oflags);
         /*
          * TODO: avoid blocking on fifos for wasi-threads.
          */
@@ -2647,7 +2648,7 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
         if (hostfd == -1) {
                 ret = errno;
                 assert(ret > 0);
-                xlog_trace("open %s oflags %x failed with %d", hostpath,
+                xlog_trace("open %s oflags %x failed with %d", pi.hostpath,
                            oflags, errno);
                 goto fail;
         }
@@ -3772,7 +3773,8 @@ wasi_instance_prestat_add_common(struct wasi_instance *wasi, const char *path,
         }
         wasi_fd_affix(wasi, wasifd, fdinfo);
         toywasm_mutex_unlock(&wasi->lock);
-        xlog_trace("prestat added %s (%s)", path, fdinfo->prestat_path);
+        xlog_trace("prestat added %s (%s)", path,
+                   fdinfo->u.u_prestat.prestat_path);
         return 0;
 fail:
         free(host_path);

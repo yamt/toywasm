@@ -252,14 +252,11 @@ wasi_fdtable_free(struct wasi_instance *wasi) NO_THREAD_SAFETY_ANALYSIS
                         continue;
                 }
                 assert(fdinfo->refcount == 1);
-#if defined(TOYWASM_ENABLE_TRACING)
-                int hostfd = fdinfo->hostfd;
-#endif
                 int ret = wasi_fdinfo_close(fdinfo);
                 if (ret != 0) {
                         xlog_trace("failed to close: wasm fd %" PRIu32
-                                   " host fd %u with errno %d",
-                                   i, hostfd, ret);
+                                   " with errno %d",
+                                   i, ret);
                 }
                 free(fdinfo);
         }
