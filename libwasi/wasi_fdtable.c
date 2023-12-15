@@ -30,6 +30,8 @@ wasi_fdinfo_path(struct wasi_fdinfo *fdinfo)
         case WASI_FDINFO_UNUSED:
                 return NULL;
         }
+        assert(false);
+        return NULL;
 }
 
 struct wasi_fdinfo *
