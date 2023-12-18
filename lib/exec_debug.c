@@ -135,8 +135,10 @@ print_trace(const struct exec_context *ctx)
                         bottom = hf->saved_bottom;
                         const struct funcinst *fi = hf->func;
                         assert(fi->is_host);
-                        printf("frame(host) %p %p\n", (const void *)fi,
-                               (const void *)fi->u.host.func);
+                        printf("frame(host) %p %p user1 %08" PRIx32
+                               " user2 %08" PRIx32 "\n",
+                               (const void *)fi, (const void *)fi->u.host.func,
+                               hf->user1, hf->user2);
                         const struct functype *ft = funcinst_functype(fi);
                         const struct resulttype *rt = &ft->parameter;
                         uint32_t stackidx;
