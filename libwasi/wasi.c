@@ -1752,6 +1752,14 @@ wasi_fd_renumber(struct exec_context *ctx, struct host_instance *hi,
         if (host_ret != 0 || ret != 0) {
                 goto fail_locked;
         }
+        /*
+         * Note: unlike dup2, for some thread-safety reasons, fd_renumber
+         * requires the "to" be an open descriptor.
+         */
+        if (wasi_fdinfo_unused(fdinfo_to)) {
+                ret = EBADF;
+                goto fail_locked;
+        }
 
         /* check "from" */
         ret = wasi_fd_lookup_locked(wasi, wasifd_from, &fdinfo_from);
@@ -1776,14 +1784,11 @@ wasi_fd_renumber(struct exec_context *ctx, struct host_instance *hi,
         fdinfo_from = NULL;
 
         /* close the old "to" file */
-        if (!wasi_fdinfo_unused(fdinfo_to)) {
-                ret = wasi_fdinfo_close(fdinfo_to);
-                if (ret != 0) {
-                        /* log and ignore */
-                        xlog_error("%s: closing to-fd failed with %d",
-                                   __func__, ret);
-                        ret = 0;
-                }
+        ret = wasi_fdinfo_close(fdinfo_to);
+        if (ret != 0) {
+                /* log and ignore */
+                xlog_error("%s: closing to-fd failed with %d", __func__, ret);
+                ret = 0;
         }
 fail:
         wasi_fdinfo_release(wasi, fdinfo_from);
