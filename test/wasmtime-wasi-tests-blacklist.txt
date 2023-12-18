@@ -24,3 +24,9 @@ poll_oneoff_files
 
 # https://github.com/WebAssembly/WASI/pull/522
 close_preopen
+
+# a broken test. (fixed in the latest versions)
+readlink
+
+# a broken test. (fixed in the latest versions)
+stdio
