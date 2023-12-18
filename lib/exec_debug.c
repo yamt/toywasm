@@ -51,23 +51,15 @@ exec_context_print_stats(struct exec_context *ctx)
         STAT_PRINT(atomic_wait_restart);
 }
 
-void
-print_locals(const struct exec_context *ctx, const struct funcframe *fp)
+static void
+print_params(const struct cell *cells, const struct resulttype *rt)
 {
-        const struct instance *inst = fp->instance;
-        const struct funcinst *finst = VEC_ELEM(inst->funcs, fp->funcidx);
-        const struct functype *ft = funcinst_functype(finst);
-        const struct func *func = funcinst_func(finst);
-        const struct resulttype *rt = &ft->parameter;
-        const struct localtype *lt = &func->localtype;
-        const struct cell *locals = frame_locals(ctx, fp);
-
         uint32_t i;
         for (i = 0; i < rt->ntypes; i++) {
                 uint32_t csz;
                 uint32_t cidx = resulttype_cellidx(rt, i, &csz);
                 struct val val;
-                val_from_cells(&val, locals + cidx, csz);
+                val_from_cells(&val, cells + cidx, csz);
                 switch (csz) {
                 case 1:
                         printf("param [%" PRIu32 "] = %08" PRIx32 "\n", i,
@@ -82,8 +74,23 @@ print_locals(const struct exec_context *ctx, const struct funcframe *fp)
                         break;
                 }
         }
+}
+
+void
+print_locals(const struct exec_context *ctx, const struct funcframe *fp)
+{
+        const struct instance *inst = fp->instance;
+        const struct funcinst *finst = VEC_ELEM(inst->funcs, fp->funcidx);
+        const struct functype *ft = funcinst_functype(finst);
+        const struct func *func = funcinst_func(finst);
+        const struct resulttype *rt = &ft->parameter;
+        const struct localtype *lt = &func->localtype;
+        const struct cell *locals = frame_locals(ctx, fp);
+
+        print_params(locals, rt);
         uint32_t localstart = rt->ntypes;
         uint32_t localstartcidx = resulttype_cellsize(rt);
+        uint32_t i;
         for (i = 0; i < lt->nlocals; i++) {
                 uint32_t csz;
                 uint32_t cidx = localtype_cellidx(lt, i, &csz);
