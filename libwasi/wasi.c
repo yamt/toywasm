@@ -2813,7 +2813,6 @@ wasi_path_readlink(struct exec_context *ctx, struct host_instance *hi,
         uint32_t buf = HOST_FUNC_PARAM(ft, params, 3, i32);
         uint32_t buflen = HOST_FUNC_PARAM(ft, params, 4, i32);
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 5, i32);
-        void *tmpbuf = NULL;
         char *hostpath = NULL;
         char *wasmpath = NULL;
         int host_ret = 0;
@@ -2832,33 +2831,20 @@ wasi_path_readlink(struct exec_context *ctx, struct host_instance *hi,
          * > the link content, the first bufsize bytes shall be
          * > placed in buf.
          *
-         * However, for some reasons, wasmtime changed it to
-         * return ERANGE.
+         * For some reasons, wasmtime used to return ERANGE.
          * https://github.com/bytecodealliance/wasmtime/commit/222a57868e9c01baa838aa81e92a80451e2d920a
-         *
-         * I couldn't find any authoritative text about this in
-         * the WASI spec.
-         *
-         * Here we tries to detect the case using a bit larger
-         * buffer than requested and mimick the wasmtime behavior.
+         * However, it has been fixed.
+         * https://github.com/bytecodealliance/wasmtime/commit/24b607cf751930c51f2b6449cdfbf2e81dce1c31
          */
-        tmpbuf = malloc(buflen + 1);
-        if (tmpbuf == NULL) {
-                ret = ENOMEM;
+        void *p;
+        host_ret = memory_getptr(ctx, 0, buf, 0, buflen, &p);
+        if (host_ret != 0) {
                 goto fail;
         }
-        ssize_t ret1 = readlink(hostpath, tmpbuf, buflen + 1);
+        ssize_t ret1 = readlink(hostpath, p, buflen);
         if (ret1 == -1) {
                 ret = errno;
                 assert(ret > 0);
-                goto fail;
-        }
-        if (ret1 >= buflen + 1) {
-                ret = ERANGE;
-                goto fail;
-        }
-        host_ret = wasi_copyout(ctx, tmpbuf, buf, ret1, 1);
-        if (host_ret != 0) {
                 goto fail;
         }
         uint32_t result = le32_to_host(ret1);
@@ -2868,7 +2854,6 @@ wasi_path_readlink(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
 fail:
-        free(tmpbuf);
         free(hostpath);
         free(wasmpath);
         if (host_ret == 0) {
