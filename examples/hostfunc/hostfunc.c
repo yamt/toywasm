@@ -1,13 +1,23 @@
 #include <assert.h>
 #include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include <toywasm/cconv.h>
 #include <toywasm/cell.h>
 #include <toywasm/endian.h>
 #include <toywasm/exec_context.h>
+#include <toywasm/exec_debug.h>
 #include <toywasm/host_instance.h>
 #include <toywasm/restart.h>
+
+static void
+print_backtrace(const char *func, const struct exec_context *ctx)
+{
+        printf("===== start backtrace (%s) =====\n", func);
+        print_trace(ctx);
+        printf("===== end backtrace (%s) =======\n", func);
+}
 
 static int
 load(struct exec_context *ctx, uint32_t pp, uint32_t *resultp)
@@ -70,6 +80,8 @@ my_host_inst_load(struct exec_context *ctx, struct host_instance *hi,
         uint32_t pp = HOST_FUNC_PARAM(ft, params, 0, i32);
         int host_ret;
 
+        print_backtrace(__func__, ctx);
+
         uint32_t result;
         host_ret = load(ctx, pp, &result);
         if (host_ret == 0) {
@@ -87,6 +99,8 @@ my_host_inst_load_call(struct exec_context *ctx, struct host_instance *hi,
         HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t pp = HOST_FUNC_PARAM(ft, params, 0, i32);
         int host_ret;
+
+        print_backtrace(__func__, ctx);
 
         const struct funcinst *func;
         host_ret = load_func(ctx, ft, pp, &func);
@@ -130,6 +144,8 @@ my_host_inst_load_call_add(struct exec_context *ctx, struct host_instance *hi,
         uint32_t result;
         uint32_t sum = 0;
         uint32_t i;
+
+        print_backtrace(__func__, ctx);
 
         host_ret = restart_info_prealloc(ctx);
         if (host_ret != 0) {
