@@ -137,6 +137,19 @@ print_trace(const struct exec_context *ctx)
                         assert(fi->is_host);
                         printf("frame(host) %p %p\n", (const void *)fi,
                                (const void *)fi->u.host.func);
+                        const struct functype *ft = funcinst_functype(fi);
+                        const struct resulttype *rt = &ft->parameter;
+                        uint32_t stackidx;
+                        if (frameidx < ctx->frames.lsize) {
+                                const struct funcframe *fp =
+                                        &VEC_ELEM(ctx->frames, frameidx);
+                                stackidx = fp->height;
+                        } else {
+                                stackidx = ctx->stack.lsize;
+                        }
+                        const struct cell *stack = &VEC_ELEM(
+                                ctx->stack, stackidx - hf->stack_adj);
+                        print_params(stack, rt);
                         continue;
                 }
                 assert(frameidx > 0);
