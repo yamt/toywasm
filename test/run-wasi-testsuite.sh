@@ -7,7 +7,7 @@ DIR=.wasi-testsuite
 fetch() {
     REPO=https://github.com/WebAssembly/wasi-testsuite
     # prod/testsuite-all branch
-    REF=e77de76bc295c67e261ce673ffab38baf39a02e3
+    REF=a2dcdb3cd6418f5341f3749d70610f609d1eb064
     mkdir "${DIR}"
     git -C "${DIR}" init
     git -C "${DIR}" fetch --depth 1 ${REPO} ${REF}
