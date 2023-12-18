@@ -87,9 +87,3 @@ struct cell *frame_locals(const struct exec_context *ctx,
                           const struct funcframe *frame) __purefunc;
 
 uint32_t find_type_annotation(struct exec_context *ectx, const uint8_t *p);
-
-/* debug */
-void print_trace(const struct exec_context *ctx);
-void print_memory(const struct exec_context *ctx, const struct instance *inst,
-                  uint32_t memidx, uint32_t addr, uint32_t count);
-void print_pc(const struct exec_context *ctx);
