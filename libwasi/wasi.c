@@ -143,6 +143,13 @@ racy_fallocate(int fd, off_t offset, off_t size)
                 assert(ret > 0);
                 return ret;
         }
+        if (S_ISDIR(sb.st_mode)) {
+                /*
+                 * Note: wasmtime tests expects EBADF.
+                 * Why not EISDIR?
+                 */
+                return EBADF;
+        }
         if (sb.st_size >= newsize) {
                 return 0;
         }
@@ -170,6 +177,30 @@ readlink(const char *path, char *buf, size_t buflen)
         return -1;
 }
 #endif
+
+static int
+reject_directory(int hostfd)
+{
+        struct stat st;
+        int ret;
+
+        ret = fstat(hostfd, &st);
+        if (ret == -1) {
+                ret = errno;
+                assert(ret > 0);
+                goto fail;
+        }
+        if (S_ISDIR(st.st_mode)) {
+                /*
+                 * Note: wasmtime directory_seek.rs test expects EBADF.
+                 * Why not EISDIR?
+                 */
+                ret = EBADF;
+                goto fail;
+        }
+fail:
+        return ret;
+}
 
 static int
 wasi_copyin_iovec(struct exec_context *ctx, uint32_t iov_uaddr,
@@ -876,6 +907,10 @@ wasi_fd_filestat_set_size(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
+        /*
+         * Note: at least on macOS, ftruncate on a directory returns EINVAL,
+         * not EISDIR. POSIX doesn't list EISDIR for ftruncate either.
+         */
         xlog_trace("ftruncate wasifd %" PRIu32 " hostfd %d size %" PRIu64,
                    wasifd, hostfd, size);
         ret = ftruncate(hostfd, size);
@@ -1518,19 +1553,8 @@ wasi_fd_seek(struct exec_context *ctx, struct host_instance *hi,
                 ret = EINVAL;
                 goto fail;
         }
-        struct stat st;
-        ret = fstat(hostfd, &st);
-        if (ret == -1) {
-                ret = errno;
-                assert(ret > 0);
-                goto fail;
-        }
-        if (S_ISDIR(st.st_mode)) {
-                /*
-                 * Note: wasmtime directory_seek.rs test expects EBADF.
-                 * Why not EISDIR?
-                 */
-                ret = EBADF;
+        ret = reject_directory(hostfd);
+        if (ret != 0) {
                 goto fail;
         }
         off_t ret1 = lseek(hostfd, offset, hostwhence);
@@ -1587,19 +1611,8 @@ wasi_unstable_fd_seek(struct exec_context *ctx, struct host_instance *hi,
                 ret = EINVAL;
                 goto fail;
         }
-        struct stat st;
-        ret = fstat(hostfd, &st);
-        if (ret == -1) {
-                ret = errno;
-                assert(ret > 0);
-                goto fail;
-        }
-        if (S_ISDIR(st.st_mode)) {
-                /*
-                 * Note: wasmtime directory_seek.rs test expects EBADF.
-                 * Why not EISDIR?
-                 */
-                ret = EBADF;
+        ret = reject_directory(hostfd);
+        if (ret != 0) {
                 goto fail;
         }
         off_t ret1 = lseek(hostfd, offset, hostwhence);
@@ -1636,6 +1649,10 @@ wasi_fd_tell(struct exec_context *ctx, struct host_instance *hi,
         int host_ret = 0;
         int ret;
         ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
+        if (ret != 0) {
+                goto fail;
+        }
+        ret = reject_directory(hostfd);
         if (ret != 0) {
                 goto fail;
         }
