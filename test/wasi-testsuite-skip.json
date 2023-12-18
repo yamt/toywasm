@@ -1,5 +1,6 @@
 {
     "WASI Rust tests": {
+        "dir_fd_op_failures": "https://github.com/WebAssembly/wasi-testsuite/pull/97",
         "fd_fdstat_set_rights": "rights system not implemented.",
         "fd_filestat_get": "https://github.com/WebAssembly/wasi-testsuite/pull/59",
         "fd_filestat_set": "intentional limitations due to the use of legacy (non openat family) functions.",
