@@ -1,0 +1,5 @@
+{
+    "WASI C tests": {
+        "pwrite-with-append": "https://github.com/bytecodealliance/wasm-micro-runtime/issues/2828#issuecomment-1833122530"
+    }
+}
