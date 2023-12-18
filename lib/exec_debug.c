@@ -2,6 +2,7 @@
 
 #include "context.h"
 #include "exec.h"
+#include "exec_debug.h"
 #include "nbio.h"
 #include "type.h"
 #include "xlog.h"
