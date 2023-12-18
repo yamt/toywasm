@@ -63,6 +63,7 @@ set(lib_core_headers
 	"dylink_type.h"
 	"endian.h"
 	"exec_context.h"
+	"exec_debug.h"
 	"fileio.h"
 	"host_instance.h"
 	"idalloc.h"
