@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <inttypes.h>
 
 #include "context.h"
@@ -108,9 +109,32 @@ print_locals(const struct exec_context *ctx, const struct funcframe *fp)
 void
 print_trace(const struct exec_context *ctx)
 {
-        const struct funcframe *fp;
-        uint32_t i;
-        VEC_FOREACH_IDX(i, fp, ctx->frames) {
+        uint32_t frameidx = ctx->frames.lsize;
+        uint32_t restartidx = ctx->restarts.lsize;
+        uint32_t bottom = ctx->bottom;
+        while (true) {
+                if (frameidx == bottom) {
+                        if (restartidx == 0) {
+                                assert(bottom == 0);
+                                break;
+                        }
+                        restartidx--;
+                        const struct restart_info *restart =
+                                &VEC_ELEM(ctx->restarts, restartidx);
+                        assert(restart->restart_type == RESTART_HOSTFUNC);
+                        const struct restart_hostfunc *hf =
+                                &restart->restart_u.hostfunc;
+                        assert(bottom >= hf->saved_bottom);
+                        bottom = hf->saved_bottom;
+                        const struct funcinst *fi = hf->func;
+                        assert(fi->is_host);
+                        printf("frame(host) %p %p\n", (const void *)fi,
+                               (const void *)fi->u.host.func);
+                        continue;
+                }
+                assert(frameidx > 0);
+                frameidx--;
+                const struct funcframe *fp = &VEC_ELEM(ctx->frames, frameidx);
                 const struct instance *inst = fp->instance;
                 const struct funcinst *finst =
                         VEC_ELEM(inst->funcs, fp->funcidx);
@@ -125,13 +149,13 @@ print_trace(const struct exec_context *ctx)
                  */
                 uint32_t funcpc = ptr2pc(inst->module, func->e.start);
                 /* no callerpc for the first frame */
-                if (i == 0) {
-                        printf("frame[%3" PRIu32 "] funcpc %06" PRIx32 "\n", i,
-                               funcpc);
+                if (frameidx == 0) {
+                        printf("frame[%3" PRIu32 "] funcpc %06" PRIx32 "\n",
+                               frameidx, funcpc);
                 } else {
                         printf("frame[%3" PRIu32 "] funcpc %06" PRIx32
                                " callerpc %06" PRIx32 "\n",
-                               i, funcpc, fp->callerpc);
+                               frameidx, funcpc, fp->callerpc);
                 }
                 print_locals(ctx, fp);
         }
