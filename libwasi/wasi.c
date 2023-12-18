@@ -541,6 +541,9 @@ wasi_convert_errno(int host_errno)
         case ENOTEMPTY:
                 wasmerrno = 55;
                 break;
+        case ENOTSOCK:
+                wasmerrno = 57;
+                break;
         case ENOTSUP:
                 wasmerrno = 58;
                 break;
