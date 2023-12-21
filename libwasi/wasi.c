@@ -2859,7 +2859,6 @@ wasi_path_readlink(struct exec_context *ctx, struct host_instance *hi,
         uint32_t buf = HOST_FUNC_PARAM(ft, params, 3, i32);
         uint32_t buflen = HOST_FUNC_PARAM(ft, params, 4, i32);
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 5, i32);
-        void *tmpbuf = NULL;
         struct path_info pi = PATH_INITIALIZER;
         int host_ret = 0;
         int ret = 0;
