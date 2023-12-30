@@ -170,7 +170,8 @@ of the above example apps.
   build toywasm with it.
 
 * For NuttX, it's probably easiest to use [interpreters/toywasm in NuttX apps].
-  There are a few sample defconfig with toywasm enabled, including [sim:toywasm].
+  There are a few sample defconfig with toywasm enabled, including
+  [sim:toywasm] and [esp32s3-devkit:toywasm].
 
 ## How slow/fast is this?
 
@@ -235,3 +236,5 @@ of the above example apps.
 [interpreters/toywasm in NuttX apps]: https://github.com/apache/nuttx-apps/blob/master/interpreters/toywasm/Kconfig
 
 [sim:toywasm]: https://nuttx.apache.org/docs/latest/platforms/sim/sim/boards/sim/index.html#toywasm
+
+[esp32s3-devkit:toywasm]: https://nuttx.apache.org/docs/latest/platforms/xtensa/esp32s3/boards/esp32s3-devkit/index.html#toywasm
