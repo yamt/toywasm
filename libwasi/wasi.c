@@ -72,6 +72,7 @@
 #include "util.h"
 #include "vec.h"
 #include "wasi.h"
+#include "wasi_dirop.h"
 #include "wasi_impl.h"
 #include "xlog.h"
 
@@ -433,11 +434,6 @@ wasi_convert_dirent_filetype(uint8_t hosttype)
         }
         return t;
 }
-
-struct path_info {
-        char *hostpath;
-        char *wasmpath;
-};
 
 #define PATH_INITIALIZER                                                      \
         {                                                                     \
@@ -2644,7 +2640,7 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
          * wasmtime uses the default of the underlying library:
          * https://doc.rust-lang.org/nightly/std/os/unix/fs/trait.OpenOptionsExt.html#tymethod.mode
          */
-        hostfd = open(pi.hostpath, oflags | O_NONBLOCK, 0666);
+        hostfd = wasi_host_open(&pi, oflags | O_NONBLOCK, 0666);
         if (hostfd == -1) {
                 ret = errno;
                 assert(ret > 0);
@@ -2710,7 +2706,7 @@ wasi_path_unlink_file(struct exec_context *ctx, struct host_instance *hi,
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
-        ret = unlink(pi.hostpath);
+        ret = wasi_host_unlink(&pi);
         if (ret != 0) {
                 ret = errno;
                 assert(ret > 0);
@@ -2745,7 +2741,7 @@ wasi_path_create_directory(struct exec_context *ctx, struct host_instance *hi,
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
-        ret = mkdir(pi.hostpath, 0777);
+        ret = wasi_host_mkdir(&pi);
         if (ret != 0) {
                 ret = errno;
                 assert(ret > 0);
@@ -2780,7 +2776,7 @@ wasi_path_remove_directory(struct exec_context *ctx, struct host_instance *hi,
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
-        ret = rmdir(pi.hostpath);
+        ret = wasi_host_rmdir(&pi);
         if (ret != 0) {
                 ret = errno;
                 assert(ret > 0);
@@ -2828,7 +2824,7 @@ wasi_path_symlink(struct exec_context *ctx, struct host_instance *hi,
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
-        ret = symlink(target_buf, pi.hostpath);
+        ret = wasi_host_symlink(target_buf, &pi);
         if (ret != 0) {
                 ret = errno;
                 assert(ret > 0);
@@ -2885,7 +2881,7 @@ wasi_path_readlink(struct exec_context *ctx, struct host_instance *hi,
         if (host_ret != 0) {
                 goto fail;
         }
-        ssize_t ret1 = readlink(pi.hostpath, p, buflen);
+        ssize_t ret1 = wasi_host_readlink(&pi, p, buflen);
         if (ret1 == -1) {
                 ret = errno;
                 assert(ret > 0);
@@ -2945,7 +2941,7 @@ wasi_path_link(struct exec_context *ctx, struct host_instance *hi,
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
-        ret = link(pi1.hostpath, pi2.hostpath);
+        ret = wasi_host_link(&pi1, &pi2);
         if (ret == -1) {
                 ret = errno;
                 assert(ret > 0);
@@ -2990,7 +2986,7 @@ wasi_path_rename(struct exec_context *ctx, struct host_instance *hi,
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
-        ret = rename(pi1.hostpath, pi2.hostpath);
+        ret = wasi_host_rename(&pi1, &pi2);
         if (ret == -1) {
                 ret = errno;
                 assert(ret > 0);
@@ -3030,9 +3026,9 @@ wasi_path_filestat_get(struct exec_context *ctx, struct host_instance *hi,
         }
         struct stat hst;
         if ((lookupflags & WASI_LOOKUPFLAG_SYMLINK_FOLLOW) != 0) {
-                ret = stat(pi.hostpath, &hst);
+                ret = wasi_host_stat(&pi, &hst);
         } else {
-                ret = lstat(pi.hostpath, &hst);
+                ret = wasi_host_lstat(&pi, &hst);
         }
         if (ret == -1) {
                 ret = errno;
@@ -3078,9 +3074,9 @@ wasi_unstable_path_filestat_get(struct exec_context *ctx,
         }
         struct stat hst;
         if ((lookupflags & WASI_LOOKUPFLAG_SYMLINK_FOLLOW) != 0) {
-                ret = stat(pi.hostpath, &hst);
+                ret = wasi_host_stat(&pi, &hst);
         } else {
-                ret = lstat(pi.hostpath, &hst);
+                ret = wasi_host_lstat(&pi, &hst);
         }
         if (ret == -1) {
                 ret = errno;
@@ -3136,10 +3132,10 @@ wasi_path_filestat_set_times(struct exec_context *ctx,
                 errno = ENOSYS;
                 ret = -1;
 #else
-                ret = utimes(pi.hostpath, tvp);
+                ret = wasi_host_utimes(&pi, tvp);
 #endif
         } else {
-                ret = lutimes(pi.hostpath, tvp);
+                ret = wasi_host_lutimes(&pi, tvp);
         }
         if (ret == -1) {
                 ret = errno;
