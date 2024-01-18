@@ -88,28 +88,6 @@
  */
 
 static int
-lutimes(const char *path, const struct timeval *tvp)
-{
-#if defined(TOYWASM_OLD_WASI_LIBC)
-        errno = ENOSYS;
-        return -1;
-#else
-        struct timespec ts[2];
-        const struct timespec *tsp;
-        if (tvp != NULL) {
-                ts[0].tv_sec = tvp[0].tv_sec;
-                ts[0].tv_nsec = tvp[0].tv_usec * 1000;
-                ts[1].tv_sec = tvp[1].tv_sec;
-                ts[1].tv_nsec = tvp[1].tv_usec * 1000;
-                tsp = ts;
-        } else {
-                tsp = NULL;
-        }
-        return utimensat(AT_FDCWD, path, tsp, AT_SYMLINK_NOFOLLOW);
-#endif
-}
-
-static int
 futimes(int fd, const struct timeval *tvp)
 {
         struct timespec ts[2];
@@ -160,22 +138,6 @@ racy_fallocate(int fd, off_t offset, off_t size)
                 assert(ret > 0);
         }
         return ret;
-}
-#endif
-
-#if defined(__NuttX__) && !defined(CONFIG_PSEUDOFS_SOFTLINKS)
-int
-symlink(const char *path1, const char *path2)
-{
-        errno = ENOSYS;
-        return -1;
-}
-
-ssize_t
-readlink(const char *path, char *buf, size_t buflen)
-{
-        errno = ENOSYS;
-        return -1;
 }
 #endif
 
@@ -3128,12 +3090,7 @@ wasi_path_filestat_set_times(struct exec_context *ctx,
                 goto fail;
         }
         if ((lookupflags & WASI_LOOKUPFLAG_SYMLINK_FOLLOW) != 0) {
-#if defined(TOYWASM_OLD_WASI_LIBC)
-                errno = ENOSYS;
-                ret = -1;
-#else
                 ret = wasi_host_utimes(&pi, tvp);
-#endif
         } else {
                 ret = wasi_host_lutimes(&pi, tvp);
         }
