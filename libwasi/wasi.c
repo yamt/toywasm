@@ -73,97 +73,9 @@
 #include "vec.h"
 #include "wasi.h"
 #include "wasi_dirop.h"
+#include "wasi_fdop.h"
 #include "wasi_impl.h"
 #include "xlog.h"
-
-#if defined(__wasi__)
-#if !defined(AT_FDCWD)
-/* a workaroud for wasi-sdk-8.0 which we use for wapm */
-#define TOYWASM_OLD_WASI_LIBC
-#endif
-
-/*
- * For some reasons, wasi-libc doesn't have legacy stuff enabled.
- * It includes lutimes and futimes.
- */
-
-static int
-futimes(int fd, const struct timeval *tvp)
-{
-        struct timespec ts[2];
-        const struct timespec *tsp;
-        if (tvp != NULL) {
-                ts[0].tv_sec = tvp[0].tv_sec;
-                ts[0].tv_nsec = tvp[0].tv_usec * 1000;
-                ts[1].tv_sec = tvp[1].tv_sec;
-                ts[1].tv_nsec = tvp[1].tv_usec * 1000;
-                tsp = ts;
-        } else {
-                tsp = NULL;
-        }
-        return futimens(fd, tsp);
-}
-#endif
-
-#if defined(__APPLE__)
-static int
-racy_fallocate(int fd, off_t offset, off_t size)
-{
-        struct stat sb;
-        int ret;
-
-        off_t newsize = offset + size;
-        if (newsize < offset) {
-                return EOVERFLOW;
-        }
-        ret = fstat(fd, &sb);
-        if (ret != 0) {
-                ret = errno;
-                assert(ret > 0);
-                return ret;
-        }
-        if (S_ISDIR(sb.st_mode)) {
-                /*
-                 * Note: wasmtime tests expects EBADF.
-                 * Why not EISDIR?
-                 */
-                return EBADF;
-        }
-        if (sb.st_size >= newsize) {
-                return 0;
-        }
-        ret = ftruncate(fd, newsize);
-        if (ret != 0) {
-                ret = errno;
-                assert(ret > 0);
-        }
-        return ret;
-}
-#endif
-
-static int
-reject_directory(int hostfd)
-{
-        struct stat st;
-        int ret;
-
-        ret = fstat(hostfd, &st);
-        if (ret == -1) {
-                ret = errno;
-                assert(ret > 0);
-                goto fail;
-        }
-        if (S_ISDIR(st.st_mode)) {
-                /*
-                 * Note: wasmtime directory_seek.rs test expects EBADF.
-                 * Why not EISDIR?
-                 */
-                ret = EBADF;
-                goto fail;
-        }
-fail:
-        return ret;
-}
 
 static int
 wasi_copyin_iovec(struct exec_context *ctx, uint32_t iov_uaddr,
@@ -831,12 +743,11 @@ wasi_fd_advise(struct exec_context *ctx, struct host_instance *hi,
         uint32_t adv = HOST_FUNC_PARAM(ft, params, 3, i32);
 #endif
         struct wasi_fdinfo *fdinfo;
-        int hostfd;
         int ret;
 #if defined(__GNUC__) && !defined(__clang__)
         fdinfo = NULL;
 #endif
-        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
+        ret = wasi_userfd_lookup(wasi, wasifd, &fdinfo);
         if (ret != 0) {
                 goto fail;
         }
@@ -861,24 +772,15 @@ wasi_fd_allocate(struct exec_context *ctx, struct host_instance *hi,
         uint64_t offset = HOST_FUNC_PARAM(ft, params, 1, i64);
         uint64_t len = HOST_FUNC_PARAM(ft, params, 2, i64);
         struct wasi_fdinfo *fdinfo;
-        int hostfd;
         int ret;
 #if defined(__GNUC__) && !defined(__clang__)
         fdinfo = NULL;
 #endif
-        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
+        ret = wasi_userfd_lookup(wasi, wasifd, &fdinfo);
         if (ret != 0) {
                 goto fail;
         }
-        /*
-         * macOS doesn't have posix_fallocate
-         * cf. https://github.com/WebAssembly/wasi-filesystem/issues/19
-         */
-#if defined(__APPLE__)
-        ret = racy_fallocate(hostfd, offset, len);
-#else
-        ret = posix_fallocate(hostfd, offset, len);
-#endif
+        ret = wasi_userfd_fallocate(fdinfo, offset, len);
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
@@ -897,12 +799,11 @@ wasi_fd_filestat_set_size(struct exec_context *ctx, struct host_instance *hi,
         uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         uint64_t size = HOST_FUNC_PARAM(ft, params, 1, i64);
         struct wasi_fdinfo *fdinfo;
-        int hostfd;
         int ret;
 #if defined(__GNUC__) && !defined(__clang__)
         fdinfo = NULL;
 #endif
-        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
+        ret = wasi_userfd_lookup(wasi, wasifd, &fdinfo);
         if (ret != 0) {
                 goto fail;
         }
@@ -910,9 +811,8 @@ wasi_fd_filestat_set_size(struct exec_context *ctx, struct host_instance *hi,
          * Note: at least on macOS, ftruncate on a directory returns EINVAL,
          * not EISDIR. POSIX doesn't list EISDIR for ftruncate either.
          */
-        xlog_trace("ftruncate wasifd %" PRIu32 " hostfd %d size %" PRIu64,
-                   wasifd, hostfd, size);
-        ret = ftruncate(hostfd, size);
+        xlog_trace("ftruncate wasifd %" PRIu32 " size %" PRIu64, wasifd, size);
+        ret = wasi_userfd_ftruncate(fdinfo, size);
         if (ret == -1) {
                 ret = errno;
                 assert(ret > 0);
@@ -999,14 +899,13 @@ wasi_fd_write(struct exec_context *ctx, struct host_instance *hi,
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 3, i32);
         struct iovec *hostiov = NULL;
         struct wasi_fdinfo *fdinfo = NULL;
-        int hostfd;
         int host_ret = 0;
         int ret;
         if (iov_count > INT_MAX) {
                 ret = EOVERFLOW;
                 goto fail;
         }
-        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
+        ret = wasi_userfd_lookup(wasi, wasifd, &fdinfo);
         if (ret != 0) {
                 goto fail;
         }
@@ -1016,7 +915,7 @@ wasi_fd_write(struct exec_context *ctx, struct host_instance *hi,
         }
         ssize_t n;
 retry:
-        n = writev(hostfd, hostiov, iov_count);
+        n = wasi_userfd_writev(fdinfo, hostiov, iov_count);
         if (n == -1) {
                 ret = errno;
                 assert(ret > 0);
@@ -1062,14 +961,13 @@ wasi_fd_pwrite(struct exec_context *ctx, struct host_instance *hi,
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 4, i32);
         struct iovec *hostiov = NULL;
         struct wasi_fdinfo *fdinfo = NULL;
-        int hostfd;
         int host_ret = 0;
         int ret;
         if (iov_count > INT_MAX) {
                 ret = EOVERFLOW;
                 goto fail;
         }
-        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
+        ret = wasi_userfd_lookup(wasi, wasifd, &fdinfo);
         if (ret != 0) {
                 goto fail;
         }
@@ -1079,7 +977,7 @@ wasi_fd_pwrite(struct exec_context *ctx, struct host_instance *hi,
         }
         ssize_t n;
 retry:
-        n = pwritev(hostfd, hostiov, iov_count, offset);
+        n = wasi_userfd_pwritev(fdinfo, hostiov, iov_count, offset);
         if (n == -1) {
                 ret = errno;
                 assert(ret > 0);
@@ -1124,14 +1022,13 @@ wasi_fd_read(struct exec_context *ctx, struct host_instance *hi,
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 3, i32);
         struct iovec *hostiov = NULL;
         struct wasi_fdinfo *fdinfo = NULL;
-        int hostfd;
         int host_ret = 0;
         int ret;
         if (iov_count > INT_MAX) {
                 ret = EOVERFLOW;
                 goto fail;
         }
-        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
+        ret = wasi_userfd_lookup(wasi, wasifd, &fdinfo);
         if (ret != 0) {
                 goto fail;
         }
@@ -1142,12 +1039,12 @@ wasi_fd_read(struct exec_context *ctx, struct host_instance *hi,
         ssize_t n;
 
         /* hack for tty. see the comment in wasi_instance_create. */
-        if ((fcntl(hostfd, F_GETFL, 0) & O_NONBLOCK) == 0) {
+        if ((wasi_userfd_fcntl(fdinfo, F_GETFL, 0) & O_NONBLOCK) == 0) {
                 ret = EAGAIN;
                 goto tty_hack;
         }
 retry:
-        n = readv(hostfd, hostiov, iov_count);
+        n = wasi_userfd_readv(fdinfo, hostiov, iov_count);
         if (n == -1) {
                 ret = errno;
                 assert(ret > 0);
@@ -1194,14 +1091,13 @@ wasi_fd_pread(struct exec_context *ctx, struct host_instance *hi,
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 4, i32);
         struct iovec *hostiov = NULL;
         struct wasi_fdinfo *fdinfo = NULL;
-        int hostfd;
         int host_ret = 0;
         int ret;
         if (iov_count > INT_MAX) {
                 ret = EOVERFLOW;
                 goto fail;
         }
-        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
+        ret = wasi_userfd_lookup(wasi, wasifd, &fdinfo);
         if (ret != 0) {
                 goto fail;
         }
@@ -1211,7 +1107,7 @@ wasi_fd_pread(struct exec_context *ctx, struct host_instance *hi,
         }
         ssize_t n;
 retry:
-        n = preadv(hostfd, hostiov, iov_count, offset);
+        n = wasi_userfd_preadv(fdinfo, hostiov, iov_count, offset);
         if (n == -1) {
                 ret = errno;
                 assert(ret > 0);
@@ -1256,10 +1152,9 @@ wasi_fd_readdir(struct exec_context *ctx, struct host_instance *hi,
         uint64_t cookie = HOST_FUNC_PARAM(ft, params, 3, i64);
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 4, i32);
         struct wasi_fdinfo *fdinfo = NULL;
-        int hostfd;
         int host_ret = 0;
         int ret;
-        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
+        ret = wasi_userfd_lookup(wasi, wasifd, &fdinfo);
         if (ret != 0) {
                 goto fail;
         }
@@ -1267,7 +1162,7 @@ wasi_fd_readdir(struct exec_context *ctx, struct host_instance *hi,
         DIR *dir = fdinfo->u.u_user.dir;
         if (dir == NULL) {
                 xlog_trace("fd_readdir: fdopendir");
-                dir = fdopendir(hostfd);
+                dir = wasi_userfd_fdopendir(fdinfo);
                 if (dir == NULL) {
                         ret = errno;
                         assert(ret > 0);
@@ -1383,15 +1278,14 @@ wasi_fd_fdstat_get(struct exec_context *ctx, struct host_instance *hi,
                 st.fs_filetype = WASI_FILETYPE_DIRECTORY;
         } else {
                 struct stat stat;
-                int hostfd = fdinfo->u.u_user.hostfd;
-                ret = fstat(hostfd, &stat);
+                ret = wasi_userfd_fstat(fdinfo, &stat);
                 if (ret != 0) {
                         ret = errno;
                         assert(ret > 0);
                         goto fail;
                 }
                 st.fs_filetype = wasi_convert_filetype(stat.st_mode);
-                int flags = fcntl(hostfd, F_GETFL, 0);
+                int flags = wasi_userfd_fcntl(fdinfo, F_GETFL, 0);
                 if (!fdinfo->blocking) {
                         st.fs_flags |= WASI_FDFLAG_NONBLOCK;
                 }
@@ -1535,10 +1429,9 @@ wasi_fd_seek(struct exec_context *ctx, struct host_instance *hi,
         uint32_t whence = HOST_FUNC_PARAM(ft, params, 2, i32);
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 3, i32);
         struct wasi_fdinfo *fdinfo = NULL;
-        int hostfd;
         int host_ret = 0;
         int ret;
-        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
+        ret = wasi_userfd_lookup(wasi, wasifd, &fdinfo);
         if (ret != 0) {
                 goto fail;
         }
@@ -1557,11 +1450,11 @@ wasi_fd_seek(struct exec_context *ctx, struct host_instance *hi,
                 ret = EINVAL;
                 goto fail;
         }
-        ret = reject_directory(hostfd);
+        ret = wasi_userfd_reject_directory(fdinfo);
         if (ret != 0) {
                 goto fail;
         }
-        off_t ret1 = lseek(hostfd, offset, hostwhence);
+        off_t ret1 = wasi_userfd_lseek(fdinfo, offset, hostwhence);
         if (ret1 == -1) {
                 ret = errno;
                 assert(ret > 0);
@@ -1593,10 +1486,9 @@ wasi_unstable_fd_seek(struct exec_context *ctx, struct host_instance *hi,
         uint32_t whence = HOST_FUNC_PARAM(ft, params, 2, i32);
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 3, i32);
         struct wasi_fdinfo *fdinfo = NULL;
-        int hostfd;
         int host_ret = 0;
         int ret;
-        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
+        ret = wasi_userfd_lookup(wasi, wasifd, &fdinfo);
         if (ret != 0) {
                 goto fail;
         }
@@ -1615,11 +1507,11 @@ wasi_unstable_fd_seek(struct exec_context *ctx, struct host_instance *hi,
                 ret = EINVAL;
                 goto fail;
         }
-        ret = reject_directory(hostfd);
+        ret = wasi_userfd_reject_directory(fdinfo);
         if (ret != 0) {
                 goto fail;
         }
-        off_t ret1 = lseek(hostfd, offset, hostwhence);
+        off_t ret1 = wasi_userfd_lseek(fdinfo, offset, hostwhence);
         if (ret1 == -1) {
                 ret = errno;
                 assert(ret > 0);
@@ -1649,18 +1541,17 @@ wasi_fd_tell(struct exec_context *ctx, struct host_instance *hi,
         uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 1, i32);
         struct wasi_fdinfo *fdinfo = NULL;
-        int hostfd;
         int host_ret = 0;
         int ret;
-        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
+        ret = wasi_userfd_lookup(wasi, wasifd, &fdinfo);
         if (ret != 0) {
                 goto fail;
         }
-        ret = reject_directory(hostfd);
+        ret = wasi_userfd_reject_directory(fdinfo);
         if (ret != 0) {
                 goto fail;
         }
-        off_t ret1 = lseek(hostfd, 0, SEEK_CUR);
+        off_t ret1 = wasi_userfd_lseek(fdinfo, 0, SEEK_CUR);
         if (ret1 == -1) {
                 ret = errno;
                 assert(ret > 0);
@@ -1689,13 +1580,12 @@ wasi_fd_sync(struct exec_context *ctx, struct host_instance *hi,
         HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         struct wasi_fdinfo *fdinfo = NULL;
-        int hostfd;
         int ret;
-        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
+        ret = wasi_userfd_lookup(wasi, wasifd, &fdinfo);
         if (ret != 0) {
                 goto fail;
         }
-        ret = fsync(hostfd);
+        ret = wasi_userfd_fsync(fdinfo);
         if (ret == -1) {
                 ret = errno;
                 assert(ret > 0);
@@ -1708,10 +1598,6 @@ fail:
         return 0;
 }
 
-#if defined(__APPLE__)
-/* macOS doesn't have fdatasync */
-#define wasi_fd_datasync wasi_fd_sync
-#else
 static int
 wasi_fd_datasync(struct exec_context *ctx, struct host_instance *hi,
                  const struct functype *ft, const struct cell *params,
@@ -1722,13 +1608,12 @@ wasi_fd_datasync(struct exec_context *ctx, struct host_instance *hi,
         HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         struct wasi_fdinfo *fdinfo = NULL;
-        int hostfd;
         int ret;
-        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
+        ret = wasi_userfd_lookup(wasi, wasifd, &fdinfo);
         if (ret != 0) {
                 goto fail;
         }
-        ret = fdatasync(hostfd);
+        ret = wasi_userfd_fdatasync(fdinfo);
         if (ret == -1) {
                 ret = errno;
                 assert(ret > 0);
@@ -1740,7 +1625,6 @@ fail:
         HOST_FUNC_FREE_CONVERTED_PARAMS();
         return 0;
 }
-#endif
 
 static int
 wasi_fd_renumber(struct exec_context *ctx, struct host_instance *hi,
@@ -1836,15 +1720,14 @@ wasi_fd_filestat_get(struct exec_context *ctx, struct host_instance *hi,
         uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 1, i32);
         struct wasi_fdinfo *fdinfo = NULL;
-        int hostfd;
         int host_ret = 0;
         int ret;
-        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
+        ret = wasi_userfd_lookup(wasi, wasifd, &fdinfo);
         if (ret != 0) {
                 goto fail;
         }
         struct stat hst;
-        ret = fstat(hostfd, &hst);
+        ret = wasi_userfd_fstat(fdinfo, &hst);
         if (ret == -1) {
                 ret = errno;
                 assert(ret > 0);
@@ -1876,15 +1759,14 @@ wasi_unstable_fd_filestat_get(struct exec_context *ctx,
         uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 1, i32);
         struct wasi_fdinfo *fdinfo = NULL;
-        int hostfd;
         int host_ret = 0;
         int ret;
-        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
+        ret = wasi_userfd_lookup(wasi, wasifd, &fdinfo);
         if (ret != 0) {
                 goto fail;
         }
         struct stat hst;
-        ret = fstat(hostfd, &hst);
+        ret = wasi_userfd_fstat(fdinfo, &hst);
         if (ret == -1) {
                 ret = errno;
                 assert(ret > 0);
@@ -1917,9 +1799,8 @@ wasi_fd_filestat_set_times(struct exec_context *ctx, struct host_instance *hi,
         uint64_t mtim = HOST_FUNC_PARAM(ft, params, 2, i64);
         uint32_t fstflags = HOST_FUNC_PARAM(ft, params, 3, i32);
         struct wasi_fdinfo *fdinfo = NULL;
-        int hostfd;
         int ret;
-        ret = wasi_hostfd_lookup(wasi, wasifd, &hostfd, &fdinfo);
+        ret = wasi_userfd_lookup(wasi, wasifd, &fdinfo);
         if (ret != 0) {
                 goto fail;
         }
@@ -1929,7 +1810,7 @@ wasi_fd_filestat_set_times(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        ret = futimes(hostfd, tvp);
+        ret = wasi_userfd_futimes(fdinfo, tvp);
         if (ret == -1) {
                 ret = errno;
                 assert(ret > 0);

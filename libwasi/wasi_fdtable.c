@@ -210,6 +210,20 @@ wasi_hostfd_lookup(struct wasi_instance *wasi, uint32_t wasifd, int *hostfdp,
                    struct wasi_fdinfo **fdinfop)
 {
         struct wasi_fdinfo *info;
+        int ret = wasi_userfd_lookup(wasi, wasifd, &info);
+        if (ret != 0) {
+                return ret;
+        }
+        *hostfdp = info->u.u_user.hostfd;
+        *fdinfop = info;
+        return 0;
+}
+
+int
+wasi_userfd_lookup(struct wasi_instance *wasi, uint32_t wasifd,
+                   struct wasi_fdinfo **fdinfop)
+{
+        struct wasi_fdinfo *info;
         int ret = wasi_fd_lookup(wasi, wasifd, &info);
         if (ret != 0) {
                 return ret;
@@ -219,7 +233,6 @@ wasi_hostfd_lookup(struct wasi_instance *wasi, uint32_t wasifd, int *hostfdp,
                 return EBADF;
         }
         assert(info->u.u_user.hostfd != -1);
-        *hostfdp = info->u.u_user.hostfd;
         *fdinfop = info;
         return 0;
 }

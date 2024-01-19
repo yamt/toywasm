@@ -98,6 +98,8 @@ int wasi_fd_lookup_locked_for_close(struct exec_context *ctx,
         REQUIRES(wasi->lock);
 int wasi_hostfd_lookup(struct wasi_instance *wasi, uint32_t wasifd,
                        int *hostfdp, struct wasi_fdinfo **fdinfop);
+int wasi_userfd_lookup(struct wasi_instance *wasi, uint32_t wasifd,
+                       struct wasi_fdinfo **fdinfop);
 int wasi_fdtable_expand(struct wasi_instance *wasi, uint32_t maxfd)
         REQUIRES(wasi->lock);
 void wasi_fdtable_free(struct wasi_instance *wasi);
