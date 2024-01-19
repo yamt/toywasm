@@ -4,6 +4,7 @@ set(lib_wasi_sources
 	"wasi.c"
 	"wasi_fdtable.c"
 	"wasi_host_dirop.c"
+	"wasi_host_fdop.c"
 )
 
 if(TOYWASM_ENABLE_WASI_THREADS)
