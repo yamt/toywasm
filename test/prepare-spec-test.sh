@@ -57,9 +57,9 @@ fetch_spec .spec-extended-const https://github.com/WebAssembly/extended-const dd
 -name "data.wast" -o \
 -name "global.wast") | compile extended-const
 
-fetch_spec .spec-exception-handling https://github.com/WebAssembly/exception-handling d12346cf9a10ddeeef0fcf0c08819755e1a4ac4a
-(cd .spec-exception-handling && find test \
--name "try_catch.wast" -o \
--name "try_delegate.wast" -o \
--name "throw.wast" -o \
--name "rethrow.wast") | compile exception-handling
+#fetch_spec .spec-exception-handling https://github.com/WebAssembly/exception-handling d12346cf9a10ddeeef0fcf0c08819755e1a4ac4a
+#(cd .spec-exception-handling && find test \
+#-name "try_catch.wast" -o \
+#-name "try_delegate.wast" -o \
+#-name "throw.wast" -o \
+#-name "rethrow.wast") | compile exception-handling
