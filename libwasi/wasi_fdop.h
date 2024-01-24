@@ -25,3 +25,4 @@ off_t wasi_userfd_lseek(struct wasi_fdinfo *fdinfo, off_t offset, int whence);
 int wasi_userfd_fsync(struct wasi_fdinfo *fdinfo);
 int wasi_userfd_fdatasync(struct wasi_fdinfo *fdinfo);
 int wasi_userfd_futimes(struct wasi_fdinfo *fdinfo, const struct timeval *tvp);
+int wasi_userfd_close(struct wasi_fdinfo *fdinfo);

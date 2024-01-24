@@ -133,36 +133,6 @@ fail:
         return host_ret;
 }
 
-static int
-wasi_fdinfo_close_user(struct wasi_fdinfo *fdinfo)
-{
-        assert(fdinfo->type == WASI_FDINFO_USER);
-        int ret = 0;
-        int hostfd = fdinfo->u.u_user.hostfd;
-#if defined(__wasi__) /* wasi has no dup */
-        if (hostfd != -1 && hostfd >= 3) {
-#else
-        if (hostfd != -1) {
-#endif
-                ret = close(hostfd);
-                if (ret != 0) {
-                        ret = errno;
-                        assert(ret > 0);
-                        xlog_trace("failed to close: host fd %" PRIu32
-                                   " with errno %d",
-                                   hostfd, ret);
-                }
-        }
-        free(fdinfo->u.u_user.path);
-        if (fdinfo->u.u_user.dir != NULL) {
-                closedir(fdinfo->u.u_user.dir);
-        }
-        fdinfo->u.u_user.hostfd = -1;
-        fdinfo->u.u_user.path = NULL;
-        fdinfo->u.u_user.dir = NULL;
-        return ret;
-}
-
 int
 wasi_fdinfo_close(struct wasi_fdinfo *fdinfo)
 {
@@ -175,7 +145,7 @@ wasi_fdinfo_close(struct wasi_fdinfo *fdinfo)
                 fdinfo->u.u_prestat.wasm_path = NULL;
                 break;
         case WASI_FDINFO_USER:
-                ret = wasi_fdinfo_close_user(fdinfo);
+                ret = wasi_userfd_close(fdinfo);
                 break;
         case WASI_FDINFO_UNUSED:
                 break;
