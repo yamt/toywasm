@@ -14,6 +14,8 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <inttypes.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #include "wasi_fdop.h"
@@ -224,4 +226,34 @@ wasi_userfd_futimes(struct wasi_fdinfo *fdinfo, const struct timeval *tvp)
 {
         int hostfd = fdinfo_hostfd(fdinfo);
         return futimes(hostfd, tvp);
+}
+
+int
+wasi_userfd_close(struct wasi_fdinfo *fdinfo)
+{
+        assert(fdinfo->type == WASI_FDINFO_USER);
+        int ret = 0;
+        int hostfd = fdinfo->u.u_user.hostfd;
+#if defined(__wasi__) /* wasi has no dup */
+        if (hostfd != -1 && hostfd >= 3) {
+#else
+        if (hostfd != -1) {
+#endif
+                ret = close(hostfd);
+                if (ret != 0) {
+                        ret = errno;
+                        assert(ret > 0);
+                        xlog_trace("failed to close: host fd %" PRIu32
+                                   " with errno %d",
+                                   hostfd, ret);
+                }
+        }
+        free(fdinfo->u.u_user.path);
+        if (fdinfo->u.u_user.dir != NULL) {
+                closedir(fdinfo->u.u_user.dir);
+        }
+        fdinfo->u.u_user.hostfd = -1;
+        fdinfo->u.u_user.path = NULL;
+        fdinfo->u.u_user.dir = NULL;
+        return ret;
 }
