@@ -181,7 +181,7 @@ read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
 #endif
         xlog_trace("code size %zu, jump table size %zu, max labels %" PRIu32
                    ", cells %" PRIu32,
-                   expr->end - expr->start, ei->njumps * sizeof(*ei->jumps),
+                   p - expr->start, ei->njumps * sizeof(*ei->jumps),
                    ei->maxlabels, ei->maxcells);
         validation_context_reuse(vctx);
         return 0;
