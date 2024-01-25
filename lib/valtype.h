@@ -12,6 +12,7 @@ enum valtype {
         TYPE_v128 = 0x7b,
 
         /* reftype */
+        TYPE_EXNREF = 0x69,
         TYPE_FUNCREF = 0x70,
         TYPE_EXTERNREF = 0x6f,
 

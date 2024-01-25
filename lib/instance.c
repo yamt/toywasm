@@ -134,7 +134,7 @@ static int
 check_tagtype(const struct import_object_entry *e, const void *vp)
 {
         const struct functype *ft = vp;
-        assert(e->type == IMPORT_TAG);
+        assert(e->type == EXTERNTYPE_TAG);
         const struct taginst *tag_imported = e->u.tag;
         const struct functype *ft_imported = taginst_functype(tag_imported);
         if (!compare_functype(ft, ft_imported)) {
@@ -238,6 +238,29 @@ global_instance_destroy(struct globalinst *gi)
 }
 
 int
+tag_instance_create(struct taginst **tip, const struct functype *ft)
+{
+        struct taginst *ti;
+        int ret;
+        ti = zalloc(sizeof(*ti));
+        if (ti == NULL) {
+                ret = ENOMEM;
+                goto fail;
+        }
+        ti->type = ft;
+        *tip = ti;
+        ret = 0;
+fail:
+        return ret;
+}
+
+void
+tag_instance_destroy(struct taginst *ti)
+{
+        free(ti);
+}
+
+int
 table_instance_create(struct tableinst **tip, const struct tabletype *tt)
 {
         struct tableinst *tinst;
@@ -317,6 +340,9 @@ resolve_imports(struct instance *inst, const struct import_object *imports,
         uint32_t memidx = 0;
         uint32_t globalidx = 0;
         uint32_t tableidx = 0;
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+        uint32_t tagidx = 0;
+#endif
         for (i = 0; i < m->nimports; i++) {
                 const struct import *im = &m->imports[i];
                 const struct importdesc *imd = &im->desc;
@@ -344,6 +370,12 @@ resolve_imports(struct instance *inst, const struct import_object *imports,
                         check = check_globaltype;
                         type = &imd->u.globaltype;
                         break;
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+                case EXTERNTYPE_TAG:
+                        check = check_tagtype;
+                        type = &m->types[imd->u.tagtype.typeidx];
+                        break;
+#endif
                 default:
                         assert(false);
                 }
@@ -371,12 +403,21 @@ resolve_imports(struct instance *inst, const struct import_object *imports,
                         VEC_ELEM(inst->globals, globalidx) = e->u.global;
                         globalidx++;
                         break;
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+                case EXTERNTYPE_TAG:
+                        VEC_ELEM(inst->tags, tagidx) = e->u.tag;
+                        tagidx++;
+                        break;
                 }
+#endif
         }
         assert(funcidx == m->nimportedfuncs);
         assert(tableidx == m->nimportedtables);
         assert(memidx == m->nimportedmems);
         assert(globalidx == m->nimportedglobals);
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+        assert(tagidx == m->nimportedtags);
+#endif
 
         return 0;
 fail:
@@ -419,6 +460,13 @@ instance_create_no_init(const struct module *m, struct instance **instp,
         if (ret != 0) {
                 goto fail;
         }
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+        uint32_t ntags = m->nimportedtags + m->ntags;
+        ret = VEC_RESIZE(inst->tags, ntags);
+        if (ret != 0) {
+                goto fail;
+        }
+#endif
 
         ret = resolve_imports(inst, imports, report);
         if (ret != 0) {
@@ -468,32 +516,13 @@ instance_create_no_init(const struct module *m, struct instance **instp,
         }
 
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
-        uint32_t ntags = m->nimportedtags + m->ntags;
-        ret = VEC_RESIZE(inst->tags, ntags);
-        if (ret != 0) {
-                goto fail;
-        }
-        for (i = 0; i < ntags; i++) {
+        for (i = m->nimportedtags; i < ntags; i++) {
                 struct taginst *tinst;
-                const struct functype *ft = module_tagtype(m, i);
-                if (i < m->nimportedtags) {
-                        const struct import_object_entry *e;
-                        ret = find_import_entry(m, IMPORT_TAG, i, imports,
-                                                check_tagtype, ft, &e, report);
-                        if (ret != 0) {
-                                goto fail;
-                        }
-                        assert(e->type == IMPORT_TAG);
-                        tinst = e->u.tag;
-                        assert(tinst != NULL);
-                } else {
-                        tinst = zalloc(sizeof(*tinst));
-                        if (tinst == NULL) {
-                                ret = ENOMEM;
-                                goto fail;
-                        }
-                        tinst->module = m;
-                        tinst->tagidx = i;
+                const struct tagtype *tt = module_tagtype(m, i);
+                const struct functype *ft = module_tagtype_functype(m, tt);
+                ret = tag_instance_create(&tinst, ft);
+                if (ret != 0) {
+                        goto fail;
                 }
                 VEC_ELEM(inst->tags, i) = tinst;
         }
@@ -631,11 +660,11 @@ instance_destroy(struct instance *inst)
         VEC_FREE(inst->tables);
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
         struct taginst **tagp;
-        VEC_FOREACH(tagp, inst->tags) {
+        VEC_FOREACH_IDX(i, tagp, inst->tags) {
                 if (i < m->nimportedtags) {
                         continue;
                 }
-                free(*tp);
+                tag_instance_destroy(*tagp);
         }
         VEC_FREE(inst->tags);
 #endif

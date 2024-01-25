@@ -122,6 +122,9 @@
         READ_IMM(uint32_t, VAR, read_leb_u32(&p, ep, &VAR),                   \
                  read_leb_u32_nocheck(&p))
 
+#define READ_LEB_U32_TO(VAR)                                                  \
+        READ_IMM_TO(VAR, read_leb_u32(&p, ep, &VAR), read_leb_u32_nocheck(&p))
+
 #define READ_LEB_I32(VAR)                                                     \
         READ_IMM(uint32_t, VAR, read_leb_i32(&p, ep, &VAR),                   \
                  read_leb_i32_nocheck(&p))

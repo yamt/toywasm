@@ -503,8 +503,8 @@ fail:
 
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
 static int
-read_tag(const uint8_t **pp, const uint8_t *ep, uint32_t idx, struct tag *tag,
-         void *vctx)
+read_tagtype(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
+             struct tagtype *tag, void *vctx)
 {
         struct load_context *ctx = vctx;
         const uint8_t *p = *pp;
@@ -591,7 +591,7 @@ read_importdesc(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
                 break;
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
         case 0x04: /* tag */
-                ret = read_tag(&p, ep, 0, &desc->u.tag, ctx);
+                ret = read_tagtype(&p, ep, 0, &desc->u.tagtype, ctx);
                 if (ret != 0) {
                         goto fail;
                 }
@@ -672,7 +672,7 @@ read_exportdesc(const uint8_t **pp, const uint8_t *ep, struct exportdesc *desc,
                 }
                 break;
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
-        case EXPORT_TAG:
+        case EXTERNTYPE_TAG:
                 if (desc->idx >= m->nimportedtags + m->ntags) {
                         ret = EINVAL;
                         goto fail;
@@ -1617,7 +1617,7 @@ fail:
 
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
 static void
-clear_tag(struct tag *tag)
+clear_tagtype(struct tagtype *tag)
 {
 }
 
@@ -1629,8 +1629,8 @@ read_tag_section(const uint8_t **pp, const uint8_t *ep,
         const uint8_t *p = *pp;
         int ret;
 
-        ret = read_vec_with_ctx(&p, ep, sizeof(*m->tags), read_tag, clear_tag,
-                                ctx, &m->ntags, &m->tags);
+        ret = read_vec_with_ctx(&p, ep, sizeof(*m->tags), read_tagtype,
+                                clear_tagtype, ctx, &m->ntags, &m->tags);
         if (ret != 0) {
                 goto fail;
         }

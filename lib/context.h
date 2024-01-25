@@ -14,16 +14,21 @@ enum ctrlframe_op {
         FRAME_OP_LOOP = 0x03,
         FRAME_OP_IF = 0x04,
         FRAME_OP_ELSE = 0x05,
-        FRAME_OP_TRY = 0x06,
-        FRAME_OP_CATCH = 0x07,
-        FRAME_OP_CATCH_ALL = 0x19,
 
         FRAME_OP_END = 0x0b,
-        FRAME_OP_DELEGATE = 0x18,
+
+        FRAME_OP_TRY_TABLE = 0x1f,
 
         /* pseudo op */
         FRAME_OP_EMPTY_ELSE = 0xfe,
         FRAME_OP_INVOKE = 0xff,
+};
+
+enum try_handler_tag {
+        CATCH = 0x00,
+        CATCH_REF = 0x01,
+        CATCH_ALL = 0x02,
+        CATCH_ALL_REF = 0x03,
 };
 
 struct context {

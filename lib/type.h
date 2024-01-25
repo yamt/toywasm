@@ -267,8 +267,9 @@ struct tabletype {
         struct limits lim;
 };
 
-struct tag {
-        uint32_t typeidx;
+struct tagtype {
+        /* at this point, there is only one type, TAG_TYPE_exception */
+        uint32_t typeidx; /* func type index */
 };
 
 enum externtype {
@@ -288,7 +289,7 @@ struct importdesc {
                 struct memtype memtype;
                 struct tabletype tabletype;
                 struct globaltype globaltype;
-                struct tag tag;
+                struct tagtype tagtype;
         } u;
 };
 
@@ -413,7 +414,7 @@ struct module {
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
         uint32_t nimportedtags;
         uint32_t ntags;
-        struct tag *tags;
+        struct tagtype *tags;
 #endif
 
         uint32_t nelems;
@@ -510,8 +511,7 @@ struct tableinst {
  * should behave the same as ones from two identical modules.
  */
 struct taginst {
-        const struct module *module;
-        uint32_t tagidx;
+        const struct functype *type;
 };
 
 struct instance {
@@ -597,7 +597,9 @@ const struct memtype *module_memtype(const struct module *m, uint32_t idx);
 const struct tabletype *module_tabletype(const struct module *m, uint32_t idx);
 const struct globaltype *module_globaltype(const struct module *m,
                                            uint32_t idx);
-const struct functype *module_tagtype(const struct module *m, uint32_t idx);
+const struct tagtype *module_tagtype(const struct module *m, uint32_t idx);
+const struct functype *module_tagtype_functype(const struct module *m,
+                                               const struct tagtype *tt);
 
 const struct functype *funcinst_functype(const struct funcinst *fi);
 const struct functype *taginst_functype(const struct taginst *ti);

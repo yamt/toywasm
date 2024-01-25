@@ -37,6 +37,7 @@ bool
 is_reftype(enum valtype vt)
 {
         switch (vt) {
+        case TYPE_EXNREF:
         case TYPE_FUNCREF:
         case TYPE_EXTERNREF:
                 return true;
@@ -175,18 +176,24 @@ module_globaltype(const struct module *m, uint32_t idx)
 }
 
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
-const struct functype *
+const struct tagtype *
 module_tagtype(const struct module *m, uint32_t idx)
 {
-        const struct tag *tag;
-        if (idx < m->nimportedfuncs) {
-                tag = &module_find_importdesc(m, IMPORT_TAG, idx)->u.tag;
-        } else {
-                tag = &m->tags[idx - m->nimportedfuncs];
+        if (idx < m->nimportedtags) {
+                return &module_find_importdesc(m, EXTERNTYPE_TAG, idx)
+                                ->u.tagtype;
         }
-        uint32_t functypeidx = tag->typeidx;
+        return &m->tags[idx - m->nimportedtags];
+}
+
+const struct functype *
+module_tagtype_functype(const struct module *m, const struct tagtype *tt)
+{
+        uint32_t functypeidx = tt->typeidx;
         assert(functypeidx < m->ntypes);
-        return &m->types[functypeidx];
+        const struct functype *ft = &m->types[functypeidx];
+        assert(ft->result.ntypes == 0);
+        return ft;
 }
 #endif
 
@@ -204,7 +211,7 @@ funcinst_functype(const struct funcinst *fi)
 const struct functype *
 taginst_functype(const struct taginst *ti)
 {
-        return module_tagtype(ti->module, ti->tagidx);
+        return ti->type;
 }
 #endif
 
