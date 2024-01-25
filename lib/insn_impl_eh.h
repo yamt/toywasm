@@ -134,6 +134,7 @@ INSN_IMPL(throw)
         READ_LEB_U32(tagidx);
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
+                /* schedule_exception(ectx, tagidx); */
                 const struct instance *inst = ectx->instance;
                 const struct module *m = inst->module;
                 const struct tagtype *tt = module_tagtype(m, tagidx);
