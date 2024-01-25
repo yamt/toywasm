@@ -12,7 +12,26 @@ INSN_IMPL(try_table)
         READ_LEB_S33(blocktype);
         READ_LEB_U32(vec_count);
         if (EXECUTING) {
-                ret = ENOTSUP;
+                /* skip catch clauses */
+                uint32_t i;
+                for (i = 0; i < vec_count; i++) {
+                        uint32_t tagidx;
+                        READ_U8(catch_op);
+                        switch (catch_op) {
+                        case CATCH_REF:
+                        case CATCH:
+                                READ_LEB_U32_TO(tagidx);
+                                break;
+                        case CATCH_ALL_REF:
+                        case CATCH_ALL:
+                                break;
+                        default:
+                                assert(false);
+                        }
+                        READ_LEB_U32(labelidx);
+                }
+                /* same as block */
+                push_label(ORIG_PC, STACK, ECTX);
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
                 struct module *m = vctx->module;
