@@ -534,6 +534,14 @@ read_tagtype(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
                 ret = EINVAL;
                 goto fail;
         }
+        uint32_t csz = resulttype_cellsize(&ft->parameter);
+        if (csz > TOYWASM_EXCEPTION_MAX_CELLS) {
+                report_error(&ctx->report,
+                             "too big exception %" PRIu32 " > %" PRIu32, csz,
+                             (uint32_t)TOYWASM_EXCEPTION_MAX_CELLS);
+                ret = ENOTSUP;
+                goto fail;
+        }
         tag->typeidx = typeidx;
         ret = 0;
         *pp = p;
