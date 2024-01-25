@@ -161,8 +161,9 @@ read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
                 if (vctx->cframes.lsize == 0) {
                         break;
                 }
-                xlog_trace_insn("inst %s ctrls.size %" PRIu32 " ctrls[0].height %" PRIu32 ": vals.size %" PRIu32
-                                " -> %" PRIu32,
+                xlog_trace_insn("inst %s ctrls.size %" PRIu32
+                                " ctrls[0].height %" PRIu32
+                                ": vals.size %" PRIu32 " -> %" PRIu32,
                                 desc->name, vctx->cframes.lsize,
                                 VEC_LASTELEM(vctx->cframes).height, orig_n,
                                 vctx->valtypes.lsize);
