@@ -148,9 +148,9 @@ push_ctrlframe(uint32_t pc, enum ctrlframe_op op, uint32_t jumpslot,
         struct ctrlframe *cframe;
         int ret;
 
-        xlog_trace_insn("push_ctrlframe (op %02x) %u %u", (unsigned int)op,
+        xlog_trace_insn("push_ctrlframe (op %02x) start_types.size %" PRIu32 " end_types.size %" PRIu32 " vals.size %" PRIu32, (unsigned int)op,
                         start_types != NULL ? start_types->ntypes : 0,
-                        end_types->ntypes);
+                        end_types->ntypes, ctx->valtypes.lsize);
         struct expr_exec_info *ei = ctx->ei;
         uint32_t nslots = 1;
         /*
