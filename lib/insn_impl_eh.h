@@ -128,11 +128,26 @@ fail:
 INSN_IMPL(throw)
 {
         int ret;
+        struct exception *exc = NULL;
 
         LOAD_PC;
         READ_LEB_U32(tagidx);
         if (EXECUTING) {
-                return ENOTSUP;
+                struct exec_context *ectx = ECTX;
+                const struct instance *inst = ectx->instance;
+                const struct module *m = inst->module;
+                const struct tagtype *tt = module_tagtype(m, tagidx);
+                const struct functype *ft = module_tagtype_functype(m, tt);
+                const struct resulttype *rt = &ft->parameter;
+                exc = malloc(sizeof(*exc));
+                if (exc == NULL) {
+                        ret = ENOMEM;
+                        goto fail;
+                }
+                const struct taginst *taginst = VEC_ELEM(inst->tags, tagidx);
+                exc->tag = taginst;
+                uint32_t csz = resulttype_cellsize(rt);
+                cells_copy(exc->cells, STACK - csz, csz);
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
                 const struct module *m = vctx->module;
@@ -153,6 +168,7 @@ INSN_IMPL(throw)
         SAVE_PC;
         INSN_SUCCESS_RETURN;
 fail:
+        free(exc);
         INSN_FAIL;
 }
 

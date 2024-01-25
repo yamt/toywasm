@@ -498,6 +498,7 @@ struct tableinst {
         const struct tabletype *type;
 };
 
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
 /*
  * A note about tag identity
  *
@@ -513,6 +514,17 @@ struct tableinst {
 struct taginst {
         const struct functype *type;
 };
+
+#if !defined(TOYWASM_USE_SMALL_CELLS)
+#error TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING w/o TOYWASM_USE_SMALL_CELLS is not implemented
+#endif
+#define TOYWASM_EXCEPTION_MAX_CELLS 4
+/* Note: the type of exc->cells is taginst_functype(exc->tag)->parameter */
+struct exception {
+        const struct taginst *tag;
+        struct cell cells[TOYWASM_EXCEPTION_MAX_CELLS];
+};
+#endif
 
 struct instance {
         const struct module *module;
