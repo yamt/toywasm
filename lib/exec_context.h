@@ -98,6 +98,9 @@ enum exec_event {
 #if defined(TOYWASM_ENABLE_WASM_TAILCALL)
         EXEC_EVENT_RETURN_CALL,
 #endif /* defined(TOYWASM_ENABLE_WASM_TAILCALL) */
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+        EXEC_EVENT_EXCEPTION,
+#endif /* defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING) */
 };
 
 enum restart_type {
@@ -280,6 +283,11 @@ struct exec_context {
                                        struct context *ctx);
 #endif
                 } restart_insn;
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+                struct {
+                        uint32_t tagidx;
+                } exception;
+#endif
         } event_u;
 
         /* Restart */
