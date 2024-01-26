@@ -570,6 +570,10 @@ jump_cache2_store(struct exec_context *ctx, uint32_t blockpc, bool goto_else,
 }
 #endif
 
+/*
+ * in case of goto_else=true, returns true if it was a jump inside a block.
+ * otherwise always returns false.
+ */
 static bool
 block_exit(struct exec_context *ctx, uint32_t blockpc, bool goto_else,
            uint32_t *param_arityp, uint32_t *arityp)
@@ -665,6 +669,10 @@ block_exit(struct exec_context *ctx, uint32_t blockpc, bool goto_else,
         return false;
 }
 
+/*
+ * a cached version of block_exit.
+ * the parameters and return values are same as block_exit.
+ */
 static bool
 cached_block_exit(struct exec_context *ctx, uint32_t blockpc, bool goto_else,
                   uint32_t *param_arityp, uint32_t *arityp)
