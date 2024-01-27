@@ -528,7 +528,7 @@ find_catch(const struct exec_context *ctx, const struct taginst *taginst,
                         frameidx--;
                 } while (true);
                 assert(labelidx >= frame->labelidx);
-                assert(labelidx < labelheight - frame->labelidx);
+                assert(labelidx < labelheight);
                 const struct instance *inst = frame->instance;
                 const struct module *m = inst->module;
                 const struct label *l = &VEC_ELEM(ctx->labels, labelidx);
