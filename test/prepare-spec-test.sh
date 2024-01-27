@@ -57,6 +57,8 @@ fetch_spec .spec-extended-const https://github.com/WebAssembly/extended-const dd
 -name "data.wast" -o \
 -name "global.wast") | compile extended-const
 
+# REVISIT: wabt (wast2json) doesn't implement the latest exception-handling
+# yet. https://github.com/WebAssembly/wabt/issues/2348
 #fetch_spec .spec-exception-handling https://github.com/WebAssembly/exception-handling d12346cf9a10ddeeef0fcf0c08819755e1a4ac4a
 #(cd .spec-exception-handling && find test \
 #-name "try_catch.wast" -o \
