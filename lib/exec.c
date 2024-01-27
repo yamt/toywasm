@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <errno.h>
 #include <inttypes.h>
 #include <stdalign.h>
 #include <stdlib.h>
@@ -139,6 +140,10 @@ set_current_frame(struct exec_context *ctx, const struct funcframe *frame,
         ctx->current_locals = frame_locals(ctx, frame);
 #endif
 }
+
+static bool branch_to_label(struct exec_context *ctx, uint32_t labelidx,
+                            bool goto_else, uint32_t *heightp,
+                            uint32_t *arityp);
 
 /*
  * https://webassembly.github.io/spec/core/exec/instructions.html#function-calls
@@ -481,6 +486,175 @@ do_return_call(struct exec_context *ctx, const struct funcinst *finst)
         return do_call(ctx, finst);
 }
 #endif /* defined(TOYWASM_ENABLE_WASM_TAILCALL) */
+
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+static int
+compare_taginst(const struct taginst *a, const struct taginst *b)
+{
+        /*
+         * Note: in this implementation, tag equality is same as
+         * pointer equality of taginst.
+         */
+        return a != b;
+}
+
+static int
+find_catch(struct exec_context *ctx, const struct taginst *taginst,
+           uint32_t *frameidxp, uint32_t *labelidxp)
+{
+        /* TODO: reject or support host frames */
+        assert(ctx->frames.lsize > 0);
+        uint32_t frameidx = ctx->frames.lsize - 1;
+        uint32_t catch_labelidx;
+        uint32_t i;
+        const struct funcframe *frame;
+        for (i = 0; i < ctx->labels.lsize; i++) {
+                uint32_t labelidx = ctx->labels.lsize - i - 1;
+                do {
+                        frame = &VEC_ELEM(ctx->frames, frameidx);
+                        if (frame->labelidx <= labelidx) {
+                                break;
+                        }
+                        assert(frameidx > 0);
+                        frameidx--;
+                } while (true);
+                const struct instance *inst = frame->instance;
+                const struct module *m = inst->module;
+                const struct label *l = &VEC_ELEM(ctx->labels, labelidx);
+                uint32_t blockpc = l->pc;
+                xlog_trace_insn("%s: looking at frame %" PRIu32
+                                " label %" PRIu32 " pc %06" PRIx32,
+                                __func__, frameidx, labelidx, blockpc);
+                const uint8_t *const blockp = pc2ptr(m, blockpc);
+                const uint8_t *p = blockp;
+                const uint8_t op = *p++;
+                if (op != FRAME_OP_TRY_TABLE) {
+                        xlog_trace_insn("%s: not a try-table", __func__);
+                        continue;
+                }
+                /* const int64_t blocktype = */ read_leb_s33_nocheck(&p);
+                const uint32_t vec_count = read_leb_u32_nocheck(&p);
+                xlog_trace_insn("%s: try-table with %" PRIu32
+                                " catch clause(s)",
+                                __func__, vec_count);
+                uint32_t j;
+                for (j = 0; j < vec_count; j++) {
+                        xlog_trace_insn(
+                                "%s: looking at catch at pc %06" PRIx32,
+                                __func__, ptr2pc(m, p));
+                        const uint8_t catch_op = *p++;
+                        uint32_t catch_tagidx;
+                        const struct taginst *catch_taginst = NULL;
+                        switch (catch_op) {
+                        case CATCH_REF:
+                        case CATCH:
+                                catch_tagidx = read_leb_u32_nocheck(&p);
+                                assert(catch_tagidx <
+                                       m->nimportedtags + m->ntags);
+                                catch_taginst =
+                                        VEC_ELEM(inst->tags, catch_tagidx);
+                                break;
+                        case CATCH_ALL_REF:
+                        case CATCH_ALL:
+                        default:
+                                assert(false);
+                        }
+                        uint32_t catch_label = read_leb_u32_nocheck(&p);
+                        /*
+                         * convert to the absolute label index
+                         * labelidx here is of try_table block.
+                         */
+                        assert(catch_label < labelidx - frame->labelidx);
+                        catch_labelidx = labelidx - catch_label - 1;
+                        assert(frame->labelidx <= catch_labelidx);
+                        if (catch_taginst == NULL) {
+                                goto found;
+                        }
+                        if (!compare_taginst(catch_taginst, taginst)) {
+                                goto found;
+                        }
+                }
+        }
+        /* not found */
+        return ENOENT;
+
+found:
+        *frameidxp = frameidx;
+        *labelidxp = catch_labelidx;
+        return 0;
+}
+
+static int
+do_exception(struct exec_context *ctx, uint32_t tagidx)
+{
+        xlog_trace_insn("%s: tag [%" PRIu32 "]", __func__, tagidx);
+        const struct instance *inst = ctx->instance;
+        const struct taginst *taginst = VEC_ELEM(inst->tags, tagidx);
+
+        /* find the matching catch clause */
+        uint32_t frameidx;
+        uint32_t labelidx;
+        int ret = find_catch(ctx, taginst, &frameidx, &labelidx);
+        if (ret != 0) {
+                xlog_trace_insn("%s: no catch clause found for tag [%" PRIu32
+                                "]",
+                                __func__, tagidx);
+                return trap_with_id(ctx, TRAP_UNCAUGHT_EXCEPTION,
+                                    "uncaught exception [%" PRIu32 "]",
+                                    tagidx);
+        }
+        xlog_trace_insn("%s: a catch clause found at frame %" PRIu32
+                        " label %" PRIu32 " for tag [%" PRIu32 "]",
+                        __func__, frameidx, labelidx, tagidx);
+
+        /* create an exception */
+        const struct functype *ft = taginst_functype(taginst);
+        const struct resulttype *rt = &ft->parameter;
+        struct exception *exc = malloc(sizeof(*exc));
+        if (exc == NULL) {
+                return ENOMEM;
+        }
+        exc->tag = taginst;
+        uint32_t csz = resulttype_cellsize(rt);
+        /* copy the values from the top of the stack */
+        assert(csz <= TOYWASM_EXCEPTION_MAX_CELLS);
+        struct cell *stack = &VEC_NEXTELEM(ctx->stack);
+        cells_copy(exc->cells, stack - csz, csz);
+
+        /* rewind the frames */
+        while (frameidx + 1 < ctx->frames.lsize) {
+                struct funcframe *frame = &VEC_LASTELEM(ctx->frames);
+                frame_exit(ctx);
+                frame_clear(frame);
+        }
+        assert(frameidx + 1 == ctx->frames.lsize);
+        /* jump to the label */
+        uint32_t height;
+        uint32_t arity;
+        assert(labelidx < ctx->labels.lsize);
+        /* convert the absolute label index to a relative one */
+        labelidx = ctx->labels.lsize - labelidx - 1;
+        bool in_block = branch_to_label(ctx, labelidx, false, &height, &arity);
+        assert(!in_block);
+
+        /*
+         * rewind the operand stack similarly to rewind_stack.
+         * but use the values from the exception.
+         */
+        xlog_trace_insn("%s: rewinding operand stack: height %" PRIu32
+                        " -> %" PRIu32,
+                        __func__, ctx->stack.lsize, height);
+        xlog_trace_insn("%s: csz %" PRIu32, __func__, csz);
+        assert(arity == csz);
+        stack = &VEC_ELEM(ctx->stack, height);
+        cells_copy(stack, exc->cells, csz);
+        ctx->stack.lsize = height + arity;
+        xlog_trace_insn("%s: copied csz %" PRIu32, __func__, csz);
+
+        free(exc);
+        return 0;
+}
+#endif /* defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING) */
 
 /*
  * a bit shrinked version of get_functype_for_blocktype.
@@ -1017,6 +1191,14 @@ exec_expr_continue(struct exec_context *ctx)
                         }
                         break;
 #endif /* defined(TOYWASM_ENABLE_WASM_TAILCALL) */
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+                case EXEC_EVENT_EXCEPTION:
+                        ret = do_exception(ctx, ctx->event_u.exception.tagidx);
+                        if (ret != 0) {
+                                return ret;
+                        }
+                        break;
+#endif /* defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING) */
                 case EXEC_EVENT_CALL:
                         ret = do_call(ctx, ctx->event_u.call.func);
                         if (ret != 0) {
