@@ -166,6 +166,12 @@ struct exception {
         struct cell cells[TOYWASM_EXCEPTION_MAX_CELLS];
         const struct taginst *tag;
 };
+ctassert_offset(struct exception, cells, 0);
+/*
+ * a complex way to say (struct cell *)&exc->tag avoiding UBSAN complaints.
+ */
+#define exception_tag_ptr(exc)                                                \
+        ((uint8_t *)(exc) + toywasm_offsetof(struct exception, tag))
 #endif /* defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING) */
 
 /*

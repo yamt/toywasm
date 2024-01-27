@@ -612,7 +612,7 @@ do_exception(struct exec_context *ctx)
 
         const struct taginst *taginst;
         /* Note: use memcpy as exc might be misaligned */
-        memcpy(&taginst, &exc->tag, sizeof(taginst));
+        memcpy(&taginst, exception_tag_ptr(exc), sizeof(taginst));
         xlog_trace_insn("%s: taginst %p", __func__, (const void *)taginst);
 
         /*
