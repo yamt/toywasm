@@ -31,18 +31,24 @@
     end
     unreachable
   )
-  (func $f (param i32 i64) (result i32 i64)
+  (func $id (param i32 i64) (result i32 i64) (local $tmp exnref)
     local.get 0
     call $wrap-e1
     call $unwrap-e1
     local.get 1
     call $wrap-e2
+    local.set $tmp
+    i32.const 0
+    local.get $tmp
+    table.set $table
+    i32.const 0
+    table.get $table
     call $unwrap-e2
   )
   (func (export "_start")
     i32.const 1234
     i64.const 0x4444_3333_2222_1111
-    call $f
+    call $id
     i64.const 0x4444_3333_2222_1111
     i64.ne
     if
@@ -54,4 +60,5 @@
       unreachable
     end
   )
+  (table $table 1 1 exnref)
 )
