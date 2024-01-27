@@ -52,7 +52,8 @@ stack_push_val(const struct exec_context *ctx, const struct val *val,
                                 le64_to_host(val->u.v128.i64[0]));
                 break;
         default:
-                assert(false);
+                xlog_trace_insn("stack push csz=%" PRIu32, csz);
+                break;
         }
         val_to_cells(val, *stackp, csz);
         *stackp += csz;
@@ -80,7 +81,8 @@ stack_pop_val(const struct exec_context *ctx, struct val *val,
                                 le64_to_host(val->u.v128.i64[0]));
                 break;
         default:
-                assert(false);
+                xlog_trace_insn("stack pop  csz=%" PRIu32, csz);
+                break;
         }
 }
 #endif

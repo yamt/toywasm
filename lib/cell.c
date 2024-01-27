@@ -27,12 +27,12 @@ valtype_cellsize(enum valtype t)
 #endif
         case TYPE_FUNCREF:
         case TYPE_EXTERNREF:
-                sz = sizeof(void *) / sizeof(struct cell);
+                sz = EXTERNREF_NCELLS;
                 assert(sizeof(void *) == sz * sizeof(struct cell));
                 break;
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
         case TYPE_EXNREF:
-                sz = HOWMANY(sizeof(struct exception), sizeof(struct cell));
+                sz = EXNREF_NCELLS;
                 assert(sizeof(struct exception) <= sz * sizeof(struct cell));
                 break;
 #endif
@@ -231,7 +231,6 @@ void
 val_to_cells(const struct val *val, struct cell *cells, uint32_t ncells)
 {
         assert(ncells <= ARRAYCOUNT(val->u.cells));
-        assert(ncells == 1 || ncells == 2 || ncells == 4);
         cells_copy(cells, val->u.cells, ncells);
 }
 
@@ -239,7 +238,6 @@ void
 val_from_cells(struct val *val, const struct cell *cells, uint32_t ncells)
 {
         assert(ncells <= ARRAYCOUNT(val->u.cells));
-        assert(ncells == 1 || ncells == 2 || ncells == 4);
         cells_copy(val->u.cells, cells, ncells);
 }
 
