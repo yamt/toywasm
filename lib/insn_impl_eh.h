@@ -165,7 +165,7 @@ INSN_IMPL(throw_ref)
 
         LOAD_PC;
         if (EXECUTING) {
-                return ENOTSUP;
+                schedule_exception(ECTX);
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
                 enum valtype t;
