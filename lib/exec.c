@@ -506,12 +506,13 @@ compare_taginst(const struct taginst *a, const struct taginst *b)
  */
 static int
 find_catch(const struct exec_context *ctx, const struct taginst *taginst,
-           uint32_t *frameidxp, uint32_t *labelidxp)
+           uint32_t *frameidxp, uint32_t *labelidxp, bool *allp)
 {
         /* TODO: reject or support host frames */
         assert(ctx->frames.lsize > 0);
         uint32_t frameidx = ctx->frames.lsize - 1;
         uint32_t catch_labelidx;
+        bool all;
         uint32_t i;
         const struct funcframe *frame;
         for (i = 0; i < ctx->labels.lsize; i++) {
@@ -562,6 +563,7 @@ find_catch(const struct exec_context *ctx, const struct taginst *taginst,
                                 break;
                         case CATCH_ALL_REF:
                         case CATCH_ALL:
+                                break;
                         default:
                                 assert(false);
                         }
@@ -574,9 +576,11 @@ find_catch(const struct exec_context *ctx, const struct taginst *taginst,
                         catch_labelidx = labelidx - catch_label - 1;
                         assert(frame->labelidx <= catch_labelidx);
                         if (catch_taginst == NULL) {
+                                all = true;
                                 goto found;
                         }
                         if (!compare_taginst(catch_taginst, taginst)) {
+                                all = false;
                                 goto found;
                         }
                 }
@@ -587,6 +591,7 @@ find_catch(const struct exec_context *ctx, const struct taginst *taginst,
 found:
         *frameidxp = frameidx;
         *labelidxp = catch_labelidx;
+        *allp = all;
         return 0;
 }
 
@@ -614,7 +619,8 @@ do_exception(struct exec_context *ctx)
          */
         uint32_t frameidx;
         uint32_t labelidx;
-        int ret = find_catch(ctx, taginst, &frameidx, &labelidx);
+        bool all;
+        int ret = find_catch(ctx, taginst, &frameidx, &labelidx, &all);
         if (ret != 0) {
                 xlog_trace_insn("%s: no catch clause found for tag", __func__);
                 return trap_with_id(ctx, TRAP_UNCAUGHT_EXCEPTION,
@@ -649,15 +655,20 @@ do_exception(struct exec_context *ctx)
         xlog_trace_insn("%s: rewinding operand stack: height %" PRIu32
                         " -> %" PRIu32,
                         __func__, ctx->stack.lsize, height);
-        const struct functype *ft = taginst_functype(taginst);
-        const struct resulttype *rt = &ft->parameter;
-        uint32_t csz = resulttype_cellsize(rt);
-
+        uint32_t csz;
+        if (all) {
+                csz = 0;
+        } else {
+                const struct functype *ft = taginst_functype(taginst);
+                const struct resulttype *rt = &ft->parameter;
+                csz = resulttype_cellsize(rt);
+        }
         xlog_trace_insn("%s: csz %" PRIu32, __func__, csz);
         if (arity != csz) {
-                /* arity != csz here means catch_ref/catch_all_ref. */
+                /* arity != csz here means catch_ref/catch_ref_all. */
                 assert(arity == csz + exnref_csz);
         }
+
         /*
          * Note: we use cells_move here as src and dst can overlap.
          */
