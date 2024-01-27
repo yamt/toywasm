@@ -445,6 +445,16 @@ schedule_return_call(struct exec_context *ectx, const struct funcinst *fi)
 }
 #endif
 
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+static void
+schedule_exception(struct exec_context *ectx, uint32_t tagidx)
+{
+        xlog_trace_insn("%s: tag [%" PRIu32 "]", __func__, tagidx);
+        ectx->event_u.exception.tagidx = tagidx;
+        ectx->event = EXEC_EVENT_EXCEPTION;
+}
+#endif
+
 /*
  * LOAD_PC: prepare PC on the entry of the function.
  *
