@@ -237,6 +237,7 @@ global_instance_destroy(struct globalinst *gi)
         free(gi);
 }
 
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
 int
 tag_instance_create(struct taginst **tip, const struct functype *ft)
 {
@@ -259,6 +260,7 @@ tag_instance_destroy(struct taginst *ti)
 {
         free(ti);
 }
+#endif
 
 int
 table_instance_create(struct tableinst **tip, const struct tabletype *tt)
@@ -408,8 +410,8 @@ resolve_imports(struct instance *inst, const struct import_object *imports,
                         VEC_ELEM(inst->tags, tagidx) = e->u.tag;
                         tagidx++;
                         break;
-                }
 #endif
+                }
         }
         assert(funcidx == m->nimportedfuncs);
         assert(tableidx == m->nimportedtables);

@@ -30,10 +30,12 @@ valtype_cellsize(enum valtype t)
                 sz = sizeof(void *) / sizeof(struct cell);
                 assert(sizeof(void *) == sz * sizeof(struct cell));
                 break;
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
         case TYPE_EXNREF:
                 sz = HOWMANY(sizeof(struct exception), sizeof(struct cell));
                 assert(sizeof(struct exception) <= sz * sizeof(struct cell));
                 break;
+#endif
         default:
                 xassert(false);
                 sz = 0;
