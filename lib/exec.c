@@ -498,8 +498,14 @@ compare_taginst(const struct taginst *a, const struct taginst *b)
         return a != b;
 }
 
+/*
+ * find_catch: find the matching exception handler for the given taginst.
+ *
+ * At this point, we avoid modifying exec_context so that we can give
+ * a better diagnostic on uncaught exception.
+ */
 static int
-find_catch(struct exec_context *ctx, const struct taginst *taginst,
+find_catch(const struct exec_context *ctx, const struct taginst *taginst,
            uint32_t *frameidxp, uint32_t *labelidxp)
 {
         /* TODO: reject or support host frames */
