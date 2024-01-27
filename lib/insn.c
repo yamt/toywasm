@@ -487,10 +487,9 @@ push_exception(struct exec_context *ectx, uint32_t tagidx,
         struct exception *exc = (void *)cells;
         assert((const uint8_t *)(exc + 1) <=
                (const uint8_t *)&VEC_NEXTELEM(ectx->stack));
-        assert(cells == exc->cells);
         const struct taginst *taginst = VEC_ELEM(ectx->instance->tags, tagidx);
         /* Note: use memcpy as exc might be misaligned */
-        memcpy(&exc->tag, &taginst, sizeof(taginst));
+        memcpy(exception_tag_ptr(exc), &taginst, sizeof(taginst));
         return 0;
 }
 
