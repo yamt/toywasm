@@ -175,6 +175,27 @@ ctassert_offset(struct exception, cells, 0);
 #endif /* defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING) */
 
 /*
+ * calculate how many cells we need in struct val.
+ */
+#if defined(TOYWASM_USE_SMALL_CELLS)
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+#define EXNREF_NCELLS HOWMANY(sizeof(struct exception), sizeof(struct cell))
+#else
+#define EXNREF_NCELLS 0
+#endif
+#define EXTERNREF_NCELLS HOWMANY(sizeof(void *), sizeof(struct cell))
+#if defined(TOYWASM_ENABLE_WASM_SIMD)
+#define VALTYPE_NCELLS 4
+#else
+#define VALTYPE_NCELLS 2
+#endif
+#define _MAX(a, b) ((a > b) ? a : b)
+#define VAL_NCELLS _MAX(_MAX(EXNREF_NCELLS, EXTERNREF_NCELLS), VALTYPE_NCELLS)
+#else /* defined(TOYWASM_USE_SMALL_CELLS) */
+#define VAL_NCELLS 1
+#endif /* defined(TOYWASM_USE_SMALL_CELLS) */
+
+/*
  * a value on operand stack, locals, etc.
  *
  * This fixed-sized representation allows simpler code
@@ -195,15 +216,6 @@ struct val {
 #endif
                 struct funcref funcref;
                 void *externref;
-#if defined(TOYWASM_USE_SMALL_CELLS)
-#if defined(TOYWASM_ENABLE_WASM_SIMD)
-                struct cell cells[4];
-#else
-                struct cell cells[2];
-#endif
-#else
-                struct cell cells[1];
-#endif
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
                 /*
                  * Note: Because we don't have GC, we implement exnref as
@@ -211,15 +223,10 @@ struct val {
                  */
                 struct exception exnref;
 #endif
+                struct cell cells[VAL_NCELLS];
         } u;
 };
-#if !defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
-#if defined(TOYWASM_ENABLE_WASM_SIMD)
-_Static_assert(sizeof(struct val) == 16, "struct val");
-#else
-_Static_assert(sizeof(struct val) == 8, "struct val");
-#endif
-#endif /* !defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING) */
+_Static_assert(sizeof(struct val) == VAL_NCELLS * 4, "struct val");
 
 struct localchunk {
         enum valtype type;
