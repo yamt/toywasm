@@ -594,7 +594,7 @@ const static struct section {
         SECTION(datacount), SECTION(code),   SECTION(data),
 };
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
-#warning notyet
+#error notyet
 #endif
 
 static void
