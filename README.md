@@ -44,16 +44,17 @@ is built with an ancient wasi-sdk to workaround
 
 ## What are implemented?
 
-|Feature                 |Status                                            |
-| ---------------------- | ------------------------------------------------ |
-|[WebAssembly]           |Complete `2.0 (Draft 2022-06-27)`                 |
-|[extended-const]        |Complete (`TOYWASM_ENABLE_WASM_EXTENDED_CONST`)   |
-|[multi-memory]          |Complete (`TOYWASM_ENABLE_WASM_MULTI_MEMORY`)     |
-|[tail-call]             |Complete (`TOYWASM_ENABLE_WASM_TAILCALL`)         |
-|[threads]               |Complete (`TOYWASM_ENABLE_WASM_THREADS`)          |
-|[wasi_snapshot_preview1]|See [the top comment in wasi.c]                   |
-|[wasi-threads]          |Complete (`TOYWASM_ENABLE_WASI_THREADS`)          |
-|[dynamic-linking]       |Complete (`TOYWASM_ENABLE_DYLD`)                  |
+|Feature                 |Status                                              |
+| ---------------------- | -------------------------------------------------- |
+|[WebAssembly]           |Complete `2.0 (Draft 2022-06-27)`                   |
+|[extended-const]        |Complete (`TOYWASM_ENABLE_WASM_EXTENDED_CONST`)     |
+|[exception-handling]    |Complete (`TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING`) |
+|[multi-memory]          |Complete (`TOYWASM_ENABLE_WASM_MULTI_MEMORY`)       |
+|[tail-call]             |Complete (`TOYWASM_ENABLE_WASM_TAILCALL`)           |
+|[threads]               |Complete (`TOYWASM_ENABLE_WASM_THREADS`)            |
+|[wasi_snapshot_preview1]|See [the top comment in wasi.c]                     |
+|[wasi-threads]          |Complete (`TOYWASM_ENABLE_WASI_THREADS`)            |
+|[dynamic-linking]       |Complete (`TOYWASM_ENABLE_DYLD`)                    |
 
 Note: As this runtime is relatively new, all proposals which had finished
 when I started this implementation are just included in the `WebAssembly`
@@ -69,6 +70,7 @@ It includes
 
 [WebAssembly]: https://github.com/WebAssembly/spec
 [extended-const]: https://github.com/WebAssembly/extended-const
+[exception-handling]: https://github.com/WebAssembly/exception-handling
 [multi-memory]: https://github.com/WebAssembly/multi-memory
 [tail-call]: https://github.com/WebAssembly/tail-call
 [threads]: https://github.com/WebAssembly/threads
