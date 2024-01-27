@@ -599,9 +599,9 @@ do_exception(struct exec_context *ctx)
          */
         uint32_t exnref_csz = valtype_cellsize(TYPE_EXNREF);
         assert(ctx->stack.lsize >= exnref_csz);
-        const struct cell *cells =
+        const struct cell *exc_cells =
                 &VEC_ELEM(ctx->stack, ctx->stack.lsize - exnref_csz);
-        const struct exception *exc = (const void *)cells;
+        const struct exception *exc = (const void *)exc_cells;
         ctx->stack.lsize -= exnref_csz;
 
         const struct taginst *taginst;
@@ -654,9 +654,22 @@ do_exception(struct exec_context *ctx)
         uint32_t csz = resulttype_cellsize(rt);
 
         xlog_trace_insn("%s: csz %" PRIu32, __func__, csz);
-        assert(arity == csz);
-        struct cell *stack = &VEC_ELEM(ctx->stack, height);
-        cells_copy(stack, exc->cells, csz);
+        if (arity != csz) {
+                /* arity != csz here means catch_ref/catch_all_ref. */
+                assert(arity == csz + exnref_csz);
+        }
+        /*
+         * Note: we use cells_move here as src and dst can overlap.
+         */
+        struct cell *dst = &VEC_ELEM(ctx->stack, height);
+        if (arity != csz) {
+                /* move exc to the new location first */
+                assert(dst + csz >= exc_cells);
+                cells_move(dst + csz, exc_cells, exnref_csz);
+                exc_cells = dst + csz;
+                exc = (const void *)exc_cells;
+        }
+        cells_move(dst, exc_cells, csz);
         ctx->stack.lsize = height + arity;
         xlog_trace_insn("%s: copied csz %" PRIu32, __func__, csz);
         return 0;
