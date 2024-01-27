@@ -1,5 +1,15 @@
 /*
  * https://github.com/WebAssembly/exception-handling
+ *
+ * Implementation notes:
+ *
+ * - Because we don't have GC, we implement exnref as a copy-able type,
+ *   rather than a reference to an object.
+ *   cf. https://github.com/WebAssembly/exception-handling/issues/287
+ *
+ * - We don't have embedder APIs to deal with exceptions.
+ *   cf.
+ * https://github.com/WebAssembly/exception-handling/blob/main/proposals/exception-handling/Exceptions.md#js-api
  */
 
 INSN_IMPL(try_table)
