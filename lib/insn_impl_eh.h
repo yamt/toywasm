@@ -131,24 +131,22 @@ INSN_IMPL(throw)
 
         LOAD_PC;
         READ_LEB_U32(tagidx);
+        const struct module *m = MODULE;
+        CHECK(tagidx < m->nimportedtags + m->ntags);
+        const struct tagtype *tt = module_tagtype(m, tagidx);
+        const struct functype *ft = module_tagtype_functype(m, tt);
+        const struct resulttype *rt = &ft->parameter;
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
-                /* REVISIT: maybe it's simpler to create and push an exnref
-                 * on the stack here to share the implementation with
-                 * throw_ref?
-                 */
-                schedule_exception(ectx, tagidx);
-        } else if (VALIDATING) {
-                struct validation_context *vctx = VCTX;
-                const struct module *m = vctx->module;
-                if (tagidx >= m->nimportedtags + m->ntags) {
-                        ret = validation_failure(
-                                vctx, "out of range tag %" PRIu32, tagidx);
+                SAVE_STACK_PTR;
+                ret = push_exception(ectx, tagidx, rt);
+                LOAD_STACK_PTR;
+                if (ret != 0) {
                         goto fail;
                 }
-                const struct tagtype *tt = module_tagtype(m, tagidx);
-                const struct functype *ft = module_tagtype_functype(m, tt);
-                const struct resulttype *rt = &ft->parameter;
+                schedule_exception(ectx);
+        } else if (VALIDATING) {
+                struct validation_context *vctx = VCTX;
                 ret = pop_valtypes(rt, vctx);
                 if (ret != 0) {
                         goto fail;

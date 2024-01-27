@@ -30,6 +30,10 @@ valtype_cellsize(enum valtype t)
                 sz = sizeof(void *) / sizeof(struct cell);
                 assert(sizeof(void *) == sz * sizeof(struct cell));
                 break;
+        case TYPE_EXNREF:
+                sz = HOWMANY(sizeof(struct exception), sizeof(struct cell));
+                assert(sizeof(struct exception) <= sz * sizeof(struct cell));
+                break;
         default:
                 xassert(false);
                 sz = 0;

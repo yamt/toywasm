@@ -154,6 +154,20 @@ _Static_assert(sizeof(float) == 4, "float");
 _Static_assert(sizeof(double) == 8, "double");
 _Static_assert(sizeof(union v128) == 16, "v128");
 
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+#if !defined(TOYWASM_USE_SMALL_CELLS)
+#error TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING w/o TOYWASM_USE_SMALL_CELLS is not implemented
+#endif
+#define TOYWASM_EXCEPTION_MAX_CELLS 4
+/*
+ * Note: the type of exc->cells is taginst_functype(exc->tag)->parameter.
+ */
+struct exception {
+        struct cell cells[TOYWASM_EXCEPTION_MAX_CELLS];
+        const struct taginst *tag;
+};
+#endif /* defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING) */
+
 /*
  * a value on operand stack, locals, etc.
  *
@@ -184,13 +198,22 @@ struct val {
 #else
                 struct cell cells[1];
 #endif
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+                /*
+                 * Note: Because we don't have GC, we implement exnref as
+                 * a copy-able type, rather than a reference to an object.
+                 */
+                struct exception exnref;
+#endif
         } u;
 };
+#if !defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
 #if defined(TOYWASM_ENABLE_WASM_SIMD)
 _Static_assert(sizeof(struct val) == 16, "struct val");
 #else
 _Static_assert(sizeof(struct val) == 8, "struct val");
 #endif
+#endif /* !defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING) */
 
 struct localchunk {
         enum valtype type;
@@ -513,16 +536,6 @@ struct tableinst {
  */
 struct taginst {
         const struct functype *type;
-};
-
-#if !defined(TOYWASM_USE_SMALL_CELLS)
-#error TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING w/o TOYWASM_USE_SMALL_CELLS is not implemented
-#endif
-#define TOYWASM_EXCEPTION_MAX_CELLS 4
-/* Note: the type of exc->cells is taginst_functype(exc->tag)->parameter */
-struct exception {
-        const struct taginst *tag;
-        struct cell cells[TOYWASM_EXCEPTION_MAX_CELLS];
 };
 #endif
 
