@@ -823,7 +823,7 @@ block_exit(struct exec_context *ctx, uint32_t blockpc, bool goto_else,
         const uint8_t *p = blockp;
         const uint8_t op = *p++;
         assert(op == FRAME_OP_LOOP || op == FRAME_OP_IF ||
-               op == FRAME_OP_BLOCK);
+               op == FRAME_OP_BLOCK || op == FRAME_OP_TRY_TABLE);
         uint32_t param_arity;
         uint32_t arity;
         if (op != FRAME_OP_LOOP) {
