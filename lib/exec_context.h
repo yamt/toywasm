@@ -283,11 +283,6 @@ struct exec_context {
                                        struct context *ctx);
 #endif
                 } restart_insn;
-#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
-                struct {
-                        uint32_t tagidx;
-                } exception;
-#endif
         } event_u;
 
         /* Restart */

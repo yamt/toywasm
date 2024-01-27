@@ -446,11 +446,58 @@ schedule_return_call(struct exec_context *ectx, const struct funcinst *fi)
 #endif
 
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
-static void
-schedule_exception(struct exec_context *ectx, uint32_t tagidx)
+/*
+ * push_exception: create and push an exception onto the operand stack
+ *
+ * logically, this is an equivalent of the following operations:
+ *
+ * - pop exception args
+ * - create an exception with the parameters
+ * - push exnref of the exception
+ *
+ * implementation-wise, this converts from:
+ *
+ * | ... | arg cell 0 | arg cell 1 |
+ *
+ * to:
+ *
+ * | ... | arg cell 0 | arg cell 1 | ...  | arg cell N | taginst    |
+ *       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ *                                     |
+ *                                     +---- struct exception
+ *
+ * where N = TOYWASM_EXCEPTION_MAX_CELLS.
+ */
+static int
+push_exception(struct exec_context *ectx, uint32_t tagidx,
+               const struct resulttype *rt)
 {
-        xlog_trace_insn("%s: tag [%" PRIu32 "]", __func__, tagidx);
-        ectx->event_u.exception.tagidx = tagidx;
+        uint32_t exnref_csz = valtype_cellsize(TYPE_EXNREF);
+        uint32_t csz = resulttype_cellsize(rt);
+        assert(csz < exnref_csz);
+        assert(ectx->stack.lsize >= csz);
+        uint32_t extra = exnref_csz - csz;
+        int ret = stack_prealloc(ectx, exnref_csz - csz);
+        if (ret != 0) {
+                return ret;
+        }
+        ectx->stack.lsize += extra;
+        struct cell *cells =
+                &VEC_ELEM(ectx->stack, ectx->stack.lsize - exnref_csz);
+        struct exception *exc = (void *)cells;
+        assert((const uint8_t *)(exc + 1) <=
+               (const uint8_t *)&VEC_NEXTELEM(ectx->stack));
+        assert(cells == exc->cells);
+        const struct taginst *taginst = VEC_ELEM(ectx->instance->tags, tagidx);
+        /* Note: use memcpy as exc might be misaligned */
+        memcpy(&exc->tag, &taginst, sizeof(taginst));
+        return 0;
+}
+
+static void
+schedule_exception(struct exec_context *ectx)
+{
+        xlog_trace_insn("%s: throwing an exception", __func__);
         ectx->event = EXEC_EVENT_EXCEPTION;
 }
 #endif

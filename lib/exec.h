@@ -18,6 +18,7 @@ struct localtype;
 struct resulttype;
 struct val;
 
+int stack_prealloc(struct exec_context *ctx, uint32_t count);
 int exec_expr(uint32_t funcidx, const struct expr *expr,
               const struct localtype *localtype,
               const struct resulttype *parametertype, uint32_t nresults,

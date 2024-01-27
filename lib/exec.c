@@ -59,7 +59,7 @@ frame_locals(const struct exec_context *ctx, const struct funcframe *frame)
 #endif
 }
 
-static int
+int
 stack_prealloc(struct exec_context *ctx, uint32_t count)
 {
         uint32_t needed = ctx->stack.lsize + count;
@@ -585,43 +585,42 @@ found:
 }
 
 static int
-do_exception(struct exec_context *ctx, uint32_t tagidx)
+do_exception(struct exec_context *ctx)
 {
-        xlog_trace_insn("%s: tag [%" PRIu32 "]", __func__, tagidx);
-        const struct instance *inst = ctx->instance;
-        const struct taginst *taginst = VEC_ELEM(inst->tags, tagidx);
+        /*
+         * pop an exception on the top of the stack.
+         * cf. push_exception
+         */
+        uint32_t exnref_csz = valtype_cellsize(TYPE_EXNREF);
+        assert(ctx->stack.lsize >= exnref_csz);
+        const struct cell *cells =
+                &VEC_ELEM(ctx->stack, ctx->stack.lsize - exnref_csz);
+        const struct exception *exc = (const void *)cells;
+        ctx->stack.lsize -= exnref_csz;
 
-        /* find the matching catch clause */
+        const struct taginst *taginst;
+        /* Note: use memcpy as exc might be misaligned */
+        memcpy(&taginst, &exc->tag, sizeof(taginst));
+        xlog_trace_insn("%s: taginst %p", __func__, (const void *)taginst);
+
+        /*
+         * find the matching catch clause
+         */
         uint32_t frameidx;
         uint32_t labelidx;
         int ret = find_catch(ctx, taginst, &frameidx, &labelidx);
         if (ret != 0) {
-                xlog_trace_insn("%s: no catch clause found for tag [%" PRIu32
-                                "]",
-                                __func__, tagidx);
+                xlog_trace_insn("%s: no catch clause found for tag", __func__);
                 return trap_with_id(ctx, TRAP_UNCAUGHT_EXCEPTION,
-                                    "uncaught exception [%" PRIu32 "]",
-                                    tagidx);
+                                    "uncaught exception");
         }
         xlog_trace_insn("%s: a catch clause found at frame %" PRIu32
-                        " label %" PRIu32 " for tag [%" PRIu32 "]",
-                        __func__, frameidx, labelidx, tagidx);
+                        " label %" PRIu32 " for tag",
+                        __func__, frameidx, labelidx);
 
-        /* create an exception */
-        const struct functype *ft = taginst_functype(taginst);
-        const struct resulttype *rt = &ft->parameter;
-        struct exception *exc = malloc(sizeof(*exc));
-        if (exc == NULL) {
-                return ENOMEM;
-        }
-        exc->tag = taginst;
-        uint32_t csz = resulttype_cellsize(rt);
-        /* copy the values from the top of the stack */
-        assert(csz <= TOYWASM_EXCEPTION_MAX_CELLS);
-        struct cell *stack = &VEC_NEXTELEM(ctx->stack);
-        cells_copy(exc->cells, stack - csz, csz);
-
-        /* rewind the frames */
+        /*
+         * rewind the frames
+         */
         while (frameidx + 1 < ctx->frames.lsize) {
                 struct funcframe *frame = &VEC_LASTELEM(ctx->frames);
                 frame_exit(ctx);
@@ -644,14 +643,16 @@ do_exception(struct exec_context *ctx, uint32_t tagidx)
         xlog_trace_insn("%s: rewinding operand stack: height %" PRIu32
                         " -> %" PRIu32,
                         __func__, ctx->stack.lsize, height);
+        const struct functype *ft = taginst_functype(taginst);
+        const struct resulttype *rt = &ft->parameter;
+        uint32_t csz = resulttype_cellsize(rt);
+
         xlog_trace_insn("%s: csz %" PRIu32, __func__, csz);
         assert(arity == csz);
-        stack = &VEC_ELEM(ctx->stack, height);
+        struct cell *stack = &VEC_ELEM(ctx->stack, height);
         cells_copy(stack, exc->cells, csz);
         ctx->stack.lsize = height + arity;
         xlog_trace_insn("%s: copied csz %" PRIu32, __func__, csz);
-
-        free(exc);
         return 0;
 }
 #endif /* defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING) */
@@ -1193,7 +1194,7 @@ exec_expr_continue(struct exec_context *ctx)
 #endif /* defined(TOYWASM_ENABLE_WASM_TAILCALL) */
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
                 case EXEC_EVENT_EXCEPTION:
-                        ret = do_exception(ctx, ctx->event_u.exception.tagidx);
+                        ret = do_exception(ctx);
                         if (ret != 0) {
                                 return ret;
                         }
