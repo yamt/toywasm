@@ -508,7 +508,6 @@ static int
 find_catch(const struct exec_context *ctx, const struct taginst *taginst,
            uint32_t *frameidxp, uint32_t *labelidxp, bool *allp)
 {
-        /* TODO: reject or support host frames */
         assert(ctx->frames.lsize > 0);
         uint32_t frameidx = ctx->frames.lsize - 1;
         uint32_t labelheight = ctx->labels.lsize;
@@ -522,6 +521,12 @@ find_catch(const struct exec_context *ctx, const struct taginst *taginst,
                         frame = &VEC_ELEM(ctx->frames, frameidx);
                         if (frame->labelidx <= labelidx) {
                                 break;
+                        }
+                        if (frameidx == ctx->bottom) {
+                                /*
+                                 * we hit a host frame.
+                                 */
+                                return ENOENT;
                         }
                         labelheight = frame->labelidx;
                         assert(frameidx > 0);
