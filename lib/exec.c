@@ -511,6 +511,7 @@ find_catch(const struct exec_context *ctx, const struct taginst *taginst,
         /* TODO: reject or support host frames */
         assert(ctx->frames.lsize > 0);
         uint32_t frameidx = ctx->frames.lsize - 1;
+        uint32_t labelheight = ctx->labels.lsize;
         uint32_t catch_labelidx;
         bool all;
         uint32_t i;
@@ -522,9 +523,12 @@ find_catch(const struct exec_context *ctx, const struct taginst *taginst,
                         if (frame->labelidx <= labelidx) {
                                 break;
                         }
+                        labelheight = frame->labelidx;
                         assert(frameidx > 0);
                         frameidx--;
                 } while (true);
+                assert(labelidx >= frame->labelidx);
+                assert(labelidx < labelheight - frame->labelidx);
                 const struct instance *inst = frame->instance;
                 const struct module *m = inst->module;
                 const struct label *l = &VEC_ELEM(ctx->labels, labelidx);
@@ -568,13 +572,10 @@ find_catch(const struct exec_context *ctx, const struct taginst *taginst,
                                 assert(false);
                         }
                         uint32_t catch_label = read_leb_u32_nocheck(&p);
-                        /*
-                         * convert to the absolute label index
-                         * labelidx here is of try_table block.
-                         */
-                        assert(catch_label < labelidx - frame->labelidx);
-                        catch_labelidx = labelidx - catch_label - 1;
-                        assert(frame->labelidx <= catch_labelidx);
+                        /* labelidx here is of try_table block. */
+                        assert(catch_label <= labelidx - frame->labelidx);
+                        catch_labelidx =
+                                catch_label + (labelheight - labelidx);
                         if (catch_taginst == NULL) {
                                 all = true;
                                 goto found;
@@ -639,14 +640,24 @@ do_exception(struct exec_context *ctx)
                 frame_clear(frame);
         }
         assert(frameidx + 1 == ctx->frames.lsize);
-        /* jump to the label */
+        /*
+         * jump to the label.
+         * REVISIT: share some code with do_branch?
+         */
         uint32_t height;
         uint32_t arity;
-        assert(labelidx < ctx->labels.lsize);
-        /* convert the absolute label index to a relative one */
-        labelidx = ctx->labels.lsize - labelidx - 1;
-        bool in_block = branch_to_label(ctx, labelidx, false, &height, &arity);
-        assert(!in_block);
+        assert(labelidx <= ctx->labels.lsize);
+        struct funcframe *frame = &VEC_LASTELEM(ctx->frames);
+        if (ctx->labels.lsize - labelidx == frame->labelidx) {
+                frame_exit(ctx);
+                height = frame->height;
+                arity = frame->nresults;
+                frame_clear(frame);
+        } else {
+                bool in_block =
+                        branch_to_label(ctx, labelidx, false, &height, &arity);
+                assert(!in_block);
+        }
 
         /*
          * rewind the operand stack similarly to rewind_stack.
