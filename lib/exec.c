@@ -628,6 +628,7 @@ do_exception(struct exec_context *ctx)
         bool all;
         int ret = find_catch(ctx, taginst, &frameidx, &labelidx, &all);
         if (ret != 0) {
+                assert(ret == ENOENT);
                 xlog_trace_insn("%s: no catch clause found for tag", __func__);
                 return trap_with_id(ctx, TRAP_UNCAUGHT_EXCEPTION,
                                     "uncaught exception");
