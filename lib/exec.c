@@ -698,9 +698,20 @@ do_exception(struct exec_context *ctx)
          *             -------------
          *             exception
          *
+         *       <----- rewind
+         *
          * x x x arg0 arg1 arg0 arg1 tag
          *                 -------------
          *                 exception
+         *
+         *                 ~~~~~~~~~~~~~
+         *                 exnref_csz
+         *
+         *       ~~~~~~~~~
+         *       csz
+         *
+         *       ~~~~~~~~~~~~~~~~~~~~~~~
+         *       arity
          */
         struct cell *dst = &VEC_ELEM(ctx->stack, height);
         if (arity != csz) {
