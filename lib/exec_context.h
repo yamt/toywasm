@@ -88,6 +88,7 @@ enum trapid {
         TRAP_UNALIGNED_MEMORY_ACCESS,
         TRAP_INDIRECT_FUNCTION_TABLE_NOT_FOUND,
         TRAP_UNCAUGHT_EXCEPTION,
+        TRAP_THROW_REF_NULL,
 };
 
 enum exec_event {

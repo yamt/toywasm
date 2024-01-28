@@ -619,6 +619,11 @@ do_exception(struct exec_context *ctx)
         /* Note: use memcpy as exc might be misaligned */
         memcpy(&taginst, exception_tag_ptr(exc), sizeof(taginst));
         xlog_trace_insn("%s: taginst %p", __func__, (const void *)taginst);
+        if (taginst == NULL) {
+                /* an attempt to throw ref.null should trap. */
+                return trap_with_id(ctx, TRAP_THROW_REF_NULL,
+                                    "throwing ref.null exception");
+        }
 
         /*
          * find the matching catch clause
