@@ -137,6 +137,15 @@ set_tests_properties(toywasm-cli-wasm3-spec-test-threads PROPERTIES ENVIRONMENT 
 set_tests_properties(toywasm-cli-wasm3-spec-test-threads PROPERTIES LABELS "spec:wasm-threads")
 endif()
 
+if(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+add_test(NAME toywasm-cli-exception-handling-test
+	COMMAND ./test.sh
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/wat/eh
+)
+set_tests_properties(toywasm-cli-exception-handling-test PROPERTIES ENVIRONMENT "${TEST_ENV}")
+set_tests_properties(toywasm-cli-exception-handling-test PROPERTIES LABELS "exception-handling")
+endif()
+
 if(TOYWASM_ENABLE_WASI)
 add_test(NAME toywasm-cli-wasi-testsuite
 	COMMAND ./test/run-wasi-testsuite.sh
