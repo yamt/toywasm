@@ -163,6 +163,15 @@ write_memtype(struct writer *w, const struct memtype *mt)
         write_limits(w, &mt->lim, mt->flags);
 }
 
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+static void
+write_tagtype(struct writer *w, const struct tagtype *tt)
+{
+        WRITE_LEB_U32(TAG_TYPE_exception);
+        WRITE_LEB_U32(tt->typeidx);
+}
+#endif
+
 static void
 write_globaltype(struct writer *w, const struct globaltype *gt)
 {
@@ -478,6 +487,21 @@ write_memory_section(struct writer *w, const struct module *m)
         }
 }
 
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+static void
+write_tag_section(struct writer *w, const struct module *m)
+{
+        if (m->ntags == 0) {
+                return;
+        }
+        WRITE_LEB_U32(m->ntags);
+        uint32_t i;
+        for (i = 0; i < m->ntags; i++) {
+                write_tagtype(w, &m->tags[i]);
+        }
+}
+#endif
+
 static void
 write_global_section(struct writer *w, const struct module *m)
 {
@@ -588,14 +612,15 @@ const static struct section {
         uint8_t id;
         void (*write)(struct writer *w, const struct module *m);
 } sections[] = {
-        SECTION(type),      SECTION(import), SECTION(function),
-        SECTION(table),     SECTION(memory), SECTION(global),
-        SECTION(export),    SECTION(start),  SECTION(element),
-        SECTION(datacount), SECTION(code),   SECTION(data),
-};
+        SECTION(type),    SECTION(import),    SECTION(function),
+        SECTION(table),   SECTION(memory),
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
-#error notyet
+        SECTION(tag),
 #endif
+        SECTION(global),  SECTION(export),    SECTION(start),
+        SECTION(element), SECTION(datacount), SECTION(code),
+        SECTION(data),
+};
 
 static void
 module_write1(struct writer *w, const struct module *m)
