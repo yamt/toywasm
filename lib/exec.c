@@ -693,11 +693,18 @@ do_exception(struct exec_context *ctx)
 
         /*
          * Note: we use cells_move here as src and dst can overlap.
+         *
+         * x x x ..... arg0 arg1 tag
+         *             -------------
+         *             exception
+         *
+         * x x x arg0 arg1 arg0 arg1 tag
+         *                 -------------
+         *                 exception
          */
         struct cell *dst = &VEC_ELEM(ctx->stack, height);
         if (arity != csz) {
                 /* move exc to the new location first */
-                assert(dst + csz >= exc_cells);
                 cells_move(dst + csz, exc_cells, exnref_csz);
                 exc_cells = dst + csz;
                 exc = (const void *)exc_cells;
