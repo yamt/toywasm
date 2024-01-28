@@ -184,13 +184,16 @@ ctassert_offset(struct exception, cells, 0);
 #define EXNREF_NCELLS 0
 #endif
 #define EXTERNREF_NCELLS HOWMANY(sizeof(void *), sizeof(struct cell))
+#define NUMTYPE_NCELLS 2
 #if defined(TOYWASM_ENABLE_WASM_SIMD)
-#define VALTYPE_NCELLS 4
+#define VECTYPE_NCELLS 4
 #else
-#define VALTYPE_NCELLS 2
+#define VECTYPE_NCELLS 0
 #endif
 #define _MAX(a, b) ((a > b) ? a : b)
-#define VAL_NCELLS _MAX(_MAX(EXNREF_NCELLS, EXTERNREF_NCELLS), VALTYPE_NCELLS)
+#define VAL_NCELLS                                                            \
+        _MAX(_MAX(_MAX(EXNREF_NCELLS, EXTERNREF_NCELLS), NUMTYPE_NCELLS),     \
+             VECTYPE_NCELLS)
 #else /* defined(TOYWASM_USE_SMALL_CELLS) */
 #define VAL_NCELLS 1
 #endif /* defined(TOYWASM_USE_SMALL_CELLS) */
@@ -226,7 +229,9 @@ struct val {
                 struct cell cells[VAL_NCELLS];
         } u;
 };
+#if defined(TOYWASM_USE_SMALL_CELLS)
 _Static_assert(sizeof(struct val) == VAL_NCELLS * 4, "struct val");
+#endif
 
 struct localchunk {
         enum valtype type;
