@@ -483,6 +483,14 @@ push_exception(struct exec_context *ectx, uint32_t tagidx,
         if (ret != 0) {
                 return ret;
         }
+#if !defined(TOYWASM_USE_SEPARATE_LOCALS) && defined(TOYWASM_USE_LOCALS_CACHE)
+        /*
+         * refresh the cache as stack_prealloc might have moved
+         * the locals as well.
+         */
+        const struct funcframe *frame = &VEC_LASTELEM(ectx->frames);
+        ectx->current_locals = frame_locals(ectx, frame);
+#endif
         ectx->stack.lsize += extra;
         struct cell *cells =
                 &VEC_ELEM(ectx->stack, ectx->stack.lsize - exnref_csz);
