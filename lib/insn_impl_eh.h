@@ -7,6 +7,10 @@
  *   rather than a reference to an object.
  *   cf. https://github.com/WebAssembly/exception-handling/issues/287
  *
+ *   Note that this approach is incompatible with configurations with
+ *   fixed-sized values because one value (exnref) needs to contain
+ *   another. (eg. i32)  For now, we just require TOYWASM_USE_SMALL_CELLS.
+ *
  * - We don't have embedder APIs to deal with exceptions.
  *   cf.
  * https://github.com/WebAssembly/exception-handling/blob/main/proposals/exception-handling/Exceptions.md#js-api
