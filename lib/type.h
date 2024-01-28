@@ -230,7 +230,14 @@ struct val {
         } u;
 };
 #if defined(TOYWASM_USE_SMALL_CELLS)
-_Static_assert(sizeof(struct val) == VAL_NCELLS * 4, "struct val");
+/*
+ * Note: because the largest member of the union might not have the largest
+ * alignment, the union can be a bit larger than what's calculated above.
+ * in that case, the last 4 byte of the structure is just an unused padding.
+ */
+_Static_assert(sizeof(struct val) == VAL_NCELLS * 4 ||
+                       sizeof(struct val) == (VAL_NCELLS + 1) * 4,
+               "struct val");
 #endif
 
 struct localchunk {
