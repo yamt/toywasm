@@ -2186,6 +2186,13 @@ module_unload(struct module *m)
         }
         free(m->globals);
 
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+        for (i = 0; i < m->ntags; i++) {
+                clear_tagtype(&m->tags[i]);
+        }
+        free(m->tags);
+#endif
+
         for (i = 0; i < m->nelems; i++) {
                 clear_element(&m->elems[i]);
         }
