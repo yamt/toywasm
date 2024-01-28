@@ -7,6 +7,10 @@
  *   rather than a reference to an object.
  *   cf. https://github.com/WebAssembly/exception-handling/issues/287
  *
+ *   Because of this approach, we have a fixed size limit on
+ *   exception parameters. (TOYWASM_EXCEPTION_MAX_CELLS)
+ *   It also means that we can't accept exnref as a parameter for exceptions.
+ *
  *   Note that this approach is incompatible with configurations with
  *   fixed-sized values because one value (exnref) needs to contain
  *   another. (eg. i32)  For now, we just require TOYWASM_USE_SMALL_CELLS.
