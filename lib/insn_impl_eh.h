@@ -17,6 +17,9 @@ INSN_IMPL(try_table)
         int ret;
         struct resulttype *rt_parameter = NULL;
         struct resulttype *rt_result = NULL;
+#if defined(__GNUC__) && !defined(__clang__)
+        ret = 0; /* suppress maybe-uninitialized warning */
+#endif
 
         LOAD_PC;
         READ_LEB_S33(blocktype);
