@@ -47,14 +47,42 @@
       unreachable
     end
   )
+  (func $test-null-from-global
+    global.get $g
+    ref.is_null
+    i32.eqz
+    if
+      unreachable
+    end
+  )
+  (func $test-nonnull-from-global
+    global.get $g-nonnull
+    ref.is_null
+    if
+      unreachable
+    end
+  )
+  (func $init
+    i32.const 0
+    i32.const 0
+    i32.const 0
+    i32.const 0
+    call $wrap-e1
+    global.set $g-nonnull
+  )
   (func (export "_start")
+    call $init
     call $test-nonnull
     call $test-null
-    call $test-nonnull
+    call $test-nonnull-from-global
     call $test-null-from-table
     call $test-nonnull
     call $test-null-from-local
     call $test-nonnull
+    call $test-null-from-global
+    call $test-nonnull-from-global
   )
   (table $table 1 1 exnref)
+  (global $g exnref (ref.null exn))
+  (global $g-nonnull (mut exnref) (ref.null exn))
 )
