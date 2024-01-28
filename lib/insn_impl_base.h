@@ -537,7 +537,35 @@ INSN_IMPL(ref_is_null)
                 uint32_t csz = find_type_annotation(ectx, p);
                 struct val val_n;
                 pop_val(&val_n, csz, ectx);
+#if defined(TOYWASM_USE_SMALL_CELLS)
+                switch (csz) {
+                case EXTERNREF_NCELLS:
+                        /*
+                         * externref or funcref.
+                         * Note: their bit-patterns are compatible.
+                         */
+                        val_result.u.i32 = (int)(val_n.u.funcref.func == NULL);
+                        break;
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+                case EXNREF_NCELLS:
+                        val_result.u.i32 = (int)(val_n.u.exnref.tag == NULL);
+                        break;
+#endif
+                default:
+                        assert(false);
+                }
+#else /* defined(TOYWASM_USE_SMALL_CELLS) */
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+                /*
+                 * TODO: exnref
+                 *
+                 * maybe we can tweak the layout of struct exception
+                 * so that the following test works for exc->tag as well.
+                 */
+#error notyet
+#endif
                 val_result.u.i32 = (int)(val_n.u.funcref.func == NULL);
+#endif /* defined(TOYWASM_USE_SMALL_CELLS) */
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
                 enum valtype type_n;
