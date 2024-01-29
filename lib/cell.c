@@ -33,7 +33,8 @@ valtype_cellsize(enum valtype t)
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
         case TYPE_EXNREF:
                 sz = EXNREF_NCELLS;
-                assert(sizeof(struct exception) <= sz * sizeof(struct cell));
+                assert(sizeof(struct wasm_exception) <=
+                       sz * sizeof(struct cell));
                 break;
 #endif
         default:

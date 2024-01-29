@@ -468,8 +468,8 @@ schedule_return_call(struct exec_context *ectx, const struct funcinst *fi)
  *                                  <----------------->
  * | ... | arg cell 0 | arg cell 1 | ...  | arg cell N | taginst     |
  *       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- *                                          |                         ^
- *                                          +---- struct exception    |
+ *                                      |                             ^
+ *                                      +--- struct wasm_exception    |
  *                                                                    |
  *                                                    new stack top --+
  *        <----------------------->
@@ -506,7 +506,7 @@ push_exception(struct exec_context *ectx, uint32_t tagidx,
         ectx->stack.lsize += extra;
         struct cell *cells =
                 &VEC_ELEM(ectx->stack, ectx->stack.lsize - exnref_csz);
-        struct exception *exc = (void *)cells;
+        struct wasm_exception *exc = (void *)cells;
         assert((const uint8_t *)(exc + 1) <=
                (const uint8_t *)&VEC_NEXTELEM(ectx->stack));
         const struct taginst *taginst = VEC_ELEM(ectx->instance->tags, tagidx);
