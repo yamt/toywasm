@@ -2,28 +2,6 @@
 
 A WebAssembly interpreter written in C.
 
-## On-browser demo
-
-You can try it out on [webassembly.sh](https://webassembly.sh/?run-command=toywasm):
-
-```shell
-$ curl -o cowsay.wasm https://registry-cdn.wapm.io/contents/liftm/cowsay/0.2.2/target/wasm32-wasi/release/cowsay.wasm
-$ toywasm --wasi cowsay.wasm hello
- _______
-< hello >
- -------
-        \   ^__^
-         \  (oo)\_______
-            (__)\       )\/\
-               ||----w |
-                ||     ||
-$
-```
-
-Note: [the binary published to wapm.io](https://wapm.io/yamt/toywasm)
-is built with an ancient wasi-sdk to workaround
-[an webassembly.sh issue](https://github.com/wasmerio/webassembly.sh/issues/105).
-
 ## Goals
 
 * Learn the spec by implementing it
@@ -99,7 +77,40 @@ It includes
 
 ## Use as a command
 
-See [toywasm command help message](https://webassembly.sh/?run-command=toywasm).
+See toywasm command help message.
+
+```shell
+Usage:
+        toywasm [OPTIONS] [--] <MODULE> [WASI-ARGS...]
+Options:
+        --disable-jump-table
+        --disable-localtype-cellidx
+        --disable-resulttype-cellidx
+        --dyld
+        --dyld-bindnow
+        --dyld-dlfcn
+        --dyld-path LIBRARY_DIR
+        --dyld-stack-size C_STACK_SIZE_IN_BYTES
+        --invoke FUNCTION[ FUNCTION_ARGS...]
+        --load MODULE_PATH
+        --max-frames NUMBER_OF_FRAMES
+        --max-stack-cells NUMBER_OF_CELLS
+        --repl
+        --repl-prompt STRING
+        --print-stats
+        --timeout TIMEOUT_MS
+        --trace LEVEL
+        --version
+        --wasi
+        --wasi-dir DIR
+        --wasi-mapdir GUEST_DIR::HOST_DIR
+        --wasi-env NAME=VAR
+Examples:
+        Run a wasi module
+                toywasm --wasi module
+        Load a module and invoke its function
+                toywasm --load module --invoke "func arg1 arg2"
+```
 
 ## Use as a library
 
