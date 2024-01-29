@@ -9,6 +9,7 @@ struct ctrlframe {
         uint32_t jumpslot;
         enum ctrlframe_op op;
         bool unreachable;
+        bool seen;
 };
 
 struct validation_context {
@@ -26,6 +27,7 @@ struct validation_context {
         VEC(, enum valtype) locals;
 
         bool const_expr;
+        bool can_shrink_jump_table;
 
         bool has_datacount;
         uint32_t ndatas_in_datacount;

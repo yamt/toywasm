@@ -17,9 +17,11 @@
 #define WASM_PAGE_SIZE 65536
 #define WASM_MAX_PAGES 65536
 
+#define JUMP_TABLE_INVALID_PC 0xffffffff
+
 struct jump {
-        uint32_t pc;
-        uint32_t targetpc;
+        uint32_t pc; /* the address of block instruction (eg. block, loop) */
+        uint32_t targetpc; /* the jump target addreass */
 };
 
 struct type_annotation {

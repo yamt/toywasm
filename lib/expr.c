@@ -176,6 +176,28 @@ read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
                                 i, j->pc, j->targetpc);
         }
 #endif
+        if (vctx->can_shrink_jump_table) {
+                assert(ei->jumps != NULL);
+                assert(ei->njumps > 0);
+                const struct jump *from = ei->jumps;
+                struct jump *to = ei->jumps;
+                const struct jump *ep = ei->jumps + ei->njumps;
+                while (from < ep) {
+                        if (from->targetpc != JUMP_TABLE_INVALID_PC) {
+                                *to++ = *from;
+                        }
+                        from++;
+                }
+                assert(to < from);
+                xlog_trace("jump table shrinked from %" PRIu32 " to %zu",
+                           ei->njumps, to - ei->jumps);
+                ei->njumps = to - ei->jumps;
+                ret = resize_array((void **)&ei->jumps, sizeof(*ei->jumps),
+                                   ei->njumps);
+                if (ret != 0) {
+                        xlog_error("ignoring jump table resize failure");
+                }
+        }
         *pp = p;
 #if defined(TOYWASM_ENABLE_WRITER)
         expr->end = p;
