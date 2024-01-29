@@ -559,7 +559,7 @@ INSN_IMPL(ref_is_null)
                 /*
                  * TODO: exnref
                  *
-                 * maybe we can tweak the layout of struct exception
+                 * maybe we can tweak the layout of struct wasm_exception
                  * so that the following test works for exc->tag as well.
                  */
 #error notyet

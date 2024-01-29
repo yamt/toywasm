@@ -612,7 +612,7 @@ do_exception(struct exec_context *ctx)
         assert(ctx->stack.lsize >= exnref_csz);
         const struct cell *exc_cells =
                 &VEC_ELEM(ctx->stack, ctx->stack.lsize - exnref_csz);
-        const struct exception *exc = (const void *)exc_cells;
+        const struct wasm_exception *exc = (const void *)exc_cells;
         ctx->stack.lsize -= exnref_csz;
 
         const struct taginst *taginst;
