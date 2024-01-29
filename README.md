@@ -44,7 +44,7 @@ is built with an ancient wasi-sdk to workaround
 
 ## What are implemented?
 
-|Feature                 | cmake config                           | Notes    |
+| Feature                | cmake option                           | Notes    |
 | ---------------------- | -------------------------------------- | -------- |
 |[WebAssembly]           |                                        |`2.0 (Draft 2022-06-27)`|
 |[extended-const]        |`TOYWASM_ENABLE_WASM_EXTENDED_CONST`    |          |
