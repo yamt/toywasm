@@ -460,15 +460,27 @@ schedule_return_call(struct exec_context *ectx, const struct funcinst *fi)
  * implementation-wise, this converts from:
  *
  * | ... | arg cell 0 | arg cell 1 |
- *
+ *                                  ^
+ *                                  |
+ *                                  +--- stack top
  * to:
+ *                                             unused
+ *                                  <----------------->
+ * | ... | arg cell 0 | arg cell 1 | ...  | arg cell N | taginst     |
+ *       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ *                                          |                         ^
+ *                                          +---- struct exception    |
+ *                                                                    |
+ *                                                    new stack top --+
+ *        <----------------------->
+ *         csz
+ *                                  <------------------------------->
+ *                                   extra
  *
- * | ... | arg cell 0 | arg cell 1 | ...  | arg cell N | taginst    |
- *       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- *                                     |
- *                                     +---- struct exception
+ *        <--------------------------------------------------------->
+ *         exnref_csz
  *
- * where N = TOYWASM_EXCEPTION_MAX_CELLS.
+ * where N = TOYWASM_EXCEPTION_MAX_CELLS - 1.
  */
 static int
 push_exception(struct exec_context *ectx, uint32_t tagidx,
