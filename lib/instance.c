@@ -137,7 +137,7 @@ check_tagtype(const struct import_object_entry *e, const void *vp)
         assert(e->type == EXTERNTYPE_TAG);
         const struct taginst *tag_imported = e->u.tag;
         const struct functype *ft_imported = taginst_functype(tag_imported);
-        if (!compare_functype(ft, ft_imported)) {
+        if (compare_functype(ft, ft_imported)) {
                 return EINVAL;
         }
         return 0;
