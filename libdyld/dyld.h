@@ -47,6 +47,11 @@ struct dyld {
         struct globalinst *stack_pointer;
         struct globalinst heap_base;
         struct globalinst heap_end;
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+        struct functype *c_longjmp_ft;
+        struct taginst c_longjmp;
+        struct taginst cpp_exception;
+#endif
 
         union {
                 struct {
