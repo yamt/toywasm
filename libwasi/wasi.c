@@ -875,10 +875,6 @@ wasi_fd_allocate(struct exec_context *ctx, struct host_instance *hi,
          * macOS doesn't have posix_fallocate
          * cf. https://github.com/WebAssembly/wasi-filesystem/issues/19
          */
-        ret = reject_directory(hostfd);
-        if (ret != 0) {
-                goto fail;
-        }
 #if defined(__APPLE__)
         ret = racy_fallocate(hostfd, offset, len);
 #else
