@@ -132,7 +132,7 @@ of the above example apps.
 > It's just an increasing number, which doesn't imply anything
 > about compatibilities or features.
 
-* Release binaries are built with clang, with `thin LTO` where it's
+* Release binaries are built with clang, with `ThinLTO` where it's
   available.
 
 * For macOS, we ship a universal binary. (amd64 and arm64)
@@ -163,6 +163,14 @@ of the above example apps.
   ```
 
   For build-time options, see the [ToywasmConfig.cmake].
+
+  By default, it uses ThinLTO if available.
+  You might want to use regular LTO instead to get a bit better optimization:
+
+  ```
+  % cmake -B build . -DUSE_IPO=OFF -DCMAKE_C_FLAGS=-flto=full
+  % cmake --build build
+  ```
 
   By default, it requires `wabt` and `cmocka` for tests. If you don't
   want to install them, you can disable tests.
