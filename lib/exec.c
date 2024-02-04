@@ -59,7 +59,7 @@ frame_locals(const struct exec_context *ctx, const struct funcframe *frame)
 #endif
 }
 
-int
+static int
 stack_prealloc(struct exec_context *ctx, uint32_t count)
 {
         uint32_t needed = ctx->stack.lsize + count;
