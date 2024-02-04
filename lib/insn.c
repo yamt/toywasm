@@ -491,7 +491,7 @@ push_exception(struct exec_context *ectx, uint32_t tagidx,
         assert(csz < exnref_csz);
         assert(ectx->stack.lsize >= csz);
         uint32_t extra = exnref_csz - csz;
-        int ret = stack_prealloc(ectx, exnref_csz - csz);
+        int ret = stack_prealloc(ectx, extra);
         if (ret != 0) {
                 return ret;
         }
