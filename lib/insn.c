@@ -482,7 +482,7 @@ schedule_return_call(struct exec_context *ectx, const struct funcinst *fi)
  *
  * where N = TOYWASM_EXCEPTION_MAX_CELLS - 1.
  */
-static int
+static void
 push_exception(struct exec_context *ectx, uint32_t tagidx,
                const struct resulttype *rt)
 {
@@ -491,24 +491,6 @@ push_exception(struct exec_context *ectx, uint32_t tagidx,
         assert(csz < exnref_csz);
         assert(ectx->stack.lsize >= csz);
         uint32_t extra = exnref_csz - csz;
-        /*
-         * allocate the stack.
-         *
-         * REVISIT: maybe it's simpler to reserve the extra space
-         * via increasing ei->maxcells.
-         */
-        int ret = stack_prealloc(ectx, extra);
-        if (ret != 0) {
-                return ret;
-        }
-#if !defined(TOYWASM_USE_SEPARATE_LOCALS) && defined(TOYWASM_USE_LOCALS_CACHE)
-        /*
-         * refresh the cache as stack_prealloc might have moved
-         * the locals as well.
-         */
-        const struct funcframe *frame = &VEC_LASTELEM(ectx->frames);
-        ectx->current_locals = frame_locals(ectx, frame);
-#endif
         assert(ectx->stack.psize - ectx->stack.lsize >= extra);
         ectx->stack.lsize += extra;
         struct cell *cells =
@@ -519,7 +501,6 @@ push_exception(struct exec_context *ectx, uint32_t tagidx,
         const struct taginst *taginst = VEC_ELEM(ectx->instance->tags, tagidx);
         /* Note: use memcpy as exc might be misaligned */
         memcpy(exception_tag_ptr(exc), &taginst, sizeof(taginst));
-        return 0;
 }
 
 static void
