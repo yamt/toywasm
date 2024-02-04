@@ -503,6 +503,7 @@ push_exception(struct exec_context *ectx, uint32_t tagidx,
         const struct funcframe *frame = &VEC_LASTELEM(ectx->frames);
         ectx->current_locals = frame_locals(ectx, frame);
 #endif
+        assert(ectx->stack.psize - ectx->stack.lsize >= extra);
         ectx->stack.lsize += extra;
         struct cell *cells =
                 &VEC_ELEM(ectx->stack, ectx->stack.lsize - exnref_csz);
