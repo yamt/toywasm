@@ -160,15 +160,16 @@ INSN_IMPL(throw)
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
                 SAVE_STACK_PTR;
-                ret = push_exception(ectx, tagidx, rt);
+                push_exception(ectx, tagidx, rt);
                 LOAD_STACK_PTR;
-                if (ret != 0) {
-                        goto fail;
-                }
                 schedule_exception(ectx);
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
                 ret = pop_valtypes(rt, vctx);
+                if (ret != 0) {
+                        goto fail;
+                }
+                ret = push_valtype(TYPE_EXNREF, vctx);
                 if (ret != 0) {
                         goto fail;
                 }
