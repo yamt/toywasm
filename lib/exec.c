@@ -710,6 +710,7 @@ do_exception(struct exec_context *ctx)
          *
          *       <---------------------> arity
          */
+        assert(ctx->stack.psize - ctx->stack.lsize >= height + arity);
         struct cell *dst = &VEC_ELEM(ctx->stack, height);
         if (arity != csz) {
                 /* move exc to the new location first */
