@@ -33,7 +33,11 @@ INSN_IMPL(try_table)
         READ_LEB_S33(blocktype);
         READ_LEB_U32(vec_count);
         if (EXECUTING) {
-                /* skip catch clauses */
+                /*
+                 * skip and ignore catch clauses.
+                 * we will process them when an exception is
+                 * actually thrown. (find_catch)
+                 */
                 uint32_t i;
                 for (i = 0; i < vec_count; i++) {
                         uint32_t tagidx;
@@ -51,7 +55,9 @@ INSN_IMPL(try_table)
                         }
                         READ_LEB_U32(labelidx);
                 }
-                /* same as block */
+                /*
+                 * now it's same as block.
+                 */
                 push_label(ORIG_PC, STACK, ECTX);
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
@@ -125,7 +131,9 @@ INSN_IMPL(try_table)
                 }
                 /*
                  * Note: we should push our control frame _after_
-                 * validating catch labels.
+                 * validating catch labels. ("catch 0" points to the
+                 * surrounding block, not the try_table block itself.)
+                 *
                  * cf.
                  * https://github.com/WebAssembly/exception-handling/issues/286
                  */
@@ -159,9 +167,16 @@ INSN_IMPL(throw)
         const struct resulttype *rt = &ft->parameter;
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
+                /*
+                 * pop the exception parameters, create an exception,
+                 * and push exnref.
+                 */
                 SAVE_STACK_PTR;
                 push_exception(ectx, tagidx, rt);
                 LOAD_STACK_PTR;
+                /*
+                 * now it's same as throw.
+                 */
                 schedule_exception(ectx);
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
