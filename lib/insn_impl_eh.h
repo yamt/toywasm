@@ -169,6 +169,7 @@ INSN_IMPL(throw)
                 if (ret != 0) {
                         goto fail;
                 }
+                /* ensure to allocate enough stack for push_exception */
                 ret = push_valtype(TYPE_EXNREF, vctx);
                 if (ret != 0) {
                         goto fail;
