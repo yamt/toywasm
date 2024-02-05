@@ -17,7 +17,7 @@
         try_table (result i32) (catch $e1 0) (catch_all 1)
           block (result i32)
             try_table (result i32)
-            i32.const 0
+              i32.const 0
               block
                 local.get 0
                 call $g
