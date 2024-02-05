@@ -144,6 +144,13 @@ add_test(NAME toywasm-cli-exception-handling-test
 )
 set_tests_properties(toywasm-cli-exception-handling-test PROPERTIES ENVIRONMENT "${TEST_ENV}")
 set_tests_properties(toywasm-cli-exception-handling-test PROPERTIES LABELS "exception-handling")
+
+add_test(NAME toywasm-cli-exception-handling-test-disable-jump-table
+	COMMAND ./test.sh
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/wat/eh
+)
+set_tests_properties(toywasm-cli-exception-handling-test-disable-jump-table PROPERTIES ENVIRONMENT "${TEST_ENV};TEST_RUNTIME_EXE=${TOYWASM_CLI} --disable-jump-table")
+set_tests_properties(toywasm-cli-exception-handling-test-disable-jump-table PROPERTIES LABELS "exception-handling")
 endif()
 
 if(TOYWASM_ENABLE_WASI)
