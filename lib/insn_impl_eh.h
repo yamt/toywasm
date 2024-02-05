@@ -32,34 +32,7 @@ INSN_IMPL(try_table)
         LOAD_PC;
         READ_LEB_S33(blocktype);
         READ_LEB_U32(vec_count);
-        if (EXECUTING) {
-                /*
-                 * skip and ignore catch clauses.
-                 * we will process them when an exception is
-                 * actually thrown. (find_catch)
-                 */
-                uint32_t i;
-                for (i = 0; i < vec_count; i++) {
-                        uint32_t tagidx;
-                        READ_U8(catch_op);
-                        switch (catch_op) {
-                        case CATCH_REF:
-                        case CATCH:
-                                READ_LEB_U32_TO(tagidx);
-                                break;
-                        case CATCH_ALL_REF:
-                        case CATCH_ALL:
-                                break;
-                        default:
-                                assert(false);
-                        }
-                        READ_LEB_U32(labelidx);
-                }
-                /*
-                 * now it's same as block.
-                 */
-                push_label(ORIG_PC, STACK, ECTX);
-        } else if (VALIDATING) {
+        if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
                 struct module *m = vctx->module;
                 ret = get_functype_for_blocktype(m, blocktype, &rt_parameter,
@@ -145,6 +118,35 @@ INSN_IMPL(try_table)
                 }
                 rt_parameter = NULL;
                 rt_result = NULL;
+        } else {
+                /*
+                 * skip and ignore catch clauses.
+                 * we will process them when an exception is
+                 * actually thrown. (find_catch)
+                 */
+                uint32_t i;
+                for (i = 0; i < vec_count; i++) {
+                        uint32_t tagidx;
+                        READ_U8(catch_op);
+                        switch (catch_op) {
+                        case CATCH_REF:
+                        case CATCH:
+                                READ_LEB_U32_TO(tagidx);
+                                break;
+                        case CATCH_ALL_REF:
+                        case CATCH_ALL:
+                                break;
+                        default:
+                                assert(false);
+                        }
+                        READ_LEB_U32(labelidx);
+                }
+                if (EXECUTING) {
+                        /*
+                         * now it's same as block.
+                         */
+                        push_label(ORIG_PC, STACK, ECTX);
+                }
         }
         SAVE_PC;
         INSN_SUCCESS;

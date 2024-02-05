@@ -890,9 +890,13 @@ block_exit(struct exec_context *ctx, uint32_t blockpc, bool goto_else,
                          * The only way to find out the jump target is
                          * to parse every instructions. This is expensive.
                          *
-                         * REVISIT: skipping LEBs can be optimized better
-                         * than the current code.
+                         * Go back to the first byte of the block-starting
+                         * instruction (blockp) and let skip_expr to skip
+                         * the block.
+                         * Note that we haven't finished parsing the
+                         * instruction yet in case of try_table.
                          */
+                        p = blockp;
                         bool stay_in_block = skip_expr(&p, goto_else);
                         ctx->p = p;
                         if (stay_in_block) {
@@ -1376,6 +1380,19 @@ exec_pop_vals(struct exec_context *ctx, const struct resulttype *rt,
         vals_from_cells(vals, cells, rt);
 }
 
+/*
+ * skip the block starting at *p.
+ *
+ * if goto_else=false, *p is pointing to the block-starting instruction.
+ * (block, loop, if, or try_table.)
+ * this function advances *p to the next instruction next to the
+ * corresponding "end".
+ *
+ * if goto_else=true, *p is pointing to "if". this function advances *p
+ * to the next instruction next te the corresponding "else".
+ *
+ * REVISIT: skipping LEBs can be optimized better than the current code.
+ */
 bool
 skip_expr(const uint8_t **pp, bool goto_else)
 {
@@ -1383,6 +1400,12 @@ skip_expr(const uint8_t **pp, bool goto_else)
         struct context ctx;
         memset(&ctx, 0, sizeof(ctx));
         uint32_t block_level = 0;
+        if (goto_else) {
+                assert(*p == FRAME_OP_IF);
+        } else {
+                assert(*p == FRAME_OP_BLOCK || *p == FRAME_OP_LOOP ||
+                       *p == FRAME_OP_IF || *p == FRAME_OP_TRY_TABLE);
+        }
         while (true) {
                 uint32_t op = *p++;
                 const struct instruction_desc *desc = &instructions[op];
@@ -1391,22 +1414,24 @@ skip_expr(const uint8_t **pp, bool goto_else)
                         desc = &desc->next_table[op2];
                 }
                 assert(desc->process != NULL);
+                xlog_trace_insn("skipping %s", desc->name);
                 int ret = desc->process(&p, NULL, &ctx);
                 assert(ret == 0);
                 switch (op) {
                 case FRAME_OP_BLOCK:
                 case FRAME_OP_LOOP:
                 case FRAME_OP_IF:
+                case FRAME_OP_TRY_TABLE:
                         block_level++;
                         break;
                 case FRAME_OP_ELSE:
-                        if (goto_else && block_level == 0) {
+                        if (goto_else && block_level == 1) {
                                 *pp = p;
                                 return true;
                         }
                         break;
                 case FRAME_OP_END:
-                        if (block_level == 0) {
+                        if (block_level == 1) {
                                 *pp = p;
                                 return false;
                         }
