@@ -974,9 +974,12 @@ branch_to_label(struct exec_context *ctx, uint32_t labelidx, bool goto_else,
         uint32_t blockpc = l->pc;
         uint32_t arity;
         uint32_t param_arity;
+        xlog_trace_insn("branching to the block at %06" PRIx32, blockpc);
         if (cached_block_exit(ctx, blockpc, goto_else, &param_arity, &arity)) {
                 return true;
         }
+        xlog_trace_insn("branched to %06" PRIx32,
+                        ptr2pc(ctx->instance->module, ctx->p));
         ctx->labels.lsize -= labelidx + 1;
         /*
          * Note: The spec says to pop the values before
