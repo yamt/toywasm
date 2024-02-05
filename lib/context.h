@@ -9,6 +9,14 @@
 struct localtype;
 struct module;
 
+/*
+ * type of control frame (ctrlframe) used in validation logic.
+ *
+ * non-pseudo ones are only used by the validation logic.
+ *
+ * the others have the same values as the corresponding wasm opcodes.
+ * they are (ab)used by exec.c as well.
+ */
 enum ctrlframe_op {
         FRAME_OP_BLOCK = 0x02,
         FRAME_OP_LOOP = 0x03,
@@ -19,11 +27,15 @@ enum ctrlframe_op {
 
         FRAME_OP_TRY_TABLE = 0x1f,
 
-        /* pseudo op */
+        /* pseudo ops */
         FRAME_OP_EMPTY_ELSE = 0xfe,
         FRAME_OP_INVOKE = 0xff,
 };
 
+/*
+ * tags for catch clauses.
+ * this is a part of binary representation of try_table instruction.
+ */
 enum try_handler_tag {
         CATCH = 0x00,
         CATCH_REF = 0x01,
