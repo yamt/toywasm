@@ -158,7 +158,6 @@ _Static_assert(sizeof(union v128) == 16, "v128");
 #if !defined(TOYWASM_USE_SMALL_CELLS)
 #error TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING w/o TOYWASM_USE_SMALL_CELLS is not implemented
 #endif
-#define TOYWASM_EXCEPTION_MAX_CELLS 4
 /*
  * Note: the type of exc->cells is taginst_functype(exc->tag)->parameter.
  */

@@ -127,6 +127,7 @@ option(TOYWASM_ENABLE_WASM_SIMD "Enable SIMD" ON)
 
 # enable each wasm proposals.
 option(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING "Enable exception-handling proposal" OFF)
+set(TOYWASM_EXCEPTION_MAX_CELLS "4" CACHE STRING "The max size of exception")
 option(TOYWASM_ENABLE_WASM_EXTENDED_CONST "Enable extended-const proposal" OFF)
 option(TOYWASM_ENABLE_WASM_MULTI_MEMORY "Enable multi-memory proposal" OFF)
 option(TOYWASM_ENABLE_WASM_TAILCALL "Enable WASM tail-call proposal" OFF)
