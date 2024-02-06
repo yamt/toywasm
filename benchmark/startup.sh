@@ -37,6 +37,7 @@ run "wasm3 (no lazy)" wasm3 --compile
 run "wamr (classic interp)" iwasm.classic
 run "wamr (fast interp)" iwasm.fast
 run "wasmi" "wasmi_cli --"
+run "wasmi (lazy)" "wasmi_cli --compilation-mode lazy --"
 run "wazero (interp)" "wazero run -interpreter --"
 run "wasmedge (interp)" "wasmedge --"
 
