@@ -57,7 +57,7 @@ installed with homebrew.
 ### wasmi
 
 ```
-git checkout v0.31.0
+git checkout v0.32.0-beta.5
 cargo build --profile bench
 cp target/release/wasmi_cli ~/bin
 ```
