@@ -49,6 +49,9 @@ exec_context_print_stats(struct exec_context *ctx)
         STAT_PRINT(call_restart);
         STAT_PRINT(tail_call_restart);
         STAT_PRINT(atomic_wait_restart);
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+        STAT_PRINT(exception);
+#endif
 }
 
 static void
