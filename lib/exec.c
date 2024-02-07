@@ -604,6 +604,8 @@ found:
 static int
 do_exception(struct exec_context *ctx)
 {
+        STAT_INC(ctx, exception);
+
         /*
          * pop an exception on the top of the stack.
          * cf. push_exception

@@ -133,6 +133,9 @@ struct exec_stat {
         uint64_t call_restart;
         uint64_t tail_call_restart;
         uint64_t atomic_wait_restart;
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+        uint64_t exception;
+#endif
 };
 
 struct jump_cache {
