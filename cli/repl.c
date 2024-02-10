@@ -438,7 +438,7 @@ repl_exec_init(struct repl_state *state, struct repl_module_state *mod,
         int ret;
         exec_context_init(ctx, mod->inst);
         ctx->options = state->opts.exec_options;
-        ret = instance_create_execute_init(mod->inst, ctx);
+        ret = instance_execute_init(ctx);
         if (ret == ETOYWASMTRAP) {
                 assert(ctx->trapped);
                 print_trap(ctx, &ctx->trap);
