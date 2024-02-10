@@ -430,12 +430,14 @@ print_trap(const struct exec_context *ctx, const struct trap_info *trap)
 }
 
 static int
-repl_exec_init(struct repl_module_state *mod, bool trap_ok)
+repl_exec_init(struct repl_state *state, struct repl_module_state *mod,
+               bool trap_ok)
 {
         struct exec_context ctx0;
         struct exec_context *ctx = &ctx0;
         int ret;
         exec_context_init(ctx, mod->inst);
+        ctx->options = state->opts.exec_options;
         ret = instance_create_execute_init(mod->inst, ctx);
         if (ret == ETOYWASMTRAP) {
                 assert(ctx->trapped);
@@ -506,7 +508,7 @@ repl_load_from_buf(struct repl_state *state, const char *modname,
                 xlog_printf("instance_create_no_init failed with %d\n", ret);
                 goto fail;
         }
-        ret = repl_exec_init(mod, trap_ok);
+        ret = repl_exec_init(state, mod, trap_ok);
         if (ret != 0) {
                 xlog_printf("repl_exec_init failed\n");
                 goto fail;
