@@ -1474,6 +1474,7 @@ exec_const_expr(const struct expr *expr, enum valtype type, struct val *result,
         /*
          * it's very unlikely for a const expr to use a restart.
          * but just in case.
+         * note that a const expr can't have a loop.
          */
         while (IS_RESTARTABLE(ret)) {
                 xlog_trace("%s: restarting execution of a const expr\n",
