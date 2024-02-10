@@ -69,6 +69,13 @@ set_tests_properties(toywasm-cli-timeout PROPERTIES ENVIRONMENT "${TEST_ENV}")
 set_tests_properties(toywasm-cli-timeout PROPERTIES LABELS "timeout")
 set_tests_properties(toywasm-cli-timeout PROPERTIES WILL_FAIL ON)
 
+add_test(NAME toywasm-cli-start-timeout COMMAND
+	${TOYWASM_CLI} --timeout=100 infiniteloop_in_start.wasm
+)
+set_tests_properties(toywasm-cli-start-timeout PROPERTIES ENVIRONMENT "${TEST_ENV}")
+set_tests_properties(toywasm-cli-start-timeout PROPERTIES LABELS "timeout")
+set_tests_properties(toywasm-cli-start-timeout PROPERTIES WILL_FAIL ON)
+
 if(TOYWASM_ENABLE_WASI_THREADS)
 add_test(NAME toywasm-cli-timeout-wasi-threads COMMAND
 	${TOYWASM_CLI} --wasi --timeout=100 infiniteloops.wasm
@@ -223,6 +230,7 @@ if(BUILD_TESTING)
 set(wat_files
 	test/spectest.wat
 	wat/infiniteloop.wat
+	wat/infiniteloop_in_start.wat
 	wat/wasi-threads/infiniteloops.wat
 )
 
