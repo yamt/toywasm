@@ -321,6 +321,7 @@ instance_create(const struct module *m, struct instance **instp,
         exec_context_init(ctx, inst);
         ctx->report = report;
         ret = instance_execute_init(ctx);
+        ret = instance_execute_handle_restart(ctx, ret);
         exec_context_clear(ctx);
         if (ret != 0) {
                 instance_destroy(inst);
@@ -605,19 +606,7 @@ instance_execute_init(struct exec_context *ctx)
         if (m->has_start) {
                 assert(m->start < m->nimportedfuncs + m->nfuncs);
                 struct funcinst *finst = VEC_ELEM(inst->funcs, m->start);
-                ret = invoke(finst, NULL, NULL, ctx);
-                while (IS_RESTARTABLE(ret)) {
-                        xlog_trace("%s: restarting execution of the start "
-                                   "function\n",
-                                   __func__);
-#if defined(TOYWASM_ENABLE_WASM_THREADS)
-                        suspend_parked(ctx->cluster);
-#endif
-                        ret = exec_expr_continue(ctx);
-                }
-                if (ret != 0) {
-                        goto fail;
-                }
+                return invoke(finst, NULL, NULL, ctx);
         }
         return 0;
 fail:
