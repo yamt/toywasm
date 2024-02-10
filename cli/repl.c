@@ -894,6 +894,64 @@ unescape(char *p0, size_t *lenp)
         return 0;
 }
 
+static void
+setup_timeout(struct exec_context *ctx)
+{
+        /*
+         * REVISIT: this timeout logic is a bit broken because it
+         * assumes that, when the main thread exits, other threads
+         * also exit soon.
+         * right now, it happens to be true because
+         * wasi_threads_complete_exec terminates other threads
+         * for proc_exit anyway.
+         * (see the comment in wasi_threads_instance_join.)
+         *
+         * possible fixes:
+         * a. make wasi_threads_instance_join check timeout expiration
+         * b. make the user interrutpt a cluster-wide event and handle
+         *    it in non-main threads as well
+         * c. give up implementing a timeout this way
+         */
+
+        const static atomic_uint one = 1;
+        /*
+         * keep the interrupt triggered so that we can check
+         * timeout in the execution loop below.
+         *
+         * Note: if a host environment has a nice timer functionality
+         * like alarm(3), you can make this more efficient by
+         * requesting an interrupt only after timeout_ms. we don't
+         * bother to make such an optimization here though because
+         * we aim to be portable to wasm32-wasi, which doesn't have
+         * signals.
+         */
+        ctx->intrp = &one;
+        /*
+         * a hack to avoid busy loop.
+         * maybe it's cleaner for us to provide a timer functionality
+         * by ourselves. but i feel it's too much for now.
+         */
+        ctx->user_intr_delay = 1;
+}
+
+static int
+check_timeout(const struct timespec *abstimeout)
+{
+        struct timespec now;
+        int ret = timespec_now(CLOCK_MONOTONIC, &now);
+        if (ret != 0) {
+                goto fail;
+        }
+        if (timespec_cmp(&now, abstimeout) > 0) {
+                xlog_error("execution timed out");
+                ret = ETIMEDOUT;
+                goto fail;
+        }
+        ret = 0;
+fail:
+        return ret;
+}
+
 static int
 exec_func(struct exec_context *ctx, uint32_t funcidx,
           const struct resulttype *ptype, const struct resulttype *rtype,
@@ -904,46 +962,12 @@ exec_func(struct exec_context *ctx, uint32_t funcidx,
         int ret;
         *trapp = NULL;
         if (timeout_ms > 0) {
-                /*
-                 * REVISIT: this timeout logic is a bit broken because it
-                 * assumes that, when the main thread exits, other threads
-                 * also exit soon.
-                 * right now, it happens to be true because
-                 * wasi_threads_complete_exec terminates other threads
-                 * for proc_exit anyway.
-                 * (see the comment in wasi_threads_instance_join.)
-                 *
-                 * possible fixes:
-                 * a. make wasi_threads_instance_join check timeout expiration
-                 * b. make the user interrutpt a cluster-wide event and handle
-                 *    it in non-main threads as well
-                 * c. give up implementing a timeout this way
-                 */
-
-                const static atomic_uint one = 1;
                 ret = abstime_from_reltime_ms(CLOCK_MONOTONIC, &abstimeout,
                                               timeout_ms);
                 if (ret != 0) {
                         goto fail;
                 }
-                /*
-                 * keep the interrupt triggered so that we can check
-                 * timeout in the execution loop below.
-                 *
-                 * Note: if a host environment has a nice timer functionality
-                 * like alarm(3), you can make this more efficient by
-                 * requesting an interrupt only after timeout_ms. we don't
-                 * bother to make such an optimization here though because
-                 * we aim to be portable to wasm32-wasi, which doesn't have
-                 * signals.
-                 */
-                ctx->intrp = &one;
-                /*
-                 * a hack to avoid busy loop.
-                 * maybe it's cleaner for us to provide a timer functionality
-                 * by ourselves. but i feel it's too much for now.
-                 */
-                ctx->user_intr_delay = 1;
+                setup_timeout(ctx);
         }
         assert(ctx->stack.lsize == 0);
         ret = exec_push_vals(ctx, ptype, param);
@@ -953,17 +977,10 @@ exec_func(struct exec_context *ctx, uint32_t funcidx,
         ret = instance_execute_func(ctx, funcidx, ptype, rtype);
         do {
                 if (ret == ETOYWASMUSERINTERRUPT) {
-                        struct timespec now;
-                        int ret1;
                         assert(timeout_ms > 0);
-                        ret1 = timespec_now(CLOCK_MONOTONIC, &now);
+                        int ret1 = check_timeout(&abstimeout);
                         if (ret1 != 0) {
                                 ret = ret1;
-                                goto fail;
-                        }
-                        if (timespec_cmp(&now, &abstimeout) > 0) {
-                                xlog_error("execution timed out");
-                                ret = ETIMEDOUT;
                                 goto fail;
                         }
                 }
