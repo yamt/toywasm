@@ -59,9 +59,12 @@ struct repl_state {
         struct wasi_instance *wasi;
         struct wasi_threads_instance *wasi_threads;
         struct repl_options opts;
+        struct timespec abstimeout;
+        bool has_timeout;
 };
 
 void toywasm_repl_state_init(struct repl_state *state);
+int toywasm_repl_set_timeout(struct repl_state *state, int timeout_ms);
 int toywasm_repl(struct repl_state *state);
 
 void toywasm_repl_reset(struct repl_state *state);
@@ -70,7 +73,7 @@ int toywasm_repl_load(struct repl_state *state, const char *modname,
 int toywasm_repl_register(struct repl_state *state, const char *modname,
                           const char *register_name);
 int toywasm_repl_invoke(struct repl_state *state, const char *modname,
-                        const char *cmd, int timeout_ms, uint32_t *exitcodep,
+                        const char *cmd, uint32_t *exitcodep,
                         bool print_result);
 void toywasm_repl_print_version(void);
 

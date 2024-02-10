@@ -268,7 +268,6 @@ main(int argc, char *const *argv)
         bool might_need_help = true;
 
         int exit_status = 1;
-        int timeout_ms = -1;
 
 #if defined(__NuttX__)
         xlog_tracing = 0;
@@ -321,8 +320,8 @@ main(int argc, char *const *argv)
                         break;
 #endif
                 case opt_invoke:
-                        ret = toywasm_repl_invoke(state, NULL, optarg,
-                                                  timeout_ms, NULL, true);
+                        ret = toywasm_repl_invoke(state, NULL, optarg, NULL,
+                                                  true);
                         if (ret != 0) {
                                 goto fail;
                         }
@@ -356,7 +355,7 @@ main(int argc, char *const *argv)
                         opts->print_stats = true;
                         break;
                 case opt_timeout:
-                        timeout_ms = atoi(optarg);
+                        toywasm_repl_set_timeout(state, atoi(optarg));
                         break;
                 case opt_trace:
                         xlog_tracing = atoi(optarg);
@@ -452,8 +451,8 @@ main(int argc, char *const *argv)
         }
 #endif
         uint32_t wasi_exit_code = 0;
-        ret = toywasm_repl_invoke(state, NULL, "_start", timeout_ms,
-                                  &wasi_exit_code, false);
+        ret = toywasm_repl_invoke(state, NULL, "_start", &wasi_exit_code,
+                                  false);
         if (ret != 0) {
                 xlog_error("invoke failed with %d", ret);
                 /*

@@ -429,17 +429,89 @@ print_trap(const struct exec_context *ctx, const struct trap_info *trap)
         nbio_printf("Error: [trap] %s (%u): %s\n", msg, id, trapmsg);
 }
 
+static void
+setup_timeout(struct exec_context *ctx)
+{
+        /*
+         * REVISIT: this timeout logic is a bit broken because it
+         * assumes that, when the main thread exits, other threads
+         * also exit soon.
+         * right now, it happens to be true because
+         * wasi_threads_complete_exec terminates other threads
+         * for proc_exit anyway.
+         * (see the comment in wasi_threads_instance_join.)
+         *
+         * possible fixes:
+         * a. make wasi_threads_instance_join check timeout expiration
+         * b. make the user interrutpt a cluster-wide event and handle
+         *    it in non-main threads as well
+         * c. give up implementing a timeout this way
+         */
+
+        const static atomic_uint one = 1;
+        /*
+         * keep the interrupt triggered so that we can check
+         * timeout in the execution loop below.
+         *
+         * Note: if a host environment has a nice timer functionality
+         * like alarm(3), you can make this more efficient by
+         * requesting an interrupt only after timeout_ms. we don't
+         * bother to make such an optimization here though because
+         * we aim to be portable to wasm32-wasi, which doesn't have
+         * signals.
+         */
+        ctx->intrp = &one;
+        /*
+         * a hack to avoid busy loop.
+         * maybe it's cleaner for us to provide a timer functionality
+         * by ourselves. but i feel it's too much for now.
+         */
+        ctx->user_intr_delay = 1;
+}
+
+static int
+check_timeout(const struct timespec *abstimeout)
+{
+        struct timespec now;
+        int ret = timespec_now(CLOCK_MONOTONIC, &now);
+        if (ret != 0) {
+                goto fail;
+        }
+        if (timespec_cmp(&now, abstimeout) > 0) {
+                xlog_error("execution timed out");
+                ret = ETIMEDOUT;
+                goto fail;
+        }
+        ret = 0;
+fail:
+        return ret;
+}
+
 static int
 repl_exec_init(struct repl_state *state, struct repl_module_state *mod,
                bool trap_ok)
 {
+        const bool has_timeout = state->has_timeout;
         struct exec_context ctx0;
         struct exec_context *ctx = &ctx0;
         int ret;
         exec_context_init(ctx, mod->inst);
         ctx->options = state->opts.exec_options;
+        if (has_timeout) {
+                setup_timeout(ctx);
+        }
         ret = instance_execute_init(ctx);
-        ret = instance_execute_handle_restart(ctx, ret);
+        do {
+                if (ret == ETOYWASMUSERINTERRUPT) {
+                        assert(has_timeout);
+                        int ret1 = check_timeout(&state->abstimeout);
+                        if (ret1 != 0) {
+                                ret = ret1;
+                                goto fail;
+                        }
+                }
+                ret = instance_execute_handle_restart_once(ctx, ret);
+        } while (IS_RESTARTABLE(ret));
         if (ret == ETOYWASMTRAP) {
                 assert(ctx->trapped);
                 print_trap(ctx, &ctx->trap);
@@ -447,6 +519,7 @@ repl_exec_init(struct repl_state *state, struct repl_module_state *mod,
                         ret = 0;
                 }
         }
+fail:
         exec_context_clear(ctx);
         return ret;
 }
@@ -894,79 +967,27 @@ unescape(char *p0, size_t *lenp)
         return 0;
 }
 
-static void
-setup_timeout(struct exec_context *ctx)
+int
+toywasm_repl_set_timeout(struct repl_state *state, int timeout_ms)
 {
-        /*
-         * REVISIT: this timeout logic is a bit broken because it
-         * assumes that, when the main thread exits, other threads
-         * also exit soon.
-         * right now, it happens to be true because
-         * wasi_threads_complete_exec terminates other threads
-         * for proc_exit anyway.
-         * (see the comment in wasi_threads_instance_join.)
-         *
-         * possible fixes:
-         * a. make wasi_threads_instance_join check timeout expiration
-         * b. make the user interrutpt a cluster-wide event and handle
-         *    it in non-main threads as well
-         * c. give up implementing a timeout this way
-         */
-
-        const static atomic_uint one = 1;
-        /*
-         * keep the interrupt triggered so that we can check
-         * timeout in the execution loop below.
-         *
-         * Note: if a host environment has a nice timer functionality
-         * like alarm(3), you can make this more efficient by
-         * requesting an interrupt only after timeout_ms. we don't
-         * bother to make such an optimization here though because
-         * we aim to be portable to wasm32-wasi, which doesn't have
-         * signals.
-         */
-        ctx->intrp = &one;
-        /*
-         * a hack to avoid busy loop.
-         * maybe it's cleaner for us to provide a timer functionality
-         * by ourselves. but i feel it's too much for now.
-         */
-        ctx->user_intr_delay = 1;
-}
-
-static int
-check_timeout(const struct timespec *abstimeout)
-{
-        struct timespec now;
-        int ret = timespec_now(CLOCK_MONOTONIC, &now);
+        int ret = abstime_from_reltime_ms(CLOCK_MONOTONIC, &state->abstimeout,
+                                          timeout_ms);
         if (ret != 0) {
-                goto fail;
+                return ret;
         }
-        if (timespec_cmp(&now, abstimeout) > 0) {
-                xlog_error("execution timed out");
-                ret = ETIMEDOUT;
-                goto fail;
-        }
-        ret = 0;
-fail:
-        return ret;
+        state->has_timeout = true;
+        return 0;
 }
 
 static int
 exec_func(struct exec_context *ctx, uint32_t funcidx,
           const struct resulttype *ptype, const struct resulttype *rtype,
-          const struct val *param, struct val *result, int timeout_ms,
-          const struct trap_info **trapp)
+          const struct val *param, struct val *result,
+          const struct timespec *abstimeout, const struct trap_info **trapp)
 {
-        struct timespec abstimeout;
         int ret;
         *trapp = NULL;
-        if (timeout_ms > 0) {
-                ret = abstime_from_reltime_ms(CLOCK_MONOTONIC, &abstimeout,
-                                              timeout_ms);
-                if (ret != 0) {
-                        goto fail;
-                }
+        if (abstimeout != NULL) {
                 setup_timeout(ctx);
         }
         assert(ctx->stack.lsize == 0);
@@ -977,8 +998,8 @@ exec_func(struct exec_context *ctx, uint32_t funcidx,
         ret = instance_execute_func(ctx, funcidx, ptype, rtype);
         do {
                 if (ret == ETOYWASMUSERINTERRUPT) {
-                        assert(timeout_ms > 0);
-                        int ret1 = check_timeout(&abstimeout);
+                        assert(abstimeout != NULL);
+                        int ret1 = check_timeout(abstimeout);
                         if (ret1 != 0) {
                                 ret = ret1;
                                 goto fail;
@@ -1003,8 +1024,7 @@ fail:
  */
 int
 toywasm_repl_invoke(struct repl_state *state, const char *modname,
-                    const char *cmd, int timeout_ms, uint32_t *exitcodep,
-                    bool print_result)
+                    const char *cmd, uint32_t *exitcodep, bool print_result)
 {
         char *cmd1 = strdup(cmd);
         if (cmd1 == NULL) {
@@ -1095,7 +1115,9 @@ toywasm_repl_invoke(struct repl_state *state, const char *modname,
         struct wasi_threads_instance *wasi_threads = state->wasi_threads;
         wasi_threads_setup_exec_context(wasi_threads, ctx);
 #endif
-        ret = exec_func(ctx, funcidx, ptype, rtype, param, result, timeout_ms,
+        const struct timespec *abstimeout =
+                state->has_timeout ? &state->abstimeout : NULL;
+        ret = exec_func(ctx, funcidx, ptype, rtype, param, result, abstimeout,
                         &trap);
 #if defined(TOYWASM_ENABLE_WASI_THREADS)
         wasi_threads_complete_exec(wasi_threads, &trap);
@@ -1284,7 +1306,7 @@ repl_module_subcmd(struct repl_state *state, const char *cmd,
                         goto fail;
                 }
         } else if (!strcmp(cmd, "invoke") && opt != NULL) {
-                ret = toywasm_repl_invoke(state, modname, opt, -1, NULL, true);
+                ret = toywasm_repl_invoke(state, modname, opt, NULL, true);
                 if (ret != 0) {
                         goto fail;
                 }
