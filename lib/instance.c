@@ -320,7 +320,7 @@ instance_create(const struct module *m, struct instance **instp,
         ctx = &ctx0;
         exec_context_init(ctx, inst);
         ctx->report = report;
-        ret = instance_create_execute_init(inst, ctx);
+        ret = instance_execute_init(ctx);
         exec_context_clear(ctx);
         if (ret != 0) {
                 instance_destroy(inst);
@@ -547,8 +547,9 @@ fail:
 }
 
 int
-instance_create_execute_init(struct instance *inst, struct exec_context *ctx)
+instance_execute_init(struct exec_context *ctx)
 {
+        struct instance *inst = ctx->instance;
         const struct module *m = inst->module;
         uint32_t i;
         int ret;
