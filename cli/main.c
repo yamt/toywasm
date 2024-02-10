@@ -328,7 +328,7 @@ main(int argc, char *const *argv)
                         }
                         break;
                 case opt_load:
-                        ret = toywasm_repl_load(state, NULL, optarg);
+                        ret = toywasm_repl_load(state, NULL, optarg, false);
                         if (ret != 0) {
                                 goto fail;
                         }
@@ -426,7 +426,7 @@ main(int argc, char *const *argv)
         }
 #endif
         const char *filename = argv[0];
-        ret = toywasm_repl_load(state, NULL, filename);
+        ret = toywasm_repl_load(state, NULL, filename, false);
         if (ret != 0) {
                 xlog_error("load failed");
                 goto fail;

@@ -66,7 +66,7 @@ int toywasm_repl(struct repl_state *state);
 
 void toywasm_repl_reset(struct repl_state *state);
 int toywasm_repl_load(struct repl_state *state, const char *modname,
-                      const char *filename);
+                      const char *filename, bool trap_ok);
 int toywasm_repl_register(struct repl_state *state, const char *modname,
                           const char *register_name);
 int toywasm_repl_invoke(struct repl_state *state, const char *modname,
