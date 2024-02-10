@@ -525,7 +525,7 @@ fail:
 
 int
 toywasm_repl_load(struct repl_state *state, const char *modname,
-                  const char *filename)
+                  const char *filename, bool trap_ok)
 {
         int ret;
         ret = resize_array((void **)&state->modules, sizeof(*state->modules),
@@ -536,6 +536,9 @@ toywasm_repl_load(struct repl_state *state, const char *modname,
         struct repl_module_state_u *mod_u = &state->modules[state->nmodules];
 #if defined(TOYWASM_ENABLE_DYLD)
         if (state->opts.enable_dyld) {
+                if (trap_ok) {
+                        return ENOTSUP; /* not implemented */
+                }
                 struct dyld *d = &mod_u->u.dyld;
                 dyld_init(d);
                 d->opts = state->opts.dyld_options;
@@ -556,7 +559,7 @@ toywasm_repl_load(struct repl_state *state, const char *modname,
                 goto fail;
         }
         mod->buf_mapped = true;
-        ret = repl_load_from_buf(state, modname, mod, true);
+        ret = repl_load_from_buf(state, modname, mod, trap_ok);
         if (ret != 0) {
                 goto fail;
         }
@@ -1251,7 +1254,7 @@ repl_module_subcmd(struct repl_state *state, const char *cmd,
         int ret;
 
         if (!strcmp(cmd, "load") && opt != NULL) {
-                ret = toywasm_repl_load(state, modname, opt);
+                ret = toywasm_repl_load(state, modname, opt, true);
                 if (ret != 0) {
                         goto fail;
                 }
