@@ -64,6 +64,7 @@
                 } else {                                                      \
                         read_memarg_nocheck(&p, arg);                         \
                 }                                                             \
+                CHECK((arg)->align <= 4);                                     \
         } while (false)
 
 #define READ_MEMARG8(arg)                                                     \
