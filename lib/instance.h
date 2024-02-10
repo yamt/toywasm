@@ -25,6 +25,9 @@ int instance_create(const struct module *m, struct instance **instp,
  * some kind of errors more flexibly. These functions are introduced
  * to deal with some of corner cases you can see in opam-2.0.0 linking.wast.
  * cf. https://github.com/WebAssembly/spec/issues/1530
+ *
+ * note than instance_execute_init can return a restartable error.
+ * see also: instance_execute_continue.
  */
 int instance_create_no_init(const struct module *m, struct instance **instp,
                             const struct import_object *imports,
@@ -69,6 +72,7 @@ int instance_execute_func_nocheck(struct exec_context *ctx, uint32_t funcidx);
  * returned a restartable error, the app can resume the execution by calling
  * this function.
  *
+ *   - instance_execute_init
  *   - instance_execute_func
  *   - instance_execute_func_nocheck
  *   - instance_execute_continue
