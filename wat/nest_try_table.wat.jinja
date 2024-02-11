@@ -1,0 +1,57 @@
+;; % jinja2 nest_try_table.wat.jinja|wasm-tools parse -o nest_try_table.wasm
+;; %
+
+{% set NUM_CATCH = NUM_CATCH | default(100000) | int %}
+
+(module
+  {% for x in range(NUM_CATCH) %}
+  (tag $e{{x}} (param i32))
+  {% endfor %}
+  (func $create-exception (param i32 i32) (result exnref)
+    try_table (catch_all_ref 0)
+      {% for x in range(NUM_CATCH) %}
+      local.get 0
+      i32.const {{x}}
+      i32.eq
+      if
+        local.get 1
+        throw $e{{x}}
+      end
+      {% endfor %}
+    end
+    unreachable
+  )
+  (func $mul-2 (export "mul-2") (param i32) (result i32)
+    i32.const 0
+    block (param i32) (result i32)
+      {% for x in range(NUM_CATCH) %}
+      try_table (param i32) (result i32) (catch $e{{x}} 0)
+      {% endfor %}
+        local.get 0
+        local.get 0
+        call $create-exception
+        throw_ref
+      {% for x in range(NUM_CATCH) %}
+      end
+      i32.const 1
+      i32.add
+      {% endfor %}
+    end
+  )
+  (func (export "_start")
+    i32.const 0
+    call $mul-2
+    i32.const 0
+    i32.ne
+    if
+      unreachable
+    end
+    i32.const {{NUM_CATCH - 1}}
+    call $mul-2
+    i32.const {{(NUM_CATCH - 1) * 2}}
+    i32.ne
+    if
+      unreachable
+    end
+  )
+)
