@@ -17,11 +17,17 @@
 #define WASM_PAGE_SIZE 65536
 #define WASM_MAX_PAGES 65536
 
+/*
+ * jump table. see doc/annotations.md
+ */
 struct jump {
         uint32_t pc;
         uint32_t targetpc;
 };
 
+/*
+ * type annotations. see doc/annotations.md
+ */
 struct type_annotation {
         uint32_t pc;
         uint32_t size;
@@ -61,6 +67,9 @@ struct expr {
         struct expr_exec_info ei;
 };
 
+/*
+ * local offset table. see doc/annotations.md
+ */
 struct localcellidx {
         /*
          * This structure is used by TOYWASM_USE_RESULTTYPE_CELLIDX and
