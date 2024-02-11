@@ -291,3 +291,4 @@ add_custom_target(tar
 
 install(TARGETS toywasm-cli DESTINATION bin)
 install(FILES LICENSE README.md DESTINATION share/doc/toywasm)
+install(FILES doc/annotations.md doc/check_interrupt.md DESTINATION share/doc/toywasm/doc)
