@@ -1,6 +1,15 @@
 #if !defined(_TOYWASM_LIST_H)
 #define _TOYWASM_LIST_H
 
+/*
+ * This is a tail queue implementation
+ *
+ * - the structure is similar to BSD queue.h TAILQ.
+ *   re-invented just for NIH.
+ *
+ * - insert and remove are O(1).
+ */
+
 #include <stdint.h>
 
 #include "platform.h"
