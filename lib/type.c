@@ -58,6 +58,10 @@ module_find_export(const struct module *m, const struct name *name,
                    uint32_t type, uint32_t *idxp)
 {
 #if defined(TOYWASM_SORT_EXPORTS)
+        /*
+         * binary search
+         * O(lg(n)) where n is the number of exports
+         */
         uint32_t left = 0;
         uint32_t right = m->nexports;
         while (left < right) {
@@ -79,6 +83,10 @@ module_find_export(const struct module *m, const struct name *name,
         }
         return ENOENT;
 #else
+        /*
+         * linear search
+         * O(n) where n is the number of exports
+         */
         uint32_t i;
         for (i = 0; i < m->nexports; i++) {
                 const struct export *ex = &m->exports[i];
