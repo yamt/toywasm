@@ -16,7 +16,7 @@ int suspend_check_interrupt(struct exec_context *ctx, const struct cluster *c);
 void suspend_parked(struct cluster *c);
 
 /*
- * suspend_threads: request to suspend all threads in the cluster.
+ * suspend_threads: request to suspend all other threads in the cluster.
  *
  * when suspend_threads returns, every other threads in the cluster
  * are either:
@@ -33,7 +33,7 @@ void suspend_parked(struct cluster *c);
 void suspend_threads(struct cluster *c);
 
 /*
- * resume_threads: request to undo resume_threads.
+ * resume_threads: request to undo suspend_threads.
  * should only be called after a successful call of suspend_threads().
  */
 void resume_threads(struct cluster *c);
