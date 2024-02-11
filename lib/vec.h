@@ -21,7 +21,7 @@ void _vec_free(void *vec);
 #define VEC_INIT(v) memset(&v, 0, sizeof(v))
 /*
  * VEC_RESIZE resizes the size of vector. that is, psize == lsize == sz.
- * when extending th vector, it initializes newly allocated elements
+ * when extending the vector, it initializes newly allocated elements
  * with zeros.
  */
 #define VEC_RESIZE(v, sz) _vec_resize(&v, sizeof(*v.p), sz);
