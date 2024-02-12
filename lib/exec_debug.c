@@ -29,26 +29,40 @@ exec_context_print_stats(struct exec_context *ctx)
 
         STAT_PRINT(call);
         STAT_PRINT(host_call);
+#if defined(TOYWASM_ENABLE_WASM_TAILCALL)
         STAT_PRINT(tail_call);
         STAT_PRINT(host_tail_call);
+#endif
         STAT_PRINT(branch);
         STAT_PRINT(branch_goto_else);
-        STAT_PRINT(jump_cache2_hit);
+#if defined(TOYWASM_USE_JUMP_CACHE)
         STAT_PRINT(jump_cache_hit);
+#endif
+#if TOYWASM_JUMP_CACHE2_SIZE > 0
+        STAT_PRINT(jump_cache2_hit);
+#endif
         STAT_PRINT(jump_table_search);
         STAT_PRINT(jump_loop);
+#if defined(TOYWASM_USE_SMALL_CELLS)
         STAT_PRINT(type_annotation_lookup1);
         STAT_PRINT(type_annotation_lookup2);
         STAT_PRINT(type_annotation_lookup3);
+#endif
         STAT_PRINT(interrupt_exit);
         STAT_PRINT(interrupt_suspend);
+#if defined(TOYWASM_USE_USER_SCHED)
         STAT_PRINT(interrupt_usched);
+#endif
         STAT_PRINT(interrupt_user);
         STAT_PRINT(interrupt_debug);
         STAT_PRINT(exec_loop_restart);
         STAT_PRINT(call_restart);
+#if defined(TOYWASM_ENABLE_WASM_TAILCALL)
         STAT_PRINT(tail_call_restart);
+#endif
+#if defined(TOYWASM_ENABLE_WASM_THREADS)
         STAT_PRINT(atomic_wait_restart);
+#endif
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
         STAT_PRINT(exception);
 #endif
