@@ -112,27 +112,41 @@ enum restart_type {
 
 struct exec_stat {
         uint64_t call;
-        uint64_t host_call;      /* included in call */
+        uint64_t host_call; /* included in call */
+#if defined(TOYWASM_ENABLE_WASM_TAILCALL)
         uint64_t tail_call;      /* included in call */
         uint64_t host_tail_call; /* included in host_call and call */
+#endif
         uint64_t branch;
         uint64_t branch_goto_else;
+#if defined(TOYWASM_USE_JUMP_CACHE)
         uint64_t jump_cache_hit;
+#endif
+#if TOYWASM_JUMP_CACHE2_SIZE > 0
         uint64_t jump_cache2_hit;
+#endif
         uint64_t jump_table_search;
         uint64_t jump_loop;
+#if defined(TOYWASM_USE_SMALL_CELLS)
         uint64_t type_annotation_lookup1;
         uint64_t type_annotation_lookup2;
         uint64_t type_annotation_lookup3;
+#endif
         uint64_t interrupt_exit;
         uint64_t interrupt_suspend;
+#if defined(TOYWASM_USE_USER_SCHED)
         uint64_t interrupt_usched;
+#endif
         uint64_t interrupt_user;
         uint64_t interrupt_debug;
         uint64_t exec_loop_restart;
         uint64_t call_restart;
+#if defined(TOYWASM_ENABLE_WASM_TAILCALL)
         uint64_t tail_call_restart;
+#endif
+#if defined(TOYWASM_ENABLE_WASM_THREADS)
         uint64_t atomic_wait_restart;
+#endif
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
         uint64_t exception;
 #endif
