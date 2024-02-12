@@ -17,8 +17,12 @@
 
 enum longopt {
         opt_disable_jump_table = 0x100,
+#if defined(TOYWASM_USE_LOCALTYPE_CELLIDX)
         opt_disable_localtype_cellidx,
+#endif
+#if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
         opt_disable_resulttype_cellidx,
+#endif
 #if defined(TOYWASM_ENABLE_DYLD)
         opt_dyld,
         opt_dyld_bindnow,
@@ -37,12 +41,16 @@ enum longopt {
         opt_repl_prompt,
         opt_print_stats,
         opt_timeout,
+#if defined(TOYWASM_ENABLE_TRACING)
         opt_trace,
+#endif
         opt_version,
+#if defined(TOYWASM_ENABLE_WASI)
         opt_wasi,
         opt_wasi_dir,
         opt_wasi_mapdir,
         opt_wasi_env,
+#endif
 };
 
 static const struct option longopts[] = {
@@ -52,18 +60,22 @@ static const struct option longopts[] = {
                 NULL,
                 opt_disable_jump_table,
         },
+#if defined(TOYWASM_USE_LOCALTYPE_CELLIDX)
         {
                 "disable-localtype-cellidx",
                 no_argument,
                 NULL,
                 opt_disable_localtype_cellidx,
         },
+#endif
+#if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
         {
                 "disable-resulttype-cellidx",
                 no_argument,
                 NULL,
                 opt_disable_resulttype_cellidx,
         },
+#endif
 #if defined(TOYWASM_ENABLE_DYLD)
         {
                 "dyld",
@@ -146,12 +158,14 @@ static const struct option longopts[] = {
                 NULL,
                 opt_timeout,
         },
+#if defined(TOYWASM_ENABLE_TRACING)
         {
                 "trace",
                 required_argument,
                 NULL,
                 opt_trace,
         },
+#endif
         {
                 "version",
                 no_argument,
@@ -199,11 +213,15 @@ static const char *opt_metavars[] = {
         [opt_dyld_path] = "LIBRARY_DIR",
         [opt_dyld_stack_size] = "C_STACK_SIZE_IN_BYTES",
 #endif
+#if defined(TOYWASM_ENABLE_WASI)
         [opt_wasi_env] = "NAME=VAR",
         [opt_wasi_dir] = "DIR",
         [opt_wasi_mapdir] = "GUEST_DIR::HOST_DIR",
+#endif
         [opt_timeout] = "TIMEOUT_MS",
+#if defined(TOYWASM_ENABLE_TRACING)
         [opt_trace] = "LEVEL",
+#endif
         [opt_repl_prompt] = "STRING",
         [opt_max_frames] = "NUMBER_OF_FRAMES",
         [opt_max_stack_cells] = "NUMBER_OF_CELLS",
@@ -284,12 +302,16 @@ main(int argc, char *const *argv)
                 case opt_disable_jump_table:
                         opts->load_options.generate_jump_table = false;
                         break;
+#if defined(TOYWASM_USE_LOCALTYPE_CELLIDX)
                 case opt_disable_localtype_cellidx:
                         opts->load_options.generate_localtype_cellidx = false;
                         break;
+#endif
+#if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
                 case opt_disable_resulttype_cellidx:
                         opts->load_options.generate_resulttype_cellidx = false;
                         break;
+#endif
 #if defined(TOYWASM_ENABLE_DYLD)
                 case opt_dyld:
                         if (state->nmodules > 0) {
@@ -357,9 +379,11 @@ main(int argc, char *const *argv)
                 case opt_timeout:
                         toywasm_repl_set_timeout(state, atoi(optarg));
                         break;
+#if defined(TOYWASM_ENABLE_TRACING)
                 case opt_trace:
                         xlog_tracing = atoi(optarg);
                         break;
+#endif
                 case opt_version:
                         toywasm_repl_print_version();
                         might_need_help = false;

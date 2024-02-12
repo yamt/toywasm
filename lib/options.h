@@ -4,10 +4,16 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "toywasm_config.h"
+
 struct load_options {
         bool generate_jump_table;
+#if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
         bool generate_resulttype_cellidx;
+#endif
+#if defined(TOYWASM_USE_LOCALTYPE_CELLIDX)
         bool generate_localtype_cellidx;
+#endif
 };
 
 struct exec_options {

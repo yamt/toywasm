@@ -8,8 +8,12 @@ load_options_set_defaults(struct load_options *opts)
 {
         memset(opts, 0, sizeof(*opts));
         opts->generate_jump_table = true;
+#if defined(TOYWASM_USE_LOCALTYPE_CELLIDX)
         opts->generate_localtype_cellidx = true;
+#endif
+#if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
         opts->generate_resulttype_cellidx = true;
+#endif
 }
 
 void
