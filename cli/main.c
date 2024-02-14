@@ -17,12 +17,8 @@
 
 enum longopt {
         opt_disable_jump_table = 0x100,
-#if defined(TOYWASM_USE_LOCALTYPE_CELLIDX)
         opt_disable_localtype_cellidx,
-#endif
-#if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
         opt_disable_resulttype_cellidx,
-#endif
 #if defined(TOYWASM_ENABLE_DYLD)
         opt_dyld,
         opt_dyld_bindnow,
@@ -60,22 +56,18 @@ static const struct option longopts[] = {
                 NULL,
                 opt_disable_jump_table,
         },
-#if defined(TOYWASM_USE_LOCALTYPE_CELLIDX)
         {
                 "disable-localtype-cellidx",
                 no_argument,
                 NULL,
                 opt_disable_localtype_cellidx,
         },
-#endif
-#if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
         {
                 "disable-resulttype-cellidx",
                 no_argument,
                 NULL,
                 opt_disable_resulttype_cellidx,
         },
-#endif
 #if defined(TOYWASM_ENABLE_DYLD)
         {
                 "dyld",
@@ -302,16 +294,16 @@ main(int argc, char *const *argv)
                 case opt_disable_jump_table:
                         opts->load_options.generate_jump_table = false;
                         break;
-#if defined(TOYWASM_USE_LOCALTYPE_CELLIDX)
                 case opt_disable_localtype_cellidx:
+#if defined(TOYWASM_USE_LOCALTYPE_CELLIDX)
                         opts->load_options.generate_localtype_cellidx = false;
-                        break;
 #endif
-#if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
+                        break;
                 case opt_disable_resulttype_cellidx:
+#if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
                         opts->load_options.generate_resulttype_cellidx = false;
-                        break;
 #endif
+                        break;
 #if defined(TOYWASM_ENABLE_DYLD)
                 case opt_dyld:
                         if (state->nmodules > 0) {
