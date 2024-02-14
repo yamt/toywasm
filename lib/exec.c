@@ -1137,6 +1137,7 @@ check_interrupt(struct exec_context *ctx)
         return 0;
 }
 
+__attribute__((no_sanitize("thread"))) /* see the following XXX lock */
 int
 check_interrupt_interval_ms(struct exec_context *ctx)
 {
