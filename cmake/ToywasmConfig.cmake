@@ -132,6 +132,7 @@ option(TOYWASM_ENABLE_WASM_EXTENDED_CONST "Enable extended-const proposal" OFF)
 option(TOYWASM_ENABLE_WASM_MULTI_MEMORY "Enable multi-memory proposal" OFF)
 option(TOYWASM_ENABLE_WASM_TAILCALL "Enable WASM tail-call proposal" OFF)
 option(TOYWASM_ENABLE_WASM_THREADS "Enable WASM threads proposal" OFF)
+option(TOYWASM_ENABLE_WASM_NAME_SECTION "Enable name section" ON)
 
 # enable WASI.
 option(TOYWASM_ENABLE_WASI "Enable WASI snapshow preview1" ON)
