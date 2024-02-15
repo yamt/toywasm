@@ -70,7 +70,8 @@ exec_context_print_stats(struct exec_context *ctx)
 }
 
 static void
-print_params(const struct cell *cells, const struct resulttype *rt)
+print_params(const struct cell *cells, const struct resulttype *rt,
+             const char *prefix)
 {
         uint32_t i;
         for (i = 0; i < rt->ntypes; i++) {
@@ -80,22 +81,24 @@ print_params(const struct cell *cells, const struct resulttype *rt)
                 val_from_cells(&val, cells + cidx, csz);
                 switch (csz) {
                 case 1:
-                        printf("param [%" PRIu32 "] = %08" PRIx32 "\n", i,
-                               val.u.i32);
+                        printf("%sparam [%" PRIu32 "] = %08" PRIx32 "\n",
+                               prefix, i, val.u.i32);
                         break;
                 case 2:
-                        printf("param [%" PRIu32 "] = %016" PRIx64 "\n", i,
-                               val.u.i64);
+                        printf("%sparam [%" PRIu32 "] = %016" PRIx64 "\n",
+                               prefix, i, val.u.i64);
                         break;
                 default:
-                        printf("param [%" PRIu32 "] = unknown size\n", i);
+                        printf("%sparam [%" PRIu32 "] = unknown size\n",
+                               prefix, i);
                         break;
                 }
         }
 }
 
 void
-print_locals(const struct exec_context *ctx, const struct funcframe *fp)
+print_locals(const struct exec_context *ctx, const struct funcframe *fp,
+             const char *prefix)
 {
         const struct instance *inst = fp->instance;
         const struct funcinst *finst = VEC_ELEM(inst->funcs, fp->funcidx);
@@ -105,7 +108,7 @@ print_locals(const struct exec_context *ctx, const struct funcframe *fp)
         const struct localtype *lt = &func->localtype;
         const struct cell *locals = frame_locals(ctx, fp);
 
-        print_params(locals, rt);
+        print_params(locals, rt, prefix);
         uint32_t localstart = rt->ntypes;
         uint32_t localstartcidx = resulttype_cellsize(rt);
         uint32_t i;
@@ -116,16 +119,16 @@ print_locals(const struct exec_context *ctx, const struct funcframe *fp)
                 val_from_cells(&val, locals + localstartcidx + cidx, csz);
                 switch (csz) {
                 case 1:
-                        printf("local [%" PRIu32 "] = %08" PRIx32 "\n",
-                               localstart + i, val.u.i32);
+                        printf("%slocal [%" PRIu32 "] = %08" PRIx32 "\n",
+                               prefix, localstart + i, val.u.i32);
                         break;
                 case 2:
-                        printf("local [%" PRIu32 "] = %016" PRIx64 "\n",
-                               localstart + i, val.u.i64);
+                        printf("%slocal [%" PRIu32 "] = %016" PRIx64 "\n",
+                               prefix, localstart + i, val.u.i64);
                         break;
                 default:
-                        printf("local [%" PRIu32 "] = unknown size\n",
-                               localstart + i);
+                        printf("%slocal [%" PRIu32 "] = unknown size\n",
+                               prefix, localstart + i);
                         break;
                 }
         }
@@ -138,6 +141,7 @@ print_trace(const struct exec_context *ctx)
         uint32_t frameidx = ctx->frames.lsize;
         uint32_t restartidx = ctx->restarts.lsize;
         uint32_t bottom = ctx->bottom;
+        const char *prefix = "  "; /* indent a bit */
         nametable_init(&table);
         while (true) {
                 if (frameidx == bottom) {
@@ -171,7 +175,7 @@ print_trace(const struct exec_context *ctx)
                         }
                         const struct cell *stack = &VEC_ELEM(
                                 ctx->stack, stackidx - hf->stack_adj);
-                        print_params(stack, rt);
+                        print_params(stack, rt, prefix);
                         continue;
                 }
                 assert(frameidx > 0);
@@ -209,7 +213,7 @@ print_trace(const struct exec_context *ctx)
                                frameidx, funcpc, CSTR(&module_name),
                                CSTR(&func_name), fp->callerpc);
                 }
-                print_locals(ctx, fp);
+                print_locals(ctx, fp, prefix);
         }
         nametable_clear(&table);
 }
