@@ -436,7 +436,6 @@ static int
 read_name(const uint8_t **pp, const uint8_t *ep, struct name *namep)
 {
         const uint8_t *p = *pp;
-        char *name = NULL;
         uint32_t vec_count;
         int ret;
 
@@ -461,7 +460,6 @@ read_name(const uint8_t **pp, const uint8_t *ep, struct name *namep)
         *pp = p;
         return 0;
 fail:
-        free(name);
         return ret;
 }
 
