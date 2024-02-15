@@ -22,6 +22,7 @@
 
 #include "endian.h"
 #include "exec_context.h"
+#include "exec_debug.h"
 #include "fileio.h"
 #include "instance.h"
 #include "load_context.h"
@@ -427,6 +428,8 @@ print_trap(const struct exec_context *ctx, const struct trap_info *trap)
                 trapmsg = "no message";
         }
         nbio_printf("Error: [trap] %s (%u): %s\n", msg, id, trapmsg);
+
+        print_trace(ctx); /* XXX nbio_printf */
 }
 
 static void
