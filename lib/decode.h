@@ -61,3 +61,6 @@ int _read_vec_with_ctx_impl(const uint8_t **pp, const uint8_t *ep,
                 pp, ep, elem_size, (read_elem_with_ctx_func_t)read_elem,      \
                 (clear_elem_func_t)clear_elem, ctx, countp, (void **)resultp)
 #endif
+
+struct name;
+int read_name(const uint8_t **pp, const uint8_t *ep, struct name *namep);
