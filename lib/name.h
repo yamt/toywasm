@@ -19,6 +19,10 @@ struct nametable {
 void nametable_init(struct nametable *table);
 void nametable_clear(struct nametable *table);
 
+/*
+ * these functions don't return errors.
+ * on errors, they just fill the struct name with a string like "unknown".
+ */
 void nametable_lookup_func(struct nametable *table, const struct module *m,
                            uint32_t funcidx, struct name *name);
 void nametable_lookup_module(struct nametable *table, const struct module *m,
