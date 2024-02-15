@@ -4,6 +4,7 @@
 #include "context.h"
 #include "exec.h"
 #include "exec_debug.h"
+#include "name.h"
 #include "nbio.h"
 #include "type.h"
 #include "xlog.h"
@@ -133,9 +134,11 @@ print_locals(const struct exec_context *ctx, const struct funcframe *fp)
 void
 print_trace(const struct exec_context *ctx)
 {
+        struct nametable table;
         uint32_t frameidx = ctx->frames.lsize;
         uint32_t restartidx = ctx->restarts.lsize;
         uint32_t bottom = ctx->bottom;
+        nametable_init(&table);
         while (true) {
                 if (frameidx == bottom) {
                         if (restartidx == 0) {
@@ -175,6 +178,7 @@ print_trace(const struct exec_context *ctx)
                 frameidx--;
                 const struct funcframe *fp = &VEC_ELEM(ctx->frames, frameidx);
                 const struct instance *inst = fp->instance;
+                const struct module *m = inst->module;
                 const struct funcinst *finst =
                         VEC_ELEM(inst->funcs, fp->funcidx);
                 const struct func *func = funcinst_func(finst);
@@ -186,18 +190,28 @@ print_trace(const struct exec_context *ctx)
                  * our funcpc is usually a few bytes ahead. (the size LEB
                  * and the following definition of locals)
                  */
-                uint32_t funcpc = ptr2pc(inst->module, func->e.start);
+
+                uint32_t funcpc = ptr2pc(m, func->e.start);
+                struct name func_name;
+                nametable_lookup_func(&table, m, fp->funcidx, &func_name);
+                struct name module_name;
+                nametable_lookup_module(&table, m, &module_name);
                 /* no callerpc for the first frame */
                 if (frameidx == 0) {
-                        printf("frame[%3" PRIu32 "] funcpc %06" PRIx32 "\n",
-                               frameidx, funcpc);
+                        printf("frame[%3" PRIu32 "] funcpc %06" PRIx32
+                               " (%.*s:%.*s)\n",
+                               frameidx, funcpc, CSTR(&module_name),
+                               CSTR(&func_name));
                 } else {
                         printf("frame[%3" PRIu32 "] funcpc %06" PRIx32
+                               " (%.*s:%.*s)"
                                " callerpc %06" PRIx32 "\n",
-                               frameidx, funcpc, fp->callerpc);
+                               frameidx, funcpc, CSTR(&module_name),
+                               CSTR(&func_name), fp->callerpc);
                 }
                 print_locals(ctx, fp);
         }
+        nametable_clear(&table);
 }
 
 void
