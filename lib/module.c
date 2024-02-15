@@ -1674,6 +1674,28 @@ fail:
         return ret;
 }
 
+#if defined(TOYWASM_ENABLE_WASM_NAME_SECTION)
+/* https://webassembly.github.io/spec/core/appendix/custom.html#name-section */
+static int
+read_name_section(const uint8_t **pp, const uint8_t *ep,
+                  struct load_context *ctx)
+{
+        const uint8_t *p = *pp;
+        struct module *m = ctx->module;
+        /*
+         * Just record the pointers so that we can process the section later
+         * if/when necessary.
+         *
+         * The actual parsing logic is implemeted in name.c.
+         */
+        xlog_trace("name section %p .. %p", (const void *)p, (const void *)ep);
+        m->name_section_start = p;
+        m->name_section_end = ep;
+        *pp = ep;
+        return 0;
+}
+#endif /* defined(TOYWASM_ENABLE_WASM_NAME_SECTION) */
+
 #if defined(TOYWASM_ENABLE_DYLD)
 static int
 read_dylink_mem_info(const uint8_t **pp, const uint8_t *ep,
@@ -1872,18 +1894,29 @@ fail:
         m->dylink = NULL;
         return ret;
 }
+#endif /* defined(TOYWASM_ENABLE_DYLD) */
 
+#if defined(TOYWASM_ENABLE_WASM_NAME_SECTION) || defined(TOYWASM_ENABLE_DYLD)
 static const struct known_custom_section {
         const char *name;
         int (*read)(const uint8_t **pp, const uint8_t *ep,
                     struct load_context *ctx);
 } known_custom_sections[] = {
+#if defined(TOYWASM_ENABLE_WASM_NAME_SECTION)
+        {
+                .name = "name",
+                .read = read_name_section,
+        },
+#endif /* defined(TOYWASM_ENABLE_WASM_NAME_SECTION) */
+#if defined(TOYWASM_ENABLE_DYLD)
         {
                 .name = "dylink.0",
                 .read = read_dylink_0_section,
         },
-};
 #endif /* defined(TOYWASM_ENABLE_DYLD) */
+};
+#endif /* defined(TOYWASM_ENABLE_WASM_NAME_SECTION) ||                        \
+          defined(TOYWASM_ENABLE_DYLD) */
 
 static int
 read_custom_section(const uint8_t **pp, const uint8_t *ep,
@@ -1899,7 +1932,7 @@ read_custom_section(const uint8_t **pp, const uint8_t *ep,
         if (ret != 0) {
                 goto fail;
         }
-#if defined(TOYWASM_ENABLE_DYLD)
+#if defined(TOYWASM_ENABLE_WASM_NAME_SECTION) || defined(TOYWASM_ENABLE_DYLD)
         const struct known_custom_section *k;
         unsigned int i;
         for (i = 0; i < ARRAYCOUNT(known_custom_sections); i++) {
@@ -1915,7 +1948,7 @@ read_custom_section(const uint8_t **pp, const uint8_t *ep,
         }
 #endif
         clear_name(&name);
-#if defined(TOYWASM_ENABLE_DYLD)
+#if defined(TOYWASM_ENABLE_WASM_NAME_SECTION) || defined(TOYWASM_ENABLE_DYLD)
         if (i < ARRAYCOUNT(known_custom_sections)) {
                 ret = read_section(&p, ep, k->name, k->read, ctx);
                 if (ret != 0) {

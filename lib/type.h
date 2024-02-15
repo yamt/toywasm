@@ -498,6 +498,10 @@ struct module {
 
         const uint8_t *bin;
 
+#if defined(TOYWASM_ENABLE_WASM_NAME_SECTION)
+        const uint8_t *name_section_start;
+        const uint8_t *name_section_end;
+#endif
 #if defined(TOYWASM_ENABLE_DYLD)
         struct dylink *dylink;
 #endif
