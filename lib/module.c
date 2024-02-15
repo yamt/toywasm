@@ -432,7 +432,7 @@ fail:
         return ret;
 }
 
-static int
+int
 read_name(const uint8_t **pp, const uint8_t *ep, struct name *namep)
 {
         const uint8_t *p = *pp;
