@@ -464,7 +464,7 @@ fail:
 }
 
 void
-set_name_cstr(struct name *name, char *cstr)
+set_name_cstr(struct name *name, const char *cstr)
 {
         name->nbytes = strlen(cstr);
         name->data = cstr;
