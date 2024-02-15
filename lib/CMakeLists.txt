@@ -74,6 +74,7 @@ set(lib_core_headers
 	"lock.h"
 	"module.h"
 	"module_writer.h"
+	"name.h"
 	"nbio.h"
 	"options.h"
 	"platform.h"
