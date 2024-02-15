@@ -5,6 +5,7 @@
 #include <toywasm/fileio.h>
 #include <toywasm/load_context.h>
 #include <toywasm/module.h>
+#include <toywasm/name.h>
 #include <toywasm/type.h>
 #include <toywasm/xlog.h>
 
@@ -96,46 +97,71 @@ main(int argc, char **argv)
                 }
 #endif
         }
+
+        struct nametable table;
+        nametable_init(&table);
         if (funcidx_with_most_locals != UINT32_MAX) {
-                printf("func %" PRIu32 " has the most locals (%" PRIu32
+                uint32_t funcidx =
+                        m->nimportedfuncs + funcidx_with_most_locals;
+                struct name func_name;
+                nametable_lookup_func(&table, m, funcidx, &func_name);
+                printf("func %" PRIu32 " (%.*s) has the most locals (%" PRIu32
                        ") in this module.\n",
-                       m->nimportedfuncs + funcidx_with_most_locals, nlocals);
+                       funcidx, CSTR(&func_name), nlocals);
         }
         if (funcidx_with_most_params != UINT32_MAX) {
-                printf("func %" PRIu32 " has the most parameters (%" PRIu32
+                uint32_t funcidx =
+                        m->nimportedfuncs + funcidx_with_most_params;
+                struct name func_name;
+                nametable_lookup_func(&table, m, funcidx, &func_name);
+                printf("func %" PRIu32
+                       " (%.*s) has the most parameters (%" PRIu32
                        ") in this module.\n",
-                       m->nimportedfuncs + funcidx_with_most_params, nparams);
+                       funcidx, CSTR(&func_name), nparams);
         }
         if (funcidx_with_most_results != UINT32_MAX) {
-                printf("func %" PRIu32 " has the most results (%" PRIu32
+                uint32_t funcidx =
+                        m->nimportedfuncs + funcidx_with_most_params;
+                struct name func_name;
+                nametable_lookup_func(&table, m, funcidx, &func_name);
+                printf("func %" PRIu32 " (%.*s) has the most results (%" PRIu32
                        ") in this module.\n",
-                       m->nimportedfuncs + funcidx_with_most_results,
-                       nresults);
+                       funcidx, CSTR(&func_name), nresults);
         }
         if (funcidx_with_largest_jump_table != UINT32_MAX) {
-                printf("func %" PRIu32 " has the largest jump table (%" PRIu32
+                uint32_t funcidx =
+                        m->nimportedfuncs + funcidx_with_largest_jump_table;
+                struct name func_name;
+                nametable_lookup_func(&table, m, funcidx, &func_name);
+                printf("func %" PRIu32
+                       " (%.*s) has the largest jump table (%" PRIu32
                        " entries) in this module.\n",
-                       m->nimportedfuncs + funcidx_with_largest_jump_table,
-                       largest_jump_table);
+                       funcidx, CSTR(&func_name), largest_jump_table);
         }
 #if defined(TOYWASM_USE_SMALL_CELLS)
         if (funcidx_with_largest_type_annotations != UINT32_MAX) {
+                uint32_t funcidx = m->nimportedfuncs +
+                                   funcidx_with_largest_type_annotations;
+                struct name func_name;
+                nametable_lookup_func(&table, m, funcidx, &func_name);
                 printf("func %" PRIu32
-                       " has the largest type annotations (%" PRIu32
+                       " (%.*s) has the largest type annotations (%" PRIu32
                        " entries) in this module.\n",
-                       m->nimportedfuncs +
-                               funcidx_with_largest_type_annotations,
-                       largest_type_annotations);
+                       funcidx, CSTR(&func_name), largest_type_annotations);
         }
 #endif
 #if defined(TOYWASM_ENABLE_WRITER)
         if (funcidx_with_max_code_size != UINT32_MAX) {
-                printf("func %" PRIu32 " is largest (%" PRIu32
+                uint32_t funcidx =
+                        m->nimportedfuncs + funcidx_with_max_code_size;
+                struct name func_name;
+                nametable_lookup_func(&table, m, funcidx, &func_name);
+                printf("func %" PRIu32 " (%.*s) is largest (%" PRIu32
                        " bytes) in this module.\n",
-                       m->nimportedfuncs + funcidx_with_max_code_size,
-                       max_code_size);
+                       funcidx, CSTR(&func_name), max_code_size);
         }
 #endif
+        nametable_clear(&table);
 
         exit(0);
 }
