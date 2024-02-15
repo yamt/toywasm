@@ -21,6 +21,7 @@ set(lib_core_sources
 	"list.c"
 	"load_context.c"
 	"module.c"
+	"name.c"
 	"nbio.c"
 	"options.c"
 	"report.c"
