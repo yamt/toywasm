@@ -672,7 +672,7 @@ int check_functype_with_string(const struct module *m, uint32_t funcidx,
 void clear_functype(struct functype *ft);
 void clear_resulttype(struct resulttype *rt);
 
-void set_name_cstr(struct name *name, char *cstr);
+void set_name_cstr(struct name *name, const char *cstr);
 void clear_name(struct name *name);
 
 #endif /* defined(_TOYWASM_TYPE_H) */
