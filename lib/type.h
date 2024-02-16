@@ -361,8 +361,15 @@ struct name {
         const char *data; /* utf-8 */
 };
 
-/* usage: printf("%.*s", CSTR(name)); */
-/* TODO escape unprintable names */
+/*
+ * usage: printf("%.*s", CSTR(name));
+ *
+ * Note: This is a broken hack. Only use this for diagnostic purposes.
+ * The names in wasm are in utf-8. To feed them to printf %s, we need to
+ * convert them to the charset/encoding of the current C locale. Also, the
+ * names in wasm can contain NUL. Maybe it's simpler to escape non-PCS
+ * characters.
+ */
 #define CSTR(n) (int)(n)->nbytes, (n)->data
 
 #define NAME_FROM_CSTR_LITERAL(C)                                             \
