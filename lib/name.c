@@ -133,7 +133,7 @@ parse_name_section(struct nametable *table, const struct module *m)
                 }
                 switch (name_type) {
                 case NAME_KIND_MODULE:
-                        xlog_trace("name section: found NAME_KIND_FUNC "
+                        xlog_trace("name section: found NAME_KIND_MODULE "
                                    "subsection");
                         ret = read_name(&p, ep, &table->module_name);
                         if (ret != 0) {
