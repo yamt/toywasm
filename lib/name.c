@@ -187,16 +187,23 @@ void
 namemap_lookup(const struct module *m, const struct namemap *map,
                uint32_t funcidx, struct name *name)
 {
-        /* TODO: binary search */
-        uint32_t i;
-        for (i = 0; i < map->nentries; i++) {
-                const struct naming *naming = &map->entries[i];
+        /* binary search */
+        uint32_t left = 0;
+        uint32_t right = map->nentries;
+        while (left < right) {
+                uint32_t mid = (left + right) / 2;
+                const struct naming *naming = &map->entries[mid];
                 if (naming->idx == funcidx) {
                         const uint32_t offset = naming->offset;
                         const uint8_t *p = m->bin + offset;
                         name->nbytes = read_leb_u32_nocheck(&p);
                         name->data = (const char *)p;
                         return;
+                }
+                if (naming->idx < funcidx) {
+                        left = mid + 1;
+                } else {
+                        right = mid;
                 }
         }
         set_name_cstr(name, unknown_name);
