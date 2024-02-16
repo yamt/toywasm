@@ -58,6 +58,9 @@ read_naming(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
                 return EINVAL;
         }
         ctx->lastidx = naming->idx;
+        /*
+         * after validating the name, only record the offset.
+         */
         const uint8_t *name_len_ptr = p;
         struct name name;
         ret = read_name(&p, ep, &name);
@@ -203,6 +206,10 @@ namemap_lookup(const struct module *m, const struct namemap *map,
                 uint32_t mid = (left + right) / 2;
                 const struct naming *naming = &map->entries[mid];
                 if (naming->idx == funcidx) {
+                        /*
+                         * Note: the name pointed by the offset has
+                         * already been validated by read_naming().
+                         */
                         const uint32_t offset = naming->offset;
                         const uint8_t *p = m->bin + offset;
                         name->nbytes = read_leb_u32_nocheck(&p);
