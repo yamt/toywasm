@@ -392,6 +392,12 @@ memory_grow_impl(struct exec_context *ctx, struct meminst *mi, uint32_t sz)
 {
         const struct memtype *mt = mi->type;
         const struct limits *lim = &mt->lim;
+        /*
+         * Note: memory_lock is merely to serialize concurrent memory.grow
+         * operations on a shared memory.
+         * actual memory accesses including load/store instructions and
+         * host functions will be suspended with suspend_threads.
+         */
         memory_lock(mi);
         uint32_t orig_size;
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
