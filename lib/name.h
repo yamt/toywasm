@@ -1,9 +1,6 @@
 #include "type.h"
 
-struct naming {
-        uint32_t idx;
-        uint32_t offset;
-};
+struct naming;
 
 struct namemap {
         uint32_t nentries;
