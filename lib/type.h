@@ -534,6 +534,13 @@ struct meminst {
         uint8_t *data;
         /* Note: memory_getptr2 reads size_in_pages w/o locks */
         _Atomic uint32_t size_in_pages; /* overrides type->min */
+
+        /*
+         * meminst->allocated is the number of bytes actually
+         * allocated meminst->data. it can be smaller than size_in_bytes
+         * in case of sub-page allocation. wasm page size (64KB) is a bit
+         * too large for small use cases.
+         */
         size_t allocated;
         const struct memtype *type;
 
