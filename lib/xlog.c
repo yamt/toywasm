@@ -19,7 +19,10 @@
 
 int xlog_tracing = 0;
 
-/* NuttX: https://github.com/apache/incubator-nuttx/pull/6152 */
+/*
+ * NuttX: https://github.com/apache/incubator-nuttx/pull/6152
+ * WASI: https://github.com/WebAssembly/wasi-libc/pull/362
+ */
 #if defined(__wasi__) || defined(__NuttX__)
 #define flockfile(f)
 #define funlockfile(f)
