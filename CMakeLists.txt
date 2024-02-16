@@ -92,7 +92,7 @@ if(NOT TOYWASM_ENABLE_WASM_MULTI_MEMORY)
 add_test(NAME toywasm-cli-wasm3-spec-test
 	# Note: arbitrary limits for stack overflow tests in call.wast.
 	# (--max-frames and --max-stack-cells)
-	COMMAND ./test/run-wasm3-spec-test-opam-2.0.0.sh --exec "${TOYWASM_CLI} --max-frames=2000 --max-stack-cells=10000 --repl --repl-prompt=wasm3" --timeout 60 --spectest ${CMAKE_BINARY_DIR}/spectest.wasm
+	COMMAND ./test/run-wasm3-spec-test-opam-2.0.0.sh --exec "${TOYWASM_CLI} --max-frames=201 --max-stack-cells=1000 --repl --repl-prompt=wasm3" --timeout 60 --spectest ${CMAKE_BINARY_DIR}/spectest.wasm
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 set_tests_properties(toywasm-cli-wasm3-spec-test PROPERTIES ENVIRONMENT "${TEST_ENV}")
@@ -208,7 +208,7 @@ if(NOT TOYWASM_ENABLE_WASM_MULTI_MEMORY)
 add_test(NAME toywasm-cli-wasm3-spec-test-disable-optimizations
 	# Note: arbitrary limits for stack overflow tests in call.wast.
 	# (--max-frames and --max-stack-cells)
-	COMMAND ./test/run-wasm3-spec-test-opam-2.0.0.sh --exec "${TOYWASM_CLI} --disable-jump-table --disable-resulttype-cellidx --disable-localtype-cellidx --max-frames=2000 --max-stack-cells=10000 --repl --repl-prompt=wasm3" --timeout 60 --spectest ${CMAKE_BINARY_DIR}/spectest.wasm
+	COMMAND ./test/run-wasm3-spec-test-opam-2.0.0.sh --exec "${TOYWASM_CLI} --disable-jump-table --disable-resulttype-cellidx --disable-localtype-cellidx --max-frames=201 --max-stack-cells=1000 --repl --repl-prompt=wasm3" --timeout 60 --spectest ${CMAKE_BINARY_DIR}/spectest.wasm
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 set_tests_properties(toywasm-cli-wasm3-spec-test-disable-optimizations PROPERTIES ENVIRONMENT "${TEST_ENV}")
