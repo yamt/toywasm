@@ -727,7 +727,7 @@ instance_execute_handle_restart(struct exec_context *ctx, int exec_ret)
 void
 instance_print_stats(const struct instance *inst)
 {
-        printf("=== instance statistics ===\n");
+        nbio_printf("=== instance statistics ===\n");
         uint32_t i;
         for (i = 0; i < inst->mems.lsize; i++) {
                 const struct meminst *mi = VEC_ELEM(inst->mems, i);
