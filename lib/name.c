@@ -13,6 +13,11 @@
 #include "type.h"
 #include "xlog.h"
 
+struct naming {
+        uint32_t idx;
+        uint32_t offset;
+};
+
 enum namekind {
         NAME_KIND_MODULE = 0,
         NAME_KIND_FUNC = 1,
