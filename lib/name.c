@@ -148,6 +148,15 @@ parse_name_section(struct nametable *table, const struct module *m)
                                 goto fail;
                         }
                         break;
+                case NAME_KIND_LOCAL:
+                        /*
+                         * REVISIT: is it worth implementing local names?
+                         *
+                         * wat2wasm with --debug-names produces local names.
+                         * i'm not aware of other toolchains producing them.
+                         * LLVM doesn't produce them.
+                         */
+                        /* fallthrough */
                 default:
                         xlog_trace("name section: ignore unimplemented kind "
                                    "%" PRIu32,
