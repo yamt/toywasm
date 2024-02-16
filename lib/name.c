@@ -18,10 +18,23 @@ struct naming {
         uint32_t offset;
 };
 
+/*
+ * https://github.com/WebAssembly/extended-name-section/blob/main/proposals/extended-name-section/Overview.md
+ * https://webassembly.github.io/gc/core/appendix/custom.html#subsections
+ */
 enum namekind {
         NAME_KIND_MODULE = 0,
         NAME_KIND_FUNC = 1,
         NAME_KIND_LOCAL = 2,
+        NAME_KIND_LABEL = 3,  /* extended-name-section */
+        NAME_KIND_TYPE = 4,   /* GC */
+        NAME_KIND_TABLE = 5,  /* extended-name-section */
+        NAME_KIND_MEMORY = 6, /* extended-name-section */
+        NAME_KIND_GLOBAL = 7, /* extended-name-section */
+        NAME_KIND_ELEM = 8,   /* extended-name-section */
+        NAME_KIND_DATA = 9,   /* extended-name-section */
+        NAME_KIND_FIELD = 10, /* GC */
+        NAME_KIND_TAG = 11,   /* extended-name-section */
 };
 
 /* Make aliases here just because it isn't a PC */
