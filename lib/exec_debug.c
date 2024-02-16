@@ -19,7 +19,7 @@
 void
 exec_context_print_stats(struct exec_context *ctx)
 {
-        printf("=== execution statistics ===\n");
+        nbio_printf("=== execution statistics ===\n");
         VEC_PRINT_USAGE("operand stack", &ctx->stack);
 #if defined(TOYWASM_USE_SEPARATE_LOCALS)
         VEC_PRINT_USAGE("locals", &ctx->locals);
@@ -81,16 +81,16 @@ print_params(const struct cell *cells, const struct resulttype *rt,
                 val_from_cells(&val, cells + cidx, csz);
                 switch (csz) {
                 case 1:
-                        printf("%sparam [%" PRIu32 "] = %08" PRIx32 "\n",
-                               prefix, i, val.u.i32);
+                        nbio_printf("%sparam [%" PRIu32 "] = %08" PRIx32 "\n",
+                                    prefix, i, val.u.i32);
                         break;
                 case 2:
-                        printf("%sparam [%" PRIu32 "] = %016" PRIx64 "\n",
-                               prefix, i, val.u.i64);
+                        nbio_printf("%sparam [%" PRIu32 "] = %016" PRIx64 "\n",
+                                    prefix, i, val.u.i64);
                         break;
                 default:
-                        printf("%sparam [%" PRIu32 "] = unknown size\n",
-                               prefix, i);
+                        nbio_printf("%sparam [%" PRIu32 "] = unknown size\n",
+                                    prefix, i);
                         break;
                 }
         }
@@ -119,16 +119,16 @@ print_locals(const struct exec_context *ctx, const struct funcframe *fp,
                 val_from_cells(&val, locals + localstartcidx + cidx, csz);
                 switch (csz) {
                 case 1:
-                        printf("%slocal [%" PRIu32 "] = %08" PRIx32 "\n",
-                               prefix, localstart + i, val.u.i32);
+                        nbio_printf("%slocal [%" PRIu32 "] = %08" PRIx32 "\n",
+                                    prefix, localstart + i, val.u.i32);
                         break;
                 case 2:
-                        printf("%slocal [%" PRIu32 "] = %016" PRIx64 "\n",
-                               prefix, localstart + i, val.u.i64);
+                        nbio_printf("%slocal [%" PRIu32 "] = %016" PRIx64 "\n",
+                                    prefix, localstart + i, val.u.i64);
                         break;
                 default:
-                        printf("%slocal [%" PRIu32 "] = unknown size\n",
-                               prefix, localstart + i);
+                        nbio_printf("%slocal [%" PRIu32 "] = unknown size\n",
+                                    prefix, localstart + i);
                         break;
                 }
         }
@@ -159,10 +159,11 @@ print_trace(const struct exec_context *ctx)
                         bottom = hf->saved_bottom;
                         const struct funcinst *fi = hf->func;
                         assert(fi->is_host);
-                        printf("frame(host) %p %p user1 %08" PRIx32
-                               " user2 %08" PRIx32 "\n",
-                               (const void *)fi, (const void *)fi->u.host.func,
-                               hf->user1, hf->user2);
+                        nbio_printf("frame(host) %p %p user1 %08" PRIx32
+                                    " user2 %08" PRIx32 "\n",
+                                    (const void *)fi,
+                                    (const void *)fi->u.host.func, hf->user1,
+                                    hf->user2);
                         const struct functype *ft = funcinst_functype(fi);
                         const struct resulttype *rt = &ft->parameter;
                         uint32_t stackidx;
@@ -202,16 +203,16 @@ print_trace(const struct exec_context *ctx)
                 nametable_lookup_module(&table, m, &module_name);
                 /* no callerpc for the first frame */
                 if (frameidx == 0) {
-                        printf("frame[%3" PRIu32 "] funcpc %06" PRIx32
-                               " (%.*s:%.*s)\n",
-                               frameidx, funcpc, CSTR(&module_name),
-                               CSTR(&func_name));
+                        nbio_printf("frame[%3" PRIu32 "] funcpc %06" PRIx32
+                                    " (%.*s:%.*s)\n",
+                                    frameidx, funcpc, CSTR(&module_name),
+                                    CSTR(&func_name));
                 } else {
-                        printf("frame[%3" PRIu32 "] funcpc %06" PRIx32
-                               " (%.*s:%.*s)"
-                               " callerpc %06" PRIx32 "\n",
-                               frameidx, funcpc, CSTR(&module_name),
-                               CSTR(&func_name), fp->callerpc);
+                        nbio_printf("frame[%3" PRIu32 "] funcpc %06" PRIx32
+                                    " (%.*s:%.*s)"
+                                    " callerpc %06" PRIx32 "\n",
+                                    frameidx, funcpc, CSTR(&module_name),
+                                    CSTR(&func_name), fp->callerpc);
                 }
                 print_locals(ctx, fp, prefix);
         }
@@ -222,19 +223,19 @@ void
 print_memory(const struct exec_context *ctx, const struct instance *inst,
              uint32_t memidx, uint32_t addr, uint32_t count)
 {
-        printf("==== print_memory start ====\n");
+        nbio_printf("==== print_memory start ====\n");
         const struct module *m = inst->module;
         if (memidx >= m->nmems + m->nimportedmems) {
-                printf("%s: out of range memidx\n", __func__);
+                nbio_printf("%s: out of range memidx\n", __func__);
                 goto fail;
         }
         const struct meminst *mi = VEC_ELEM(inst->mems, memidx);
         if (addr >= mi->allocated) {
-                printf("%s: not allocated yet\n", __func__);
+                nbio_printf("%s: not allocated yet\n", __func__);
                 goto fail;
         }
         if (mi->allocated - addr < count) {
-                printf("%s: dump truncated\n", __func__);
+                nbio_printf("%s: dump truncated\n", __func__);
                 count = mi->allocated - addr;
         }
         const uint8_t *p = mi->data + addr;
@@ -242,15 +243,15 @@ print_memory(const struct exec_context *ctx, const struct instance *inst,
         uint32_t i;
         for (i = 0; i < count; i++) {
                 if ((i % 16) == 0) {
-                        printf("%04" PRIx32 ":%08" PRIx32 ":", memidx,
-                               addr + i);
+                        nbio_printf("%04" PRIx32 ":%08" PRIx32 ":", memidx,
+                                    addr + i);
                 }
-                printf("%s%02x", sep, p[i]);
+                nbio_printf("%s%02x", sep, p[i]);
                 sep = " ";
         }
-        printf("\n");
+        nbio_printf("\n");
 fail:
-        printf("==== print_memory end ====\n");
+        nbio_printf("==== print_memory end ====\n");
 }
 
 void
@@ -260,5 +261,6 @@ print_pc(const struct exec_context *ctx)
          * XXX ctx->p is usually not up to date with TOYWASM_USE_TAILCALL.
          * XXX ctx->p usually points to the middle of opcode.
          */
-        printf("PC %06" PRIx32 "\n", ptr2pc(ctx->instance->module, ctx->p));
+        nbio_printf("PC %06" PRIx32 "\n",
+                    ptr2pc(ctx->instance->module, ctx->p));
 }
