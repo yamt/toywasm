@@ -3247,7 +3247,7 @@ retry:
                 goto fail;
         }
 fail:
-        if (hostchildfd == -1) {
+        if (hostchildfd != -1) {
                 close(hostchildfd);
         }
         if (host_ret == 0) {
