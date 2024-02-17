@@ -539,7 +539,8 @@ struct meminst {
          * meminst->allocated is the number of bytes actually
          * allocated meminst->data. it can be smaller than size_in_bytes
          * in case of sub-page allocation. wasm page size (64KB) is a bit
-         * too large for small use cases.
+         * too large for small use cases. the sub-page allocation is an
+         * implementation detail which is not visible to the wasm instance.
          */
         size_t allocated;
         const struct memtype *type;
