@@ -3247,6 +3247,7 @@ retry:
                 goto fail;
         }
 fail:
+        wasi_fdinfo_release(wasi, fdinfo);
         if (hostchildfd != -1) {
                 close(hostchildfd);
         }
