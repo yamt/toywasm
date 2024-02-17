@@ -39,7 +39,7 @@ timeval_from_ns(struct timeval *tv, uint64_t ns)
 
 int
 prepare_utimes_tv(uint32_t fstflags, uint64_t atim, uint64_t mtim,
-                  struct timeval tvstore[2], const struct timeval **resultp)
+                  struct timeval *tvstore, const struct timeval **resultp)
 {
         const struct timeval *tvp;
         if (fstflags == (WASI_FSTFLAG_ATIM_NOW | WASI_FSTFLAG_MTIM_NOW)) {

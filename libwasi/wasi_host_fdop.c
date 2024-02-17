@@ -181,13 +181,6 @@ wasi_userfd_preadv(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
         return preadv(hostfd, iov, iovcnt, off);
 }
 
-DIR *
-wasi_userfd_fdopendir(struct wasi_fdinfo *fdinfo)
-{
-        int hostfd = fdinfo_hostfd(fdinfo);
-        return fdopendir(hostfd);
-}
-
 int
 wasi_userfd_fstat(struct wasi_fdinfo *fdinfo, struct stat *stp)
 {
@@ -250,10 +243,25 @@ wasi_userfd_close(struct wasi_fdinfo *fdinfo)
         }
         free(fdinfo->u.u_user.path);
         if (fdinfo->u.u_user.dir != NULL) {
-                closedir(fdinfo->u.u_user.dir);
+                wasi_userdir_close(fdinfo->u.u_user.dir);
         }
         fdinfo->u.u_user.hostfd = -1;
         fdinfo->u.u_user.path = NULL;
         fdinfo->u.u_user.dir = NULL;
         return ret;
+}
+
+int
+wasi_userfd_fdopendir(struct wasi_fdinfo *fdinfo, void **dirp)
+{
+        int hostfd = fdinfo_hostfd(fdinfo);
+        DIR *dir = fdopendir(hostfd);
+        int ret;
+        if (dir == NULL) {
+                ret = errno;
+                assert(ret > 0);
+                return ret;
+        }
+        *dirp = (void *)dir;
+        return 0;
 }

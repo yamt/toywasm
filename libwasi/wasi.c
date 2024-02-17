@@ -869,13 +869,11 @@ wasi_fd_readdir(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         assert(fdinfo->type == WASI_FDINFO_USER);
-        DIR *dir = fdinfo->u.u_user.dir;
+        void *dir = fdinfo->u.u_user.dir;
         if (dir == NULL) {
                 xlog_trace("fd_readdir: fdopendir");
-                dir = wasi_userfd_fdopendir(fdinfo);
-                if (dir == NULL) {
-                        ret = errno;
-                        assert(ret > 0);
+                ret = wasi_userfd_fdopendir(fdinfo, &dir);
+                if (ret != 0) {
                         goto fail;
                 }
                 fdinfo->u.u_user.dir = dir;
@@ -886,63 +884,52 @@ wasi_fd_readdir(struct exec_context *ctx, struct host_instance *hi,
                  * is it what WASI expects?
                  */
                 xlog_trace("fd_readdir: rewinddir");
-                rewinddir(dir);
+                ret = wasi_userdir_seek(dir, 0);
+                if (ret != 0) {
+                        goto fail;
+                }
         } else if (cookie > LONG_MAX) {
                 ret = EINVAL;
                 goto fail;
         } else {
                 xlog_trace("fd_readdir: seekdir %" PRIu64, cookie);
-                seekdir(dir, cookie);
+                ret = wasi_userdir_seek(dir, cookie);
+                if (ret != 0) {
+                        goto fail;
+                }
         }
         uint32_t n = 0;
         while (true) {
-                struct dirent *d;
-                errno = 0;
-                d = readdir(dir);
-                if (d == NULL) {
-                        if (errno != 0) {
-                                ret = errno;
-                                xlog_trace(
-                                        "fd_readdir: readdir failed with %d",
-                                        ret);
-                                goto fail;
-                        }
-                        xlog_trace("fd_readdir: EOD");
+                struct wasi_dirent wde;
+                const uint8_t *d_name;
+                memset(&wde, 0, sizeof(wde));
+                bool eod;
+                ret = wasi_userdir_read(dir, &wde, &d_name, &eod);
+                if (ret != 0) {
+                        goto fail;
+                }
+                if (eod) {
                         break;
                 }
-                long nextloc = telldir(dir);
-                struct wasi_dirent wde;
-                memset(&wde, 0, sizeof(wde));
-                le64_encode(&wde.d_next, nextloc);
-#if defined(__NuttX__)
-                /* NuttX doesn't have d_ino */
-                wde.d_ino = 0;
-#else
-                le64_encode(&wde.d_ino, d->d_ino);
-#endif
-                uint32_t namlen = strlen(d->d_name);
-                le32_encode(&wde.d_namlen, namlen);
-                wde.d_type = wasi_convert_dirent_filetype(d->d_type);
-                xlog_trace("fd_readdir: ino %" PRIu64 " nam %.*s",
-                           (uint64_t)d->d_ino, (int)namlen, d->d_name);
                 if (buflen - n < sizeof(wde)) {
                         xlog_trace("fd_readdir: buffer full");
                         n = buflen; /* signal buffer full */
                         break;
                 }
-                /* XXX is it ok to return unaligned structure? */
+                /* it's ok to return unaligned structure */
                 host_ret = wasi_copyout(ctx, &wde, buf, sizeof(wde), 1);
                 if (host_ret != 0) {
                         goto fail;
                 }
                 buf += sizeof(wde);
                 n += sizeof(wde);
+                uint32_t namlen = le32_decode(&wde.d_namlen);
                 if (buflen - n < namlen) {
                         xlog_trace("fd_readdir: buffer full");
                         n = buflen; /* signal buffer full */
                         break;
                 }
-                host_ret = wasi_copyout(ctx, d->d_name, buf, namlen, 1);
+                host_ret = wasi_copyout(ctx, d_name, buf, namlen, 1);
                 if (host_ret != 0) {
                         goto fail;
                 }
