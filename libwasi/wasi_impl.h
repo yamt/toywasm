@@ -1,4 +1,3 @@
-#include <dirent.h> /* DIR */
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -24,7 +23,7 @@ struct wasi_fdinfo {
                 /* WASI_FDINFO_USER */
                 struct {
                         int hostfd;
-                        DIR *dir;
+                        void *dir;
                         char *path;
                 } u_user;
         } u;
