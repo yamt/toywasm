@@ -645,9 +645,6 @@ retry:
                                      &ret)) {
                         goto retry;
                 }
-                if (host_ret != 0 || ret != 0) {
-                        goto fail;
-                }
                 goto fail;
         }
         if (n > UINT32_MAX) {
@@ -706,9 +703,6 @@ retry:
                 if (emulate_blocking(ctx, fdinfo, POLLOUT, ret, &host_ret,
                                      &ret)) {
                         goto retry;
-                }
-                if (host_ret != 0 || ret != 0) {
-                        goto fail;
                 }
                 goto fail;
         }
@@ -775,9 +769,6 @@ tty_hack:
                                      &ret)) {
                         goto retry;
                 }
-                if (host_ret != 0 || ret != 0) {
-                        goto fail;
-                }
                 goto fail;
         }
         if (n > UINT32_MAX) {
@@ -836,9 +827,6 @@ retry:
                 if (emulate_blocking(ctx, fdinfo, POLLIN, ret, &host_ret,
                                      &ret)) {
                         goto retry;
-                }
-                if (host_ret != 0 || ret != 0) {
-                        goto fail;
                 }
                 goto fail;
         }
@@ -2780,9 +2768,6 @@ retry:
                                      &ret)) {
                         goto retry;
                 }
-                if (host_ret != 0 || ret != 0) {
-                        goto fail;
-                }
                 goto fail;
         }
         /*
@@ -2892,9 +2877,6 @@ retry:
                                      &ret)) {
                         goto retry;
                 }
-                if (host_ret != 0 || ret != 0) {
-                        goto fail;
-                }
                 goto fail;
         }
         if (n > UINT32_MAX) {
@@ -2992,9 +2974,6 @@ retry:
                 if (emulate_blocking(ctx, fdinfo, POLLOUT, ret, &host_ret,
                                      &ret)) {
                         goto retry;
-                }
-                if (host_ret != 0 || ret != 0) {
-                        goto fail;
                 }
                 goto fail;
         }
