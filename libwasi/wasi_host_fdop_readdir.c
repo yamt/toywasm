@@ -24,7 +24,11 @@ wasi_userdir_close(void *dir)
 int
 wasi_userdir_seek(void *dir, uint64_t offset)
 {
-        seekdir(dir, offset);
+        if (offset == 0) {
+                rewinddir(dir);
+        } else {
+                seekdir(dir, offset);
+        }
         return 0;
 }
 
