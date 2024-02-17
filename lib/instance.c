@@ -731,7 +731,11 @@ instance_print_stats(const struct instance *inst)
         uint32_t i;
         for (i = 0; i < inst->mems.lsize; i++) {
                 const struct meminst *mi = VEC_ELEM(inst->mems, i);
-                nbio_printf("memory[%" PRIu32 "] %zu bytes allocated\n", i,
-                            mi->allocated);
+                const struct limits *lim = &mi->type->lim;
+                nbio_printf("memory[%" PRIu32
+                            "] %zu bytes allocated for %" PRIu32
+                            " pages (min/max=%" PRIu32 "/%" PRIu32 ")\n",
+                            i, mi->allocated, mi->size_in_pages, lim->min,
+                            lim->max);
         }
 }
