@@ -393,10 +393,15 @@ memory_grow_impl(struct exec_context *ctx, struct meminst *mi, uint32_t sz)
         const struct memtype *mt = mi->type;
         const struct limits *lim = &mt->lim;
         /*
-         * Note: memory_lock is merely to serialize concurrent memory.grow
-         * operations on a shared memory.
-         * actual memory accesses including load/store instructions and
-         * host functions will be suspended with suspend_threads.
+         * In case of non-shared memory, no serialization is necessary.
+         * in that case, memory_lock is no-op.
+         *
+         * For shared memory,
+         * - mi->size_in_bytes is updated only with memory_lock held.
+         *   also, it's _Atomic to allow fetches w/o the lock held.
+         * - actual memory accesses including load/store instructions and
+         *   host functions will be suspended with suspend_threads.
+         *   mi->allocated is protected with the same mechanism.
          */
         memory_lock(mi);
         uint32_t orig_size;
