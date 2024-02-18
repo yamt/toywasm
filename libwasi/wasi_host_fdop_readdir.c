@@ -1,3 +1,7 @@
+#define _DARWIN_C_SOURCE
+#define _GNU_SOURCE
+#define _NETBSD_SOURCE
+
 #include <assert.h>
 #include <dirent.h>
 #include <errno.h>
