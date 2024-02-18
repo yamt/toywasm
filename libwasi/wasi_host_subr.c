@@ -8,6 +8,7 @@
 #include <assert.h>
 #include <dirent.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <inttypes.h>
 #include <stdint.h>
 #include <string.h>
@@ -245,4 +246,59 @@ wasi_convert_errno(int host_errno)
         xlog_trace("error converted from %u to %" PRIu32, host_errno,
                    wasmerrno);
         return wasmerrno;
+}
+
+int
+wasi_build_oflags(uint32_t lookupflags, uint32_t wasmoflags,
+                  uint64_t rights_base, uint32_t fdflags, int *hostoflagsp)
+{
+        int oflags = 0;
+        if ((lookupflags & WASI_LOOKUPFLAG_SYMLINK_FOLLOW) == 0) {
+#if defined(__NuttX__) && !defined(CONFIG_PSEUDOFS_SOFTLINKS)
+                /*
+                 * Ignore O_NOFOLLOW where the system doesn't
+                 * support symlink at all.
+                 */
+                xlog_trace("Ignoring O_NOFOLLOW");
+#elif defined(O_NOFOLLOW)
+                oflags |= O_NOFOLLOW;
+                xlog_trace("oflag O_NOFOLLOW");
+#else
+                return ENOTSUP;
+#endif
+        }
+        if ((wasmoflags & WASI_OFLAG_CREAT) != 0) {
+                oflags |= O_CREAT;
+                xlog_trace("oflag O_CREAT");
+        }
+        if ((wasmoflags & WASI_OFLAG_DIRECTORY) != 0) {
+                oflags |= O_DIRECTORY;
+                xlog_trace("oflag O_DIRECTORY");
+        }
+        if ((wasmoflags & WASI_OFLAG_EXCL) != 0) {
+                oflags |= O_EXCL;
+                xlog_trace("oflag O_EXCL");
+        }
+        if ((wasmoflags & WASI_OFLAG_TRUNC) != 0) {
+                oflags |= O_TRUNC;
+                xlog_trace("oflag O_TRUNC");
+        }
+        if ((fdflags & WASI_FDFLAG_APPEND) != 0) {
+                oflags |= O_APPEND;
+                xlog_trace("oflag O_APPEND");
+        }
+        switch (rights_base & (WASI_RIGHT_FD_READ | WASI_RIGHT_FD_WRITE)) {
+        case WASI_RIGHT_FD_READ:
+        default:
+                oflags |= O_RDONLY;
+                break;
+        case WASI_RIGHT_FD_WRITE:
+                oflags |= O_WRONLY;
+                break;
+        case WASI_RIGHT_FD_READ | WASI_RIGHT_FD_WRITE:
+                oflags |= O_RDWR;
+                break;
+        }
+        *hostoflagsp = oflags;
+        return 0;
 }

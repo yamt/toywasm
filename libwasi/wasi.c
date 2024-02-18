@@ -2103,56 +2103,14 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
         struct path_info pi = PATH_INITIALIZER;
         int hostfd = -1;
         int host_ret = 0;
-        int ret = 0;
-        int oflags = 0;
+        int ret;
+        int oflags;
         xlog_trace("wasm oflags %" PRIx32 " rights_base %" PRIx64, wasmoflags,
                    rights_base);
-        if ((lookupflags & WASI_LOOKUPFLAG_SYMLINK_FOLLOW) == 0) {
-#if defined(__NuttX__) && !defined(CONFIG_PSEUDOFS_SOFTLINKS)
-                /*
-                 * Ignore O_NOFOLLOW where the system doesn't
-                 * support symlink at all.
-                 */
-                xlog_trace("Ignoring O_NOFOLLOW");
-#elif defined(O_NOFOLLOW)
-                oflags |= O_NOFOLLOW;
-                xlog_trace("oflag O_NOFOLLOW");
-#else
-                ret = ENOTSUP;
+        ret = wasi_build_oflags(lookupflags, wasmoflags, rights_base, fdflags,
+                                &oflags);
+        if (ret != 0) {
                 goto fail;
-#endif
-        }
-        if ((wasmoflags & WASI_OFLAG_CREAT) != 0) {
-                oflags |= O_CREAT;
-                xlog_trace("oflag O_CREAT");
-        }
-        if ((wasmoflags & WASI_OFLAG_DIRECTORY) != 0) {
-                oflags |= O_DIRECTORY;
-                xlog_trace("oflag O_DIRECTORY");
-        }
-        if ((wasmoflags & WASI_OFLAG_EXCL) != 0) {
-                oflags |= O_EXCL;
-                xlog_trace("oflag O_EXCL");
-        }
-        if ((wasmoflags & WASI_OFLAG_TRUNC) != 0) {
-                oflags |= O_TRUNC;
-                xlog_trace("oflag O_TRUNC");
-        }
-        if ((fdflags & WASI_FDFLAG_APPEND) != 0) {
-                oflags |= O_APPEND;
-                xlog_trace("oflag O_APPEND");
-        }
-        switch (rights_base & (WASI_RIGHT_FD_READ | WASI_RIGHT_FD_WRITE)) {
-        case WASI_RIGHT_FD_READ:
-        default:
-                oflags |= O_RDONLY;
-                break;
-        case WASI_RIGHT_FD_WRITE:
-                oflags |= O_WRONLY;
-                break;
-        case WASI_RIGHT_FD_READ | WASI_RIGHT_FD_WRITE:
-                oflags |= O_RDWR;
-                break;
         }
         host_ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd, path,
                                                 pathlen, &pi, &ret);
