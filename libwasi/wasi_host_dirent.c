@@ -26,13 +26,16 @@ wasi_host_dir_close(void *dir)
 }
 
 int
+wasi_host_dir_rewind(void *dir)
+{
+        rewinddir(dir);
+        return 0;
+}
+
+int
 wasi_host_dir_seek(void *dir, uint64_t offset)
 {
-        if (offset == 0) {
-                rewinddir(dir);
-        } else {
-                seekdir(dir, offset);
-        }
+        seekdir(dir, offset);
         return 0;
 }
 
@@ -54,6 +57,13 @@ wasi_host_dir_read(void *dir, struct wasi_dirent *wde, const uint8_t **namep,
                 *eod = true;
                 return 0;
         }
+        /*
+         * Note: if the below telldir happens to returns 0 and it's
+         * used by the next fd_readdir call, we will mistakenly rewind
+         * the directory because it can't be distinguished from
+         * WASI_DIRCOOKIE_START.
+         * it can't be fixed w/o changing the wasi preview1 ABI.
+         */
         long nextloc = telldir(dir);
         le64_encode(&wde->d_next, nextloc);
 #if defined(__NuttX__)
