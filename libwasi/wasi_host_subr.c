@@ -58,7 +58,7 @@ prepare_utimes_tv(const struct utimes_args *args, struct timeval *tvstore,
 }
 
 uint8_t
-wasi_convert_filetype(mode_t mode)
+wasi_convert_filetype(unsigned int mode)
 {
         uint8_t type;
         if (S_ISREG(mode)) {
