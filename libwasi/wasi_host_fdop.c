@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "wasi_host_dirent.h"
 #include "wasi_host_fdop.h"
 #include "wasi_host_subr.h"
 #include "wasi_impl.h"
