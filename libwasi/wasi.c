@@ -974,12 +974,12 @@ wasi_fd_fdstat_get(struct exec_context *ctx, struct host_instance *hi,
         if (wasi_fdinfo_is_prestat(fdinfo)) {
                 st.fs_filetype = WASI_FILETYPE_DIRECTORY;
         } else {
-                struct stat stat;
-                ret = wasi_userfd_fstat(fdinfo, &stat);
+                struct wasi_filestat wst;
+                ret = wasi_userfd_fstat(fdinfo, &wst);
                 if (ret != 0) {
                         goto fail;
                 }
-                st.fs_filetype = wasi_convert_filetype(stat.st_mode);
+                st.fs_filetype = wst.type;
                 int flags;
                 ret = wasi_userfd_fcntl(fdinfo, F_GETFL, 0, &flags);
                 if (ret != 0) {
@@ -1418,13 +1418,11 @@ wasi_fd_filestat_get(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        struct stat hst;
-        ret = wasi_userfd_fstat(fdinfo, &hst);
+        struct wasi_filestat wst;
+        ret = wasi_userfd_fstat(fdinfo, &wst);
         if (ret != 0) {
                 goto fail;
         }
-        struct wasi_filestat wst;
-        wasi_convert_filestat(&hst, &wst);
         host_ret = wasi_copyout(ctx, &wst, retp, sizeof(wst),
                                 WASI_FILESTAT_ALIGN);
 fail:
@@ -1455,14 +1453,17 @@ wasi_unstable_fd_filestat_get(struct exec_context *ctx,
         if (ret != 0) {
                 goto fail;
         }
-        struct stat hst;
-        ret = wasi_userfd_fstat(fdinfo, &hst);
+        struct wasi_filestat wst;
+        ret = wasi_userfd_fstat(fdinfo, &wst);
         if (ret != 0) {
                 goto fail;
         }
-        struct wasi_unstable_filestat wst;
-        wasi_unstable_convert_filestat(&hst, &wst);
-        host_ret = wasi_copyout(ctx, &wst, retp, sizeof(wst),
+        struct wasi_unstable_filestat uwst;
+        ret = wasi_unstable_convert_filestat(&wst, &uwst);
+        if (ret != 0) {
+                goto fail;
+        }
+        host_ret = wasi_copyout(ctx, &uwst, retp, sizeof(uwst),
                                 WASI_UNSTABLE_FILESTAT_ALIGN);
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
@@ -2520,17 +2521,15 @@ wasi_path_filestat_get(struct exec_context *ctx, struct host_instance *hi,
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
-        struct stat hst;
+        struct wasi_filestat wst;
         if ((lookupflags & WASI_LOOKUPFLAG_SYMLINK_FOLLOW) != 0) {
-                ret = wasi_host_stat(&pi, &hst);
+                ret = wasi_host_stat(&pi, &wst);
         } else {
-                ret = wasi_host_lstat(&pi, &hst);
+                ret = wasi_host_lstat(&pi, &wst);
         }
         if (ret != 0) {
                 goto fail;
         }
-        struct wasi_filestat wst;
-        wasi_convert_filestat(&hst, &wst);
         host_ret = wasi_copyout(ctx, &wst, retp, sizeof(wst),
                                 WASI_FILESTAT_ALIGN);
 fail:
@@ -2566,18 +2565,21 @@ wasi_unstable_path_filestat_get(struct exec_context *ctx,
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
-        struct stat hst;
+        struct wasi_filestat wst;
         if ((lookupflags & WASI_LOOKUPFLAG_SYMLINK_FOLLOW) != 0) {
-                ret = wasi_host_stat(&pi, &hst);
+                ret = wasi_host_stat(&pi, &wst);
         } else {
-                ret = wasi_host_lstat(&pi, &hst);
+                ret = wasi_host_lstat(&pi, &wst);
         }
         if (ret != 0) {
                 goto fail;
         }
-        struct wasi_unstable_filestat wst;
-        wasi_unstable_convert_filestat(&hst, &wst);
-        host_ret = wasi_copyout(ctx, &wst, retp, sizeof(wst),
+        struct wasi_unstable_filestat uwst;
+        ret = wasi_unstable_convert_filestat(&wst, &uwst);
+        if (ret != 0) {
+                goto fail;
+        }
+        host_ret = wasi_copyout(ctx, &uwst, retp, sizeof(uwst),
                                 WASI_UNSTABLE_FILESTAT_ALIGN);
 fail:
         path_clear(&pi);

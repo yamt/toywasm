@@ -97,25 +97,24 @@ wasi_convert_filestat(const struct stat *hst, struct wasi_filestat *wst)
 #endif
 }
 
-void
-wasi_unstable_convert_filestat(const struct stat *hst,
-                               struct wasi_unstable_filestat *wst)
+int
+wasi_unstable_convert_filestat(const struct wasi_filestat *wst,
+                               struct wasi_unstable_filestat *uwst)
 {
-        memset(wst, 0, sizeof(*wst));
-        wst->dev = host_to_le64(hst->st_dev);
-        wst->ino = host_to_le64(hst->st_ino);
-        wst->type = wasi_convert_filetype(hst->st_mode);
-        wst->linkcount = host_to_le32(hst->st_nlink);
-        wst->size = host_to_le64(hst->st_size);
-#if defined(__APPLE__)
-        wst->atim = host_to_le64(timespec_to_ns(&hst->st_atimespec));
-        wst->mtim = host_to_le64(timespec_to_ns(&hst->st_mtimespec));
-        wst->ctim = host_to_le64(timespec_to_ns(&hst->st_ctimespec));
-#else
-        wst->atim = host_to_le64(timespec_to_ns(&hst->st_atim));
-        wst->mtim = host_to_le64(timespec_to_ns(&hst->st_mtim));
-        wst->ctim = host_to_le64(timespec_to_ns(&hst->st_ctim));
-#endif
+        uint64_t linkcount = le64_decode(&wst->linkcount);
+        if (linkcount > UINT32_MAX) {
+                return E2BIG;
+        }
+        memset(uwst, 0, sizeof(*uwst));
+        uwst->dev = wst->dev;
+        uwst->ino = wst->ino;
+        uwst->type = wst->type;
+        le32_encode(&uwst->linkcount, linkcount);
+        uwst->size = wst->size;
+        uwst->atim = wst->atim;
+        uwst->mtim = wst->mtim;
+        uwst->ctim = wst->ctim;
+        return 0;
 }
 
 uint8_t

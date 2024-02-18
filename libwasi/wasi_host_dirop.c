@@ -146,17 +146,27 @@ wasi_host_rename(const struct path_info *pi1, const struct path_info *pi2)
 }
 
 int
-wasi_host_stat(const struct path_info *pi, struct stat *stp)
+wasi_host_stat(const struct path_info *pi, struct wasi_filestat *wstp)
 {
-        int ret = stat(pi->hostpath, stp);
-        return handle_errno(ret);
+        struct stat st;
+        int ret = stat(pi->hostpath, &st);
+        if (ret != 0) {
+                return handle_errno(ret);
+        }
+        wasi_convert_filestat(&st, wstp);
+        return 0;
 }
 
 int
-wasi_host_lstat(const struct path_info *pi, struct stat *stp)
+wasi_host_lstat(const struct path_info *pi, struct wasi_filestat *wstp)
 {
-        int ret = lstat(pi->hostpath, stp);
-        return handle_errno(ret);
+        struct stat st;
+        int ret = lstat(pi->hostpath, &st);
+        if (ret != 0) {
+                return handle_errno(ret);
+        }
+        wasi_convert_filestat(&st, wstp);
+        return 0;
 }
 
 int
