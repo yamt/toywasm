@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 struct wasi_fdinfo;
-struct timeval;
+struct utimes_args;
 struct iovec;
 struct stat;
 
@@ -24,7 +24,8 @@ int wasi_userfd_fstat(struct wasi_fdinfo *fdinfo, struct stat *stp);
 off_t wasi_userfd_lseek(struct wasi_fdinfo *fdinfo, off_t offset, int whence);
 int wasi_userfd_fsync(struct wasi_fdinfo *fdinfo);
 int wasi_userfd_fdatasync(struct wasi_fdinfo *fdinfo);
-int wasi_userfd_futimes(struct wasi_fdinfo *fdinfo, const struct timeval *tvp);
+int wasi_userfd_futimes(struct wasi_fdinfo *fdinfo,
+                        const struct utimes_args *args);
 int wasi_userfd_close(struct wasi_fdinfo *fdinfo);
 
 int wasi_userfd_fdopendir(struct wasi_fdinfo *fdinfo, void **dirp);

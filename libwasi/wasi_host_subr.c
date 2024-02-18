@@ -15,6 +15,7 @@
 #include "endian.h"
 #include "wasi_abi.h"
 #include "wasi_host_subr.h"
+#include "wasi_utimes.h"
 #include "xlog.h"
 
 uint64_t
@@ -38,15 +39,16 @@ timeval_from_ns(struct timeval *tv, uint64_t ns)
 }
 
 int
-prepare_utimes_tv(uint32_t fstflags, uint64_t atim, uint64_t mtim,
-                  struct timeval *tvstore, const struct timeval **resultp)
+prepare_utimes_tv(const struct utimes_args *args, struct timeval *tvstore,
+                  const struct timeval **resultp)
 {
+        uint32_t fstflags = args->fstflags;
         const struct timeval *tvp;
         if (fstflags == (WASI_FSTFLAG_ATIM_NOW | WASI_FSTFLAG_MTIM_NOW)) {
                 tvp = NULL;
         } else if (fstflags == (WASI_FSTFLAG_ATIM | WASI_FSTFLAG_MTIM)) {
-                timeval_from_ns(&tvstore[0], atim);
-                timeval_from_ns(&tvstore[1], mtim);
+                timeval_from_ns(&tvstore[0], args->atim);
+                timeval_from_ns(&tvstore[1], args->mtim);
                 tvp = tvstore;
         } else {
                 return ENOTSUP;
