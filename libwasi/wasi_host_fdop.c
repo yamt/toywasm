@@ -96,7 +96,7 @@ wasi_userfd_reject_directory(struct wasi_fdinfo *fdinfo)
         struct wasi_filestat st;
         int ret;
 
-        ret = wasi_userfd_fstat(fdinfo, &st);
+        ret = wasi_host_fd_fstat(fdinfo, &st);
         if (ret == -1) {
                 ret = errno;
                 assert(ret > 0);
@@ -115,8 +115,8 @@ fail:
 }
 
 int
-wasi_userfd_fallocate(struct wasi_fdinfo *fdinfo, wasi_off_t offset,
-                      wasi_off_t len)
+wasi_host_fd_fallocate(struct wasi_fdinfo *fdinfo, wasi_off_t offset,
+                       wasi_off_t len)
 {
         int hostfd = fdinfo_hostfd(fdinfo);
         int ret;
@@ -145,7 +145,7 @@ handle_errno(int orig_ret)
 }
 
 int
-wasi_userfd_ftruncate(struct wasi_fdinfo *fdinfo, wasi_off_t size)
+wasi_host_fd_ftruncate(struct wasi_fdinfo *fdinfo, wasi_off_t size)
 {
         int hostfd = fdinfo_hostfd(fdinfo);
         int ret = ftruncate(hostfd, size);
@@ -153,8 +153,8 @@ wasi_userfd_ftruncate(struct wasi_fdinfo *fdinfo, wasi_off_t size)
 }
 
 int
-wasi_userfd_writev(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
-                   int iovcnt, size_t *resultp)
+wasi_host_fd_writev(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
+                    int iovcnt, size_t *resultp)
 {
         int hostfd = fdinfo_hostfd(fdinfo);
         ssize_t ssz = writev(hostfd, iov, iovcnt);
@@ -168,8 +168,8 @@ wasi_userfd_writev(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
 }
 
 int
-wasi_userfd_pwritev(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
-                    int iovcnt, wasi_off_t off, size_t *resultp)
+wasi_host_fd_pwritev(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
+                     int iovcnt, wasi_off_t off, size_t *resultp)
 {
         int hostfd = fdinfo_hostfd(fdinfo);
         ssize_t ssz = pwritev(hostfd, iov, iovcnt, off);
@@ -183,7 +183,7 @@ wasi_userfd_pwritev(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
 }
 
 int
-wasi_userfd_fcntl(struct wasi_fdinfo *fdinfo, int cmd, int data, int *resultp)
+wasi_host_fd_fcntl(struct wasi_fdinfo *fdinfo, int cmd, int data, int *resultp)
 {
         int hostfd = fdinfo_hostfd(fdinfo);
         errno = 0;
@@ -196,8 +196,8 @@ wasi_userfd_fcntl(struct wasi_fdinfo *fdinfo, int cmd, int data, int *resultp)
 }
 
 int
-wasi_userfd_readv(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
-                  int iovcnt, size_t *resultp)
+wasi_host_fd_readv(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
+                   int iovcnt, size_t *resultp)
 {
         int hostfd = fdinfo_hostfd(fdinfo);
         ssize_t ssz = readv(hostfd, iov, iovcnt);
@@ -211,8 +211,8 @@ wasi_userfd_readv(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
 }
 
 int
-wasi_userfd_preadv(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
-                   int iovcnt, wasi_off_t off, size_t *resultp)
+wasi_host_fd_preadv(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
+                    int iovcnt, wasi_off_t off, size_t *resultp)
 {
         int hostfd = fdinfo_hostfd(fdinfo);
         ssize_t ssz = preadv(hostfd, iov, iovcnt, off);
@@ -226,7 +226,7 @@ wasi_userfd_preadv(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
 }
 
 int
-wasi_userfd_fstat(struct wasi_fdinfo *fdinfo, struct wasi_filestat *wstp)
+wasi_host_fd_fstat(struct wasi_fdinfo *fdinfo, struct wasi_filestat *wstp)
 {
         int hostfd = fdinfo_hostfd(fdinfo);
         struct stat st;
@@ -239,8 +239,8 @@ wasi_userfd_fstat(struct wasi_fdinfo *fdinfo, struct wasi_filestat *wstp)
 }
 
 int
-wasi_userfd_lseek(struct wasi_fdinfo *fdinfo, wasi_off_t offset, int whence,
-                  wasi_off_t *resultp)
+wasi_host_fd_lseek(struct wasi_fdinfo *fdinfo, wasi_off_t offset, int whence,
+                   wasi_off_t *resultp)
 {
         int hostfd = fdinfo_hostfd(fdinfo);
         errno = 0;
@@ -255,7 +255,7 @@ wasi_userfd_lseek(struct wasi_fdinfo *fdinfo, wasi_off_t offset, int whence,
 }
 
 int
-wasi_userfd_fsync(struct wasi_fdinfo *fdinfo)
+wasi_host_fd_fsync(struct wasi_fdinfo *fdinfo)
 {
         int hostfd = fdinfo_hostfd(fdinfo);
         int ret = fsync(hostfd);
@@ -263,7 +263,7 @@ wasi_userfd_fsync(struct wasi_fdinfo *fdinfo)
 }
 
 int
-wasi_userfd_fdatasync(struct wasi_fdinfo *fdinfo)
+wasi_host_fd_fdatasync(struct wasi_fdinfo *fdinfo)
 {
         int hostfd = fdinfo_hostfd(fdinfo);
 #if defined(__APPLE__)
@@ -276,7 +276,8 @@ wasi_userfd_fdatasync(struct wasi_fdinfo *fdinfo)
 }
 
 int
-wasi_userfd_futimes(struct wasi_fdinfo *fdinfo, const struct utimes_args *args)
+wasi_host_fd_futimes(struct wasi_fdinfo *fdinfo,
+                     const struct utimes_args *args)
 {
         int hostfd = fdinfo_hostfd(fdinfo);
         struct timeval tv[2];
@@ -291,7 +292,7 @@ wasi_userfd_futimes(struct wasi_fdinfo *fdinfo, const struct utimes_args *args)
 }
 
 int
-wasi_userfd_close(struct wasi_fdinfo *fdinfo)
+wasi_host_fd_close(struct wasi_fdinfo *fdinfo)
 {
         assert(fdinfo->type == WASI_FDINFO_USER);
         int ret = 0;
@@ -311,7 +312,7 @@ wasi_userfd_close(struct wasi_fdinfo *fdinfo)
         }
         free(fdinfo->u.u_user.path);
         if (fdinfo->u.u_user.dir != NULL) {
-                wasi_userdir_close(fdinfo->u.u_user.dir);
+                wasi_host_dir_close(fdinfo->u.u_user.dir);
         }
         fdinfo->u.u_user.hostfd = -1;
         fdinfo->u.u_user.path = NULL;
@@ -320,7 +321,7 @@ wasi_userfd_close(struct wasi_fdinfo *fdinfo)
 }
 
 int
-wasi_userfd_fdopendir(struct wasi_fdinfo *fdinfo, void **dirp)
+wasi_host_fd_fdopendir(struct wasi_fdinfo *fdinfo, void **dirp)
 {
         int hostfd = fdinfo_hostfd(fdinfo);
         DIR *dir = fdopendir(hostfd);

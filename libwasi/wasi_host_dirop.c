@@ -81,7 +81,7 @@ handle_errno(int orig_ret)
 
 int
 wasi_host_path_open(const struct path_info *pi, int oflags, unsigned int mode,
-               int *fdp)
+                    int *fdp)
 {
         int ret = open(pi->hostpath, oflags, mode);
         if (ret == -1) {
@@ -121,7 +121,7 @@ wasi_host_path_symlink(const char *target_buf, const struct path_info *pi)
 
 int
 wasi_host_path_readlink(const struct path_info *pi, char *buf, size_t buflen,
-                   size_t *resultp)
+                        size_t *resultp)
 {
         ssize_t ret = readlink(pi->hostpath, buf, buflen);
         if (ret == -1) {
@@ -170,7 +170,8 @@ wasi_host_path_lstat(const struct path_info *pi, struct wasi_filestat *wstp)
 }
 
 int
-wasi_host_path_utimes(const struct path_info *pi, const struct utimes_args *args)
+wasi_host_path_utimes(const struct path_info *pi,
+                      const struct utimes_args *args)
 {
 #if defined(TOYWASM_OLD_WASI_LIBC)
         return ENOSYS;
@@ -188,7 +189,8 @@ wasi_host_path_utimes(const struct path_info *pi, const struct utimes_args *args
 }
 
 int
-wasi_host_path_lutimes(const struct path_info *pi, const struct utimes_args *args)
+wasi_host_path_lutimes(const struct path_info *pi,
+                       const struct utimes_args *args)
 {
         struct timeval tv[2];
         const struct timeval *tvp;

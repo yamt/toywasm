@@ -14,7 +14,7 @@
 #include "wasi_impl.h"
 
 int
-wasi_userdir_close(void *dir)
+wasi_host_dir_close(void *dir)
 {
         int ret = closedir(dir);
         if (ret == -1) {
@@ -26,7 +26,7 @@ wasi_userdir_close(void *dir)
 }
 
 int
-wasi_userdir_seek(void *dir, uint64_t offset)
+wasi_host_dir_seek(void *dir, uint64_t offset)
 {
         if (offset == 0) {
                 rewinddir(dir);
@@ -37,8 +37,8 @@ wasi_userdir_seek(void *dir, uint64_t offset)
 }
 
 int
-wasi_userdir_read(void *dir, struct wasi_dirent *wde, const uint8_t **namep,
-                  bool *eod)
+wasi_host_dir_read(void *dir, struct wasi_dirent *wde, const uint8_t **namep,
+                   bool *eod)
 {
         int ret;
         *eod = false;
