@@ -131,7 +131,7 @@ wasi_userfd_fallocate(struct wasi_fdinfo *fdinfo, off_t offset, off_t len)
         return ret;
 }
 
-int
+static int
 handle_errno(int orig_ret)
 {
         if (orig_ret == -1) {
