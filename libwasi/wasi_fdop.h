@@ -9,22 +9,25 @@ struct utimes_args;
 
 struct iovec;
 
+typedef uint64_t wasi_off_t;
+
 int wasi_userfd_reject_directory(struct wasi_fdinfo *fdinfo);
-int wasi_userfd_fallocate(struct wasi_fdinfo *fdinfo, off_t offset, off_t len);
-int wasi_userfd_ftruncate(struct wasi_fdinfo *fdinfo, off_t size);
+int wasi_userfd_fallocate(struct wasi_fdinfo *fdinfo, uint64_t offset,
+                          wasi_off_t len);
+int wasi_userfd_ftruncate(struct wasi_fdinfo *fdinfo, wasi_off_t size);
 int wasi_userfd_writev(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
                        int iovcnt, size_t *result);
 int wasi_userfd_pwritev(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
-                        int iovcnt, off_t off, size_t *result);
+                        int iovcnt, wasi_off_t off, size_t *result);
 int wasi_userfd_fcntl(struct wasi_fdinfo *fdinfo, int cmd, int data,
                       int *result);
 int wasi_userfd_readv(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
                       int iovcnt, size_t *result);
 int wasi_userfd_preadv(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
-                       int iovcnt, off_t off, size_t *result);
+                       int iovcnt, wasi_off_t off, size_t *result);
 int wasi_userfd_fstat(struct wasi_fdinfo *fdinfo, struct wasi_filestat *stp);
-int wasi_userfd_lseek(struct wasi_fdinfo *fdinfo, off_t offset, int whence,
-                      off_t *result);
+int wasi_userfd_lseek(struct wasi_fdinfo *fdinfo, wasi_off_t offset,
+                      int whence, wasi_off_t *result);
 int wasi_userfd_fsync(struct wasi_fdinfo *fdinfo);
 int wasi_userfd_fdatasync(struct wasi_fdinfo *fdinfo);
 int wasi_userfd_futimes(struct wasi_fdinfo *fdinfo,
