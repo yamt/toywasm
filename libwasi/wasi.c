@@ -762,6 +762,9 @@ wasi_fd_read(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         if ((fflag & O_NONBLOCK) == 0) {
+                /*
+                 * perform a poll first to avoid blocking in readv.
+                 */
                 ret = EAGAIN;
                 goto tty_hack;
         }
