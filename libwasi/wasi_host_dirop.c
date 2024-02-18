@@ -67,72 +67,103 @@ readlink(const char *path, char *buf, size_t buflen)
 }
 #endif
 
-int
-wasi_host_open(const struct path_info *pi, int oflags, unsigned int mode)
+static int
+handle_errno(int orig_ret)
 {
-        return open(pi->hostpath, oflags, mode);
+        if (orig_ret == -1) {
+                int ret = errno;
+                assert(ret > 0);
+                return ret;
+        }
+        assert(orig_ret == 0);
+        return 0;
+}
+
+int
+wasi_host_open(const struct path_info *pi, int oflags, unsigned int mode,
+               int *fdp)
+{
+        int ret = open(pi->hostpath, oflags, mode);
+        if (ret == -1) {
+                return handle_errno(ret);
+        }
+        *fdp = ret;
+        return 0;
 }
 
 int
 wasi_host_unlink(const struct path_info *pi)
 {
-        return unlink(pi->hostpath);
+        int ret = unlink(pi->hostpath);
+        return handle_errno(ret);
 }
 
 int
 wasi_host_mkdir(const struct path_info *pi)
 {
-        return mkdir(pi->hostpath, 0777);
+        int ret = mkdir(pi->hostpath, 0777);
+        return handle_errno(ret);
 }
 
 int
 wasi_host_rmdir(const struct path_info *pi)
 {
-        return rmdir(pi->hostpath);
+        int ret = rmdir(pi->hostpath);
+        return handle_errno(ret);
 }
 
 int
 wasi_host_symlink(const char *target_buf, const struct path_info *pi)
 {
-        return symlink(target_buf, pi->hostpath);
+        int ret = symlink(target_buf, pi->hostpath);
+        return handle_errno(ret);
 }
 
 int
-wasi_host_readlink(const struct path_info *pi, char *buf, size_t buflen)
+wasi_host_readlink(const struct path_info *pi, char *buf, size_t buflen,
+                   size_t *resultp)
 {
-        return readlink(pi->hostpath, buf, buflen);
+        ssize_t ret = readlink(pi->hostpath, buf, buflen);
+        if (ret == -1) {
+                return handle_errno(ret);
+        }
+        *resultp = ret;
+        return 0;
 }
 
 int
 wasi_host_link(const struct path_info *pi1, const struct path_info *pi2)
 {
-        return link(pi1->hostpath, pi2->hostpath);
+        int ret = link(pi1->hostpath, pi2->hostpath);
+        return handle_errno(ret);
 }
 
 int
 wasi_host_rename(const struct path_info *pi1, const struct path_info *pi2)
 {
-        return rename(pi1->hostpath, pi2->hostpath);
+        int ret = rename(pi1->hostpath, pi2->hostpath);
+        return handle_errno(ret);
 }
 
 int
 wasi_host_stat(const struct path_info *pi, struct stat *stp)
 {
-        return stat(pi->hostpath, stp);
+        int ret = stat(pi->hostpath, stp);
+        return handle_errno(ret);
 }
 
 int
 wasi_host_lstat(const struct path_info *pi, struct stat *stp)
 {
-        return lstat(pi->hostpath, stp);
+        int ret = lstat(pi->hostpath, stp);
+        return handle_errno(ret);
 }
 
 int
 wasi_host_utimes(const struct path_info *pi, const struct utimes_args *args)
 {
 #if defined(TOYWASM_OLD_WASI_LIBC)
-        errno = ENOSYS;
-        return -1;
+        return ENOSYS;
 #else
         struct timeval tv[2];
         const struct timeval *tvp;
@@ -142,12 +173,7 @@ wasi_host_utimes(const struct path_info *pi, const struct utimes_args *args)
                 return ret;
         }
         ret = utimes(pi->hostpath, tvp);
-        if (ret == -1) {
-                ret = errno;
-                assert(ret > 0);
-                return ret;
-        }
-        return 0;
+        return handle_errno(ret);
 #endif
 }
 
@@ -162,10 +188,5 @@ wasi_host_lutimes(const struct path_info *pi, const struct utimes_args *args)
                 return ret;
         }
         ret = lutimes(pi->hostpath, tvp);
-        if (ret == -1) {
-                ret = errno;
-                assert(ret > 0);
-                return ret;
-        }
-        return 0;
+        return handle_errno(ret);
 }

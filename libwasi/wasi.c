@@ -2166,12 +2166,10 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
          * wasmtime uses the default of the underlying library:
          * https://doc.rust-lang.org/nightly/std/os/unix/fs/trait.OpenOptionsExt.html#tymethod.mode
          */
-        hostfd = wasi_host_open(&pi, oflags | O_NONBLOCK, 0666);
-        if (hostfd == -1) {
-                ret = errno;
-                assert(ret > 0);
+        ret = wasi_host_open(&pi, oflags | O_NONBLOCK, 0666, &hostfd);
+        if (ret != 0) {
                 xlog_trace("open %s oflags %x failed with %d", pi.hostpath,
-                           oflags, errno);
+                           oflags, ret);
                 goto fail;
         }
         struct stat stat;
@@ -2234,8 +2232,6 @@ wasi_path_unlink_file(struct exec_context *ctx, struct host_instance *hi,
         }
         ret = wasi_host_unlink(&pi);
         if (ret != 0) {
-                ret = errno;
-                assert(ret > 0);
                 goto fail;
         }
 fail:
@@ -2268,11 +2264,6 @@ wasi_path_create_directory(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         ret = wasi_host_mkdir(&pi);
-        if (ret != 0) {
-                ret = errno;
-                assert(ret > 0);
-                goto fail;
-        }
 fail:
         path_clear(&pi);
         if (host_ret == 0) {
@@ -2303,11 +2294,6 @@ wasi_path_remove_directory(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         ret = wasi_host_rmdir(&pi);
-        if (ret != 0) {
-                ret = errno;
-                assert(ret > 0);
-                goto fail;
-        }
 fail:
         path_clear(&pi);
         if (host_ret == 0) {
@@ -2351,11 +2337,6 @@ wasi_path_symlink(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         ret = wasi_host_symlink(target_buf, &pi);
-        if (ret != 0) {
-                ret = errno;
-                assert(ret > 0);
-                goto fail;
-        }
 fail:
         free(target_buf);
         path_clear(&pi);
@@ -2407,13 +2388,12 @@ wasi_path_readlink(struct exec_context *ctx, struct host_instance *hi,
         if (host_ret != 0) {
                 goto fail;
         }
-        ssize_t ret1 = wasi_host_readlink(&pi, p, buflen);
-        if (ret1 == -1) {
-                ret = errno;
-                assert(ret > 0);
+        size_t n;
+        ret = wasi_host_readlink(&pi, p, buflen, &n);
+        if (ret != 0) {
                 goto fail;
         }
-        uint32_t result = le32_to_host(ret1);
+        uint32_t result = le32_to_host(n);
         host_ret = wasi_copyout(ctx, &result, retp, sizeof(result),
                                 WASI_U32_ALIGN);
         if (host_ret != 0) {
@@ -2468,11 +2448,6 @@ wasi_path_link(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         ret = wasi_host_link(&pi1, &pi2);
-        if (ret == -1) {
-                ret = errno;
-                assert(ret > 0);
-                goto fail;
-        }
 fail:
         path_clear(&pi1);
         path_clear(&pi2);
@@ -2513,11 +2488,6 @@ wasi_path_rename(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         ret = wasi_host_rename(&pi1, &pi2);
-        if (ret == -1) {
-                ret = errno;
-                assert(ret > 0);
-                goto fail;
-        }
 fail:
         path_clear(&pi1);
         path_clear(&pi2);
@@ -2556,9 +2526,7 @@ wasi_path_filestat_get(struct exec_context *ctx, struct host_instance *hi,
         } else {
                 ret = wasi_host_lstat(&pi, &hst);
         }
-        if (ret == -1) {
-                ret = errno;
-                assert(ret > 0);
+        if (ret != 0) {
                 goto fail;
         }
         struct wasi_filestat wst;
@@ -2604,9 +2572,7 @@ wasi_unstable_path_filestat_get(struct exec_context *ctx,
         } else {
                 ret = wasi_host_lstat(&pi, &hst);
         }
-        if (ret == -1) {
-                ret = errno;
-                assert(ret > 0);
+        if (ret != 0) {
                 goto fail;
         }
         struct wasi_unstable_filestat wst;
