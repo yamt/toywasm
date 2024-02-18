@@ -542,10 +542,6 @@ wasi_fd_filestat_set_size(struct exec_context *ctx, struct host_instance *hi,
          */
         xlog_trace("ftruncate wasifd %" PRIu32 " size %" PRIu64, wasifd, size);
         ret = wasi_userfd_ftruncate(fdinfo, size);
-        if (ret == -1) {
-                ret = errno;
-                assert(ret > 0);
-        }
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
@@ -642,12 +638,10 @@ wasi_fd_write(struct exec_context *ctx, struct host_instance *hi,
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
-        ssize_t n;
+        size_t n;
 retry:
-        n = wasi_userfd_writev(fdinfo, hostiov, iov_count);
-        if (n == -1) {
-                ret = errno;
-                assert(ret > 0);
+        ret = wasi_userfd_writev(fdinfo, hostiov, iov_count, &n);
+        if (ret != 0) {
                 if (emulate_blocking(ctx, fdinfo, POLLOUT, ret, &host_ret,
                                      &ret)) {
                         goto retry;
@@ -701,12 +695,10 @@ wasi_fd_pwrite(struct exec_context *ctx, struct host_instance *hi,
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
-        ssize_t n;
+        size_t n;
 retry:
-        n = wasi_userfd_pwritev(fdinfo, hostiov, iov_count, offset);
-        if (n == -1) {
-                ret = errno;
-                assert(ret > 0);
+        ret = wasi_userfd_pwritev(fdinfo, hostiov, iov_count, offset, &n);
+        if (ret != 0) {
                 if (emulate_blocking(ctx, fdinfo, POLLOUT, ret, &host_ret,
                                      &ret)) {
                         goto retry;
@@ -759,18 +751,21 @@ wasi_fd_read(struct exec_context *ctx, struct host_instance *hi,
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
-        ssize_t n;
+        size_t n;
 
         /* hack for tty. see the comment in wasi_instance_create. */
-        if ((wasi_userfd_fcntl(fdinfo, F_GETFL, 0) & O_NONBLOCK) == 0) {
+        int fflag;
+        ret = wasi_userfd_fcntl(fdinfo, F_GETFL, 0, &fflag);
+        if (ret != 0) {
+                goto fail;
+        }
+        if ((fflag & O_NONBLOCK) == 0) {
                 ret = EAGAIN;
                 goto tty_hack;
         }
 retry:
-        n = wasi_userfd_readv(fdinfo, hostiov, iov_count);
-        if (n == -1) {
-                ret = errno;
-                assert(ret > 0);
+        ret = wasi_userfd_readv(fdinfo, hostiov, iov_count, &n);
+        if (ret != 0) {
 tty_hack:
                 if (emulate_blocking(ctx, fdinfo, POLLIN, ret, &host_ret,
                                      &ret)) {
@@ -825,12 +820,10 @@ wasi_fd_pread(struct exec_context *ctx, struct host_instance *hi,
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
-        ssize_t n;
+        size_t n;
 retry:
-        n = wasi_userfd_preadv(fdinfo, hostiov, iov_count, offset);
-        if (n == -1) {
-                ret = errno;
-                assert(ret > 0);
+        ret = wasi_userfd_preadv(fdinfo, hostiov, iov_count, offset, &n);
+        if (ret != 0) {
                 if (emulate_blocking(ctx, fdinfo, POLLIN, ret, &host_ret,
                                      &ret)) {
                         goto retry;
@@ -984,12 +977,14 @@ wasi_fd_fdstat_get(struct exec_context *ctx, struct host_instance *hi,
                 struct stat stat;
                 ret = wasi_userfd_fstat(fdinfo, &stat);
                 if (ret != 0) {
-                        ret = errno;
-                        assert(ret > 0);
                         goto fail;
                 }
                 st.fs_filetype = wasi_convert_filetype(stat.st_mode);
-                int flags = wasi_userfd_fcntl(fdinfo, F_GETFL, 0);
+                int flags;
+                ret = wasi_userfd_fcntl(fdinfo, F_GETFL, 0, &flags);
+                if (ret != 0) {
+                        goto fail;
+                }
                 if (!fdinfo->blocking) {
                         st.fs_flags |= WASI_FDFLAG_NONBLOCK;
                 }
@@ -1158,13 +1153,12 @@ wasi_fd_seek(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        off_t ret1 = wasi_userfd_lseek(fdinfo, offset, hostwhence);
-        if (ret1 == -1) {
-                ret = errno;
-                assert(ret > 0);
+        off_t off;
+        ret = wasi_userfd_lseek(fdinfo, offset, hostwhence, &off);
+        if (ret != 0) {
                 goto fail;
         }
-        uint64_t result = host_to_le64(ret1);
+        uint64_t result = host_to_le64(off);
         host_ret = wasi_copyout(ctx, &result, retp, sizeof(result),
                                 WASI_U64_ALIGN);
 fail:
@@ -1215,13 +1209,12 @@ wasi_unstable_fd_seek(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        off_t ret1 = wasi_userfd_lseek(fdinfo, offset, hostwhence);
-        if (ret1 == -1) {
-                ret = errno;
-                assert(ret > 0);
+        off_t off;
+        ret = wasi_userfd_lseek(fdinfo, offset, hostwhence, &off);
+        if (ret != 0) {
                 goto fail;
         }
-        uint64_t result = host_to_le64(ret1);
+        uint64_t result = host_to_le64(off);
         host_ret = wasi_copyout(ctx, &result, retp, sizeof(result),
                                 WASI_U64_ALIGN);
 fail:
@@ -1255,13 +1248,12 @@ wasi_fd_tell(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        off_t ret1 = wasi_userfd_lseek(fdinfo, 0, SEEK_CUR);
-        if (ret1 == -1) {
-                ret = errno;
-                assert(ret > 0);
+        off_t off;
+        ret = wasi_userfd_lseek(fdinfo, 0, SEEK_CUR, &off);
+        if (ret != 0) {
                 goto fail;
         }
-        uint64_t result = host_to_le64(ret1);
+        uint64_t result = host_to_le64(off);
         host_ret = wasi_copyout(ctx, &result, retp, sizeof(result),
                                 WASI_U64_ALIGN);
 fail:
@@ -1290,9 +1282,7 @@ wasi_fd_sync(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         ret = wasi_userfd_fsync(fdinfo);
-        if (ret == -1) {
-                ret = errno;
-                assert(ret > 0);
+        if (ret != 0) {
                 goto fail;
         }
 fail:
@@ -1318,9 +1308,7 @@ wasi_fd_datasync(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         ret = wasi_userfd_fdatasync(fdinfo);
-        if (ret == -1) {
-                ret = errno;
-                assert(ret > 0);
+        if (ret != 0) {
                 goto fail;
         }
 fail:
@@ -1432,9 +1420,7 @@ wasi_fd_filestat_get(struct exec_context *ctx, struct host_instance *hi,
         }
         struct stat hst;
         ret = wasi_userfd_fstat(fdinfo, &hst);
-        if (ret == -1) {
-                ret = errno;
-                assert(ret > 0);
+        if (ret != 0) {
                 goto fail;
         }
         struct wasi_filestat wst;
@@ -1471,9 +1457,7 @@ wasi_unstable_fd_filestat_get(struct exec_context *ctx,
         }
         struct stat hst;
         ret = wasi_userfd_fstat(fdinfo, &hst);
-        if (ret == -1) {
-                ret = errno;
-                assert(ret > 0);
+        if (ret != 0) {
                 goto fail;
         }
         struct wasi_unstable_filestat wst;
