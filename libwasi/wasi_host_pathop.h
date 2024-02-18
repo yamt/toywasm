@@ -1,3 +1,5 @@
+#include <stdint.h>
+
 struct path_info {
         char *hostpath;
         char *wasmpath;
