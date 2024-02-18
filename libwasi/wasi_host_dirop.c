@@ -8,12 +8,14 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 
+#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
 
 #include "wasi_dirop.h"
+#include "wasi_host_subr.h"
 
 #if defined(__wasi__)
 #if !defined(AT_FDCWD)
@@ -126,18 +128,44 @@ wasi_host_lstat(const struct path_info *pi, struct stat *stp)
 }
 
 int
-wasi_host_utimes(const struct path_info *pi, const struct timeval *tvp)
+wasi_host_utimes(const struct path_info *pi, const struct utimes_args *args)
 {
 #if defined(TOYWASM_OLD_WASI_LIBC)
         errno = ENOSYS;
         return -1;
 #else
-        return utimes(pi->hostpath, tvp);
+        struct timeval tv[2];
+        const struct timeval *tvp;
+        int ret;
+        ret = prepare_utimes_tv(args, tv, &tvp);
+        if (ret != 0) {
+                return ret;
+        }
+        ret = utimes(pi->hostpath, tvp);
+        if (ret == -1) {
+                ret = errno;
+                assert(ret > 0);
+                return ret;
+        }
+        return 0;
 #endif
 }
 
 int
-wasi_host_lutimes(const struct path_info *pi, const struct timeval *tvp)
+wasi_host_lutimes(const struct path_info *pi, const struct utimes_args *args)
 {
-        return lutimes(pi->hostpath, tvp);
+        struct timeval tv[2];
+        const struct timeval *tvp;
+        int ret;
+        ret = prepare_utimes_tv(args, tv, &tvp);
+        if (ret != 0) {
+                return ret;
+        }
+        ret = lutimes(pi->hostpath, tvp);
+        if (ret == -1) {
+                ret = errno;
+                assert(ret > 0);
+                return ret;
+        }
+        return 0;
 }

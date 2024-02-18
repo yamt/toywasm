@@ -3,7 +3,7 @@ struct path_info {
         char *wasmpath;
 };
 
-struct timeval;
+struct utimes_args;
 struct stat;
 
 int wasi_host_open(const struct path_info *pi, int oflags, unsigned int mode);
@@ -16,5 +16,7 @@ int wasi_host_link(const struct path_info *pi1, const struct path_info *pi2);
 int wasi_host_rename(const struct path_info *pi1, const struct path_info *pi2);
 int wasi_host_stat(const struct path_info *pi, struct stat *stp);
 int wasi_host_lstat(const struct path_info *pi, struct stat *stp);
-int wasi_host_utimes(const struct path_info *pi, const struct timeval *tvp);
-int wasi_host_lutimes(const struct path_info *pi, const struct timeval *tvp);
+int wasi_host_utimes(const struct path_info *pi,
+                     const struct utimes_args *args);
+int wasi_host_lutimes(const struct path_info *pi,
+                      const struct utimes_args *args);

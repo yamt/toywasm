@@ -75,6 +75,7 @@
 #include "wasi_fdop.h"
 #include "wasi_host_subr.h"
 #include "wasi_impl.h"
+#include "wasi_utimes.h"
 #include "xlog.h"
 
 #if defined(__wasi__)
@@ -1507,17 +1508,12 @@ wasi_fd_filestat_set_times(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        struct timeval tv[2];
-        const struct timeval *tvp;
-        ret = prepare_utimes_tv(fstflags, atim, mtim, tv, &tvp);
-        if (ret != 0) {
-                goto fail;
-        }
-        ret = wasi_userfd_futimes(fdinfo, tvp);
-        if (ret == -1) {
-                ret = errno;
-                assert(ret > 0);
-        }
+        struct utimes_args args = {
+                .fstflags = fstflags,
+                .atim = atim,
+                .mtim = mtim,
+        };
+        ret = wasi_userfd_futimes(fdinfo, &args);
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
@@ -2667,20 +2663,15 @@ wasi_path_filestat_set_times(struct exec_context *ctx,
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
-        struct timeval tv[2];
-        const struct timeval *tvp;
-        ret = prepare_utimes_tv(fstflags, atim, mtim, tv, &tvp);
-        if (ret != 0) {
-                goto fail;
-        }
+        struct utimes_args args = {
+                .fstflags = fstflags,
+                .atim = atim,
+                .mtim = mtim,
+        };
         if ((lookupflags & WASI_LOOKUPFLAG_SYMLINK_FOLLOW) != 0) {
-                ret = wasi_host_utimes(&pi, tvp);
+                ret = wasi_host_utimes(&pi, &args);
         } else {
-                ret = wasi_host_lutimes(&pi, tvp);
-        }
-        if (ret == -1) {
-                ret = errno;
-                assert(ret > 0);
+                ret = wasi_host_lutimes(&pi, &args);
         }
 fail:
         path_clear(&pi);

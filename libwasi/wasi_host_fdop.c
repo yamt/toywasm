@@ -19,6 +19,7 @@
 #include <unistd.h>
 
 #include "wasi_fdop.h"
+#include "wasi_host_subr.h"
 #include "wasi_impl.h"
 
 #if defined(__wasi__)
@@ -210,10 +211,23 @@ wasi_userfd_fdatasync(struct wasi_fdinfo *fdinfo)
 }
 
 int
-wasi_userfd_futimes(struct wasi_fdinfo *fdinfo, const struct timeval *tvp)
+wasi_userfd_futimes(struct wasi_fdinfo *fdinfo, const struct utimes_args *args)
 {
         int hostfd = fdinfo_hostfd(fdinfo);
-        return futimes(hostfd, tvp);
+        struct timeval tv[2];
+        const struct timeval *tvp;
+        int ret;
+        ret = prepare_utimes_tv(args, tv, &tvp);
+        if (ret != 0) {
+                return ret;
+        }
+        ret = futimes(hostfd, tvp);
+        if (ret == -1) {
+                ret = errno;
+                assert(ret > 0);
+                return ret;
+        }
+        return 0;
 }
 
 int
