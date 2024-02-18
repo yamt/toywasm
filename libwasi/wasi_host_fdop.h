@@ -1,3 +1,8 @@
+/*
+ * Note: some operations (eg. close, read, write) are not necessarily
+ * specific to filesystem.
+ */
+
 #include <sys/types.h>
 
 #include <stdint.h>
