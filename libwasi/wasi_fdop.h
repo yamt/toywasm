@@ -11,8 +11,6 @@ struct iovec;
 
 typedef uint64_t wasi_off_t;
 
-int wasi_userfd_reject_directory(struct wasi_fdinfo *fdinfo);
-
 int wasi_host_fd_fallocate(struct wasi_fdinfo *fdinfo, uint64_t offset,
                            wasi_off_t len);
 int wasi_host_fd_ftruncate(struct wasi_fdinfo *fdinfo, wasi_off_t size);
