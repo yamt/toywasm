@@ -2104,36 +2104,25 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
         int hostfd = -1;
         int host_ret = 0;
         int ret;
-        int oflags;
         xlog_trace("wasm oflags %" PRIx32 " rights_base %" PRIx64, wasmoflags,
                    rights_base);
-        ret = wasi_build_oflags(lookupflags, wasmoflags, rights_base, fdflags,
-                                &oflags);
-        if (ret != 0) {
-                goto fail;
-        }
         host_ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd, path,
                                                 pathlen, &pi, &ret);
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
-        xlog_trace("open %s oflags %x", pi.hostpath, oflags);
         /*
          * TODO: avoid blocking on fifos for wasi-threads.
          */
-        /*
-         * Note: mode 0666 is what wasm-micro-runtime and wasmtime use.
-         *
-         * wasm-micro-runtime has it hardcoded:
-         * https://github.com/bytecodealliance/wasm-micro-runtime/blob/cadf9d0ad36ec12e2a1cab4edf5f0dfb9bf84de0/core/iwasm/libraries/libc-wasi/sandboxed-system-primitives/src/posix.c#L1971
-         *
-         * wasmtime uses the default of the underlying library:
-         * https://doc.rust-lang.org/nightly/std/os/unix/fs/trait.OpenOptionsExt.html#tymethod.mode
-         */
-        ret = wasi_host_path_open(&pi, oflags | O_NONBLOCK, 0666, &hostfd);
+        struct path_open_params open_params = {
+                .lookupflags = lookupflags,
+                .wasmoflags = wasmoflags,
+                .rights_base = rights_base,
+                .fdflags = fdflags,
+        };
+        ret = wasi_host_path_open(&pi, &open_params, &hostfd);
         if (ret != 0) {
-                xlog_trace("open %s oflags %x failed with %d", pi.hostpath,
-                           oflags, ret);
+                xlog_trace("open %s failed with %d", pi.hostpath, ret);
                 goto fail;
         }
         struct stat stat;

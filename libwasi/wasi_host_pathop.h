@@ -3,11 +3,18 @@ struct path_info {
         char *wasmpath;
 };
 
+struct path_open_params {
+        uint32_t lookupflags;
+        uint32_t wasmoflags;
+        uint64_t rights_base;
+        uint32_t fdflags;
+};
+
 struct wasi_filestat;
 struct utimes_args;
 
-int wasi_host_path_open(const struct path_info *pi, int oflags,
-                        unsigned int mode, int *fdp);
+int wasi_host_path_open(const struct path_info *pi,
+                        const struct path_open_params *params, int *fdp);
 int wasi_host_path_unlink(const struct path_info *pi);
 int wasi_host_path_mkdir(const struct path_info *pi);
 int wasi_host_path_rmdir(const struct path_info *pi);

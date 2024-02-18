@@ -80,10 +80,26 @@ handle_errno(int orig_ret)
 }
 
 int
-wasi_host_path_open(const struct path_info *pi, int oflags, unsigned int mode,
-                    int *fdp)
+wasi_host_path_open(const struct path_info *pi,
+                    const struct path_open_params *params, int *fdp)
 {
-        int ret = open(pi->hostpath, oflags, mode);
+        int ret;
+        int oflags;
+        ret = wasi_build_oflags(params->lookupflags, params->wasmoflags,
+                                params->rights_base, params->fdflags, &oflags);
+        if (ret != 0) {
+                return ret;
+        }
+        /*
+         * Note: mode 0666 is what wasm-micro-runtime and wasmtime use.
+         *
+         * wasm-micro-runtime has it hardcoded:
+         * https://github.com/bytecodealliance/wasm-micro-runtime/blob/cadf9d0ad36ec12e2a1cab4edf5f0dfb9bf84de0/core/iwasm/libraries/libc-wasi/sandboxed-system-primitives/src/posix.c#L1971
+         *
+         * wasmtime uses the default of the underlying library:
+         * https://doc.rust-lang.org/nightly/std/os/unix/fs/trait.OpenOptionsExt.html#tymethod.mode
+         */
+        ret = open(pi->hostpath, oflags | O_NONBLOCK, 0666);
         if (ret == -1) {
                 return handle_errno(ret);
         }
