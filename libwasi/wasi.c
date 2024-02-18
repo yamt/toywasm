@@ -1153,7 +1153,7 @@ wasi_fd_seek(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        off_t off;
+        wasi_off_t off;
         ret = wasi_userfd_lseek(fdinfo, offset, hostwhence, &off);
         if (ret != 0) {
                 goto fail;
@@ -1209,7 +1209,7 @@ wasi_unstable_fd_seek(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        off_t off;
+        wasi_off_t off;
         ret = wasi_userfd_lseek(fdinfo, offset, hostwhence, &off);
         if (ret != 0) {
                 goto fail;
@@ -1248,7 +1248,7 @@ wasi_fd_tell(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        off_t off;
+        wasi_off_t off;
         ret = wasi_userfd_lseek(fdinfo, 0, SEEK_CUR, &off);
         if (ret != 0) {
                 goto fail;

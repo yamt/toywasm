@@ -115,7 +115,8 @@ fail:
 }
 
 int
-wasi_userfd_fallocate(struct wasi_fdinfo *fdinfo, off_t offset, off_t len)
+wasi_userfd_fallocate(struct wasi_fdinfo *fdinfo, wasi_off_t offset,
+                      wasi_off_t len)
 {
         int hostfd = fdinfo_hostfd(fdinfo);
         int ret;
@@ -144,7 +145,7 @@ handle_errno(int orig_ret)
 }
 
 int
-wasi_userfd_ftruncate(struct wasi_fdinfo *fdinfo, off_t size)
+wasi_userfd_ftruncate(struct wasi_fdinfo *fdinfo, wasi_off_t size)
 {
         int hostfd = fdinfo_hostfd(fdinfo);
         int ret = ftruncate(hostfd, size);
@@ -168,7 +169,7 @@ wasi_userfd_writev(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
 
 int
 wasi_userfd_pwritev(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
-                    int iovcnt, off_t off, size_t *resultp)
+                    int iovcnt, wasi_off_t off, size_t *resultp)
 {
         int hostfd = fdinfo_hostfd(fdinfo);
         ssize_t ssz = pwritev(hostfd, iov, iovcnt, off);
@@ -211,7 +212,7 @@ wasi_userfd_readv(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
 
 int
 wasi_userfd_preadv(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
-                   int iovcnt, off_t off, size_t *resultp)
+                   int iovcnt, wasi_off_t off, size_t *resultp)
 {
         int hostfd = fdinfo_hostfd(fdinfo);
         ssize_t ssz = preadv(hostfd, iov, iovcnt, off);
@@ -238,8 +239,8 @@ wasi_userfd_fstat(struct wasi_fdinfo *fdinfo, struct wasi_filestat *wstp)
 }
 
 int
-wasi_userfd_lseek(struct wasi_fdinfo *fdinfo, off_t offset, int whence,
-                  off_t *resultp)
+wasi_userfd_lseek(struct wasi_fdinfo *fdinfo, wasi_off_t offset, int whence,
+                  wasi_off_t *resultp)
 {
         int hostfd = fdinfo_hostfd(fdinfo);
         errno = 0;
