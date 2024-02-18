@@ -9,7 +9,7 @@
 #include <string.h>
 
 #include "endian.h"
-#include "wasi_fdop.h"
+#include "wasi_host_fdop.h"
 #include "wasi_host_subr.h"
 #include "wasi_impl.h"
 
