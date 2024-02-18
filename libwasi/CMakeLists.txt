@@ -3,6 +3,7 @@
 set(lib_wasi_sources
 	"wasi.c"
 	"wasi_fdtable.c"
+	"wasi_subr.c"
 	"wasi_host_pathop.c"
 	"wasi_host_fdop.c"
 	"wasi_host_dirent.c"
