@@ -22,11 +22,6 @@
 #include "wasi_impl.h"
 
 #if defined(__wasi__)
-#if !defined(AT_FDCWD)
-/* a workaroud for wasi-sdk-8.0 which we use for wapm */
-#define TOYWASM_OLD_WASI_LIBC
-#endif
-
 /*
  * For some reasons, wasi-libc doesn't have legacy stuff enabled.
  * It includes lutimes and futimes.

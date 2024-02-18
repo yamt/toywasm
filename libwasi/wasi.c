@@ -78,6 +78,13 @@
 #include "wasi_impl.h"
 #include "xlog.h"
 
+#if defined(__wasi__)
+#if !defined(AT_FDCWD)
+/* a workaroud for wasi-sdk-8.0 which we use for wapm */
+#define TOYWASM_OLD_WASI_LIBC
+#endif
+#endif
+
 static int
 wasi_copyin_iovec(struct exec_context *ctx, uint32_t iov_uaddr,
                   uint32_t iov_count, struct iovec **resultp, int *usererrorp)
