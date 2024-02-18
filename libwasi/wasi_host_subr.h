@@ -15,8 +15,6 @@ int prepare_utimes_tv(const struct utimes_args *args, struct timeval *tvstore,
                       const struct timeval **resultp);
 uint8_t wasi_convert_filetype(unsigned int mode);
 void wasi_convert_filestat(const struct stat *hst, struct wasi_filestat *wst);
-int wasi_unstable_convert_filestat(const struct wasi_filestat *wst,
-                                   struct wasi_unstable_filestat *uwst);
 uint8_t wasi_convert_dirent_filetype(uint8_t hosttype);
 int wasi_convert_clockid(uint32_t clockid, clockid_t *hostidp);
 uint32_t wasi_convert_errno(int host_errno);

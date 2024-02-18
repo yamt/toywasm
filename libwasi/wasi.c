@@ -76,6 +76,7 @@
 #include "wasi_host_pathop.h"
 #include "wasi_host_subr.h"
 #include "wasi_impl.h"
+#include "wasi_subr.h"
 #include "wasi_utimes.h"
 #include "xlog.h"
 
@@ -158,30 +159,6 @@ wasi_fdinfo_close(struct wasi_fdinfo *fdinfo)
         case WASI_FDINFO_UNUSED:
                 break;
         }
-        return ret;
-}
-
-static int
-wasi_userfd_reject_directory(struct wasi_fdinfo *fdinfo)
-{
-        struct wasi_filestat st;
-        int ret;
-
-        ret = wasi_host_fd_fstat(fdinfo, &st);
-        if (ret == -1) {
-                ret = errno;
-                assert(ret > 0);
-                goto fail;
-        }
-        if (st.type == WASI_FILETYPE_DIRECTORY) {
-                /*
-                 * Note: wasmtime directory_seek.rs test expects EBADF.
-                 * Why not EISDIR?
-                 */
-                ret = EBADF;
-                goto fail;
-        }
-fail:
         return ret;
 }
 
