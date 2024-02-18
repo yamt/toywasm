@@ -4,9 +4,10 @@
 #include <stdint.h>
 
 struct wasi_fdinfo;
+struct wasi_filestat;
 struct utimes_args;
+
 struct iovec;
-struct stat;
 
 int wasi_userfd_reject_directory(struct wasi_fdinfo *fdinfo);
 int wasi_userfd_fallocate(struct wasi_fdinfo *fdinfo, off_t offset, off_t len);
@@ -21,7 +22,7 @@ int wasi_userfd_readv(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
                       int iovcnt, size_t *result);
 int wasi_userfd_preadv(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
                        int iovcnt, off_t off, size_t *result);
-int wasi_userfd_fstat(struct wasi_fdinfo *fdinfo, struct stat *stp);
+int wasi_userfd_fstat(struct wasi_fdinfo *fdinfo, struct wasi_filestat *stp);
 int wasi_userfd_lseek(struct wasi_fdinfo *fdinfo, off_t offset, int whence,
                       off_t *result);
 int wasi_userfd_fsync(struct wasi_fdinfo *fdinfo);
