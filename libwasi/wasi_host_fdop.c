@@ -132,70 +132,128 @@ wasi_userfd_fallocate(struct wasi_fdinfo *fdinfo, off_t offset, off_t len)
 }
 
 int
+handle_errno(int orig_ret)
+{
+        if (orig_ret == -1) {
+                int ret = errno;
+                assert(ret > 0);
+                return ret;
+        }
+        assert(orig_ret == 0);
+        return 0;
+}
+
+int
 wasi_userfd_ftruncate(struct wasi_fdinfo *fdinfo, off_t size)
 {
         int hostfd = fdinfo_hostfd(fdinfo);
-        return ftruncate(hostfd, size);
+        int ret = ftruncate(hostfd, size);
+        return handle_errno(ret);
 }
 
-ssize_t
+int
 wasi_userfd_writev(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
-                   int iovcnt)
+                   int iovcnt, size_t *resultp)
 {
         int hostfd = fdinfo_hostfd(fdinfo);
-        return writev(hostfd, iov, iovcnt);
+        ssize_t ssz = writev(hostfd, iov, iovcnt);
+        if (ssz == -1) {
+                int ret = errno;
+                assert(ret > 0);
+                return ret;
+        }
+        *resultp = ssz;
+        return 0;
 }
 
-ssize_t
+int
 wasi_userfd_pwritev(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
-                    int iovcnt, off_t off)
+                    int iovcnt, off_t off, size_t *resultp)
 {
         int hostfd = fdinfo_hostfd(fdinfo);
-        return pwritev(hostfd, iov, iovcnt, off);
+        ssize_t ssz = pwritev(hostfd, iov, iovcnt, off);
+        if (ssz == -1) {
+                int ret = errno;
+                assert(ret > 0);
+                return ret;
+        }
+        *resultp = ssz;
+        return 0;
 }
 
-ssize_t
-wasi_userfd_fcntl(struct wasi_fdinfo *fdinfo, int cmd, int data)
+int
+wasi_userfd_fcntl(struct wasi_fdinfo *fdinfo, int cmd, int data, int *resultp)
 {
         int hostfd = fdinfo_hostfd(fdinfo);
-        return fcntl(hostfd, cmd, data);
+        errno = 0;
+        int ret = fcntl(hostfd, cmd, data);
+        if (ret == -1 && errno != 0) {
+                return handle_errno(ret);
+        }
+        *resultp = ret;
+        return 0;
 }
 
-ssize_t
+int
 wasi_userfd_readv(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
-                  int iovcnt)
+                  int iovcnt, size_t *resultp)
 {
         int hostfd = fdinfo_hostfd(fdinfo);
-        return readv(hostfd, iov, iovcnt);
+        ssize_t ssz = readv(hostfd, iov, iovcnt);
+        if (ssz == -1) {
+                int ret = errno;
+                assert(ret > 0);
+                return ret;
+        }
+        *resultp = ssz;
+        return 0;
 }
 
-ssize_t
+int
 wasi_userfd_preadv(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
-                   int iovcnt, off_t off)
+                   int iovcnt, off_t off, size_t *resultp)
 {
         int hostfd = fdinfo_hostfd(fdinfo);
-        return preadv(hostfd, iov, iovcnt, off);
+        ssize_t ssz = preadv(hostfd, iov, iovcnt, off);
+        if (ssz == -1) {
+                int ret = errno;
+                assert(ret > 0);
+                return ret;
+        }
+        *resultp = ssz;
+        return 0;
 }
 
 int
 wasi_userfd_fstat(struct wasi_fdinfo *fdinfo, struct stat *stp)
 {
         int hostfd = fdinfo_hostfd(fdinfo);
-        return fstat(hostfd, stp);
+        int ret = fstat(hostfd, stp);
+        return handle_errno(ret);
 }
 
-off_t
-wasi_userfd_lseek(struct wasi_fdinfo *fdinfo, off_t offset, int whence)
+int
+wasi_userfd_lseek(struct wasi_fdinfo *fdinfo, off_t offset, int whence,
+                  off_t *resultp)
 {
         int hostfd = fdinfo_hostfd(fdinfo);
-        return lseek(hostfd, offset, whence);
+        errno = 0;
+        off_t off = lseek(hostfd, offset, whence);
+        if (off == -1 && errno != 0) {
+                int ret = errno;
+                assert(errno > 0);
+                return ret;
+        }
+        *resultp = off;
+        return 0;
 }
 
 int
 wasi_userfd_fsync(struct wasi_fdinfo *fdinfo)
 {
         int hostfd = fdinfo_hostfd(fdinfo);
-        return fsync(hostfd);
+        int ret = fsync(hostfd);
+        return handle_errno(ret);
 }
 
 int
@@ -204,10 +262,11 @@ wasi_userfd_fdatasync(struct wasi_fdinfo *fdinfo)
         int hostfd = fdinfo_hostfd(fdinfo);
 #if defined(__APPLE__)
         /* macOS doesn't have fdatasync */
-        return fsync(hostfd);
+        int ret = fsync(hostfd);
 #else
-        return fdatasync(hostfd);
+        int ret = fdatasync(hostfd);
 #endif
+        return handle_errno(ret);
 }
 
 int
@@ -222,12 +281,7 @@ wasi_userfd_futimes(struct wasi_fdinfo *fdinfo, const struct utimes_args *args)
                 return ret;
         }
         ret = futimes(hostfd, tvp);
-        if (ret == -1) {
-                ret = errno;
-                assert(ret > 0);
-                return ret;
-        }
-        return 0;
+        return handle_errno(ret);
 }
 
 int
@@ -242,9 +296,8 @@ wasi_userfd_close(struct wasi_fdinfo *fdinfo)
         if (hostfd != -1) {
 #endif
                 ret = close(hostfd);
+                ret = handle_errno(ret);
                 if (ret != 0) {
-                        ret = errno;
-                        assert(ret > 0);
                         xlog_trace("failed to close: host fd %" PRIu32
                                    " with errno %d",
                                    hostfd, ret);
