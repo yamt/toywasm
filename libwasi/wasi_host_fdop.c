@@ -91,30 +91,6 @@ fdinfo_hostfd(struct wasi_fdinfo *fdinfo)
 }
 
 int
-wasi_userfd_reject_directory(struct wasi_fdinfo *fdinfo)
-{
-        struct wasi_filestat st;
-        int ret;
-
-        ret = wasi_host_fd_fstat(fdinfo, &st);
-        if (ret == -1) {
-                ret = errno;
-                assert(ret > 0);
-                goto fail;
-        }
-        if (st.type == WASI_FILETYPE_DIRECTORY) {
-                /*
-                 * Note: wasmtime directory_seek.rs test expects EBADF.
-                 * Why not EISDIR?
-                 */
-                ret = EBADF;
-                goto fail;
-        }
-fail:
-        return ret;
-}
-
-int
 wasi_host_fd_fallocate(struct wasi_fdinfo *fdinfo, wasi_off_t offset,
                        wasi_off_t len)
 {
