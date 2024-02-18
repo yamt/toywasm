@@ -18,3 +18,6 @@ void wasi_convert_filestat(const struct stat *hst, struct wasi_filestat *wst);
 uint8_t wasi_convert_dirent_filetype(uint8_t hosttype);
 int wasi_convert_clockid(uint32_t clockid, clockid_t *hostidp);
 uint32_t wasi_convert_errno(int host_errno);
+int wasi_build_oflags(uint32_t lookupflags, uint32_t wasmoflags,
+                      uint64_t rights_base, uint32_t fdflags,
+                      int *hostoflagsp);
