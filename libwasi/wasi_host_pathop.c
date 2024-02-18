@@ -14,7 +14,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "wasi_dirop.h"
+#include "wasi_host_pathop.h"
 #include "wasi_host_subr.h"
 
 #if defined(__wasi__)
