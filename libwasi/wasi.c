@@ -45,7 +45,6 @@
 #include <sys/uio.h>
 
 #include <assert.h>
-#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <inttypes.h>
