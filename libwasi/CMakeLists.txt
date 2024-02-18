@@ -5,7 +5,7 @@ set(lib_wasi_sources
 	"wasi_fdtable.c"
 	"wasi_host_pathop.c"
 	"wasi_host_fdop.c"
-	"wasi_host_fdop_readdir.c"
+	"wasi_host_dirent.c"
 	"wasi_host_subr.c"
 )
 

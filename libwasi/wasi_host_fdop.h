@@ -1,6 +1,5 @@
 #include <sys/types.h>
 
-#include <stdbool.h>
 #include <stdint.h>
 
 struct wasi_fdinfo;
@@ -34,13 +33,3 @@ int wasi_host_fd_futimes(struct wasi_fdinfo *fdinfo,
 int wasi_host_fd_close(struct wasi_fdinfo *fdinfo);
 
 int wasi_host_fd_fdopendir(struct wasi_fdinfo *fdinfo, void **dirp);
-int wasi_host_dir_close(void *dir);
-/*
- * Note about directory offset:
- * offset 0 should be the start of the directory.
- * other offset values are implementation defined.
- */
-int wasi_host_dir_seek(void *dir, uint64_t offset);
-struct wasi_dirent;
-int wasi_host_dir_read(void *dir, struct wasi_dirent *wde,
-                       const uint8_t **namep, bool *eod);
