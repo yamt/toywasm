@@ -889,7 +889,7 @@ wasi_fd_readdir(struct exec_context *ctx, struct host_instance *hi,
                  * is it what WASI expects?
                  */
                 xlog_trace("fd_readdir: rewinddir");
-                ret = wasi_host_dir_seek(dir, 0);
+                ret = wasi_host_dir_rewind(dir);
                 if (ret != 0) {
                         goto fail;
                 }
