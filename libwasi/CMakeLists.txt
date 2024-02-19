@@ -13,6 +13,7 @@ set(lib_wasi_sources
 
 	"wasi_clock.c"
 	"wasi_environ.c"
+	"wasi_poll.c"
 	"wasi_proc.c"
 	"wasi_random.c"
 	"wasi_sock.c"
