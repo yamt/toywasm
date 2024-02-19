@@ -88,61 +88,6 @@
 #endif
 #endif
 
-static int
-wasi_copyin_iovec(struct exec_context *ctx, uint32_t iov_uaddr,
-                  uint32_t iov_count, struct iovec **resultp, int *usererrorp)
-{
-        struct iovec *hostiov = NULL;
-        void *p;
-        int host_ret = 0;
-        int ret = 0;
-        if (iov_count == 0) {
-                ret = EINVAL;
-                goto fail;
-        }
-        hostiov = calloc(iov_count, sizeof(*hostiov));
-        if (hostiov == NULL) {
-                ret = ENOMEM;
-                goto fail;
-        }
-retry:
-        host_ret = host_func_check_align(ctx, iov_uaddr, WASI_IOV_ALIGN);
-        if (host_ret != 0) {
-                goto fail;
-        }
-        host_ret = memory_getptr(ctx, 0, iov_uaddr, 0,
-                                 iov_count * sizeof(struct wasi_iov), &p);
-        if (host_ret != 0) {
-                goto fail;
-        }
-        const struct wasi_iov *iov_in_module = p;
-        uint32_t i;
-        for (i = 0; i < iov_count; i++) {
-                bool moved = false;
-                uint32_t iov_base = le32_decode(&iov_in_module[i].iov_base);
-                uint32_t iov_len = le32_decode(&iov_in_module[i].iov_len);
-                xlog_trace("iov [%" PRIu32 "] base %" PRIx32 " len %" PRIu32,
-                           i, iov_base, iov_len);
-                host_ret = memory_getptr2(ctx, 0, iov_base, 0, iov_len, &p,
-                                          &moved);
-                if (host_ret != 0) {
-                        goto fail;
-                }
-                if (moved) {
-                        goto retry;
-                }
-                hostiov[i].iov_base = p;
-                hostiov[i].iov_len = iov_len;
-        }
-        *resultp = hostiov;
-        *usererrorp = 0;
-        return 0;
-fail:
-        free(hostiov);
-        *usererrorp = ret;
-        return host_ret;
-}
-
 int
 wasi_fdinfo_close(struct wasi_fdinfo *fdinfo)
 {
