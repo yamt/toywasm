@@ -88,26 +88,6 @@
 #endif
 #endif
 
-int
-wasi_fdinfo_close(struct wasi_fdinfo *fdinfo)
-{
-        int ret = 0;
-        switch (fdinfo->type) {
-        case WASI_FDINFO_PRESTAT:
-                free(fdinfo->u.u_prestat.prestat_path);
-                free(fdinfo->u.u_prestat.wasm_path);
-                fdinfo->u.u_prestat.prestat_path = NULL;
-                fdinfo->u.u_prestat.wasm_path = NULL;
-                break;
-        case WASI_FDINFO_USER:
-                ret = wasi_host_fd_close(fdinfo);
-                break;
-        case WASI_FDINFO_UNUSED:
-                break;
-        }
-        return ret;
-}
-
 static int
 wasi_poll(struct exec_context *ctx, struct pollfd *fds, nfds_t nfds,
           int timeout_ms, int *retp, int *neventsp)
