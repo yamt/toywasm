@@ -82,6 +82,8 @@
 #include "wasi_utimes.h"
 #include "xlog.h"
 
+#include "wasi_hostfuncs.h"
+
 #if defined(__wasi__)
 #if !defined(AT_FDCWD)
 /* a workaroud for wasi-sdk-8.0 which we use for wapm */
@@ -89,7 +91,7 @@
 #endif
 #endif
 
-static int
+int
 wasi_proc_exit(struct exec_context *ctx, struct host_instance *hi,
                const struct functype *ft, const struct cell *params,
                struct cell *results)
@@ -126,7 +128,7 @@ wasi_proc_exit(struct exec_context *ctx, struct host_instance *hi,
                             "proc_exit with %" PRIu32, code);
 }
 
-static int
+int
 wasi_fd_advise(struct exec_context *ctx, struct host_instance *hi,
                const struct functype *ft, const struct cell *params,
                struct cell *results)
@@ -158,7 +160,7 @@ fail:
         return 0;
 }
 
-static int
+int
 wasi_fd_allocate(struct exec_context *ctx, struct host_instance *hi,
                  const struct functype *ft, const struct cell *params,
                  struct cell *results)
@@ -186,7 +188,7 @@ fail:
         return 0;
 }
 
-static int
+int
 wasi_fd_filestat_set_size(struct exec_context *ctx, struct host_instance *hi,
                           const struct functype *ft, const struct cell *params,
                           struct cell *results)
@@ -218,7 +220,7 @@ fail:
         return 0;
 }
 
-static int
+int
 wasi_fd_close(struct exec_context *ctx, struct host_instance *hi,
               const struct functype *ft, const struct cell *params,
               struct cell *results)
@@ -279,7 +281,7 @@ fail:
         return host_ret;
 }
 
-static int
+int
 wasi_fd_write(struct exec_context *ctx, struct host_instance *hi,
               const struct functype *ft, const struct cell *params,
               struct cell *results)
@@ -335,7 +337,7 @@ fail:
         return host_ret;
 }
 
-static int
+int
 wasi_fd_pwrite(struct exec_context *ctx, struct host_instance *hi,
                const struct functype *ft, const struct cell *params,
                struct cell *results)
@@ -392,7 +394,7 @@ fail:
         return host_ret;
 }
 
-static int
+int
 wasi_fd_read(struct exec_context *ctx, struct host_instance *hi,
              const struct functype *ft, const struct cell *params,
              struct cell *results)
@@ -463,7 +465,7 @@ fail:
         return host_ret;
 }
 
-static int
+int
 wasi_fd_pread(struct exec_context *ctx, struct host_instance *hi,
               const struct functype *ft, const struct cell *params,
               struct cell *results)
@@ -520,7 +522,7 @@ fail:
         return host_ret;
 }
 
-static int
+int
 wasi_fd_readdir(struct exec_context *ctx, struct host_instance *hi,
                 const struct functype *ft, const struct cell *params,
                 struct cell *results)
@@ -621,7 +623,7 @@ fail:
         goto fail_unlocked;
 }
 
-static int
+int
 wasi_fd_fdstat_get(struct exec_context *ctx, struct host_instance *hi,
                    const struct functype *ft, const struct cell *params,
                    struct cell *results)
@@ -733,7 +735,7 @@ fail:
         return host_ret;
 }
 
-static int
+int
 wasi_fd_fdstat_set_flags(struct exec_context *ctx, struct host_instance *hi,
                          const struct functype *ft, const struct cell *params,
                          struct cell *results)
@@ -761,7 +763,7 @@ fail:
         return 0;
 }
 
-static int
+int
 wasi_fd_fdstat_set_rights(struct exec_context *ctx, struct host_instance *hi,
                           const struct functype *ft, const struct cell *params,
                           struct cell *results)
@@ -788,7 +790,7 @@ fail:
         return 0;
 }
 
-static int
+int
 wasi_fd_seek(struct exec_context *ctx, struct host_instance *hi,
              const struct functype *ft, const struct cell *params,
              struct cell *results)
@@ -844,7 +846,7 @@ fail:
         return host_ret;
 }
 
-static int
+int
 wasi_unstable_fd_seek(struct exec_context *ctx, struct host_instance *hi,
                       const struct functype *ft, const struct cell *params,
                       struct cell *results)
@@ -900,7 +902,7 @@ fail:
         return host_ret;
 }
 
-static int
+int
 wasi_fd_tell(struct exec_context *ctx, struct host_instance *hi,
              const struct functype *ft, const struct cell *params,
              struct cell *results)
@@ -939,7 +941,7 @@ fail:
         return host_ret;
 }
 
-static int
+int
 wasi_fd_sync(struct exec_context *ctx, struct host_instance *hi,
              const struct functype *ft, const struct cell *params,
              struct cell *results)
@@ -965,7 +967,7 @@ fail:
         return 0;
 }
 
-static int
+int
 wasi_fd_datasync(struct exec_context *ctx, struct host_instance *hi,
                  const struct functype *ft, const struct cell *params,
                  struct cell *results)
@@ -991,7 +993,7 @@ fail:
         return 0;
 }
 
-static int
+int
 wasi_fd_renumber(struct exec_context *ctx, struct host_instance *hi,
                  const struct functype *ft, const struct cell *params,
                  struct cell *results)
@@ -1074,7 +1076,7 @@ fail_locked:
         goto fail;
 }
 
-static int
+int
 wasi_fd_filestat_get(struct exec_context *ctx, struct host_instance *hi,
                      const struct functype *ft, const struct cell *params,
                      struct cell *results)
@@ -1108,7 +1110,7 @@ fail:
         return host_ret;
 }
 
-static int
+int
 wasi_unstable_fd_filestat_get(struct exec_context *ctx,
                               struct host_instance *hi,
                               const struct functype *ft,
@@ -1148,7 +1150,7 @@ fail:
         return host_ret;
 }
 
-static int
+int
 wasi_fd_filestat_set_times(struct exec_context *ctx, struct host_instance *hi,
                            const struct functype *ft,
                            const struct cell *params, struct cell *results)
@@ -1179,7 +1181,7 @@ fail:
         return 0;
 }
 
-static int
+int
 wasi_fd_prestat_get(struct exec_context *ctx, struct host_instance *hi,
                     const struct functype *ft, const struct cell *params,
                     struct cell *results)
@@ -1220,7 +1222,7 @@ fail:
         return host_ret;
 }
 
-static int
+int
 wasi_fd_prestat_dir_name(struct exec_context *ctx, struct host_instance *hi,
                          const struct functype *ft, const struct cell *params,
                          struct cell *results)
@@ -1266,7 +1268,7 @@ fail:
         return host_ret;
 }
 
-static int
+int
 wasi_poll_oneoff(struct exec_context *ctx, struct host_instance *hi,
                  const struct functype *ft, const struct cell *params,
                  struct cell *results)
@@ -1505,7 +1507,7 @@ fail:
         return host_ret;
 }
 
-static int
+int
 wasi_clock_res_get(struct exec_context *ctx, struct host_instance *hi,
                    const struct functype *ft, const struct cell *params,
                    struct cell *results)
@@ -1540,7 +1542,7 @@ fail:
         return host_ret;
 }
 
-static int
+int
 wasi_clock_time_get(struct exec_context *ctx, struct host_instance *hi,
                     const struct functype *ft, const struct cell *params,
                     struct cell *results)
@@ -1656,7 +1658,7 @@ fail:
         return host_ret;
 }
 
-static int
+int
 wasi_args_sizes_get(struct exec_context *ctx, struct host_instance *hi,
                     const struct functype *ft, const struct cell *params,
                     struct cell *results)
@@ -1667,7 +1669,7 @@ wasi_args_sizes_get(struct exec_context *ctx, struct host_instance *hi,
                                       wasi->argc, wasi->argv);
 }
 
-static int
+int
 wasi_args_get(struct exec_context *ctx, struct host_instance *hi,
               const struct functype *ft, const struct cell *params,
               struct cell *results)
@@ -1678,7 +1680,7 @@ wasi_args_get(struct exec_context *ctx, struct host_instance *hi,
                                 wasi->argv);
 }
 
-static int
+int
 wasi_environ_sizes_get(struct exec_context *ctx, struct host_instance *hi,
                        const struct functype *ft, const struct cell *params,
                        struct cell *results)
@@ -1689,7 +1691,7 @@ wasi_environ_sizes_get(struct exec_context *ctx, struct host_instance *hi,
                                       wasi->nenvs, wasi->envs);
 }
 
-static int
+int
 wasi_environ_get(struct exec_context *ctx, struct host_instance *hi,
                  const struct functype *ft, const struct cell *params,
                  struct cell *results)
@@ -1700,7 +1702,7 @@ wasi_environ_get(struct exec_context *ctx, struct host_instance *hi,
                                 wasi->envs);
 }
 
-static int
+int
 wasi_random_get(struct exec_context *ctx, struct host_instance *hi,
                 const struct functype *ft, const struct cell *params,
                 struct cell *results)
@@ -1749,7 +1751,7 @@ fail:
         return host_ret;
 }
 
-static int
+int
 wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
                const struct functype *ft, const struct cell *params,
                struct cell *results)
@@ -1824,7 +1826,7 @@ fail:
         return host_ret;
 }
 
-static int
+int
 wasi_path_unlink_file(struct exec_context *ctx, struct host_instance *hi,
                       const struct functype *ft, const struct cell *params,
                       struct cell *results)
@@ -1857,7 +1859,7 @@ fail:
         return host_ret;
 }
 
-static int
+int
 wasi_path_create_directory(struct exec_context *ctx, struct host_instance *hi,
                            const struct functype *ft,
                            const struct cell *params, struct cell *results)
@@ -1887,7 +1889,7 @@ fail:
         return host_ret;
 }
 
-static int
+int
 wasi_path_remove_directory(struct exec_context *ctx, struct host_instance *hi,
                            const struct functype *ft,
                            const struct cell *params, struct cell *results)
@@ -1917,7 +1919,7 @@ fail:
         return host_ret;
 }
 
-static int
+int
 wasi_path_symlink(struct exec_context *ctx, struct host_instance *hi,
                   const struct functype *ft, const struct cell *params,
                   struct cell *results)
@@ -1961,7 +1963,7 @@ fail:
         return host_ret;
 }
 
-static int
+int
 wasi_path_readlink(struct exec_context *ctx, struct host_instance *hi,
                    const struct functype *ft, const struct cell *params,
                    struct cell *results)
@@ -2022,7 +2024,7 @@ fail:
         return host_ret;
 }
 
-static int
+int
 wasi_path_link(struct exec_context *ctx, struct host_instance *hi,
                const struct functype *ft, const struct cell *params,
                struct cell *results)
@@ -2072,7 +2074,7 @@ fail:
         return host_ret;
 }
 
-static int
+int
 wasi_path_rename(struct exec_context *ctx, struct host_instance *hi,
                  const struct functype *ft, const struct cell *params,
                  struct cell *results)
@@ -2112,7 +2114,7 @@ fail:
         return host_ret;
 }
 
-static int
+int
 wasi_path_filestat_get(struct exec_context *ctx, struct host_instance *hi,
                        const struct functype *ft, const struct cell *params,
                        struct cell *results)
@@ -2154,7 +2156,7 @@ fail:
         return host_ret;
 }
 
-static int
+int
 wasi_unstable_path_filestat_get(struct exec_context *ctx,
                                 struct host_instance *hi,
                                 const struct functype *ft,
@@ -2203,7 +2205,7 @@ fail:
         return host_ret;
 }
 
-static int
+int
 wasi_path_filestat_set_times(struct exec_context *ctx,
                              struct host_instance *hi,
                              const struct functype *ft,
@@ -2247,7 +2249,7 @@ fail:
         return host_ret;
 }
 
-static int
+int
 wasi_sched_yield(struct exec_context *ctx, struct host_instance *hi,
                  const struct functype *ft, const struct cell *params,
                  struct cell *results)
@@ -2259,7 +2261,7 @@ wasi_sched_yield(struct exec_context *ctx, struct host_instance *hi,
         return 0;
 }
 
-static int
+int
 wasi_sock_accept(struct exec_context *ctx, struct host_instance *hi,
                  const struct functype *ft, const struct cell *params,
                  struct cell *results)
@@ -2353,7 +2355,7 @@ fail:
         return host_ret;
 }
 
-static int
+int
 wasi_sock_recv(struct exec_context *ctx, struct host_instance *hi,
                const struct functype *ft, const struct cell *params,
                struct cell *results)
@@ -2470,7 +2472,7 @@ fail:
         return host_ret;
 }
 
-static int
+int
 wasi_sock_send(struct exec_context *ctx, struct host_instance *hi,
                const struct functype *ft, const struct cell *params,
                struct cell *results)
@@ -2543,7 +2545,7 @@ fail:
         return host_ret;
 }
 
-static int
+int
 wasi_sock_shutdown(struct exec_context *ctx, struct host_instance *hi,
                    const struct functype *ft, const struct cell *params,
                    struct cell *results)
@@ -2587,71 +2589,10 @@ fail:
         return 0;
 }
 
+#define WASI_API(a, b) WASI_HOST_FUNC(a, b),
+#define WASI_API2(a, b, c) WASI_HOST_FUNC2(a, b, c),
 const struct host_func wasi_funcs[] = {
-        /* args */
-        WASI_HOST_FUNC(args_get, "(ii)i"),
-        WASI_HOST_FUNC(args_sizes_get, "(ii)i"),
-
-        /* clock */
-        WASI_HOST_FUNC(clock_res_get, "(ii)i"),
-        WASI_HOST_FUNC(clock_time_get, "(iIi)i"),
-
-        /* environ */
-        WASI_HOST_FUNC(environ_get, "(ii)i"),
-        WASI_HOST_FUNC(environ_sizes_get, "(ii)i"),
-
-        /* fd */
-        WASI_HOST_FUNC(fd_advise, "(iIIi)i"),
-        WASI_HOST_FUNC(fd_allocate, "(iII)i"),
-        WASI_HOST_FUNC(fd_close, "(i)i"),
-        WASI_HOST_FUNC(fd_datasync, "(i)i"),
-        WASI_HOST_FUNC(fd_fdstat_get, "(ii)i"),
-        WASI_HOST_FUNC(fd_fdstat_set_flags, "(ii)i"),
-        WASI_HOST_FUNC(fd_fdstat_set_rights, "(iII)i"),
-        WASI_HOST_FUNC(fd_filestat_get, "(ii)i"),
-        WASI_HOST_FUNC(fd_filestat_set_size, "(iI)i"),
-        WASI_HOST_FUNC(fd_filestat_set_times, "(iIIi)i"),
-        WASI_HOST_FUNC(fd_pread, "(iiiIi)i"),
-        WASI_HOST_FUNC(fd_prestat_dir_name, "(iii)i"),
-        WASI_HOST_FUNC(fd_prestat_get, "(ii)i"),
-        WASI_HOST_FUNC(fd_pwrite, "(iiiIi)i"),
-        WASI_HOST_FUNC(fd_read, "(iiii)i"),
-        WASI_HOST_FUNC(fd_readdir, "(iiiIi)i"),
-        WASI_HOST_FUNC(fd_renumber, "(ii)i"),
-        WASI_HOST_FUNC(fd_seek, "(iIii)i"),
-        WASI_HOST_FUNC(fd_sync, "(i)i"),
-        WASI_HOST_FUNC(fd_tell, "(ii)i"),
-        WASI_HOST_FUNC(fd_write, "(iiii)i"),
-
-        /* path */
-        WASI_HOST_FUNC(path_create_directory, "(iii)i"),
-        WASI_HOST_FUNC(path_filestat_get, "(iiiii)i"),
-        WASI_HOST_FUNC(path_filestat_set_times, "(iiiiIIi)i"),
-        WASI_HOST_FUNC(path_link, "(iiiiiii)i"),
-        WASI_HOST_FUNC(path_open, "(iiiiiIIii)i"),
-        WASI_HOST_FUNC(path_readlink, "(iiiiii)i"),
-        WASI_HOST_FUNC(path_remove_directory, "(iii)i"),
-        WASI_HOST_FUNC(path_rename, "(iiiiii)i"),
-        WASI_HOST_FUNC(path_symlink, "(iiiii)i"),
-        WASI_HOST_FUNC(path_unlink_file, "(iii)i"),
-
-        /* poll */
-        WASI_HOST_FUNC(poll_oneoff, "(iiii)i"),
-
-        /* proc */
-        WASI_HOST_FUNC(proc_exit, "(i)"),
-
-        /* random */
-        WASI_HOST_FUNC(random_get, "(ii)i"),
-
-        /* sched */
-        WASI_HOST_FUNC(sched_yield, "()i"),
-
-        /* sock */
-        WASI_HOST_FUNC(sock_accept, "(iii)i"),
-        WASI_HOST_FUNC(sock_recv, "(iiiiii)i"),
-        WASI_HOST_FUNC(sock_send, "(iiiii)i"),
-        WASI_HOST_FUNC(sock_shutdown, "(ii)i"),
+#include "wasi_preview1.h"
 };
 
 /*
@@ -2666,12 +2607,10 @@ const struct host_func wasi_funcs[] = {
  * | filestat nlink | 32-bit   | 64-bit   |
  */
 const struct host_func wasi_unstable_funcs[] = {
-        WASI_HOST_FUNC2("fd_filestat_get", wasi_unstable_fd_filestat_get,
-                        "(ii)i"),
-        WASI_HOST_FUNC2("path_filestat_get", wasi_unstable_path_filestat_get,
-                        "(iiiii)i"),
-        WASI_HOST_FUNC2("fd_seek", wasi_unstable_fd_seek, "(iIii)i"),
+#include "wasi_unstable.h"
 };
+#undef WASI_API
+#undef WASI_API2
 
 int
 wasi_instance_add_hostfd(struct wasi_instance *inst, uint32_t wasmfd,
