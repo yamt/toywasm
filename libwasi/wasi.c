@@ -2847,6 +2847,8 @@ wasi_instance_prestat_add_common(struct wasi_instance *wasi, const char *path,
         fdinfo->type = WASI_FDINFO_PRESTAT;
         fdinfo->u.u_prestat.prestat_path = host_path;
         fdinfo->u.u_prestat.wasm_path = wasm_path;
+        host_path = NULL;
+        wasm_path = NULL;
         ret = wasi_fdinfo_add(wasi, fdinfo, &wasifd);
         if (ret != 0) {
                 goto fail;
@@ -2857,7 +2859,7 @@ wasi_instance_prestat_add_common(struct wasi_instance *wasi, const char *path,
 fail:
         free(host_path);
         free(wasm_path);
-        free(fdinfo);
+        wasi_fdinfo_free(fdinfo);
         return ret;
 }
 
