@@ -10,7 +10,10 @@ set(lib_wasi_sources
 	"wasi_host_fdop.c"
 	"wasi_host_dirent.c"
 	"wasi_host_subr.c"
+
+	"wasi_clock.c"
 	"wasi_environ.c"
+	"wasi_random.c"
 )
 
 if(TOYWASM_ENABLE_WASI_THREADS)
