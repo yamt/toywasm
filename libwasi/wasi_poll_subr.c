@@ -8,7 +8,7 @@
 #include "nbio.h"
 #include "restart.h"
 #include "wasi_impl.h"
-#include "wasi_poll.h"
+#include "wasi_poll_subr.h"
 
 int
 wasi_poll(struct exec_context *ctx, struct pollfd *fds, nfds_t nfds,
