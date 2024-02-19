@@ -1813,7 +1813,7 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
         }
 fail:
         if (fdinfo != NULL) {
-                wasi_fdinfo_release(wasi, fdinfo);
+                wasi_fdinfo_free(fdinfo);
         }
         path_clear(&pi);
         if (host_ret == 0) {

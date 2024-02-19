@@ -87,6 +87,7 @@ int wasi_fd_lookup_locked(struct wasi_instance *wasi, uint32_t wasifd,
                           struct wasi_fdinfo **infop) REQUIRES(wasi->lock);
 int wasi_fd_lookup(struct wasi_instance *wasi, uint32_t wasifd,
                    struct wasi_fdinfo **infop);
+void wasi_fdinfo_free(struct wasi_fdinfo *fdinfo);
 void wasi_fdinfo_release(struct wasi_instance *wasi,
                          struct wasi_fdinfo *fdinfo);
 int wasi_fdinfo_close(struct wasi_fdinfo *fdinfo);
