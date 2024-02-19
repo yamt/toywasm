@@ -18,6 +18,13 @@
 
 #include "wasi_hostfuncs.h"
 
+#if defined(__wasi__)
+#if !defined(AT_FDCWD)
+/* a workaroud for wasi-sdk-8.0 which we use for wapm */
+#define TOYWASM_OLD_WASI_LIBC
+#endif
+#endif
+
 int
 wasi_sock_accept(struct exec_context *ctx, struct host_instance *hi,
                  const struct functype *ft, const struct cell *params,

@@ -84,13 +84,6 @@
 
 #include "wasi_hostfuncs.h"
 
-#if defined(__wasi__)
-#if !defined(AT_FDCWD)
-/* a workaroud for wasi-sdk-8.0 which we use for wapm */
-#define TOYWASM_OLD_WASI_LIBC
-#endif
-#endif
-
 #define WASI_API(a, b) WASI_HOST_FUNC(a, b),
 #define WASI_API2(a, b, c) WASI_HOST_FUNC2(a, b, c),
 const struct host_func wasi_funcs[] = {
