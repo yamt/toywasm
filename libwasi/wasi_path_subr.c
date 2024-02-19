@@ -10,7 +10,7 @@
 #include <string.h>
 
 #include "wasi_impl.h"
-#include "wasi_path.h"
+#include "wasi_path_subr.h"
 
 void
 path_clear(struct path_info *pi)
