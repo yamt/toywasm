@@ -12,6 +12,7 @@ set(lib_wasi_sources
 	"wasi_host_subr.c"
 
 	"wasi_clock.c"
+	"wasi_fd.c"
 	"wasi_environ.c"
 	"wasi_poll.c"
 	"wasi_proc.c"
