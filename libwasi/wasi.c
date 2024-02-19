@@ -3180,14 +3180,10 @@ wasi_instance_prestat_add_common(struct wasi_instance *wasi, const char *path,
         fdinfo->type = WASI_FDINFO_PRESTAT;
         fdinfo->u.u_prestat.prestat_path = host_path;
         fdinfo->u.u_prestat.wasm_path = wasm_path;
-        toywasm_mutex_lock(&wasi->lock);
-        ret = wasi_fd_alloc(wasi, &wasifd);
+        ret = wasi_fdinfo_add(wasi, fdinfo, &wasifd);
         if (ret != 0) {
-                toywasm_mutex_unlock(&wasi->lock);
                 goto fail;
         }
-        wasi_fd_affix(wasi, wasifd, fdinfo);
-        toywasm_mutex_unlock(&wasi->lock);
         xlog_trace("prestat added %s (%s)", path,
                    fdinfo->u.u_prestat.prestat_path);
         return 0;
