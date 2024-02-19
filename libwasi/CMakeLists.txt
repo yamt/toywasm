@@ -15,6 +15,7 @@ set(lib_wasi_sources
 	"wasi_environ.c"
 	"wasi_proc.c"
 	"wasi_random.c"
+	"wasi_sock.c"
 	"wasi_sched.c"
 )
 
