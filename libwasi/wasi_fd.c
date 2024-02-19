@@ -317,12 +317,12 @@ wasi_fd_read(struct exec_context *ctx, struct host_instance *hi,
         size_t n;
 
         /* hack for tty. see the comment in wasi_instance_create. */
-        int fflag;
-        ret = wasi_host_fd_fcntl(fdinfo, F_GETFL, 0, &fflag);
+        uint16_t fflags;
+        ret = wasi_host_fd_get_flags(fdinfo, &fflags);
         if (ret != 0) {
                 goto fail;
         }
-        if ((fflag & O_NONBLOCK) == 0) {
+        if ((fflags & WASI_FDFLAG_NONBLOCK) == 0) {
                 /*
                  * perform a poll first to avoid blocking in readv.
                  */
@@ -547,16 +547,22 @@ wasi_fd_fdstat_get(struct exec_context *ctx, struct host_instance *hi,
                         goto fail;
                 }
                 st.fs_filetype = wst.type;
-                int flags;
-                ret = wasi_host_fd_fcntl(fdinfo, F_GETFL, 0, &flags);
+                uint16_t flags;
+                ret = wasi_host_fd_get_flags(fdinfo, &flags);
                 if (ret != 0) {
                         goto fail;
                 }
+                /*
+                 * Note: (flags & WASI_FDFLAG_NONBLOCK) is the non-block
+                 * flag of the underlying host descriptor, which is usually
+                 * true in this implementation.
+                 * fdinfo->blocking is what users of wasi care.
+                 */
                 if (!fdinfo->blocking) {
                         st.fs_flags |= WASI_FDFLAG_NONBLOCK;
                 }
                 if ((flags & O_APPEND) != 0) {
-                        st.fs_flags |= WASI_FDFLAG_APPEND;
+                        st.fs_flags |= (flags & WASI_FDFLAG_APPEND);
                 }
         }
 

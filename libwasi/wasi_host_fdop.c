@@ -148,15 +148,22 @@ wasi_host_fd_pwritev(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
 }
 
 int
-wasi_host_fd_fcntl(struct wasi_fdinfo *fdinfo, int cmd, int data, int *resultp)
+wasi_host_fd_get_flags(struct wasi_fdinfo *fdinfo, uint16_t *resultp)
 {
         int hostfd = fdinfo_hostfd(fdinfo);
         errno = 0;
-        int ret = fcntl(hostfd, cmd, data);
+        int ret = fcntl(hostfd, F_GETFL, 0);
         if (ret == -1 && errno != 0) {
                 return handle_errno(ret);
         }
-        *resultp = ret;
+        uint16_t flags = 0;
+        if ((ret & O_APPEND) != 0) {
+                flags |= WASI_FDFLAG_APPEND;
+        }
+        if ((ret & O_NONBLOCK) != 0) {
+                flags |= WASI_FDFLAG_NONBLOCK;
+        }
+        *resultp = flags;
         return 0;
 }
 
