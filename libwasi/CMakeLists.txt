@@ -11,15 +11,15 @@ set(lib_wasi_sources
 	"wasi_host_dirent.c"
 	"wasi_host_subr.c"
 
-	"wasi_clock.c"
-	"wasi_fd.c"
-	"wasi_environ.c"
-	"wasi_path.c"
-	"wasi_poll.c"
-	"wasi_proc.c"
-	"wasi_random.c"
-	"wasi_sched.c"
-	"wasi_sock.c"
+	"wasi_abi_clock.c"
+	"wasi_abi_fd.c"
+	"wasi_abi_environ.c"
+	"wasi_abi_path.c"
+	"wasi_abi_poll.c"
+	"wasi_abi_proc.c"
+	"wasi_abi_random.c"
+	"wasi_abi_sched.c"
+	"wasi_abi_sock.c"
 )
 
 if(TOYWASM_ENABLE_WASI_THREADS)
