@@ -177,7 +177,7 @@ INSN_IMPL(throw)
                 push_exception(ectx, tagidx, rt);
                 LOAD_STACK_PTR;
                 /*
-                 * now it's same as throw.
+                 * now it's same as throw_ref.
                  */
                 schedule_exception(ectx);
         } else if (VALIDATING) {
