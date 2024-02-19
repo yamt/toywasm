@@ -13,7 +13,9 @@ set(lib_wasi_sources
 
 	"wasi_clock.c"
 	"wasi_environ.c"
+	"wasi_proc.c"
 	"wasi_random.c"
+	"wasi_sched.c"
 )
 
 if(TOYWASM_ENABLE_WASI_THREADS)
