@@ -871,8 +871,14 @@ wasi_fd_readdir(struct exec_context *ctx, struct host_instance *hi,
         int ret;
         ret = wasi_userfd_lookup(wasi, wasifd, &fdinfo);
         if (ret != 0) {
-                goto fail;
+                goto fail_unlocked;
         }
+        /*
+         * (ab)use wasi->lock to serialize the following
+         * wasi_host_dir_rewind/wasi_host_dir_seek/wasi_host_dir_read
+         * sequence. REVISIT: it can be a per-fdinfo lock.
+         */
+        toywasm_mutex_lock(&wasi->lock);
         assert(fdinfo->type == WASI_FDINFO_USER);
         if (cookie == WASI_DIRCOOKIE_START) {
                 /*
@@ -932,9 +938,10 @@ wasi_fd_readdir(struct exec_context *ctx, struct host_instance *hi,
                 buf += namlen;
                 n += namlen;
         }
+        toywasm_mutex_unlock(&wasi->lock);
         uint32_t r = host_to_le32(n);
         host_ret = wasi_copyout(ctx, &r, retp, sizeof(r), WASI_U32_ALIGN);
-fail:
+fail_unlocked:
         wasi_fdinfo_release(wasi, fdinfo);
         if (host_ret == 0) {
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
@@ -942,6 +949,9 @@ fail:
         }
         HOST_FUNC_FREE_CONVERTED_PARAMS();
         return host_ret;
+fail:
+        toywasm_mutex_unlock(&wasi->lock);
+        goto fail_unlocked;
 }
 
 static int
