@@ -561,10 +561,7 @@ wasi_fd_fdstat_get(struct exec_context *ctx, struct host_instance *hi,
                 if (!fdinfo->blocking) {
                         st.fs_flags |= host_to_le16(WASI_FDFLAG_NONBLOCK);
                 }
-                if ((flags & O_APPEND) != 0) {
-                        st.fs_flags |=
-                                host_to_le16(flags & WASI_FDFLAG_APPEND);
-                }
+                st.fs_flags |= host_to_le16(flags & WASI_FDFLAG_APPEND);
         }
 
         /*
