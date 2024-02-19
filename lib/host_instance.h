@@ -8,6 +8,11 @@ struct host_func {
         host_func_t func;
 };
 
+#define HOST_FUNC_DECL(NAME)                                                  \
+        int NAME(struct exec_context *, struct host_instance *hi,             \
+                 const struct functype *ft, const struct cell *params,        \
+                 struct cell *results)
+
 #define HOST_FUNC(FUNC_PREFIX, NAME, TYPE)                                    \
         {                                                                     \
                 .name = NAME_FROM_CSTR_LITERAL(#NAME), .type = TYPE,          \
