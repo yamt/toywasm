@@ -22,8 +22,7 @@ int wasi_host_fd_writev(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
                         int iovcnt, size_t *result);
 int wasi_host_fd_pwritev(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
                          int iovcnt, wasi_off_t off, size_t *result);
-int wasi_host_fd_fcntl(struct wasi_fdinfo *fdinfo, int cmd, int data,
-                       int *result);
+int wasi_host_fd_get_flags(struct wasi_fdinfo *fdinfo, uint16_t *result);
 int wasi_host_fd_readv(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
                        int iovcnt, size_t *result);
 int wasi_host_fd_preadv(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
