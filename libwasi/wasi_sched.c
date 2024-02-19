@@ -5,7 +5,6 @@
 
 #include "endian.h"
 #include "wasi_impl.h"
-#include "xlog.h"
 
 #include "wasi_hostfuncs.h"
 

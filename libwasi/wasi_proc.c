@@ -3,10 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "endian.h"
 #include "exec.h"
 #include "wasi_impl.h"
-#include "xlog.h"
 
 #include "wasi_hostfuncs.h"
 
