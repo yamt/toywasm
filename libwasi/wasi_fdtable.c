@@ -303,6 +303,23 @@ wasi_fd_alloc(struct wasi_instance *wasi, uint32_t *wasifdp)
 }
 
 int
+wasi_fdinfo_add(struct wasi_instance *wasi, struct wasi_fdinfo *fdinfo,
+                uint32_t *wasifdp)
+{
+        uint32_t wasifd;
+        toywasm_mutex_lock(&wasi->lock);
+        int ret = wasi_fd_alloc(wasi, &wasifd);
+        if (ret != 0) {
+                toywasm_mutex_unlock(&wasi->lock);
+                return ret;
+        }
+        wasi_fd_affix(wasi, wasifd, fdinfo);
+        toywasm_mutex_unlock(&wasi->lock);
+        *wasifdp = wasifd;
+        return 0;
+}
+
+int
 wasi_fd_add(struct wasi_instance *wasi, int hostfd, char *path,
             uint16_t fdflags, uint32_t *wasifdp)
 {
@@ -320,16 +337,11 @@ wasi_fd_add(struct wasi_instance *wasi, int hostfd, char *path,
         fdinfo->u.u_user.dir = NULL;
         fdinfo->u.u_user.path = path;
         fdinfo->blocking = (fdflags & WASI_FDFLAG_NONBLOCK) == 0;
-        toywasm_mutex_lock(&wasi->lock);
-        ret = wasi_fd_alloc(wasi, &wasifd);
+        ret = wasi_fdinfo_add(wasi, fdinfo, &wasifd);
         if (ret != 0) {
-                toywasm_mutex_unlock(&wasi->lock);
                 free(path);
                 free(fdinfo);
-                return ret;
         }
-        wasi_fd_affix(wasi, wasifd, fdinfo);
-        toywasm_mutex_unlock(&wasi->lock);
         *wasifdp = wasifd;
         return 0;
 }
