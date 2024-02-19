@@ -104,5 +104,7 @@ int wasi_fdtable_expand(struct wasi_instance *wasi, uint32_t maxfd)
 void wasi_fdtable_free(struct wasi_instance *wasi);
 int wasi_fd_alloc(struct wasi_instance *wasi, uint32_t *wasifdp)
         REQUIRES(wasi->lock);
+int wasi_fdinfo_add(struct wasi_instance *wasi, struct wasi_fdinfo *fdinfo,
+                    uint32_t *wasifdp);
 int wasi_fd_add(struct wasi_instance *wasi, int hostfd, char *path,
                 uint16_t fdflags, uint32_t *wasifdp);

@@ -12,10 +12,12 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #include "wasi_host_pathop.h"
 #include "wasi_host_subr.h"
+#include "wasi_impl.h"
 
 #if defined(__wasi__)
 #if !defined(AT_FDCWD)
@@ -80,15 +82,17 @@ handle_errno(int orig_ret)
 }
 
 int
-wasi_host_path_open(const struct path_info *pi,
-                    const struct path_open_params *params, int *fdp)
+wasi_host_path_open(struct path_info *pi,
+                    const struct path_open_params *params,
+                    struct wasi_fdinfo *fdinfo)
 {
+        int hostfd = -1;
         int ret;
         int oflags;
         ret = wasi_build_oflags(params->lookupflags, params->wasmoflags,
                                 params->rights_base, params->fdflags, &oflags);
         if (ret != 0) {
-                return ret;
+                goto fail;
         }
         /*
          * Note: mode 0666 is what wasm-micro-runtime and wasmtime use.
@@ -101,10 +105,34 @@ wasi_host_path_open(const struct path_info *pi,
          */
         ret = open(pi->hostpath, oflags | O_NONBLOCK, 0666);
         if (ret == -1) {
-                return handle_errno(ret);
+                ret = errno;
+                assert(ret > 0);
+                goto fail;
         }
-        *fdp = ret;
-        return 0;
+        hostfd = ret;
+        struct stat stat;
+        ret = fstat(hostfd, &stat);
+        if (ret == -1) {
+                ret = errno;
+                assert(ret > 0);
+                goto fail;
+        }
+        if (!S_ISDIR(stat.st_mode)) {
+                free(pi->hostpath);
+                pi->hostpath = NULL;
+        }
+        fdinfo->type = WASI_FDINFO_USER;
+        fdinfo->u.u_user.hostfd = hostfd;
+        fdinfo->u.u_user.dir = NULL;
+        fdinfo->u.u_user.path = pi->hostpath;
+        fdinfo->blocking = (params->fdflags & WASI_FDFLAG_NONBLOCK) == 0;
+        pi->hostpath = NULL;
+        hostfd = -1;
+fail:
+        if (hostfd != -1) {
+                close(hostfd);
+        }
+        return ret;
 }
 
 int

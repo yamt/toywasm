@@ -2102,7 +2102,7 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
         uint32_t fdflags = HOST_FUNC_PARAM(ft, params, 7, i32);
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 8, i32);
         struct path_info pi = PATH_INITIALIZER;
-        int hostfd = -1;
+        struct wasi_fdinfo *fdinfo = NULL;
         int host_ret = 0;
         int ret;
         xlog_trace("wasm oflags %" PRIx32 " rights_base %" PRIx64, wasmoflags,
@@ -2110,6 +2110,11 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
         host_ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd, path,
                                                 pathlen, &pi, &ret);
         if (host_ret != 0 || ret != 0) {
+                goto fail;
+        }
+        fdinfo = wasi_fdinfo_alloc();
+        if (fdinfo == NULL) {
+                ret = ENOMEM;
                 goto fail;
         }
         /*
@@ -2121,30 +2126,17 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
                 .rights_base = rights_base,
                 .fdflags = fdflags,
         };
-        ret = wasi_host_path_open(&pi, &open_params, &hostfd);
+        ret = wasi_host_path_open(&pi, &open_params, fdinfo);
         if (ret != 0) {
                 xlog_trace("open %s failed with %d", pi.hostpath, ret);
                 goto fail;
         }
-        struct stat stat;
-        ret = fstat(hostfd, &stat);
-        if (ret != 0) {
-                ret = errno;
-                assert(ret > 0);
-                goto fail;
-        }
-        if (!S_ISDIR(stat.st_mode)) {
-                free(pi.hostpath);
-                pi.hostpath = NULL;
-        }
         uint32_t wasifd;
-        ret = wasi_fd_add(wasi, hostfd, pi.hostpath,
-                          fdflags & WASI_FDFLAG_NONBLOCK, &wasifd);
+        ret = wasi_fdinfo_add(wasi, fdinfo, &wasifd);
         if (ret != 0) {
                 goto fail;
         }
-        pi.hostpath = NULL; /* consumed by wasi_fd_add */
-        hostfd = -1;
+        fdinfo = NULL;
         xlog_trace("-> new wasi fd %" PRIu32, wasifd);
         uint32_t r = host_to_le32(wasifd);
         host_ret = wasi_copyout(ctx, &r, retp, sizeof(r), WASI_U32_ALIGN);
@@ -2153,10 +2145,10 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
 fail:
-        path_clear(&pi);
-        if (hostfd != -1) {
-                close(hostfd);
+        if (fdinfo != NULL) {
+                wasi_fdinfo_release(wasi, fdinfo);
         }
+        path_clear(&pi);
         if (host_ret == 0) {
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));

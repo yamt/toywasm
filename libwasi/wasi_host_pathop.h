@@ -12,11 +12,13 @@ struct path_open_params {
         uint32_t fdflags;
 };
 
+struct wasi_fdinfo;
 struct wasi_filestat;
 struct utimes_args;
 
-int wasi_host_path_open(const struct path_info *pi,
-                        const struct path_open_params *params, int *fdp);
+int wasi_host_path_open(struct path_info *pi,
+                        const struct path_open_params *params,
+                        struct wasi_fdinfo *fdinfo);
 int wasi_host_path_unlink(const struct path_info *pi);
 int wasi_host_path_mkdir(const struct path_info *pi);
 int wasi_host_path_rmdir(const struct path_info *pi);
