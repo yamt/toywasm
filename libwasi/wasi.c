@@ -17,9 +17,9 @@
  * https://github.com/WebAssembly/wasi-libc/blob/main/libc-bottom-half/headers/public/wasi/api.h
  */
 
-#define _DARWIN_C_SOURCE /* arc4random_buf */
-#define _GNU_SOURCE      /* asprintf, realpath, O_DIRECTORY */
-#define _NETBSD_SOURCE   /* asprintf, DT_REG, etc */
+#define _DARWIN_C_SOURCE
+#define _GNU_SOURCE
+#define _NETBSD_SOURCE
 
 #if defined(__wasi__) && (!defined(__clang_major__) || __clang_major__ < 17)
 /*
@@ -39,47 +39,15 @@
 #include <nuttx/config.h>
 #endif
 
-#include <sys/socket.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/uio.h>
-
-#include <assert.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <inttypes.h>
-#include <limits.h>
-#include <poll.h>
-#include <stdbool.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include <unistd.h>
 
-#if defined(__GLIBC__) || defined(__NuttX__)
-#include <sys/random.h> /* getrandom */
-#endif
-
-#include "endian.h"
-#include "exec.h"
-#include "lock.h"
 #include "nbio.h"
-#include "restart.h"
-#include "timeutil.h"
-#include "type.h"
-#include "util.h"
-#include "vec.h"
 #include "wasi.h"
-#include "wasi_host_dirent.h"
-#include "wasi_host_fdop.h"
-#include "wasi_host_pathop.h"
-#include "wasi_host_subr.h"
 #include "wasi_impl.h"
-#include "wasi_path_subr.h"
-#include "wasi_poll_subr.h"
-#include "wasi_subr.h"
-#include "wasi_utimes.h"
 #include "xlog.h"
 
 #include "wasi_hostfuncs.h"
