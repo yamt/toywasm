@@ -1,10 +1,5 @@
 #include <stdint.h>
 
-struct path_info {
-        char *hostpath;
-        char *wasmpath;
-};
-
 struct path_open_params {
         uint32_t lookupflags;
         uint32_t wasmoflags;
@@ -15,6 +10,7 @@ struct path_open_params {
 struct wasi_fdinfo;
 struct wasi_filestat;
 struct utimes_args;
+struct path_info;
 
 int wasi_host_path_open(struct path_info *pi,
                         const struct path_open_params *params,

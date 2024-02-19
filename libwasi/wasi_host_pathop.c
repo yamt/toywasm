@@ -18,6 +18,7 @@
 #include "wasi_host_pathop.h"
 #include "wasi_host_subr.h"
 #include "wasi_impl.h"
+#include "wasi_path.h"
 
 #if defined(__wasi__)
 #if !defined(AT_FDCWD)
