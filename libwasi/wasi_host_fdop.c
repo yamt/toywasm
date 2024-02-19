@@ -2,10 +2,6 @@
 #define _GNU_SOURCE
 #define _NETBSD_SOURCE
 
-#if defined(__NuttX__)
-#include <nuttx/config.h>
-#endif
-
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/uio.h>
