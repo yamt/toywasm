@@ -36,5 +36,3 @@ int wasi_host_fd_fdatasync(struct wasi_fdinfo *fdinfo);
 int wasi_host_fd_futimes(struct wasi_fdinfo *fdinfo,
                          const struct utimes_args *args);
 int wasi_host_fd_close(struct wasi_fdinfo *fdinfo);
-
-int wasi_host_fd_fdopendir(struct wasi_fdinfo *fdinfo, void **dirp);

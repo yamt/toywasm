@@ -5,6 +5,7 @@ struct timespec;
 struct timeval;
 struct stat;
 
+struct wasi_fdinfo;
 struct wasi_filestat;
 struct wasi_unstable_filestat;
 struct utimes_args;
@@ -21,3 +22,4 @@ uint32_t wasi_convert_errno(int host_errno);
 int wasi_build_oflags(uint32_t lookupflags, uint32_t wasmoflags,
                       uint64_t rights_base, uint32_t fdflags,
                       int *hostoflagsp);
+int fdinfo_hostfd(struct wasi_fdinfo *fdinfo);
