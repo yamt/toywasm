@@ -874,22 +874,13 @@ wasi_fd_readdir(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         assert(fdinfo->type == WASI_FDINFO_USER);
-        void *dir = fdinfo->u.u_user.dir;
-        if (dir == NULL) {
-                xlog_trace("fd_readdir: fdopendir");
-                ret = wasi_host_fd_fdopendir(fdinfo, &dir);
-                if (ret != 0) {
-                        goto fail;
-                }
-                fdinfo->u.u_user.dir = dir;
-        }
         if (cookie == WASI_DIRCOOKIE_START) {
                 /*
                  * Note: rewinddir invalidates cookies.
                  * is it what WASI expects?
                  */
                 xlog_trace("fd_readdir: rewinddir");
-                ret = wasi_host_dir_rewind(dir);
+                ret = wasi_host_dir_rewind(fdinfo);
                 if (ret != 0) {
                         goto fail;
                 }
@@ -898,7 +889,7 @@ wasi_fd_readdir(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         } else {
                 xlog_trace("fd_readdir: seekdir %" PRIu64, cookie);
-                ret = wasi_host_dir_seek(dir, cookie);
+                ret = wasi_host_dir_seek(fdinfo, cookie);
                 if (ret != 0) {
                         goto fail;
                 }
@@ -909,7 +900,7 @@ wasi_fd_readdir(struct exec_context *ctx, struct host_instance *hi,
                 const uint8_t *d_name;
                 memset(&wde, 0, sizeof(wde));
                 bool eod;
-                ret = wasi_host_dir_read(dir, &wde, &d_name, &eod);
+                ret = wasi_host_dir_read(fdinfo, &wde, &d_name, &eod);
                 if (ret != 0) {
                         goto fail;
                 }

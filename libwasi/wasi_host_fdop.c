@@ -83,14 +83,6 @@ racy_fallocate(int fd, off_t offset, off_t size)
 }
 #endif
 
-static int
-fdinfo_hostfd(struct wasi_fdinfo *fdinfo)
-{
-        assert(fdinfo->type == WASI_FDINFO_USER);
-        assert(fdinfo->u.u_user.hostfd != -1);
-        return fdinfo->u.u_user.hostfd;
-}
-
 int
 wasi_host_fd_fallocate(struct wasi_fdinfo *fdinfo, wasi_off_t offset,
                        wasi_off_t len)
@@ -289,25 +281,10 @@ wasi_host_fd_close(struct wasi_fdinfo *fdinfo)
         }
         free(fdinfo->u.u_user.path);
         if (fdinfo->u.u_user.dir != NULL) {
-                wasi_host_dir_close(fdinfo->u.u_user.dir);
+                wasi_host_dir_close(fdinfo);
         }
         fdinfo->u.u_user.hostfd = -1;
         fdinfo->u.u_user.path = NULL;
         fdinfo->u.u_user.dir = NULL;
         return ret;
-}
-
-int
-wasi_host_fd_fdopendir(struct wasi_fdinfo *fdinfo, void **dirp)
-{
-        int hostfd = fdinfo_hostfd(fdinfo);
-        DIR *dir = fdopendir(hostfd);
-        int ret;
-        if (dir == NULL) {
-                ret = errno;
-                assert(ret > 0);
-                return ret;
-        }
-        *dirp = (void *)dir;
-        return 0;
 }

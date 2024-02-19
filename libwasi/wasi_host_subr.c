@@ -14,8 +14,8 @@
 #include <string.h>
 
 #include "endian.h"
-#include "wasi_abi.h"
 #include "wasi_host_subr.h"
+#include "wasi_impl.h"
 #include "wasi_utimes.h"
 #include "xlog.h"
 
@@ -301,4 +301,12 @@ wasi_build_oflags(uint32_t lookupflags, uint32_t wasmoflags,
         }
         *hostoflagsp = oflags;
         return 0;
+}
+
+int
+fdinfo_hostfd(struct wasi_fdinfo *fdinfo)
+{
+        assert(fdinfo->type == WASI_FDINFO_USER);
+        assert(fdinfo->u.u_user.hostfd != -1);
+        return fdinfo->u.u_user.hostfd;
 }

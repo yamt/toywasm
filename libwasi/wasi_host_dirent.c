@@ -13,9 +13,41 @@
 #include "wasi_host_subr.h"
 #include "wasi_impl.h"
 
-int
-wasi_host_dir_close(void *dir)
+static int
+wasi_host_fd_fdopendir(struct wasi_fdinfo *fdinfo, DIR **dirp)
 {
+        int hostfd = fdinfo_hostfd(fdinfo);
+        DIR *dir = fdopendir(hostfd);
+        int ret;
+        if (dir == NULL) {
+                ret = errno;
+                assert(ret > 0);
+                return ret;
+        }
+        *dirp = dir;
+        return 0;
+}
+
+static int
+wasi_host_dir_init(struct wasi_fdinfo *fdinfo, DIR **dirp)
+{
+        DIR *dir = fdinfo->u.u_user.dir;
+        if (dir == NULL) {
+                xlog_trace("fd_readdir: fdopendir");
+                int ret = wasi_host_fd_fdopendir(fdinfo, &dir);
+                if (ret != 0) {
+                        return ret;
+                }
+                fdinfo->u.u_user.dir = dir;
+        }
+        *dirp = dir;
+        return 0;
+}
+
+int
+wasi_host_dir_close(struct wasi_fdinfo *fdinfo)
+{
+        DIR *dir = fdinfo->u.u_user.dir;
         int ret = closedir(dir);
         if (ret == -1) {
                 ret = errno;
@@ -26,24 +58,41 @@ wasi_host_dir_close(void *dir)
 }
 
 int
-wasi_host_dir_rewind(void *dir)
+wasi_host_dir_rewind(struct wasi_fdinfo *fdinfo)
 {
+        DIR *dir;
+        int ret;
+        ret = wasi_host_dir_init(fdinfo, &dir);
+        if (ret != 0) {
+                return ret;
+        }
         rewinddir(dir);
         return 0;
 }
 
 int
-wasi_host_dir_seek(void *dir, uint64_t offset)
+wasi_host_dir_seek(struct wasi_fdinfo *fdinfo, uint64_t offset)
 {
+        DIR *dir;
+        int ret;
+        ret = wasi_host_dir_init(fdinfo, &dir);
+        if (ret != 0) {
+                return ret;
+        }
         seekdir(dir, offset);
         return 0;
 }
 
 int
-wasi_host_dir_read(void *dir, struct wasi_dirent *wde, const uint8_t **namep,
-                   bool *eod)
+wasi_host_dir_read(struct wasi_fdinfo *fdinfo, struct wasi_dirent *wde,
+                   const uint8_t **namep, bool *eod)
 {
+        DIR *dir;
         int ret;
+        ret = wasi_host_dir_init(fdinfo, &dir);
+        if (ret != 0) {
+                return ret;
+        }
         *eod = false;
         errno = 0;
         struct dirent *d = readdir(dir);
