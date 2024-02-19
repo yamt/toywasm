@@ -18,8 +18,8 @@ set(lib_wasi_sources
 	"wasi_poll.c"
 	"wasi_proc.c"
 	"wasi_random.c"
-	"wasi_sock.c"
 	"wasi_sched.c"
+	"wasi_sock.c"
 )
 
 if(TOYWASM_ENABLE_WASI_THREADS)
