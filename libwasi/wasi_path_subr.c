@@ -13,8 +13,9 @@
 #include "wasi_path_subr.h"
 
 void
-path_clear(struct path_info *pi)
+path_clear(struct wasi_instance *wasi, struct path_info *pi)
 {
+        wasi_fdinfo_release(wasi, pi->dirfdinfo);
         free(pi->hostpath);
         free(pi->wasmpath);
 }
@@ -72,10 +73,10 @@ wasi_copyin_and_convert_path(struct exec_context *ctx,
                 assert(ret > 0);
                 goto fail;
         }
-        wasi_fdinfo_release(wasi, dirfdinfo);
         xlog_trace("%s: wasifd %d wasmpath %s hostpath %s", __func__,
                    dirwasifd, wasmpath, hostpath);
         pi->hostpath = hostpath;
+        pi->dirfdinfo = dirfdinfo;
         pi->wasmpath = wasmpath;
         *usererrorp = 0;
         return 0;

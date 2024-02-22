@@ -86,7 +86,7 @@ fail:
         if (fdinfo != NULL) {
                 wasi_fdinfo_free(fdinfo);
         }
-        path_clear(&pi);
+        path_clear(wasi, &pi);
         if (host_ret == 0) {
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
@@ -119,7 +119,7 @@ wasi_path_unlink_file(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
 fail:
-        path_clear(&pi);
+        path_clear(wasi, &pi);
         if (host_ret == 0) {
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
@@ -149,7 +149,7 @@ wasi_path_create_directory(struct exec_context *ctx, struct host_instance *hi,
         }
         ret = wasi_host_path_mkdir(&pi);
 fail:
-        path_clear(&pi);
+        path_clear(wasi, &pi);
         if (host_ret == 0) {
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
@@ -179,7 +179,7 @@ wasi_path_remove_directory(struct exec_context *ctx, struct host_instance *hi,
         }
         ret = wasi_host_path_rmdir(&pi);
 fail:
-        path_clear(&pi);
+        path_clear(wasi, &pi);
         if (host_ret == 0) {
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
@@ -223,7 +223,7 @@ wasi_path_symlink(struct exec_context *ctx, struct host_instance *hi,
         ret = wasi_host_path_symlink(target_buf, &pi);
 fail:
         free(target_buf);
-        path_clear(&pi);
+        path_clear(wasi, &pi);
         if (host_ret == 0) {
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
@@ -284,7 +284,7 @@ wasi_path_readlink(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
 fail:
-        path_clear(&pi);
+        path_clear(wasi, &pi);
         if (host_ret == 0) {
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
@@ -333,8 +333,8 @@ wasi_path_link(struct exec_context *ctx, struct host_instance *hi,
         }
         ret = wasi_host_path_link(&pi1, &pi2);
 fail:
-        path_clear(&pi1);
-        path_clear(&pi2);
+        path_clear(wasi, &pi1);
+        path_clear(wasi, &pi2);
         if (host_ret == 0) {
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
@@ -373,8 +373,8 @@ wasi_path_rename(struct exec_context *ctx, struct host_instance *hi,
         }
         ret = wasi_host_path_rename(&pi1, &pi2);
 fail:
-        path_clear(&pi1);
-        path_clear(&pi2);
+        path_clear(wasi, &pi1);
+        path_clear(wasi, &pi2);
         if (host_ret == 0) {
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
@@ -416,7 +416,7 @@ wasi_path_filestat_get(struct exec_context *ctx, struct host_instance *hi,
         host_ret = wasi_copyout(ctx, &wst, retp, sizeof(wst),
                                 WASI_FILESTAT_ALIGN);
 fail:
-        path_clear(&pi);
+        path_clear(wasi, &pi);
         if (host_ret == 0) {
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
@@ -465,7 +465,7 @@ wasi_unstable_path_filestat_get(struct exec_context *ctx,
         host_ret = wasi_copyout(ctx, &uwst, retp, sizeof(uwst),
                                 WASI_UNSTABLE_FILESTAT_ALIGN);
 fail:
-        path_clear(&pi);
+        path_clear(wasi, &pi);
         if (host_ret == 0) {
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
@@ -509,7 +509,7 @@ wasi_path_filestat_set_times(struct exec_context *ctx,
                 ret = wasi_host_path_lutimes(&pi, &args);
         }
 fail:
-        path_clear(&pi);
+        path_clear(wasi, &pi);
         if (host_ret == 0) {
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
                                      wasi_convert_errno(ret));
