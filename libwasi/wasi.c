@@ -12,6 +12,8 @@
  *   in some places because WASI is basically a copy of the openat API
  *   family.
  *
+ * - O_RESOLVE_BENEATH behavior is not implemented.
+ *
  * References:
  * https://github.com/WebAssembly/WASI/tree/main/phases/snapshot/witx
  * https://github.com/WebAssembly/wasi-libc/blob/main/libc-bottom-half/headers/public/wasi/api.h
