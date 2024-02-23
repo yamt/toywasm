@@ -151,11 +151,6 @@ wasi_fd_close(struct exec_context *ctx, struct host_instance *hi,
                 toywasm_mutex_unlock(&wasi->lock);
                 goto fail;
         }
-        if (wasi_fdinfo_unused(fdinfo)) {
-                toywasm_mutex_unlock(&wasi->lock);
-                ret = EBADF;
-                goto fail;
-        }
 
         assert(fdinfo->refcount == 2);
         fdinfo->refcount--;
@@ -531,10 +526,6 @@ wasi_fd_fdstat_get(struct exec_context *ctx, struct host_instance *hi,
         int ret;
         ret = wasi_fd_lookup(wasi, wasifd, &fdinfo);
         if (ret != 0) {
-                goto fail;
-        }
-        if (wasi_fdinfo_unused(fdinfo)) {
-                ret = EBADF;
                 goto fail;
         }
         struct wasi_fdstat st;
@@ -915,18 +906,15 @@ wasi_fd_renumber(struct exec_context *ctx, struct host_instance *hi,
 
         /* Note: we check "to" first because it can involve a restart */
 
-        /* check "to" */
-        host_ret = wasi_fd_lookup_locked_for_close(ctx, wasi, wasifd_to,
-                                                   &fdinfo_to, &ret);
-        if (host_ret != 0 || ret != 0) {
-                goto fail_locked;
-        }
         /*
+         * check "to"
+         *
          * Note: unlike dup2, for some thread-safety reasons, fd_renumber
          * requires the "to" be an open descriptor.
          */
-        if (wasi_fdinfo_unused(fdinfo_to)) {
-                ret = EBADF;
+        host_ret = wasi_fd_lookup_locked_for_close(ctx, wasi, wasifd_to,
+                                                   &fdinfo_to, &ret);
+        if (host_ret != 0 || ret != 0) {
                 goto fail_locked;
         }
 

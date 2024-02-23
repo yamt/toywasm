@@ -72,11 +72,16 @@ wasi_instance_add_hostfd(struct wasi_instance *inst, uint32_t wasmfd,
                 goto fail;
         }
         ret = wasi_fd_lookup_locked(inst, wasmfd, &fdinfo);
-        if (ret != 0) {
+        if (ret == 0) {
+                ret = EBUSY;
                 goto fail;
         }
-        if (!wasi_fdinfo_unused(fdinfo)) {
-                ret = EBUSY;
+        if (ret != EBADF) {
+                goto fail;
+        }
+        fdinfo = wasi_fdinfo_alloc();
+        if (fdinfo == NULL) {
+                ret = ENOMEM;
                 goto fail;
         }
 
@@ -126,6 +131,8 @@ wasi_instance_add_hostfd(struct wasi_instance *inst, uint32_t wasmfd,
                            " host fd %u with errno %d",
                            wasmfd, hostfd, errno);
         }
+        wasi_fd_affix(inst, wasmfd, fdinfo);
+        fdinfo = NULL;
         ret = 0;
 fail:
         toywasm_mutex_unlock(&inst->lock);
