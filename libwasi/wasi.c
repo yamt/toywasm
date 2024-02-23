@@ -35,6 +35,7 @@
 #include "xlog.h"
 
 #include "wasi_hostfuncs.h"
+#include "wasi_vfs_impl_host.h"
 
 #define WASI_API(a, b) WASI_HOST_FUNC(a, b),
 #define WASI_API2(a, b, c) WASI_HOST_FUNC2(a, b, c),
@@ -118,6 +119,7 @@ wasi_instance_add_hostfd(struct wasi_instance *inst, uint32_t wasmfd,
         dupfd = dup(hostfd);
 #endif
         fdinfo->type = WASI_FDINFO_USER;
+        wasi_vfs_impl_host_init(fdinfo);
         fdinfo->u.u_user.hostfd = dupfd;
         if (dupfd == -1) {
                 xlog_trace("failed to dup: wasm fd %" PRIu32

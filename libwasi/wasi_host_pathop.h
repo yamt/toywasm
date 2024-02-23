@@ -1,12 +1,6 @@
 #include <stdint.h>
 
-struct path_open_params {
-        uint32_t lookupflags;
-        uint32_t wasmoflags;
-        uint64_t rights_base;
-        uint32_t fdflags;
-};
-
+struct path_open_params;
 struct wasi_fdinfo;
 struct wasi_filestat;
 struct utimes_args;

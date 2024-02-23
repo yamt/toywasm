@@ -10,6 +10,9 @@
 #include "endian.h"
 #include "exec.h"
 #include "nbio.h"
+
+#include "wasi_vfs_types.h"
+
 #include "wasi_host_pathop.h"
 #include "wasi_host_subr.h"
 #include "wasi_impl.h"

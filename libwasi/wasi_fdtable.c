@@ -7,6 +7,7 @@
 #include "timeutil.h"
 #include "wasi_host_fdop.h" /* XXX wasi_host_fd_close */
 #include "wasi_impl.h"
+#include "wasi_vfs_impl_host.h"
 
 bool
 wasi_fdinfo_is_prestat(const struct wasi_fdinfo *fdinfo)
@@ -344,6 +345,7 @@ wasi_fd_add(struct wasi_instance *wasi, int hostfd, char *path,
                 return ENOMEM;
         }
         fdinfo->type = WASI_FDINFO_USER;
+        wasi_vfs_impl_host_init(fdinfo);
         fdinfo->u.u_user.hostfd = hostfd;
         fdinfo->u.u_user.dir = NULL;
         fdinfo->u.u_user.path = path;
