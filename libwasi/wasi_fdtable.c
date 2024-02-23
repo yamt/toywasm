@@ -15,7 +15,7 @@ wasi_fd_affix(struct wasi_instance *wasi, uint32_t wasifd,
         assert(wasifd < wasi->fdtable.lsize);
         struct wasi_fdinfo **slot = &VEC_ELEM(wasi->fdtable, wasifd);
         struct wasi_fdinfo *ofdinfo = *slot;
-        assert(ofdinfo == NULL || wasi_fdinfo_unused(ofdinfo));
+        assert(ofdinfo == NULL);
         assert(fdinfo->refcount < UINT32_MAX);
         fdinfo->refcount++;
         *slot = fdinfo;
@@ -32,11 +32,7 @@ wasi_fd_lookup_locked(struct wasi_instance *wasi, uint32_t wasifd,
         }
         fdinfo = VEC_ELEM(wasi->fdtable, wasifd);
         if (fdinfo == NULL) {
-                fdinfo = wasi_fdinfo_alloc();
-                if (fdinfo == NULL) {
-                        return ENOMEM;
-                }
-                wasi_fd_affix(wasi, wasifd, fdinfo);
+                return EBADF;
         }
         assert(fdinfo->refcount < UINT32_MAX); /* XXX */
         fdinfo->refcount++;
@@ -212,7 +208,7 @@ wasi_fd_alloc(struct wasi_instance *wasi, uint32_t *wasifdp)
         uint32_t wasifd;
         VEC_FOREACH_IDX(wasifd, fdinfop, wasi->fdtable) {
                 struct wasi_fdinfo *fdinfo = *fdinfop;
-                if (fdinfo == NULL || wasi_fdinfo_unused(fdinfo)) {
+                if (fdinfo == NULL) {
                         *wasifdp = wasifd;
                         return 0;
                 }
