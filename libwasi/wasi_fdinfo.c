@@ -3,7 +3,7 @@
 #include <inttypes.h>
 #include <stdlib.h>
 
-#include "wasi_host_fdop.h" /* XXX wasi_host_fd_close */
+#include "wasi_vfs.h"
 #include "wasi_impl.h"
 #include "wasi_vfs_impl_host.h"
 
@@ -123,7 +123,7 @@ wasi_fdinfo_close(struct wasi_fdinfo *fdinfo)
                 fdinfo->u.u_prestat.wasm_path = NULL;
                 break;
         case WASI_FDINFO_USER:
-                ret = wasi_host_fd_close(fdinfo);
+                ret = wasi_vfs_fd_close(fdinfo);
                 break;
         case WASI_FDINFO_UNUSED:
                 break;
