@@ -50,6 +50,8 @@ wasi_fdinfo_vfs(const struct wasi_fdinfo *fdinfo)
         default:
                 assert(false);
         }
+        assert(vfs != NULL);
+        assert(vfs->ops != NULL);
         return vfs;
 }
 
