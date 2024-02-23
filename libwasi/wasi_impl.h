@@ -80,21 +80,25 @@ uint32_t wasi_convert_errno(int host_errno);
 #define wasi_copyin(c, h, w, l, a) host_func_copyin(c, h, w, l, a)
 
 struct exec_context;
+
+/* fdinfo */
 bool wasi_fdinfo_is_prestat(const struct wasi_fdinfo *fdinfo);
 bool wasi_fdinfo_unused(struct wasi_fdinfo *fdinfo);
 const char *wasi_fdinfo_path(struct wasi_fdinfo *fdinfo);
 const struct wasi_vfs *wasi_fdinfo_vfs(const struct wasi_fdinfo *fdinfo);
 struct wasi_fdinfo *wasi_fdinfo_alloc(void);
+void wasi_fdinfo_free(struct wasi_fdinfo *fdinfo);
+void wasi_fdinfo_release(struct wasi_instance *wasi,
+                         struct wasi_fdinfo *fdinfo);
+int wasi_fdinfo_close(struct wasi_fdinfo *fdinfo);
+
+/* table */
 void wasi_fd_affix(struct wasi_instance *wasi, uint32_t wasifd,
                    struct wasi_fdinfo *fdinfo) REQUIRES(wasi->lock);
 int wasi_fd_lookup_locked(struct wasi_instance *wasi, uint32_t wasifd,
                           struct wasi_fdinfo **infop) REQUIRES(wasi->lock);
 int wasi_fd_lookup(struct wasi_instance *wasi, uint32_t wasifd,
                    struct wasi_fdinfo **infop);
-void wasi_fdinfo_free(struct wasi_fdinfo *fdinfo);
-void wasi_fdinfo_release(struct wasi_instance *wasi,
-                         struct wasi_fdinfo *fdinfo);
-int wasi_fdinfo_close(struct wasi_fdinfo *fdinfo);
 int wasi_fd_lookup_locked_for_close(struct exec_context *ctx,
                                     struct wasi_instance *wasi,
                                     uint32_t wasifd,
