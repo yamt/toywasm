@@ -11,6 +11,7 @@ set(lib_wasi_sources
 	"wasi_abi_random.c"
 	"wasi_abi_sched.c"
 	"wasi_abi_sock.c"
+	"wasi_fdinfo.c"
 	"wasi_fdtable.c"
 	"wasi_host_dirent.c"
 	"wasi_host_fdop.c"
