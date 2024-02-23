@@ -19,6 +19,7 @@ set(lib_wasi_sources
 	"wasi_path_subr.c"
 	"wasi_poll_subr.c"
 	"wasi_subr.c"
+	"wasi_vfs.c"
 )
 
 if(TOYWASM_ENABLE_WASI_THREADS)
