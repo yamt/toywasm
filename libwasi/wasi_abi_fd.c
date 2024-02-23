@@ -9,13 +9,14 @@
 
 #include "endian.h"
 #include "nbio.h"
-#include "wasi_host_dirent.h"
-#include "wasi_host_fdop.h"
-#include "wasi_host_subr.h"
+
+#include "wasi_vfs_types.h"
+
 #include "wasi_impl.h"
 #include "wasi_poll_subr.h"
 #include "wasi_subr.h"
 #include "wasi_utimes.h"
+#include "wasi_vfs.h"
 #include "xlog.h"
 
 #include "wasi_hostfuncs.h"
@@ -72,7 +73,7 @@ wasi_fd_allocate(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        ret = wasi_host_fd_fallocate(fdinfo, offset, len);
+        ret = wasi_vfs_fd_fallocate(fdinfo, offset, len);
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
@@ -104,7 +105,7 @@ wasi_fd_filestat_set_size(struct exec_context *ctx, struct host_instance *hi,
          * not EISDIR. POSIX doesn't list EISDIR for ftruncate either.
          */
         xlog_trace("ftruncate wasifd %" PRIu32 " size %" PRIu64, wasifd, size);
-        ret = wasi_host_fd_ftruncate(fdinfo, size);
+        ret = wasi_vfs_fd_ftruncate(fdinfo, size);
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
@@ -203,7 +204,7 @@ wasi_fd_write(struct exec_context *ctx, struct host_instance *hi,
         }
         size_t n;
 retry:
-        ret = wasi_host_fd_writev(fdinfo, hostiov, iov_count, &n);
+        ret = wasi_vfs_fd_writev(fdinfo, hostiov, iov_count, &n);
         if (ret != 0) {
                 if (emulate_blocking(ctx, fdinfo, POLLOUT, ret, &host_ret,
                                      &ret)) {
@@ -260,7 +261,7 @@ wasi_fd_pwrite(struct exec_context *ctx, struct host_instance *hi,
         }
         size_t n;
 retry:
-        ret = wasi_host_fd_pwritev(fdinfo, hostiov, iov_count, offset, &n);
+        ret = wasi_vfs_fd_pwritev(fdinfo, hostiov, iov_count, offset, &n);
         if (ret != 0) {
                 if (emulate_blocking(ctx, fdinfo, POLLOUT, ret, &host_ret,
                                      &ret)) {
@@ -318,7 +319,7 @@ wasi_fd_read(struct exec_context *ctx, struct host_instance *hi,
 
         /* hack for tty. see the comment in wasi_instance_create. */
         uint16_t fflags;
-        ret = wasi_host_fd_get_flags(fdinfo, &fflags);
+        ret = wasi_vfs_fd_get_flags(fdinfo, &fflags);
         if (ret != 0) {
                 goto fail;
         }
@@ -330,7 +331,7 @@ wasi_fd_read(struct exec_context *ctx, struct host_instance *hi,
                 goto tty_hack;
         }
 retry:
-        ret = wasi_host_fd_readv(fdinfo, hostiov, iov_count, &n);
+        ret = wasi_vfs_fd_readv(fdinfo, hostiov, iov_count, &n);
         if (ret != 0) {
 tty_hack:
                 if (emulate_blocking(ctx, fdinfo, POLLIN, ret, &host_ret,
@@ -388,7 +389,7 @@ wasi_fd_pread(struct exec_context *ctx, struct host_instance *hi,
         }
         size_t n;
 retry:
-        ret = wasi_host_fd_preadv(fdinfo, hostiov, iov_count, offset, &n);
+        ret = wasi_vfs_fd_preadv(fdinfo, hostiov, iov_count, offset, &n);
         if (ret != 0) {
                 if (emulate_blocking(ctx, fdinfo, POLLIN, ret, &host_ret,
                                      &ret)) {
@@ -436,7 +437,7 @@ wasi_fd_readdir(struct exec_context *ctx, struct host_instance *hi,
         }
         /*
          * (ab)use wasi->lock to serialize the following
-         * wasi_host_dir_rewind/wasi_host_dir_seek/wasi_host_dir_read
+         * wasi_vfs_dir_rewind/wasi_vfs_dir_seek/wasi_vfs_dir_read
          * sequence. REVISIT: it can be a per-fdinfo lock.
          */
         toywasm_mutex_lock(&wasi->lock);
@@ -447,7 +448,7 @@ wasi_fd_readdir(struct exec_context *ctx, struct host_instance *hi,
                  * is it what WASI expects?
                  */
                 xlog_trace("fd_readdir: rewinddir");
-                ret = wasi_host_dir_rewind(fdinfo);
+                ret = wasi_vfs_dir_rewind(fdinfo);
                 if (ret != 0) {
                         goto fail;
                 }
@@ -456,7 +457,7 @@ wasi_fd_readdir(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         } else {
                 xlog_trace("fd_readdir: seekdir %" PRIu64, cookie);
-                ret = wasi_host_dir_seek(fdinfo, cookie);
+                ret = wasi_vfs_dir_seek(fdinfo, cookie);
                 if (ret != 0) {
                         goto fail;
                 }
@@ -467,7 +468,7 @@ wasi_fd_readdir(struct exec_context *ctx, struct host_instance *hi,
                 const uint8_t *d_name;
                 memset(&wde, 0, sizeof(wde));
                 bool eod;
-                ret = wasi_host_dir_read(fdinfo, &wde, &d_name, &eod);
+                ret = wasi_vfs_dir_read(fdinfo, &wde, &d_name, &eod);
                 if (ret != 0) {
                         goto fail;
                 }
@@ -542,13 +543,13 @@ wasi_fd_fdstat_get(struct exec_context *ctx, struct host_instance *hi,
                 st.fs_filetype = WASI_FILETYPE_DIRECTORY;
         } else {
                 struct wasi_filestat wst;
-                ret = wasi_host_fd_fstat(fdinfo, &wst);
+                ret = wasi_vfs_fd_fstat(fdinfo, &wst);
                 if (ret != 0) {
                         goto fail;
                 }
                 st.fs_filetype = wst.type;
                 uint16_t flags;
-                ret = wasi_host_fd_get_flags(fdinfo, &flags);
+                ret = wasi_vfs_fd_get_flags(fdinfo, &flags);
                 if (ret != 0) {
                         goto fail;
                 }
@@ -725,7 +726,7 @@ wasi_fd_seek(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         wasi_off_t off;
-        ret = wasi_host_fd_lseek(fdinfo, offset, hostwhence, &off);
+        ret = wasi_vfs_fd_lseek(fdinfo, offset, hostwhence, &off);
         if (ret != 0) {
                 goto fail;
         }
@@ -781,7 +782,7 @@ wasi_unstable_fd_seek(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         wasi_off_t off;
-        ret = wasi_host_fd_lseek(fdinfo, offset, hostwhence, &off);
+        ret = wasi_vfs_fd_lseek(fdinfo, offset, hostwhence, &off);
         if (ret != 0) {
                 goto fail;
         }
@@ -820,7 +821,7 @@ wasi_fd_tell(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         wasi_off_t off;
-        ret = wasi_host_fd_lseek(fdinfo, 0, SEEK_CUR, &off);
+        ret = wasi_vfs_fd_lseek(fdinfo, 0, SEEK_CUR, &off);
         if (ret != 0) {
                 goto fail;
         }
@@ -852,7 +853,7 @@ wasi_fd_sync(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        ret = wasi_host_fd_fsync(fdinfo);
+        ret = wasi_vfs_fd_fsync(fdinfo);
         if (ret != 0) {
                 goto fail;
         }
@@ -878,7 +879,7 @@ wasi_fd_datasync(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        ret = wasi_host_fd_fdatasync(fdinfo);
+        ret = wasi_vfs_fd_fdatasync(fdinfo);
         if (ret != 0) {
                 goto fail;
         }
@@ -990,7 +991,7 @@ wasi_fd_filestat_get(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         struct wasi_filestat wst;
-        ret = wasi_host_fd_fstat(fdinfo, &wst);
+        ret = wasi_vfs_fd_fstat(fdinfo, &wst);
         if (ret != 0) {
                 goto fail;
         }
@@ -1025,7 +1026,7 @@ wasi_unstable_fd_filestat_get(struct exec_context *ctx,
                 goto fail;
         }
         struct wasi_filestat wst;
-        ret = wasi_host_fd_fstat(fdinfo, &wst);
+        ret = wasi_vfs_fd_fstat(fdinfo, &wst);
         if (ret != 0) {
                 goto fail;
         }
@@ -1069,7 +1070,7 @@ wasi_fd_filestat_set_times(struct exec_context *ctx, struct host_instance *hi,
                 .atim = atim,
                 .mtim = mtim,
         };
-        ret = wasi_host_fd_futimes(fdinfo, &args);
+        ret = wasi_vfs_fd_futimes(fdinfo, &args);
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
