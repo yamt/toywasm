@@ -22,6 +22,7 @@ struct wasi_fdinfo {
                 } u_prestat;
                 /* WASI_FDINFO_USER */
                 struct {
+                        const struct wasi_vfs *vfs;
                         int hostfd;
                         void *dir;
                         char *path;
