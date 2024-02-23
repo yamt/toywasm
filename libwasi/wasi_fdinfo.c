@@ -3,8 +3,8 @@
 #include <inttypes.h>
 #include <stdlib.h>
 
-#include "wasi_vfs.h"
 #include "wasi_impl.h"
+#include "wasi_vfs.h"
 #include "wasi_vfs_impl_host.h"
 
 bool
