@@ -1,10 +1,11 @@
 #include <errno.h>
 
+#include "wasi_vfs_types.h"
+
 #include "wasi_impl.h"
 #include "wasi_path_subr.h"
 #include "wasi_vfs.h"
 #include "wasi_vfs_ops.h"
-#include "wasi_vfs_types.h"
 
 static const struct wasi_vfs_ops *
 fdinfo_vfs_ops(const struct wasi_fdinfo *fdinfo)

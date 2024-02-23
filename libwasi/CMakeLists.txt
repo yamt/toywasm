@@ -20,6 +20,7 @@ set(lib_wasi_sources
 	"wasi_poll_subr.c"
 	"wasi_subr.c"
 	"wasi_vfs.c"
+	"wasi_vfs_impl_host.c"
 )
 
 if(TOYWASM_ENABLE_WASI_THREADS)
