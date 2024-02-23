@@ -1,3 +1,5 @@
+#if !defined(_TOYWASM_LIBWASI_WASI_VFS_TYPES_H_)
+#define _TOYWASM_LIBWASI_WASI_VFS_TYPES_H_
 #include <sys/types.h>
 
 #include <stdbool.h>
@@ -29,3 +31,4 @@ struct iovec;
 struct wasi_vfs {
         const struct wasi_vfs_ops *ops;
 };
+#endif /* !defined(_TOYWASM_LIBWASI_WASI_VFS_TYPES_H_) */
