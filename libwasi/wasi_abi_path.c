@@ -13,12 +13,11 @@
 
 #include "wasi_vfs_types.h"
 
-#include "wasi_host_pathop.h"
-#include "wasi_host_subr.h"
 #include "wasi_impl.h"
 #include "wasi_path_subr.h"
 #include "wasi_subr.h"
 #include "wasi_utimes.h"
+#include "wasi_vfs.h"
 #include "xlog.h"
 
 #include "wasi_hostfuncs.h"
@@ -67,7 +66,7 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
                 .rights_base = rights_base,
                 .fdflags = fdflags,
         };
-        ret = wasi_host_path_open(&pi, &open_params, fdinfo);
+        ret = wasi_vfs_path_open(&pi, &open_params, fdinfo);
         if (ret != 0) {
                 xlog_trace("open %s failed with %d", pi.hostpath, ret);
                 goto fail;
@@ -117,7 +116,7 @@ wasi_path_unlink_file(struct exec_context *ctx, struct host_instance *hi,
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
-        ret = wasi_host_path_unlink(&pi);
+        ret = wasi_vfs_path_unlink(&pi);
         if (ret != 0) {
                 goto fail;
         }
@@ -150,7 +149,7 @@ wasi_path_create_directory(struct exec_context *ctx, struct host_instance *hi,
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
-        ret = wasi_host_path_mkdir(&pi);
+        ret = wasi_vfs_path_mkdir(&pi);
 fail:
         path_clear(wasi, &pi);
         if (host_ret == 0) {
@@ -180,7 +179,7 @@ wasi_path_remove_directory(struct exec_context *ctx, struct host_instance *hi,
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
-        ret = wasi_host_path_rmdir(&pi);
+        ret = wasi_vfs_path_rmdir(&pi);
 fail:
         path_clear(wasi, &pi);
         if (host_ret == 0) {
@@ -223,7 +222,7 @@ wasi_path_symlink(struct exec_context *ctx, struct host_instance *hi,
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
-        ret = wasi_host_path_symlink(target_buf, &pi);
+        ret = wasi_vfs_path_symlink(target_buf, &pi);
 fail:
         free(target_buf);
         path_clear(wasi, &pi);
@@ -276,7 +275,7 @@ wasi_path_readlink(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         size_t n;
-        ret = wasi_host_path_readlink(&pi, p, buflen, &n);
+        ret = wasi_vfs_path_readlink(&pi, p, buflen, &n);
         if (ret != 0) {
                 goto fail;
         }
@@ -334,7 +333,7 @@ wasi_path_link(struct exec_context *ctx, struct host_instance *hi,
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
-        ret = wasi_host_path_link(&pi1, &pi2);
+        ret = wasi_vfs_path_link(&pi1, &pi2);
 fail:
         path_clear(wasi, &pi1);
         path_clear(wasi, &pi2);
@@ -374,7 +373,7 @@ wasi_path_rename(struct exec_context *ctx, struct host_instance *hi,
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
-        ret = wasi_host_path_rename(&pi1, &pi2);
+        ret = wasi_vfs_path_rename(&pi1, &pi2);
 fail:
         path_clear(wasi, &pi1);
         path_clear(wasi, &pi2);
@@ -409,9 +408,9 @@ wasi_path_filestat_get(struct exec_context *ctx, struct host_instance *hi,
         }
         struct wasi_filestat wst;
         if ((lookupflags & WASI_LOOKUPFLAG_SYMLINK_FOLLOW) != 0) {
-                ret = wasi_host_path_stat(&pi, &wst);
+                ret = wasi_vfs_path_stat(&pi, &wst);
         } else {
-                ret = wasi_host_path_lstat(&pi, &wst);
+                ret = wasi_vfs_path_lstat(&pi, &wst);
         }
         if (ret != 0) {
                 goto fail;
@@ -453,9 +452,9 @@ wasi_unstable_path_filestat_get(struct exec_context *ctx,
         }
         struct wasi_filestat wst;
         if ((lookupflags & WASI_LOOKUPFLAG_SYMLINK_FOLLOW) != 0) {
-                ret = wasi_host_path_stat(&pi, &wst);
+                ret = wasi_vfs_path_stat(&pi, &wst);
         } else {
-                ret = wasi_host_path_lstat(&pi, &wst);
+                ret = wasi_vfs_path_lstat(&pi, &wst);
         }
         if (ret != 0) {
                 goto fail;
@@ -507,9 +506,9 @@ wasi_path_filestat_set_times(struct exec_context *ctx,
                 .mtim = mtim,
         };
         if ((lookupflags & WASI_LOOKUPFLAG_SYMLINK_FOLLOW) != 0) {
-                ret = wasi_host_path_utimes(&pi, &args);
+                ret = wasi_vfs_path_utimes(&pi, &args);
         } else {
-                ret = wasi_host_path_lutimes(&pi, &args);
+                ret = wasi_vfs_path_lutimes(&pi, &args);
         }
 fail:
         path_clear(wasi, &pi);
