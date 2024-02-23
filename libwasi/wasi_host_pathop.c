@@ -125,6 +125,7 @@ wasi_host_path_open(struct path_info *pi,
                 pi->hostpath = NULL;
         }
         fdinfo->type = WASI_FDINFO_USER;
+        fdinfo->u.u_user.vfs = wasi_fdinfo_vfs(pi->dirfdinfo);
         fdinfo->u.u_user.hostfd = hostfd;
         fdinfo->u.u_user.dir = NULL;
         fdinfo->u.u_user.path = pi->hostpath;

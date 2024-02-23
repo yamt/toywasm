@@ -119,7 +119,7 @@ wasi_instance_add_hostfd(struct wasi_instance *inst, uint32_t wasmfd,
         dupfd = dup(hostfd);
 #endif
         fdinfo->type = WASI_FDINFO_USER;
-        wasi_vfs_impl_host_init(fdinfo);
+        wasi_vfs_impl_host_init_file(fdinfo);
         fdinfo->u.u_user.hostfd = dupfd;
         if (dupfd == -1) {
                 xlog_trace("failed to dup: wasm fd %" PRIu32
@@ -233,6 +233,7 @@ wasi_instance_prestat_add_common(struct wasi_instance *wasi, const char *path,
                 goto fail;
         }
         fdinfo->type = WASI_FDINFO_PRESTAT;
+        wasi_vfs_impl_host_init_prestat(fdinfo);
         fdinfo->u.u_prestat.prestat_path = host_path;
         fdinfo->u.u_prestat.wasm_path = wasm_path;
         host_path = NULL;
