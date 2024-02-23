@@ -4,6 +4,7 @@
 #include "host_instance.h"
 #include "lock.h"
 #include "wasi_abi.h"
+#include "wasi_vfs_types.h"
 #include "xlog.h"
 
 enum wasi_fdinfo_type {
@@ -19,6 +20,7 @@ struct wasi_fdinfo {
                 struct {
                         char *prestat_path;
                         char *wasm_path; /* NULL means same as prestat_path */
+                        struct wasi_vfs vfs;
                 } u_prestat;
                 /* WASI_FDINFO_USER */
                 struct {
@@ -81,6 +83,7 @@ struct exec_context;
 bool wasi_fdinfo_is_prestat(const struct wasi_fdinfo *fdinfo);
 bool wasi_fdinfo_unused(struct wasi_fdinfo *fdinfo);
 const char *wasi_fdinfo_path(struct wasi_fdinfo *fdinfo);
+const struct wasi_vfs *wasi_fdinfo_vfs(const struct wasi_fdinfo *fdinfo);
 struct wasi_fdinfo *wasi_fdinfo_alloc(void);
 void wasi_fd_affix(struct wasi_instance *wasi, uint32_t wasifd,
                    struct wasi_fdinfo *fdinfo) REQUIRES(wasi->lock);

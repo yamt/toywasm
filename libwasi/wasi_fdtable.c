@@ -36,6 +36,23 @@ wasi_fdinfo_path(struct wasi_fdinfo *fdinfo)
         return NULL;
 }
 
+const struct wasi_vfs *
+wasi_fdinfo_vfs(const struct wasi_fdinfo *fdinfo)
+{
+        const struct wasi_vfs *vfs;
+        switch (fdinfo->type) {
+        case WASI_FDINFO_PRESTAT:
+                vfs = &fdinfo->u.u_prestat.vfs;
+                break;
+        case WASI_FDINFO_USER:
+                vfs = fdinfo->u.u_user.vfs;
+                break;
+        default:
+                assert(false);
+        }
+        return vfs;
+}
+
 struct wasi_fdinfo *
 wasi_fdinfo_alloc(void)
 {
@@ -345,7 +362,7 @@ wasi_fd_add(struct wasi_instance *wasi, int hostfd, char *path,
                 return ENOMEM;
         }
         fdinfo->type = WASI_FDINFO_USER;
-        wasi_vfs_impl_host_init(fdinfo);
+        wasi_vfs_impl_host_init_file(fdinfo);
         fdinfo->u.u_user.hostfd = hostfd;
         fdinfo->u.u_user.dir = NULL;
         fdinfo->u.u_user.path = path;
