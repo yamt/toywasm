@@ -79,9 +79,8 @@ wasi_instance_add_hostfd(struct wasi_instance *inst, uint32_t wasmfd,
         if (ret != EBADF) {
                 goto fail;
         }
-        fdinfo = wasi_fdinfo_alloc();
-        if (fdinfo == NULL) {
-                ret = ENOMEM;
+        ret = wasi_vfs_impl_host_fdinfo_alloc(&fdinfo);
+        if (ret != 0) {
                 goto fail;
         }
 
@@ -123,8 +122,6 @@ wasi_instance_add_hostfd(struct wasi_instance *inst, uint32_t wasmfd,
 #else
         dupfd = dup(hostfd);
 #endif
-        fdinfo->type = WASI_FDINFO_USER;
-        wasi_vfs_impl_host_init_file(fdinfo);
         fdinfo->u.u_user.hostfd = dupfd;
         if (dupfd == -1) {
                 xlog_trace("failed to dup: wasm fd %" PRIu32

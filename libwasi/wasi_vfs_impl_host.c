@@ -71,3 +71,18 @@ wasi_vfs_impl_host_init_prestat(struct wasi_fdinfo *fdinfo)
 {
         fdinfo->u.u_prestat.vfs.ops = &wasi_host_ops;
 }
+
+int
+wasi_vfs_impl_host_fdinfo_alloc(struct wasi_fdinfo **fdinfop)
+{
+        struct wasi_fdinfo *fdinfo;
+        fdinfo = malloc(sizeof(*fdinfo));
+        if (fdinfo == NULL) {
+                return ENOMEM;
+        }
+        wasi_fdinfo_init(fdinfo);
+        fdinfo->type = WASI_FDINFO_USER;
+        fdinfo->u.u_user.vfs = &wasi_vfs_host_file;
+        *fdinfop = fdinfo;
+        return 0;
+}

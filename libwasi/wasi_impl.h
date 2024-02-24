@@ -90,6 +90,8 @@ bool wasi_fdinfo_is_prestat(const struct wasi_fdinfo *fdinfo);
 bool wasi_fdinfo_unused(struct wasi_fdinfo *fdinfo);
 const char *wasi_fdinfo_path(struct wasi_fdinfo *fdinfo);
 const struct wasi_vfs *wasi_fdinfo_vfs(const struct wasi_fdinfo *fdinfo);
+void wasi_fdinfo_init(struct wasi_fdinfo *fdinfo);
+void wasi_fdinfo_clear(struct wasi_fdinfo *fdinfo);
 struct wasi_fdinfo *wasi_fdinfo_alloc(void);
 void wasi_fdinfo_free(struct wasi_fdinfo *fdinfo);
 void wasi_fdinfo_release(struct wasi_instance *wasi,

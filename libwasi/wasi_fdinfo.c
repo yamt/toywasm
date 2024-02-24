@@ -54,6 +54,18 @@ wasi_fdinfo_vfs(const struct wasi_fdinfo *fdinfo)
         return vfs;
 }
 
+void
+wasi_fdinfo_init(struct wasi_fdinfo *fdinfo)
+{
+        fdinfo->type = WASI_FDINFO_UNUSED;
+        fdinfo->refcount = 0;
+        fdinfo->blocking = 1;
+        assert(wasi_fdinfo_unused(fdinfo));
+        fdinfo->u.u_user.hostfd = -1;
+        fdinfo->u.u_user.dir = NULL;
+        fdinfo->u.u_user.path = NULL;
+}
+
 struct wasi_fdinfo *
 wasi_fdinfo_alloc(void)
 {
@@ -61,19 +73,13 @@ wasi_fdinfo_alloc(void)
         if (fdinfo == NULL) {
                 return NULL;
         }
-        fdinfo->type = WASI_FDINFO_UNUSED;
-        fdinfo->refcount = 0;
-        fdinfo->blocking = 1;
-        assert(wasi_fdinfo_unused(fdinfo));
+        wasi_fdinfo_init(fdinfo);
         return fdinfo;
 }
 
 void
-wasi_fdinfo_free(struct wasi_fdinfo *fdinfo)
+wasi_fdinfo_clear(struct wasi_fdinfo *fdinfo)
 {
-        if (fdinfo == NULL) {
-                return;
-        }
         assert(fdinfo->refcount == 0);
         switch (fdinfo->type) {
         case WASI_FDINFO_PRESTAT:
@@ -88,6 +94,15 @@ wasi_fdinfo_free(struct wasi_fdinfo *fdinfo)
         case WASI_FDINFO_UNUSED:
                 break;
         }
+}
+
+void
+wasi_fdinfo_free(struct wasi_fdinfo *fdinfo)
+{
+        if (fdinfo == NULL) {
+                return;
+        }
+        wasi_fdinfo_clear(fdinfo);
         free(fdinfo);
 }
 
