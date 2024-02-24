@@ -171,6 +171,8 @@ wasi_instance_create(struct wasi_instance **instp) NO_THREAD_SAFETY_ANALYSIS
         }
         toywasm_mutex_init(&inst->lock);
         toywasm_cv_init(&inst->cv);
+        /* the first three slots are reserved for stdin, stdout, stderr */
+        inst->fdtable.reserved_slots = 3;
         *instp = inst;
         return 0;
 }
