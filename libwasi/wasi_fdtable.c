@@ -12,8 +12,9 @@ void
 wasi_fd_affix(struct wasi_instance *wasi, uint32_t wasifd,
               struct wasi_fdinfo *fdinfo) REQUIRES(wasi->lock)
 {
-        assert(wasifd < wasi->fdtable.lsize);
-        struct wasi_fdinfo **slot = &VEC_ELEM(wasi->fdtable, wasifd);
+        struct wasi_table *table = &wasi->fdtable;
+        assert(wasifd < table->table.lsize);
+        struct wasi_fdinfo **slot = &VEC_ELEM(table->table, wasifd);
         struct wasi_fdinfo *ofdinfo = *slot;
         assert(ofdinfo == NULL);
         assert(fdinfo->refcount < UINT32_MAX);
@@ -26,11 +27,12 @@ int
 wasi_fd_lookup_locked(struct wasi_instance *wasi, uint32_t wasifd,
                       struct wasi_fdinfo **infop) REQUIRES(wasi->lock)
 {
+        struct wasi_table *table = &wasi->fdtable;
         struct wasi_fdinfo *fdinfo;
-        if (wasifd >= wasi->fdtable.lsize) {
+        if (wasifd >= table->table.lsize) {
                 return EBADF;
         }
-        fdinfo = VEC_ELEM(wasi->fdtable, wasifd);
+        fdinfo = VEC_ELEM(table->table, wasifd);
         if (fdinfo == NULL) {
                 return EBADF;
         }
@@ -163,17 +165,18 @@ int
 wasi_fdtable_expand(struct wasi_instance *wasi, uint32_t maxfd)
         REQUIRES(wasi->lock)
 {
-        uint32_t osize = wasi->fdtable.lsize;
+        struct wasi_table *table = &wasi->fdtable;
+        uint32_t osize = table->table.lsize;
         if (maxfd < osize) {
                 return 0;
         }
-        int ret = VEC_RESIZE(wasi->fdtable, maxfd + 1);
+        int ret = VEC_RESIZE(table->table, maxfd + 1);
         if (ret != 0) {
                 return ret;
         }
         uint32_t i;
         for (i = osize; i <= maxfd; i++) {
-                VEC_ELEM(wasi->fdtable, i) = NULL;
+                VEC_ELEM(table->table, i) = NULL;
         }
         return 0;
 }
@@ -181,9 +184,10 @@ wasi_fdtable_expand(struct wasi_instance *wasi, uint32_t maxfd)
 void
 wasi_fdtable_free(struct wasi_instance *wasi) NO_THREAD_SAFETY_ANALYSIS
 {
+        struct wasi_table *table = &wasi->fdtable;
         struct wasi_fdinfo **it;
         uint32_t i;
-        VEC_FOREACH_IDX(i, it, wasi->fdtable) {
+        VEC_FOREACH_IDX(i, it, table->table) {
                 struct wasi_fdinfo *fdinfo = *it;
                 if (fdinfo == NULL) {
                         continue;
@@ -197,28 +201,29 @@ wasi_fdtable_free(struct wasi_instance *wasi) NO_THREAD_SAFETY_ANALYSIS
                 }
                 free(fdinfo);
         }
-        VEC_FREE(wasi->fdtable);
+        VEC_FREE(table->table);
 }
 
 int
 wasi_fd_alloc(struct wasi_instance *wasi, uint32_t *wasifdp)
         REQUIRES(wasi->lock)
 {
+        struct wasi_table *table = &wasi->fdtable;
         struct wasi_fdinfo **fdinfop;
         uint32_t wasifd;
-        VEC_FOREACH_IDX(wasifd, fdinfop, wasi->fdtable) {
+        VEC_FOREACH_IDX(wasifd, fdinfop, table->table) {
                 struct wasi_fdinfo *fdinfo = *fdinfop;
                 if (fdinfo == NULL) {
                         *wasifdp = wasifd;
                         return 0;
                 }
         }
-        wasifd = wasi->fdtable.lsize;
+        wasifd = table->table.lsize;
         int ret = wasi_fdtable_expand(wasi, wasifd);
         if (ret != 0) {
                 return ret;
         }
-        struct wasi_fdinfo *fdinfo = VEC_ELEM(wasi->fdtable, wasifd);
+        struct wasi_fdinfo *fdinfo = VEC_ELEM(table->table, wasifd);
         assert(fdinfo == NULL);
         *wasifdp = wasifd;
         return 0;
