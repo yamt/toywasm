@@ -260,15 +260,12 @@ wasi_fd_add(struct wasi_instance *wasi, int hostfd, char *path,
         uint32_t wasifd;
         int ret;
         assert((fdflags & ~WASI_FDFLAG_NONBLOCK) == 0);
-        fdinfo = wasi_fdinfo_alloc();
-        if (fdinfo == NULL) {
+        ret = wasi_vfs_impl_host_fdinfo_alloc(&fdinfo);
+        if (ret != 0) {
                 free(path);
-                return ENOMEM;
+                return ret;
         }
-        fdinfo->type = WASI_FDINFO_USER;
-        wasi_vfs_impl_host_init_file(fdinfo);
         fdinfo->u.u_user.hostfd = hostfd;
-        fdinfo->u.u_user.dir = NULL;
         fdinfo->u.u_user.path = path;
         fdinfo->blocking = (fdflags & WASI_FDFLAG_NONBLOCK) == 0;
         ret = wasi_fdinfo_add(wasi, fdinfo, &wasifd);
