@@ -154,8 +154,8 @@ wasi_fd_close(struct exec_context *ctx, struct host_instance *hi,
 
         assert(fdinfo->refcount == 2);
         fdinfo->refcount--;
-        assert(VEC_ELEM(wasi->fdtable, wasifd) == fdinfo);
-        VEC_ELEM(wasi->fdtable, wasifd) = NULL;
+        assert(VEC_ELEM(wasi->fdtable.table, wasifd) == fdinfo);
+        VEC_ELEM(wasi->fdtable.table, wasifd) = NULL;
         toywasm_mutex_unlock(&wasi->lock);
 
         ret = wasi_fdinfo_close(fdinfo);
@@ -932,8 +932,8 @@ wasi_fd_renumber(struct exec_context *ctx, struct host_instance *hi,
         /* renumber */
         assert(fdinfo_to->refcount == 2);
         fdinfo_to->refcount--;
-        VEC_ELEM(wasi->fdtable, wasifd_to) = fdinfo_from;
-        VEC_ELEM(wasi->fdtable, wasifd_from) = NULL;
+        VEC_ELEM(wasi->fdtable.table, wasifd_to) = fdinfo_from;
+        VEC_ELEM(wasi->fdtable.table, wasifd_from) = NULL;
 
         toywasm_mutex_unlock(&wasi->lock);
 

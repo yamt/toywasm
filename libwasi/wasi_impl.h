@@ -34,13 +34,16 @@ struct wasi_fdinfo {
         uint32_t blocking;
 };
 
+struct wasi_table {
+        VEC(, struct wasi_fdinfo *) table;
+};
+
 struct wasi_instance {
         struct host_instance hi;
 
         TOYWASM_MUTEX_DEFINE(lock);
         TOYWASM_CV_DEFINE(cv);
-        VEC(, struct wasi_fdinfo *)
-        fdtable GUARDED_VAR(lock); /* indexed by wasi fd */
+        struct wasi_table fdtable GUARDED_VAR(lock); /* indexed by wasi fd */
 
         int argc;
         const char *const *argv;
