@@ -212,6 +212,9 @@ wasi_fd_alloc(struct wasi_instance *wasi, uint32_t *wasifdp)
         struct wasi_fdinfo **fdinfop;
         uint32_t wasifd;
         VEC_FOREACH_IDX(wasifd, fdinfop, table->table) {
+                if (wasifd < table->reserved_slots) {
+                        continue;
+                }
                 struct wasi_fdinfo *fdinfo = *fdinfop;
                 if (fdinfo == NULL) {
                         *wasifdp = wasifd;
@@ -219,6 +222,9 @@ wasi_fd_alloc(struct wasi_instance *wasi, uint32_t *wasifdp)
                 }
         }
         wasifd = table->table.lsize;
+        if (wasifd < table->reserved_slots) {
+                wasifd = table->reserved_slots;
+        }
         int ret = wasi_fdtable_expand(wasi, wasifd);
         if (ret != 0) {
                 return ret;

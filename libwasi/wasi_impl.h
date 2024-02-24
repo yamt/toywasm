@@ -35,6 +35,7 @@ struct wasi_fdinfo {
 };
 
 struct wasi_table {
+        uint32_t reserved_slots;
         VEC(, struct wasi_fdinfo *) table;
 };
 
