@@ -16,7 +16,7 @@
 static int
 wasi_host_fd_fdopendir(struct wasi_fdinfo *fdinfo, DIR **dirp)
 {
-        int hostfd = fdinfo_hostfd(fdinfo);
+        int hostfd = wasi_fdinfo_hostfd(fdinfo);
         DIR *dir = fdopendir(hostfd);
         int ret;
         if (dir == NULL) {
@@ -31,14 +31,15 @@ wasi_host_fd_fdopendir(struct wasi_fdinfo *fdinfo, DIR **dirp)
 static int
 wasi_host_dir_init(struct wasi_fdinfo *fdinfo, DIR **dirp)
 {
-        DIR *dir = fdinfo->u.u_user.dir;
+        struct wasi_fdinfo_host *fdinfo_host = wasi_fdinfo_to_host(fdinfo);
+        DIR *dir = fdinfo_host->dir;
         if (dir == NULL) {
                 xlog_trace("fd_readdir: fdopendir");
                 int ret = wasi_host_fd_fdopendir(fdinfo, &dir);
                 if (ret != 0) {
                         return ret;
                 }
-                fdinfo->u.u_user.dir = dir;
+                fdinfo_host->dir = dir;
         }
         *dirp = dir;
         return 0;
@@ -47,7 +48,8 @@ wasi_host_dir_init(struct wasi_fdinfo *fdinfo, DIR **dirp)
 int
 wasi_host_dir_close(struct wasi_fdinfo *fdinfo)
 {
-        DIR *dir = fdinfo->u.u_user.dir;
+        struct wasi_fdinfo_host *fdinfo_host = wasi_fdinfo_to_host(fdinfo);
+        DIR *dir = fdinfo_host->dir;
         int ret = closedir(dir);
         if (ret == -1) {
                 ret = errno;

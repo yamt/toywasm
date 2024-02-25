@@ -923,11 +923,6 @@ wasi_fd_renumber(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail_locked;
         }
-        if (fdinfo_from->type == WASI_FDINFO_USER &&
-            fdinfo_from->u.u_user.hostfd == -1) {
-                ret = EBADF;
-                goto fail_locked;
-        }
 
         /* renumber */
         assert(fdinfo_to->refcount == 2);

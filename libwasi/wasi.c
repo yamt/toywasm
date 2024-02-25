@@ -34,6 +34,7 @@
 #include "wasi_impl.h"
 #include "xlog.h"
 
+#include "wasi_host_subr.h"
 #include "wasi_hostfuncs.h"
 #include "wasi_vfs_impl_host.h"
 
@@ -122,7 +123,7 @@ wasi_instance_add_hostfd(struct wasi_instance *inst, uint32_t wasmfd,
 #else
         dupfd = dup(hostfd);
 #endif
-        fdinfo->u.u_user.hostfd = dupfd;
+        wasi_fdinfo_to_host(fdinfo)->hostfd = dupfd;
         if (dupfd == -1) {
                 xlog_trace("failed to dup: wasm fd %" PRIu32
                            " host fd %u with errno %d",

@@ -3,6 +3,7 @@
 #include <inttypes.h>
 #include <stdlib.h>
 
+#include "wasi_host_subr.h"
 #include "wasi_impl.h"
 #include "wasi_vfs.h"
 #include "wasi_vfs_impl_host.h"
@@ -61,8 +62,6 @@ wasi_fdinfo_init(struct wasi_fdinfo *fdinfo)
         fdinfo->refcount = 0;
         fdinfo->blocking = 1;
         assert(wasi_fdinfo_unused(fdinfo));
-        fdinfo->u.u_user.hostfd = -1;
-        fdinfo->u.u_user.dir = NULL;
         fdinfo->u.u_user.path = NULL;
 }
 
@@ -87,9 +86,11 @@ wasi_fdinfo_clear(struct wasi_fdinfo *fdinfo)
                 free(fdinfo->u.u_prestat.wasm_path);
                 break;
         case WASI_FDINFO_USER:
-                assert(fdinfo->u.u_user.hostfd == -1);
                 assert(fdinfo->u.u_user.path == NULL);
-                assert(fdinfo->u.u_user.dir == NULL);
+                if (wasi_fdinfo_is_host(fdinfo)) {
+                        assert(wasi_fdinfo_to_host(fdinfo)->hostfd == -1);
+                        assert(wasi_fdinfo_to_host(fdinfo)->dir == NULL);
+                }
                 break;
         case WASI_FDINFO_UNUSED:
                 break;
