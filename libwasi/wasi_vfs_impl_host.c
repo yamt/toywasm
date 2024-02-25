@@ -1,8 +1,6 @@
 #include <errno.h>
 #include <stdlib.h>
 
-#include "wasi_vfs_types.h"
-
 #include "wasi_host_dirent.h"
 #include "wasi_host_fdop.h"
 #include "wasi_host_pathop.h"

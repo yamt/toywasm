@@ -9,9 +9,6 @@
 
 #include "endian.h"
 #include "nbio.h"
-
-#include "wasi_vfs_types.h"
-
 #include "wasi_impl.h"
 #include "wasi_poll_subr.h"
 #include "wasi_subr.h"
