@@ -25,6 +25,8 @@ struct wasi_vfs_ops {
         int (*dir_seek)(struct wasi_fdinfo *fdinfo, uint64_t offset);
         int (*dir_read)(struct wasi_fdinfo *fdinfo, struct wasi_dirent *wde,
                         const uint8_t **namep, bool *eod);
+        int (*path_fdinfo_alloc)(struct path_info *pi,
+                                 struct wasi_fdinfo **fdinfop);
         int (*path_open)(struct path_info *pi,
                          const struct path_open_params *params,
                          struct wasi_fdinfo *fdinfo);
