@@ -66,6 +66,9 @@ def process(mode, out, prefix="wasi_vfs_", qual="static const"):
                 print(f"\tconst struct wasi_vfs_ops *ops = path_vfs_ops({path_info_arg[0]});", file=out)
             else:
                 print(f"\tconst struct wasi_vfs_ops *ops = fdinfo_vfs_ops(fdinfo);", file=out)
+            print(f"\tif (ops->{fn} == NULL) {{", file=out)
+            print("\t\treturn ENOTSUP;", file=out)
+            print("\t}", file=out)
             print(f"\treturn ops->{fn}({', '.join(args_name)});", file=out)
             print("}", file=out)
     if mode == Mode.VfsStructDecl:
