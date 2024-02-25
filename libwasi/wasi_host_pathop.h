@@ -6,6 +6,8 @@ struct wasi_filestat;
 struct utimes_args;
 struct path_info;
 
+int wasi_host_path_fdinfo_alloc(struct path_info *pi,
+                                struct wasi_fdinfo **fdinfop);
 int wasi_host_path_open(struct path_info *pi,
                         const struct path_open_params *params,
                         struct wasi_fdinfo *fdinfo);

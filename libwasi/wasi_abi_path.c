@@ -52,9 +52,8 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
-        fdinfo = wasi_fdinfo_alloc();
-        if (fdinfo == NULL) {
-                ret = ENOMEM;
+        ret = wasi_vfs_path_fdinfo_alloc(&pi, &fdinfo);
+        if (ret != 0) {
                 goto fail;
         }
         /*

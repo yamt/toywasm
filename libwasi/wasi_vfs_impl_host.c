@@ -26,6 +26,7 @@ static const struct wasi_vfs_ops wasi_host_ops = {
         .dir_rewind = wasi_host_dir_rewind,
         .dir_seek = wasi_host_dir_seek,
         .dir_read = wasi_host_dir_read,
+        .path_fdinfo_alloc = wasi_host_path_fdinfo_alloc,
         .path_open = wasi_host_path_open,
         .path_unlink = wasi_host_path_unlink,
         .path_mkdir = wasi_host_path_mkdir,
