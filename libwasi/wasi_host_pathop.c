@@ -21,6 +21,7 @@
 #include "wasi_host_subr.h"
 #include "wasi_impl.h"
 #include "wasi_path_subr.h"
+#include "wasi_vfs_impl_host.h"
 
 #if defined(__wasi__)
 #if !defined(AT_FDCWD)
@@ -82,6 +83,12 @@ handle_errno(int orig_ret)
         }
         assert(orig_ret == 0);
         return 0;
+}
+
+int
+wasi_host_path_fdinfo_alloc(struct path_info *pi, struct wasi_fdinfo **fdinfop)
+{
+        return wasi_vfs_impl_host_fdinfo_alloc(fdinfop);
 }
 
 int
