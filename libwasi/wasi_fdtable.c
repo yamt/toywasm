@@ -5,6 +5,7 @@
 
 #include "exec.h"
 #include "timeutil.h"
+#include "wasi_host_subr.h"
 #include "wasi_impl.h"
 #include "wasi_vfs_impl_host.h"
 
@@ -138,7 +139,11 @@ wasi_hostfd_lookup(struct wasi_instance *wasi, uint32_t wasifd, int *hostfdp,
         if (ret != 0) {
                 return ret;
         }
-        *hostfdp = info->u.u_user.hostfd;
+        if (!wasi_fdinfo_is_host(info)) {
+                wasi_fdinfo_release(wasi, info);
+                return EBADF;
+        }
+        *hostfdp = wasi_fdinfo_hostfd(info);
         *fdinfop = info;
         return 0;
 }
@@ -156,7 +161,6 @@ wasi_userfd_lookup(struct wasi_instance *wasi, uint32_t wasifd,
                 wasi_fdinfo_release(wasi, info);
                 return EBADF;
         }
-        assert(info->u.u_user.hostfd != -1);
         *fdinfop = info;
         return 0;
 }
@@ -265,7 +269,7 @@ wasi_fd_add(struct wasi_instance *wasi, int hostfd, char *path,
                 free(path);
                 return ret;
         }
-        fdinfo->u.u_user.hostfd = hostfd;
+        wasi_fdinfo_to_host(fdinfo)->hostfd = hostfd;
         fdinfo->u.u_user.path = path;
         fdinfo->blocking = (fdflags & WASI_FDFLAG_NONBLOCK) == 0;
         ret = wasi_fdinfo_add(wasi, fdinfo, &wasifd);

@@ -83,7 +83,7 @@ int
 wasi_host_fd_fallocate(struct wasi_fdinfo *fdinfo, wasi_off_t offset,
                        wasi_off_t len)
 {
-        int hostfd = fdinfo_hostfd(fdinfo);
+        int hostfd = wasi_fdinfo_hostfd(fdinfo);
         int ret;
         /*
          * macOS doesn't have posix_fallocate
@@ -112,7 +112,7 @@ handle_errno(int orig_ret)
 int
 wasi_host_fd_ftruncate(struct wasi_fdinfo *fdinfo, wasi_off_t size)
 {
-        int hostfd = fdinfo_hostfd(fdinfo);
+        int hostfd = wasi_fdinfo_hostfd(fdinfo);
         int ret = ftruncate(hostfd, size);
         return handle_errno(ret);
 }
@@ -121,7 +121,7 @@ int
 wasi_host_fd_writev(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
                     int iovcnt, size_t *resultp)
 {
-        int hostfd = fdinfo_hostfd(fdinfo);
+        int hostfd = wasi_fdinfo_hostfd(fdinfo);
         ssize_t ssz = writev(hostfd, iov, iovcnt);
         if (ssz == -1) {
                 int ret = errno;
@@ -136,7 +136,7 @@ int
 wasi_host_fd_pwritev(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
                      int iovcnt, wasi_off_t off, size_t *resultp)
 {
-        int hostfd = fdinfo_hostfd(fdinfo);
+        int hostfd = wasi_fdinfo_hostfd(fdinfo);
         ssize_t ssz = pwritev(hostfd, iov, iovcnt, off);
         if (ssz == -1) {
                 int ret = errno;
@@ -150,7 +150,7 @@ wasi_host_fd_pwritev(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
 int
 wasi_host_fd_get_flags(struct wasi_fdinfo *fdinfo, uint16_t *resultp)
 {
-        int hostfd = fdinfo_hostfd(fdinfo);
+        int hostfd = wasi_fdinfo_hostfd(fdinfo);
         errno = 0;
         int ret = fcntl(hostfd, F_GETFL, 0);
         if (ret == -1 && errno != 0) {
@@ -171,7 +171,7 @@ int
 wasi_host_fd_readv(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
                    int iovcnt, size_t *resultp)
 {
-        int hostfd = fdinfo_hostfd(fdinfo);
+        int hostfd = wasi_fdinfo_hostfd(fdinfo);
         ssize_t ssz = readv(hostfd, iov, iovcnt);
         if (ssz == -1) {
                 int ret = errno;
@@ -186,7 +186,7 @@ int
 wasi_host_fd_preadv(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
                     int iovcnt, wasi_off_t off, size_t *resultp)
 {
-        int hostfd = fdinfo_hostfd(fdinfo);
+        int hostfd = wasi_fdinfo_hostfd(fdinfo);
         ssize_t ssz = preadv(hostfd, iov, iovcnt, off);
         if (ssz == -1) {
                 int ret = errno;
@@ -200,7 +200,7 @@ wasi_host_fd_preadv(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
 int
 wasi_host_fd_fstat(struct wasi_fdinfo *fdinfo, struct wasi_filestat *wstp)
 {
-        int hostfd = fdinfo_hostfd(fdinfo);
+        int hostfd = wasi_fdinfo_hostfd(fdinfo);
         struct stat st;
         int ret = fstat(hostfd, &st);
         if (ret != 0) {
@@ -214,7 +214,7 @@ int
 wasi_host_fd_lseek(struct wasi_fdinfo *fdinfo, wasi_off_t offset, int whence,
                    wasi_off_t *resultp)
 {
-        int hostfd = fdinfo_hostfd(fdinfo);
+        int hostfd = wasi_fdinfo_hostfd(fdinfo);
         errno = 0;
         off_t off = lseek(hostfd, offset, whence);
         if (off == -1 && errno != 0) {
@@ -229,7 +229,7 @@ wasi_host_fd_lseek(struct wasi_fdinfo *fdinfo, wasi_off_t offset, int whence,
 int
 wasi_host_fd_fsync(struct wasi_fdinfo *fdinfo)
 {
-        int hostfd = fdinfo_hostfd(fdinfo);
+        int hostfd = wasi_fdinfo_hostfd(fdinfo);
         int ret = fsync(hostfd);
         return handle_errno(ret);
 }
@@ -237,7 +237,7 @@ wasi_host_fd_fsync(struct wasi_fdinfo *fdinfo)
 int
 wasi_host_fd_fdatasync(struct wasi_fdinfo *fdinfo)
 {
-        int hostfd = fdinfo_hostfd(fdinfo);
+        int hostfd = wasi_fdinfo_hostfd(fdinfo);
 #if defined(__APPLE__)
         /* macOS doesn't have fdatasync */
         int ret = fsync(hostfd);
@@ -251,7 +251,7 @@ int
 wasi_host_fd_futimes(struct wasi_fdinfo *fdinfo,
                      const struct utimes_args *args)
 {
-        int hostfd = fdinfo_hostfd(fdinfo);
+        int hostfd = wasi_fdinfo_hostfd(fdinfo);
         struct timeval tv[2];
         const struct timeval *tvp;
         int ret;
@@ -267,8 +267,9 @@ int
 wasi_host_fd_close(struct wasi_fdinfo *fdinfo)
 {
         assert(fdinfo->type == WASI_FDINFO_USER);
+        struct wasi_fdinfo_host *fdinfo_host = wasi_fdinfo_to_host(fdinfo);
         int ret = 0;
-        int hostfd = fdinfo->u.u_user.hostfd;
+        int hostfd = fdinfo_host->hostfd;
 #if defined(__wasi__) /* wasi has no dup */
         if (hostfd != -1 && hostfd >= 3) {
 #else
@@ -282,12 +283,12 @@ wasi_host_fd_close(struct wasi_fdinfo *fdinfo)
                                    hostfd, ret);
                 }
         }
-        free(fdinfo->u.u_user.path);
-        if (fdinfo->u.u_user.dir != NULL) {
+        if (fdinfo_host->dir != NULL) {
                 wasi_host_dir_close(fdinfo);
         }
-        fdinfo->u.u_user.hostfd = -1;
+        free(fdinfo->u.u_user.path);
+        fdinfo_host->hostfd = -1;
+        fdinfo_host->dir = NULL;
         fdinfo->u.u_user.path = NULL;
-        fdinfo->u.u_user.dir = NULL;
         return ret;
 }

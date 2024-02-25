@@ -7,6 +7,7 @@
 #include "exec.h"
 #include "nbio.h"
 #include "restart.h"
+#include "wasi_host_subr.h"
 #include "wasi_impl.h"
 #include "wasi_poll_subr.h"
 
@@ -159,8 +160,7 @@ bool
 emulate_blocking(struct exec_context *ctx, struct wasi_fdinfo *fdinfo,
                  short poll_event, int orig_ret, int *host_retp, int *retp)
 {
-        assert(fdinfo->type == WASI_FDINFO_USER);
-        int hostfd = fdinfo->u.u_user.hostfd;
+        int hostfd = wasi_fdinfo_hostfd(fdinfo);
         assert(hostfd != -1);
         /* See the comment in wasi_instance_create */
         assert(isatty(hostfd) ||

@@ -21,6 +21,7 @@
 #include "wasi_host_subr.h"
 #include "wasi_impl.h"
 #include "wasi_utimes.h"
+#include "wasi_vfs_impl_host.h"
 #include "xlog.h"
 
 uint64_t
@@ -308,9 +309,19 @@ wasi_build_oflags(uint32_t lookupflags, uint32_t wasmoflags,
 }
 
 int
-fdinfo_hostfd(struct wasi_fdinfo *fdinfo)
+wasi_fdinfo_hostfd(struct wasi_fdinfo *fdinfo)
 {
-        assert(fdinfo->type == WASI_FDINFO_USER);
-        assert(fdinfo->u.u_user.hostfd != -1);
-        return fdinfo->u.u_user.hostfd;
+        assert(wasi_fdinfo_is_host(fdinfo));
+        struct wasi_fdinfo_host *fdinfo_host = wasi_fdinfo_to_host(fdinfo);
+        assert(fdinfo_host->hostfd != -1);
+        return fdinfo_host->hostfd;
+}
+
+struct wasi_fdinfo_host *
+wasi_fdinfo_to_host(struct wasi_fdinfo *fdinfo)
+{
+        assert(wasi_fdinfo_is_host(fdinfo));
+        struct wasi_fdinfo_host *fdinfo_host = (void *)fdinfo;
+        assert(fdinfo == &fdinfo_host->fdinfo);
+        return fdinfo_host;
 }

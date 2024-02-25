@@ -25,13 +25,17 @@ struct wasi_fdinfo {
                 /* WASI_FDINFO_USER */
                 struct {
                         const struct wasi_vfs *vfs;
-                        int hostfd;
-                        void *dir;
                         char *path;
                 } u_user;
         } u;
         uint32_t refcount;
         uint32_t blocking;
+};
+
+struct wasi_fdinfo_host {
+        struct wasi_fdinfo fdinfo;
+        int hostfd;
+        void *dir; /* DIR * */
 };
 
 struct wasi_table {
