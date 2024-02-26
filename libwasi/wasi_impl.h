@@ -15,25 +15,25 @@ enum wasi_fdinfo_type {
 
 struct wasi_fdinfo {
         enum wasi_fdinfo_type type;
-        union {
-                /* WASI_FDINFO_PRESTAT */
-                struct {
-                        char *prestat_path;
-                        char *wasm_path; /* NULL means same as prestat_path */
-                        struct wasi_vfs vfs;
-                } u_prestat;
-                /* WASI_FDINFO_USER */
-                struct {
-                        const struct wasi_vfs *vfs;
-                        char *path;
-                        uint32_t blocking;
-                } u_user;
-        } u;
         uint32_t refcount;
 };
 
-struct wasi_fdinfo_host {
+struct wasi_fdinfo_prestat {
         struct wasi_fdinfo fdinfo;
+        char *prestat_path;
+        char *wasm_path; /* NULL means same as prestat_path */
+        struct wasi_vfs vfs;
+};
+
+struct wasi_fdinfo_user {
+        struct wasi_fdinfo fdinfo;
+        const struct wasi_vfs *vfs;
+        char *path;
+        uint32_t blocking;
+};
+
+struct wasi_fdinfo_host {
+        struct wasi_fdinfo_user user;
         int hostfd;
         void *dir; /* DIR * */
 };
@@ -99,10 +99,13 @@ struct exec_context;
 bool wasi_fdinfo_is_prestat(const struct wasi_fdinfo *fdinfo);
 bool wasi_fdinfo_unused(struct wasi_fdinfo *fdinfo);
 const char *wasi_fdinfo_path(struct wasi_fdinfo *fdinfo);
-const struct wasi_vfs *wasi_fdinfo_vfs(const struct wasi_fdinfo *fdinfo);
+const struct wasi_vfs *wasi_fdinfo_vfs(struct wasi_fdinfo *fdinfo);
 void wasi_fdinfo_init(struct wasi_fdinfo *fdinfo);
+void wasi_fdinfo_user_init(struct wasi_fdinfo_user *fdinfo_user);
 void wasi_fdinfo_clear(struct wasi_fdinfo *fdinfo);
-struct wasi_fdinfo *wasi_fdinfo_alloc(void);
+struct wasi_fdinfo *wasi_fdinfo_alloc_prestat(void);
+struct wasi_fdinfo_prestat *wasi_fdinfo_to_prestat(struct wasi_fdinfo *fdinfo);
+struct wasi_fdinfo_user *wasi_fdinfo_to_user(struct wasi_fdinfo *fdinfo);
 void wasi_fdinfo_free(struct wasi_fdinfo *fdinfo);
 void wasi_fdinfo_release(struct wasi_instance *wasi,
                          struct wasi_fdinfo *fdinfo);

@@ -25,9 +25,9 @@ wasi_fdinfo_path(struct wasi_fdinfo *fdinfo)
 {
         switch (fdinfo->type) {
         case WASI_FDINFO_PRESTAT:
-                return fdinfo->u.u_prestat.prestat_path;
+                return wasi_fdinfo_to_prestat(fdinfo)->prestat_path;
         case WASI_FDINFO_USER:
-                return fdinfo->u.u_user.path;
+                return wasi_fdinfo_to_user(fdinfo)->path;
         case WASI_FDINFO_UNUSED:
                 return NULL;
         }
@@ -36,15 +36,15 @@ wasi_fdinfo_path(struct wasi_fdinfo *fdinfo)
 }
 
 const struct wasi_vfs *
-wasi_fdinfo_vfs(const struct wasi_fdinfo *fdinfo)
+wasi_fdinfo_vfs(struct wasi_fdinfo *fdinfo)
 {
         const struct wasi_vfs *vfs;
         switch (fdinfo->type) {
         case WASI_FDINFO_PRESTAT:
-                vfs = &fdinfo->u.u_prestat.vfs;
+                vfs = &wasi_fdinfo_to_prestat(fdinfo)->vfs;
                 break;
         case WASI_FDINFO_USER:
-                vfs = fdinfo->u.u_user.vfs;
+                vfs = wasi_fdinfo_to_user(fdinfo)->vfs;
                 break;
         default:
                 assert(false);
@@ -61,32 +61,62 @@ wasi_fdinfo_init(struct wasi_fdinfo *fdinfo)
         fdinfo->type = WASI_FDINFO_UNUSED;
         fdinfo->refcount = 0;
         assert(wasi_fdinfo_unused(fdinfo));
-        fdinfo->u.u_user.blocking = 1;
-        fdinfo->u.u_user.path = NULL;
+}
+
+void
+wasi_fdinfo_user_init(struct wasi_fdinfo_user *fdinfo_user)
+{
+        wasi_fdinfo_init(&fdinfo_user->fdinfo);
+        fdinfo_user->fdinfo.type = WASI_FDINFO_USER;
+        fdinfo_user->blocking = 1;
+        fdinfo_user->path = NULL;
 }
 
 struct wasi_fdinfo *
-wasi_fdinfo_alloc(void)
+wasi_fdinfo_alloc_prestat(void)
 {
-        struct wasi_fdinfo *fdinfo = zalloc(sizeof(*fdinfo));
-        if (fdinfo == NULL) {
+        struct wasi_fdinfo_prestat *fdinfo_prestat =
+                zalloc(sizeof(*fdinfo_prestat));
+        if (fdinfo_prestat == NULL) {
                 return NULL;
         }
+        struct wasi_fdinfo *fdinfo = &fdinfo_prestat->fdinfo;
         wasi_fdinfo_init(fdinfo);
+        fdinfo->type = WASI_FDINFO_PRESTAT;
         return fdinfo;
+}
+
+struct wasi_fdinfo_prestat *
+wasi_fdinfo_to_prestat(struct wasi_fdinfo *fdinfo)
+{
+        assert(fdinfo->type == WASI_FDINFO_PRESTAT);
+        struct wasi_fdinfo_prestat *fdinfo_prestat = (void *)fdinfo;
+        assert(&fdinfo_prestat->fdinfo == fdinfo);
+        return fdinfo_prestat;
+}
+
+struct wasi_fdinfo_user *
+wasi_fdinfo_to_user(struct wasi_fdinfo *fdinfo)
+{
+        assert(fdinfo->type == WASI_FDINFO_USER);
+        struct wasi_fdinfo_user *fdinfo_user = (void *)fdinfo;
+        assert(&fdinfo_user->fdinfo == fdinfo);
+        return fdinfo_user;
 }
 
 void
 wasi_fdinfo_clear(struct wasi_fdinfo *fdinfo)
 {
+        struct wasi_fdinfo_prestat *fdinfo_prestat;
         assert(fdinfo->refcount == 0);
         switch (fdinfo->type) {
         case WASI_FDINFO_PRESTAT:
-                free(fdinfo->u.u_prestat.prestat_path);
-                free(fdinfo->u.u_prestat.wasm_path);
+                fdinfo_prestat = wasi_fdinfo_to_prestat(fdinfo);
+                free(fdinfo_prestat->prestat_path);
+                free(fdinfo_prestat->wasm_path);
                 break;
         case WASI_FDINFO_USER:
-                assert(fdinfo->u.u_user.path == NULL);
+                assert(wasi_fdinfo_to_user(fdinfo)->path == NULL);
                 if (wasi_fdinfo_is_host(fdinfo)) {
                         assert(wasi_fdinfo_to_host(fdinfo)->hostfd == -1);
                         assert(wasi_fdinfo_to_host(fdinfo)->dir == NULL);
@@ -131,13 +161,15 @@ wasi_fdinfo_release(struct wasi_instance *wasi, struct wasi_fdinfo *fdinfo)
 int
 wasi_fdinfo_close(struct wasi_fdinfo *fdinfo)
 {
+        struct wasi_fdinfo_prestat *fdinfo_prestat;
         int ret = 0;
         switch (fdinfo->type) {
         case WASI_FDINFO_PRESTAT:
-                free(fdinfo->u.u_prestat.prestat_path);
-                free(fdinfo->u.u_prestat.wasm_path);
-                fdinfo->u.u_prestat.prestat_path = NULL;
-                fdinfo->u.u_prestat.wasm_path = NULL;
+                fdinfo_prestat = wasi_fdinfo_to_prestat(fdinfo);
+                free(fdinfo_prestat->prestat_path);
+                free(fdinfo_prestat->wasm_path);
+                fdinfo_prestat->prestat_path = NULL;
+                fdinfo_prestat->wasm_path = NULL;
                 break;
         case WASI_FDINFO_USER:
                 ret = wasi_vfs_fd_close(fdinfo);

@@ -322,6 +322,6 @@ wasi_fdinfo_to_host(struct wasi_fdinfo *fdinfo)
 {
         assert(wasi_fdinfo_is_host(fdinfo));
         struct wasi_fdinfo_host *fdinfo_host = (void *)fdinfo;
-        assert(fdinfo == &fdinfo_host->fdinfo);
+        assert(fdinfo == &fdinfo_host->user.fdinfo);
         return fdinfo_host;
 }

@@ -130,10 +130,10 @@ wasi_host_path_open(struct path_info *pi,
                 pi->hostpath = NULL;
         }
         fdinfo->type = WASI_FDINFO_USER;
-        fdinfo->u.u_user.path = pi->hostpath;
-        fdinfo->u.u_user.blocking =
-                (params->fdflags & WASI_FDFLAG_NONBLOCK) == 0;
         struct wasi_fdinfo_host *fdinfo_host = wasi_fdinfo_to_host(fdinfo);
+        fdinfo_host->user.path = pi->hostpath;
+        fdinfo_host->user.blocking =
+                (params->fdflags & WASI_FDFLAG_NONBLOCK) == 0;
         fdinfo_host->hostfd = hostfd;
         fdinfo_host->dir = NULL;
         pi->hostpath = NULL;

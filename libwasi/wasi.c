@@ -234,16 +234,17 @@ wasi_instance_prestat_add_common(struct wasi_instance *wasi, const char *path,
         } else {
                 host_path = strdup(path);
         }
-        fdinfo = wasi_fdinfo_alloc();
+        fdinfo = wasi_fdinfo_alloc_prestat();
         if (host_path == NULL || (is_mapdir && wasm_path == NULL) ||
             fdinfo == NULL) {
                 ret = ENOMEM;
                 goto fail;
         }
-        fdinfo->type = WASI_FDINFO_PRESTAT;
+        struct wasi_fdinfo_prestat *fdinfo_prestat =
+                wasi_fdinfo_to_prestat(fdinfo);
         wasi_vfs_impl_host_init_prestat(fdinfo);
-        fdinfo->u.u_prestat.prestat_path = host_path;
-        fdinfo->u.u_prestat.wasm_path = wasm_path;
+        fdinfo_prestat->prestat_path = host_path;
+        fdinfo_prestat->wasm_path = wasm_path;
         host_path = NULL;
         wasm_path = NULL;
         ret = wasi_table_fdinfo_add(wasi, WASI_TABLE_FILES, fdinfo, &wasifd);
@@ -251,7 +252,7 @@ wasi_instance_prestat_add_common(struct wasi_instance *wasi, const char *path,
                 goto fail;
         }
         xlog_trace("prestat added %s (%s)", path,
-                   fdinfo->u.u_prestat.prestat_path);
+                   fdinfo_prestat->prestat_path);
         return 0;
 fail:
         free(host_path);
