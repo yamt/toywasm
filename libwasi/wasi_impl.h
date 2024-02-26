@@ -10,7 +10,7 @@
 enum wasi_fdinfo_type {
         WASI_FDINFO_UNUSED,
         WASI_FDINFO_PRESTAT,
-        WASI_FDINFO_USER,
+        WASI_FDINFO_USER, /* vfs-based file */
 };
 
 struct wasi_fdinfo {
