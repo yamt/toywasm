@@ -140,3 +140,6 @@ int wasi_table_alloc_slot(struct wasi_instance *wasi, enum wasi_table_idx idx,
                           uint32_t *wasifdp) REQUIRES(wasi->lock);
 int wasi_table_fdinfo_add(struct wasi_instance *wasi, enum wasi_table_idx idx,
                           struct wasi_fdinfo *fdinfo, uint32_t *wasifdp);
+struct wasi_fdinfo **wasi_table_slot_ptr(struct wasi_instance *wasi,
+                                         enum wasi_table_idx idx,
+                                         uint32_t wasifd) REQUIRES(wasi->lock);
