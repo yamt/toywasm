@@ -14,12 +14,6 @@ wasi_fdinfo_is_prestat(const struct wasi_fdinfo *fdinfo)
         return fdinfo->type == WASI_FDINFO_PRESTAT;
 }
 
-bool
-wasi_fdinfo_unused(struct wasi_fdinfo *fdinfo)
-{
-        return fdinfo->type == WASI_FDINFO_UNUSED;
-}
-
 const char *
 wasi_fdinfo_path(struct wasi_fdinfo *fdinfo)
 {
@@ -28,8 +22,6 @@ wasi_fdinfo_path(struct wasi_fdinfo *fdinfo)
                 return wasi_fdinfo_to_prestat(fdinfo)->prestat_path;
         case WASI_FDINFO_USER:
                 return wasi_fdinfo_to_user(fdinfo)->path;
-        case WASI_FDINFO_UNUSED:
-                return NULL;
         }
         assert(false);
         return NULL;
@@ -46,9 +38,6 @@ wasi_fdinfo_vfs(struct wasi_fdinfo *fdinfo)
         case WASI_FDINFO_USER:
                 vfs = wasi_fdinfo_to_user(fdinfo)->vfs;
                 break;
-        default:
-                assert(false);
-                return NULL;
         }
         assert(vfs != NULL);
         assert(vfs->ops != NULL);
@@ -58,9 +47,7 @@ wasi_fdinfo_vfs(struct wasi_fdinfo *fdinfo)
 void
 wasi_fdinfo_init(struct wasi_fdinfo *fdinfo)
 {
-        fdinfo->type = WASI_FDINFO_UNUSED;
         fdinfo->refcount = 0;
-        assert(wasi_fdinfo_unused(fdinfo));
 }
 
 void
@@ -122,8 +109,6 @@ wasi_fdinfo_clear(struct wasi_fdinfo *fdinfo)
                         assert(wasi_fdinfo_to_host(fdinfo)->dir == NULL);
                 }
                 break;
-        case WASI_FDINFO_UNUSED:
-                break;
         }
 }
 
@@ -173,8 +158,6 @@ wasi_fdinfo_close(struct wasi_fdinfo *fdinfo)
                 break;
         case WASI_FDINFO_USER:
                 ret = wasi_vfs_fd_close(fdinfo);
-                break;
-        case WASI_FDINFO_UNUSED:
                 break;
         }
         return ret;

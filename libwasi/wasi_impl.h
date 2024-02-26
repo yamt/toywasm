@@ -7,7 +7,6 @@
 #include "xlog.h"
 
 enum wasi_fdinfo_type {
-        WASI_FDINFO_UNUSED,
         WASI_FDINFO_PRESTAT,
         WASI_FDINFO_USER, /* vfs-based file */
 };
@@ -96,7 +95,6 @@ struct exec_context;
 
 /* fdinfo */
 bool wasi_fdinfo_is_prestat(const struct wasi_fdinfo *fdinfo);
-bool wasi_fdinfo_unused(struct wasi_fdinfo *fdinfo);
 const char *wasi_fdinfo_path(struct wasi_fdinfo *fdinfo);
 const struct wasi_vfs *wasi_fdinfo_vfs(struct wasi_fdinfo *fdinfo);
 void wasi_fdinfo_init(struct wasi_fdinfo *fdinfo);
