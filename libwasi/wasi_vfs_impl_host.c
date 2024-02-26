@@ -46,7 +46,7 @@ struct wasi_vfs wasi_host_vfs = {
 void
 wasi_vfs_impl_host_init_prestat(struct wasi_fdinfo *fdinfo)
 {
-        wasi_fdinfo_to_prestat(fdinfo)->vfs.ops = &wasi_host_ops;
+        wasi_fdinfo_to_prestat(fdinfo)->vfs = &wasi_host_vfs;
 }
 
 int
