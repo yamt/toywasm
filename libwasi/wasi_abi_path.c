@@ -68,7 +68,7 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         uint32_t wasifd;
-        ret = wasi_fdinfo_add(wasi, fdinfo, &wasifd);
+        ret = wasi_table_fdinfo_add(wasi, WASI_TABLE_FILES, fdinfo, &wasifd);
         if (ret != 0) {
                 goto fail;
         }

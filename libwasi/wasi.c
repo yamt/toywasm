@@ -67,12 +67,13 @@ wasi_instance_add_hostfd(struct wasi_instance *inst, uint32_t wasmfd,
 {
         struct wasi_fdinfo *fdinfo = NULL;
         int ret;
+        const enum wasi_table_idx tblidx = WASI_TABLE_FILES;
         toywasm_mutex_lock(&inst->lock);
-        ret = wasi_fdtable_expand(inst, wasmfd);
+        ret = wasi_table_expand(inst, tblidx, wasmfd);
         if (ret != 0) {
                 goto fail;
         }
-        ret = wasi_fd_lookup_locked(inst, wasmfd, &fdinfo);
+        ret = wasi_table_lookup_locked(inst, tblidx, wasmfd, &fdinfo);
         if (ret == 0) {
                 ret = EBUSY;
                 goto fail;
@@ -129,7 +130,7 @@ wasi_instance_add_hostfd(struct wasi_instance *inst, uint32_t wasmfd,
                            " host fd %u with errno %d",
                            wasmfd, hostfd, errno);
         }
-        wasi_fd_affix(inst, wasmfd, fdinfo);
+        wasi_table_affix(inst, tblidx, wasmfd, fdinfo);
         fdinfo = NULL;
         ret = 0;
 fail:
@@ -170,7 +171,7 @@ wasi_instance_create(struct wasi_instance **instp) NO_THREAD_SAFETY_ANALYSIS
         toywasm_mutex_init(&inst->lock);
         toywasm_cv_init(&inst->cv);
         /* the first three slots are reserved for stdin, stdout, stderr */
-        inst->fdtable.reserved_slots = 3;
+        inst->fdtable[WASI_TABLE_FILES].reserved_slots = 3;
         *instp = inst;
         return 0;
 }
@@ -245,7 +246,7 @@ wasi_instance_prestat_add_common(struct wasi_instance *wasi, const char *path,
         fdinfo->u.u_prestat.wasm_path = wasm_path;
         host_path = NULL;
         wasm_path = NULL;
-        ret = wasi_fdinfo_add(wasi, fdinfo, &wasifd);
+        ret = wasi_table_fdinfo_add(wasi, WASI_TABLE_FILES, fdinfo, &wasifd);
         if (ret != 0) {
                 goto fail;
         }
@@ -284,7 +285,10 @@ wasi_instance_exit_code(struct wasi_instance *wasi)
 void
 wasi_instance_destroy(struct wasi_instance *inst)
 {
-        wasi_fdtable_free(inst);
+        unsigned int i;
+        for (i = 0; i < WASI_NTABLES; i++) {
+                wasi_table_clear(inst, i);
+        }
         toywasm_cv_destroy(&inst->cv);
         toywasm_mutex_destroy(&inst->lock);
         free(inst);

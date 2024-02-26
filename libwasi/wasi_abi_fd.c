@@ -122,6 +122,7 @@ wasi_fd_close(struct exec_context *ctx, struct host_instance *hi,
         struct wasi_fdinfo *fdinfo = NULL;
         int host_ret = 0;
         int ret;
+        const enum wasi_table_idx tblidx = WASI_TABLE_FILES;
 
         /*
          * we simply make fd_close block until other threads finish working
@@ -142,8 +143,8 @@ wasi_fd_close(struct exec_context *ctx, struct host_instance *hi,
          */
 
         toywasm_mutex_lock(&wasi->lock);
-        host_ret = wasi_fd_lookup_locked_for_close(ctx, wasi, wasifd, &fdinfo,
-                                                   &ret);
+        host_ret = wasi_table_lookup_locked_for_close(ctx, wasi, tblidx,
+                                                      wasifd, &fdinfo, &ret);
         if (host_ret != 0 || ret != 0) {
                 toywasm_mutex_unlock(&wasi->lock);
                 goto fail;
@@ -151,8 +152,8 @@ wasi_fd_close(struct exec_context *ctx, struct host_instance *hi,
 
         assert(fdinfo->refcount == 2);
         fdinfo->refcount--;
-        assert(VEC_ELEM(wasi->fdtable.table, wasifd) == fdinfo);
-        VEC_ELEM(wasi->fdtable.table, wasifd) = NULL;
+        assert(VEC_ELEM(wasi->fdtable[tblidx].table, wasifd) == fdinfo);
+        VEC_ELEM(wasi->fdtable[tblidx].table, wasifd) = NULL;
         toywasm_mutex_unlock(&wasi->lock);
 
         ret = wasi_fdinfo_close(fdinfo);
@@ -892,11 +893,12 @@ wasi_fd_renumber(struct exec_context *ctx, struct host_instance *hi,
         struct wasi_fdinfo *fdinfo_to = NULL;
         int host_ret = 0;
         int ret;
+        const enum wasi_table_idx tblidx = WASI_TABLE_FILES;
 
         toywasm_mutex_lock(&wasi->lock);
 
         /* ensure the table size is big enough */
-        ret = wasi_fdtable_expand(wasi, wasifd_to);
+        ret = wasi_table_expand(wasi, tblidx, wasifd_to);
         if (ret != 0) {
                 goto fail_locked;
         }
@@ -909,14 +911,15 @@ wasi_fd_renumber(struct exec_context *ctx, struct host_instance *hi,
          * Note: unlike dup2, for some thread-safety reasons, fd_renumber
          * requires the "to" be an open descriptor.
          */
-        host_ret = wasi_fd_lookup_locked_for_close(ctx, wasi, wasifd_to,
-                                                   &fdinfo_to, &ret);
+        host_ret = wasi_table_lookup_locked_for_close(
+                ctx, wasi, tblidx, wasifd_to, &fdinfo_to, &ret);
         if (host_ret != 0 || ret != 0) {
                 goto fail_locked;
         }
 
         /* check "from" */
-        ret = wasi_fd_lookup_locked(wasi, wasifd_from, &fdinfo_from);
+        ret = wasi_table_lookup_locked(wasi, tblidx, wasifd_from,
+                                       &fdinfo_from);
         if (ret != 0) {
                 goto fail_locked;
         }
@@ -924,8 +927,8 @@ wasi_fd_renumber(struct exec_context *ctx, struct host_instance *hi,
         /* renumber */
         assert(fdinfo_to->refcount == 2);
         fdinfo_to->refcount--;
-        VEC_ELEM(wasi->fdtable.table, wasifd_to) = fdinfo_from;
-        VEC_ELEM(wasi->fdtable.table, wasifd_from) = NULL;
+        VEC_ELEM(wasi->fdtable[tblidx].table, wasifd_to) = fdinfo_from;
+        VEC_ELEM(wasi->fdtable[tblidx].table, wasifd_from) = NULL;
 
         toywasm_mutex_unlock(&wasi->lock);
 
