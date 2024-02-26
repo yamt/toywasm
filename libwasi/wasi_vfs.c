@@ -6,7 +6,7 @@
 #include "wasi_vfs_ops.h"
 
 static const struct wasi_vfs_ops *
-fdinfo_vfs_ops(const struct wasi_fdinfo *fdinfo)
+fdinfo_vfs_ops(struct wasi_fdinfo *fdinfo)
 {
         return wasi_fdinfo_vfs(fdinfo)->ops;
 }

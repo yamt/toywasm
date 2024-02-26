@@ -46,7 +46,7 @@ struct wasi_vfs wasi_host_vfs = {
 void
 wasi_vfs_impl_host_init_prestat(struct wasi_fdinfo *fdinfo)
 {
-        fdinfo->u.u_prestat.vfs.ops = &wasi_host_ops;
+        wasi_fdinfo_to_prestat(fdinfo)->vfs.ops = &wasi_host_ops;
 }
 
 int
@@ -57,14 +57,12 @@ wasi_vfs_impl_host_fdinfo_alloc(struct wasi_fdinfo **fdinfop)
         if (fdinfo_host == NULL) {
                 return ENOMEM;
         }
-        struct wasi_fdinfo *fdinfo = &fdinfo_host->fdinfo;
-        wasi_fdinfo_init(fdinfo);
-        fdinfo->type = WASI_FDINFO_USER;
+        wasi_fdinfo_user_init(&fdinfo_host->user);
         /* TODO: use separate vfs for files came from separate prestat */
-        fdinfo->u.u_user.vfs = &wasi_host_vfs;
+        fdinfo_host->user.vfs = &wasi_host_vfs;
         fdinfo_host->hostfd = -1;
         fdinfo_host->dir = NULL;
-        *fdinfop = fdinfo;
+        *fdinfop = &fdinfo_host->user.fdinfo;
         return 0;
 }
 

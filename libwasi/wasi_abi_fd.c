@@ -547,9 +547,9 @@ wasi_fd_fdstat_get(struct exec_context *ctx, struct host_instance *hi,
                  * Note: (flags & WASI_FDFLAG_NONBLOCK) is the non-block
                  * flag of the underlying host descriptor, which is usually
                  * true in this implementation.
-                 * fdinfo->u.u_user.blocking is what users of wasi care.
+                 * fdinfo_user->blocking is what users of wasi care.
                  */
-                if (!fdinfo->u.u_user.blocking) {
+                if (!wasi_fdinfo_to_user(fdinfo)->blocking) {
                         st.fs_flags |= host_to_le16(WASI_FDFLAG_NONBLOCK);
                 }
                 st.fs_flags |= host_to_le16(flags & WASI_FDFLAG_APPEND);
@@ -642,7 +642,8 @@ wasi_fd_fdstat_set_flags(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        fdinfo->u.u_user.blocking = ((fdflags & WASI_FDFLAG_NONBLOCK) == 0);
+        wasi_fdinfo_to_user(fdinfo)->blocking =
+                ((fdflags & WASI_FDFLAG_NONBLOCK) == 0);
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
@@ -1092,9 +1093,11 @@ wasi_fd_prestat_get(struct exec_context *ctx, struct host_instance *hi,
         struct wasi_fd_prestat st;
         memset(&st, 0, sizeof(st));
         st.type = WASI_PREOPEN_TYPE_DIR;
-        const char *prestat_path = fdinfo->u.u_prestat.prestat_path;
-        if (fdinfo->u.u_prestat.wasm_path != NULL) {
-                prestat_path = fdinfo->u.u_prestat.wasm_path;
+        const struct wasi_fdinfo_prestat *fdinfo_prestat =
+                wasi_fdinfo_to_prestat(fdinfo);
+        const char *prestat_path = fdinfo_prestat->prestat_path;
+        if (fdinfo_prestat->wasm_path != NULL) {
+                prestat_path = fdinfo_prestat->wasm_path;
         }
         st.dir_name_len = host_to_le32(strlen(prestat_path));
         host_ret =
@@ -1132,9 +1135,11 @@ wasi_fd_prestat_dir_name(struct exec_context *ctx, struct host_instance *hi,
                 ret = EBADF;
                 goto fail;
         }
-        const char *prestat_path = fdinfo->u.u_prestat.prestat_path;
-        if (fdinfo->u.u_prestat.wasm_path != NULL) {
-                prestat_path = fdinfo->u.u_prestat.wasm_path;
+        const struct wasi_fdinfo_prestat *fdinfo_prestat =
+                wasi_fdinfo_to_prestat(fdinfo);
+        const char *prestat_path = fdinfo_prestat->prestat_path;
+        if (fdinfo_prestat->wasm_path != NULL) {
+                prestat_path = fdinfo_prestat->wasm_path;
         }
         xlog_trace("wasm fd %" PRIu32 " is prestat %s", wasifd, prestat_path);
         size_t len = strlen(prestat_path);
