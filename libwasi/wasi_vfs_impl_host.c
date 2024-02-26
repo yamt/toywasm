@@ -58,7 +58,10 @@ wasi_vfs_impl_host_fdinfo_alloc(struct wasi_fdinfo **fdinfop)
                 return ENOMEM;
         }
         wasi_fdinfo_user_init(&fdinfo_host->user);
-        /* TODO: use separate vfs for files came from separate prestat */
+        /*
+         * REVISIT: should we use separate vfs for files came from
+         * separate prestat to reject "cross-mount" operations?
+         */
         fdinfo_host->user.vfs = &wasi_host_vfs;
         fdinfo_host->hostfd = -1;
         fdinfo_host->dir = NULL;
