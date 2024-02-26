@@ -94,8 +94,8 @@ retry:
                 goto fail;
         }
         uint32_t wasichildfd;
-        ret = wasi_fd_add(wasi, hostchildfd, NULL,
-                          fdflags & WASI_FDFLAG_NONBLOCK, &wasichildfd);
+        ret = wasi_hostfd_add(wasi, hostchildfd, NULL,
+                              fdflags & WASI_FDFLAG_NONBLOCK, &wasichildfd);
         if (ret != 0) {
                 goto fail;
         }

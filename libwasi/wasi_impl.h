@@ -115,8 +115,8 @@ int wasi_hostfd_lookup(struct wasi_instance *wasi, uint32_t wasifd,
                        int *hostfdp, struct wasi_fdinfo **fdinfop);
 int wasi_userfd_lookup(struct wasi_instance *wasi, uint32_t wasifd,
                        struct wasi_fdinfo **fdinfop);
-int wasi_fd_add(struct wasi_instance *wasi, int hostfd, char *path,
-                uint16_t fdflags, uint32_t *wasifdp);
+int wasi_hostfd_add(struct wasi_instance *wasi, int hostfd, char *path,
+                    uint16_t fdflags, uint32_t *wasifdp);
 
 /* table */
 void wasi_table_affix(struct wasi_instance *wasi, enum wasi_table_idx idx,

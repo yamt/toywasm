@@ -53,8 +53,8 @@ wasi_userfd_lookup(struct wasi_instance *wasi, uint32_t wasifd,
 }
 
 int
-wasi_fd_add(struct wasi_instance *wasi, int hostfd, char *path,
-            uint16_t fdflags, uint32_t *wasifdp)
+wasi_hostfd_add(struct wasi_instance *wasi, int hostfd, char *path,
+                uint16_t fdflags, uint32_t *wasifdp)
 {
         struct wasi_fdinfo *fdinfo;
         uint32_t wasifd;
