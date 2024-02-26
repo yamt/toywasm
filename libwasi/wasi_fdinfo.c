@@ -60,8 +60,8 @@ wasi_fdinfo_init(struct wasi_fdinfo *fdinfo)
 {
         fdinfo->type = WASI_FDINFO_UNUSED;
         fdinfo->refcount = 0;
-        fdinfo->blocking = 1;
         assert(wasi_fdinfo_unused(fdinfo));
+        fdinfo->u.u_user.blocking = 1;
         fdinfo->u.u_user.path = NULL;
 }
 
