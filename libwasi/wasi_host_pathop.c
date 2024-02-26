@@ -20,6 +20,7 @@
 #include "wasi_impl.h"
 #include "wasi_path_subr.h"
 #include "wasi_vfs_impl_host.h"
+#include "wasi_vfs_types.h"
 
 #if defined(__wasi__)
 #if !defined(AT_FDCWD)

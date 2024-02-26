@@ -41,7 +41,7 @@ wasi_fdinfo_vfs(struct wasi_fdinfo *fdinfo)
         const struct wasi_vfs *vfs;
         switch (fdinfo->type) {
         case WASI_FDINFO_PRESTAT:
-                vfs = &wasi_fdinfo_to_prestat(fdinfo)->vfs;
+                vfs = wasi_fdinfo_to_prestat(fdinfo)->vfs;
                 break;
         case WASI_FDINFO_USER:
                 vfs = wasi_fdinfo_to_user(fdinfo)->vfs;
