@@ -547,9 +547,9 @@ wasi_fd_fdstat_get(struct exec_context *ctx, struct host_instance *hi,
                  * Note: (flags & WASI_FDFLAG_NONBLOCK) is the non-block
                  * flag of the underlying host descriptor, which is usually
                  * true in this implementation.
-                 * fdinfo->blocking is what users of wasi care.
+                 * fdinfo->u.u_user.blocking is what users of wasi care.
                  */
-                if (!fdinfo->blocking) {
+                if (!fdinfo->u.u_user.blocking) {
                         st.fs_flags |= host_to_le16(WASI_FDFLAG_NONBLOCK);
                 }
                 st.fs_flags |= host_to_le16(flags & WASI_FDFLAG_APPEND);
@@ -638,11 +638,11 @@ wasi_fd_fdstat_set_flags(struct exec_context *ctx, struct host_instance *hi,
                 ret = ENOTSUP;
                 goto fail;
         }
-        ret = wasi_fd_lookup(wasi, wasifd, &fdinfo);
+        ret = wasi_userfd_lookup(wasi, wasifd, &fdinfo);
         if (ret != 0) {
                 goto fail;
         }
-        fdinfo->blocking = ((fdflags & WASI_FDFLAG_NONBLOCK) == 0);
+        fdinfo->u.u_user.blocking = ((fdflags & WASI_FDFLAG_NONBLOCK) == 0);
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));

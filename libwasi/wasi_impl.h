@@ -26,10 +26,10 @@ struct wasi_fdinfo {
                 struct {
                         const struct wasi_vfs *vfs;
                         char *path;
+                        uint32_t blocking;
                 } u_user;
         } u;
         uint32_t refcount;
-        uint32_t blocking;
 };
 
 struct wasi_fdinfo_host {

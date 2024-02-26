@@ -67,7 +67,7 @@ wasi_hostfd_add(struct wasi_instance *wasi, int hostfd, char *path,
         }
         wasi_fdinfo_to_host(fdinfo)->hostfd = hostfd;
         fdinfo->u.u_user.path = path;
-        fdinfo->blocking = (fdflags & WASI_FDFLAG_NONBLOCK) == 0;
+        fdinfo->u.u_user.blocking = (fdflags & WASI_FDFLAG_NONBLOCK) == 0;
         ret = wasi_table_fdinfo_add(wasi, WASI_TABLE_FILES, fdinfo, &wasifd);
         if (ret != 0) {
                 free(path);
