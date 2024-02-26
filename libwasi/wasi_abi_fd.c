@@ -152,8 +152,9 @@ wasi_fd_close(struct exec_context *ctx, struct host_instance *hi,
 
         assert(fdinfo->refcount == 2);
         fdinfo->refcount--;
-        assert(VEC_ELEM(wasi->fdtable[tblidx].table, wasifd) == fdinfo);
-        VEC_ELEM(wasi->fdtable[tblidx].table, wasifd) = NULL;
+        struct wasi_fdinfo **slot = wasi_table_slot_ptr(wasi, tblidx, wasifd);
+        assert(*slot == fdinfo);
+        *slot = NULL;
         toywasm_mutex_unlock(&wasi->lock);
 
         ret = wasi_fdinfo_close(fdinfo);
@@ -927,8 +928,14 @@ wasi_fd_renumber(struct exec_context *ctx, struct host_instance *hi,
         /* renumber */
         assert(fdinfo_to->refcount == 2);
         fdinfo_to->refcount--;
-        VEC_ELEM(wasi->fdtable[tblidx].table, wasifd_to) = fdinfo_from;
-        VEC_ELEM(wasi->fdtable[tblidx].table, wasifd_from) = NULL;
+        struct wasi_fdinfo **to_slot =
+                wasi_table_slot_ptr(wasi, tblidx, wasifd_to);
+        assert(*to_slot = fdinfo_to);
+        *to_slot = fdinfo_from;
+        struct wasi_fdinfo **from_slot =
+                wasi_table_slot_ptr(wasi, tblidx, wasifd_from);
+        assert(*from_slot = fdinfo_from);
+        *from_slot = NULL;
 
         toywasm_mutex_unlock(&wasi->lock);
 

@@ -13,9 +13,7 @@ wasi_table_affix(struct wasi_instance *wasi, enum wasi_table_idx idx,
                  uint32_t wasifd, struct wasi_fdinfo *fdinfo)
         REQUIRES(wasi->lock)
 {
-        struct wasi_table *table = &wasi->fdtable[idx];
-        assert(wasifd < table->table.lsize);
-        struct wasi_fdinfo **slot = &VEC_ELEM(table->table, wasifd);
+        struct wasi_fdinfo **slot = wasi_table_slot_ptr(wasi, idx, wasifd);
         struct wasi_fdinfo *ofdinfo = *slot;
         assert(ofdinfo == NULL);
         assert(fdinfo->refcount < UINT32_MAX);
@@ -222,4 +220,15 @@ wasi_table_fdinfo_add(struct wasi_instance *wasi, enum wasi_table_idx idx,
         toywasm_mutex_unlock(&wasi->lock);
         *wasifdp = wasifd;
         return 0;
+}
+
+struct wasi_fdinfo **
+wasi_table_slot_ptr(struct wasi_instance *wasi, enum wasi_table_idx idx,
+                    uint32_t wasifd) REQUIRES(wasi->lock)
+{
+        assert(idx < WASI_NTABLES);
+        struct wasi_table *table = &wasi->fdtable[idx];
+        assert(wasifd < table->table.lsize);
+        struct wasi_fdinfo **slot = &VEC_ELEM(table->table, wasifd);
+        return slot;
 }
