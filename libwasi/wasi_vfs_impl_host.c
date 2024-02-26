@@ -43,14 +43,14 @@ struct wasi_vfs wasi_host_vfs = {
         .ops = &wasi_host_ops,
 };
 
-void
-wasi_vfs_impl_host_init_prestat(struct wasi_fdinfo *fdinfo)
+const struct wasi_vfs *
+wasi_get_vfs_host()
 {
-        wasi_fdinfo_to_prestat(fdinfo)->vfs = &wasi_host_vfs;
+        return &wasi_host_vfs;
 }
 
 int
-wasi_vfs_impl_host_fdinfo_alloc(struct wasi_fdinfo **fdinfop)
+wasi_fdinfo_alloc_host(struct wasi_fdinfo **fdinfop)
 {
         struct wasi_fdinfo_host *fdinfo_host;
         fdinfo_host = malloc(sizeof(*fdinfo_host));

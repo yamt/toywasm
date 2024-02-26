@@ -59,18 +59,20 @@ wasi_fdinfo_user_init(struct wasi_fdinfo_user *fdinfo_user)
         fdinfo_user->path = NULL;
 }
 
-struct wasi_fdinfo *
-wasi_fdinfo_alloc_prestat(void)
+int
+wasi_fdinfo_alloc_prestat(struct wasi_fdinfo **fdinfop)
 {
         struct wasi_fdinfo_prestat *fdinfo_prestat =
                 zalloc(sizeof(*fdinfo_prestat));
         if (fdinfo_prestat == NULL) {
-                return NULL;
+                return ENOMEM;
         }
         struct wasi_fdinfo *fdinfo = &fdinfo_prestat->fdinfo;
         wasi_fdinfo_init(fdinfo);
         fdinfo->type = WASI_FDINFO_PRESTAT;
-        return fdinfo;
+        *fdinfop = fdinfo;
+        /* Note: the caller should initialize fdinfo_prestat->vfs */
+        return 0;
 }
 
 struct wasi_fdinfo_prestat *

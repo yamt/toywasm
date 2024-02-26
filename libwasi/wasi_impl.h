@@ -100,7 +100,7 @@ const struct wasi_vfs *wasi_fdinfo_vfs(struct wasi_fdinfo *fdinfo);
 void wasi_fdinfo_init(struct wasi_fdinfo *fdinfo);
 void wasi_fdinfo_user_init(struct wasi_fdinfo_user *fdinfo_user);
 void wasi_fdinfo_clear(struct wasi_fdinfo *fdinfo);
-struct wasi_fdinfo *wasi_fdinfo_alloc_prestat(void);
+int wasi_fdinfo_alloc_prestat(struct wasi_fdinfo **fdinfop);
 struct wasi_fdinfo_prestat *wasi_fdinfo_to_prestat(struct wasi_fdinfo *fdinfo);
 struct wasi_fdinfo_user *wasi_fdinfo_to_user(struct wasi_fdinfo *fdinfo);
 void wasi_fdinfo_free(struct wasi_fdinfo *fdinfo);

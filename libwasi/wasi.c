@@ -81,7 +81,7 @@ wasi_instance_add_hostfd(struct wasi_instance *inst, uint32_t wasmfd,
         if (ret != EBADF) {
                 goto fail;
         }
-        ret = wasi_vfs_impl_host_fdinfo_alloc(&fdinfo);
+        ret = wasi_fdinfo_alloc_host(&fdinfo);
         if (ret != 0) {
                 goto fail;
         }
@@ -234,15 +234,17 @@ wasi_instance_prestat_add_common(struct wasi_instance *wasi, const char *path,
         } else {
                 host_path = strdup(path);
         }
-        fdinfo = wasi_fdinfo_alloc_prestat();
-        if (host_path == NULL || (is_mapdir && wasm_path == NULL) ||
-            fdinfo == NULL) {
+        if (host_path == NULL || (is_mapdir && wasm_path == NULL)) {
                 ret = ENOMEM;
+                goto fail;
+        }
+        ret = wasi_fdinfo_alloc_prestat(&fdinfo);
+        if (ret != 0) {
                 goto fail;
         }
         struct wasi_fdinfo_prestat *fdinfo_prestat =
                 wasi_fdinfo_to_prestat(fdinfo);
-        wasi_vfs_impl_host_init_prestat(fdinfo);
+        fdinfo_prestat->vfs = wasi_get_vfs_host();
         fdinfo_prestat->prestat_path = host_path;
         fdinfo_prestat->wasm_path = wasm_path;
         host_path = NULL;
