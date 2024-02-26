@@ -87,7 +87,7 @@ handle_errno(int orig_ret)
 int
 wasi_host_path_fdinfo_alloc(struct path_info *pi, struct wasi_fdinfo **fdinfop)
 {
-        return wasi_vfs_impl_host_fdinfo_alloc(fdinfop);
+        return wasi_fdinfo_alloc_host(fdinfop);
 }
 
 int

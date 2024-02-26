@@ -60,7 +60,7 @@ wasi_hostfd_add(struct wasi_instance *wasi, int hostfd, char *path,
         uint32_t wasifd;
         int ret;
         assert((fdflags & ~WASI_FDFLAG_NONBLOCK) == 0);
-        ret = wasi_vfs_impl_host_fdinfo_alloc(&fdinfo);
+        ret = wasi_fdinfo_alloc_host(&fdinfo);
         if (ret != 0) {
                 free(path);
                 return ret;
