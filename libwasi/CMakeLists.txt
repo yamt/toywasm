@@ -7,6 +7,7 @@ set(lib_wasi_sources
 	"wasi_abi_fd.c"
 	"wasi_abi_path.c"
 	"wasi_abi_poll.c"
+	"wasi_abi_prestat.c"
 	"wasi_abi_proc.c"
 	"wasi_abi_random.c"
 	"wasi_abi_sched.c"
