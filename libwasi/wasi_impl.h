@@ -43,12 +43,18 @@ struct wasi_table {
         VEC(, struct wasi_fdinfo *) table;
 };
 
+enum wasi_table_idx {
+        WASI_TABLE_FILES = 0,
+        WASI_NTABLES = 1,
+};
+
 struct wasi_instance {
         struct host_instance hi;
 
         TOYWASM_MUTEX_DEFINE(lock);
         TOYWASM_CV_DEFINE(cv);
-        struct wasi_table fdtable GUARDED_VAR(lock); /* indexed by wasi fd */
+        struct wasi_table fdtable[WASI_NTABLES] GUARDED_VAR(
+                lock); /* indexed by wasi fd */
 
         int argc;
         const char *const *argv;
@@ -102,28 +108,35 @@ void wasi_fdinfo_release(struct wasi_instance *wasi,
                          struct wasi_fdinfo *fdinfo);
 int wasi_fdinfo_close(struct wasi_fdinfo *fdinfo);
 
-/* table */
-void wasi_fd_affix(struct wasi_instance *wasi, uint32_t wasifd,
-                   struct wasi_fdinfo *fdinfo) REQUIRES(wasi->lock);
-int wasi_fd_lookup_locked(struct wasi_instance *wasi, uint32_t wasifd,
-                          struct wasi_fdinfo **infop) REQUIRES(wasi->lock);
+/* fdtable */
 int wasi_fd_lookup(struct wasi_instance *wasi, uint32_t wasifd,
                    struct wasi_fdinfo **infop);
-int wasi_fd_lookup_locked_for_close(struct exec_context *ctx,
-                                    struct wasi_instance *wasi,
-                                    uint32_t wasifd,
-                                    struct wasi_fdinfo **fdinfop, int *retp)
-        REQUIRES(wasi->lock);
 int wasi_hostfd_lookup(struct wasi_instance *wasi, uint32_t wasifd,
                        int *hostfdp, struct wasi_fdinfo **fdinfop);
 int wasi_userfd_lookup(struct wasi_instance *wasi, uint32_t wasifd,
                        struct wasi_fdinfo **fdinfop);
-int wasi_fdtable_expand(struct wasi_instance *wasi, uint32_t maxfd)
-        REQUIRES(wasi->lock);
-void wasi_fdtable_free(struct wasi_instance *wasi);
-int wasi_fd_alloc(struct wasi_instance *wasi, uint32_t *wasifdp)
-        REQUIRES(wasi->lock);
-int wasi_fdinfo_add(struct wasi_instance *wasi, struct wasi_fdinfo *fdinfo,
-                    uint32_t *wasifdp);
 int wasi_fd_add(struct wasi_instance *wasi, int hostfd, char *path,
                 uint16_t fdflags, uint32_t *wasifdp);
+
+/* table */
+void wasi_table_affix(struct wasi_instance *wasi, enum wasi_table_idx idx,
+                      uint32_t wasifd, struct wasi_fdinfo *fdinfo)
+        REQUIRES(wasi->lock);
+int wasi_table_lookup_locked(struct wasi_instance *wasi,
+                             enum wasi_table_idx idx, uint32_t wasifd,
+                             struct wasi_fdinfo **infop) REQUIRES(wasi->lock);
+int wasi_table_lookup(struct wasi_instance *wasi, enum wasi_table_idx idx,
+                      uint32_t wasifd, struct wasi_fdinfo **infop);
+int wasi_table_lookup_locked_for_close(struct exec_context *ctx,
+                                       struct wasi_instance *wasi,
+                                       enum wasi_table_idx idx,
+                                       uint32_t wasifd,
+                                       struct wasi_fdinfo **fdinfop, int *retp)
+        REQUIRES(wasi->lock);
+int wasi_table_expand(struct wasi_instance *wasi, enum wasi_table_idx idx,
+                      uint32_t maxfd) REQUIRES(wasi->lock);
+void wasi_table_clear(struct wasi_instance *wasi, enum wasi_table_idx idx);
+int wasi_table_alloc_slot(struct wasi_instance *wasi, enum wasi_table_idx idx,
+                          uint32_t *wasifdp) REQUIRES(wasi->lock);
+int wasi_table_fdinfo_add(struct wasi_instance *wasi, enum wasi_table_idx idx,
+                          struct wasi_fdinfo *fdinfo, uint32_t *wasifdp);
