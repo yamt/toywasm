@@ -173,7 +173,18 @@ wasi_lfs_fd_futimes(struct wasi_fdinfo *fdinfo, const struct utimes_args *args)
 int
 wasi_lfs_fd_close(struct wasi_fdinfo *fdinfo)
 {
-        return ENOTSUP;
+        struct wasi_vfs_lfs *vfs_lfs;
+        struct wasi_fdinfo_lfs *fdinfo_lfs;
+        fdinfo_to_lfs(fdinfo, &vfs_lfs, &fdinfo_lfs);
+        int ret;
+        if (fdinfo_lfs->type == WASI_LFS_TYPE_FILE) {
+                ret = lfs_file_close(&vfs_lfs->lfs, &fdinfo_lfs->u.file);
+        } else {
+                assert(fdinfo_lfs->type == WASI_LFS_TYPE_DIR);
+                ret = lfs_dir_close(&vfs_lfs->lfs, &fdinfo_lfs->u.dir);
+        }
+        fdinfo_lfs->type = WASI_LFS_TYPE_NONE;
+        return lfs_error_to_errno(ret);
 }
 
 int
