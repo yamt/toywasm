@@ -149,6 +149,7 @@ int
 wasi_fdinfo_close(struct wasi_fdinfo *fdinfo)
 {
         struct wasi_fdinfo_prestat *fdinfo_prestat;
+        struct wasi_fdinfo_user *fdinfo_user;
         int ret = 0;
         switch (fdinfo->type) {
         case WASI_FDINFO_PRESTAT:
@@ -159,7 +160,10 @@ wasi_fdinfo_close(struct wasi_fdinfo *fdinfo)
                 fdinfo_prestat->wasm_path = NULL;
                 break;
         case WASI_FDINFO_USER:
+                fdinfo_user = wasi_fdinfo_to_user(fdinfo);
                 ret = wasi_vfs_fd_close(fdinfo);
+                free(fdinfo_user->path);
+                fdinfo_user->path = NULL;
                 break;
         }
         return ret;
