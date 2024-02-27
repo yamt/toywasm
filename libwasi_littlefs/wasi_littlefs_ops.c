@@ -150,7 +150,9 @@ wasi_lfs_dir_read(struct wasi_fdinfo *fdinfo, struct wasi_dirent *wde,
 int
 wasi_lfs_path_fdinfo_alloc(struct path_info *pi, struct wasi_fdinfo **fdinfop)
 {
-        return ENOTSUP;
+        const struct wasi_vfs *vfs = wasi_fdinfo_vfs(pi->dirfdinfo);
+        ;
+        return wasi_fdinfo_alloc_lfs(fdinfop, vfs);
 }
 
 int
@@ -164,12 +166,13 @@ wasi_lfs_path_open(struct path_info *pi, const struct path_open_params *params,
                 return ret;
         }
         struct wasi_fdinfo_lfs *fdinfo_lfs = wasi_fdinfo_to_lfs(fdinfo);
-        ret = lfs_file_open(lfs->lfs, &fdinfo_lfs->u.file, pi->hostpath, 0);
+        ret = lfs_file_open(&lfs->lfs, &fdinfo_lfs->u.file, pi->hostpath, 0);
         if (ret == 0) {
                 fdinfo_lfs->type = WASI_LFS_TYPE_FILE;
         }
         if (ret == -LFS_ERR_ISDIR) {
-                ret = lfs_dir_open(lfs->lfs, &fdinfo_lfs->u.dir, pi->hostpath);
+                ret = lfs_dir_open(&lfs->lfs, &fdinfo_lfs->u.dir,
+                                   pi->hostpath);
                 if (ret == 0) {
                         fdinfo_lfs->type = WASI_LFS_TYPE_DIR;
                         fdinfo_lfs->user.path = pi->hostpath;
