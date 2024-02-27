@@ -1,6 +1,7 @@
 #include <errno.h>
 
 #include "wasi_littlefs_impl.h"
+#include "wasi_vfs_impl_littlefs.h"
 
 int
 lfs_error_to_errno(enum lfs_error lfs_error)
@@ -45,6 +46,8 @@ lfs_error_to_errno(enum lfs_error lfs_error)
 struct wasi_fdinfo_lfs *
 wasi_fdinfo_to_lfs(struct wasi_fdinfo *fdinfo)
 {
+        assert(fdinfo->type == WASI_FDINFO_USER);
+        assert(wasi_fdinfo_is_lfs(fdinfo));
         return (void *)fdinfo;
 }
 

@@ -8,7 +8,7 @@ set(lib_wasi_littlefs_sources
 )
 
 set(lib_wasi_littlefs_headers
-	"wasi_vfs_impl_littlefs.h"
+	"wasi_littelfs.h"
 )
 
 set(littlefs_sources
