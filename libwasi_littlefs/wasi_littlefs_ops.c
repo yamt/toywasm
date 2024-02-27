@@ -8,33 +8,35 @@
 #include "wasi_vfs_types.h"
 
 static void
-fdinfo_to_lfs(struct wasi_fdinfo *fdinfo, lfs_t **lfsp,
+fdinfo_to_lfs(struct wasi_fdinfo *fdinfo, struct wasi_vfs_lfs **vfs_lfsp,
               struct wasi_fdinfo_lfs **fdinfo_lfsp)
 {
         const struct wasi_vfs *vfs = wasi_fdinfo_vfs(fdinfo);
-        *lfsp = wasi_vfs_to_lfs(vfs)->lfs;
+        *vfs_lfsp = wasi_vfs_to_lfs(vfs);
         *fdinfo_lfsp = wasi_fdinfo_to_lfs(fdinfo);
 }
 
 #if 0
 static int
-fdinfo_to_lfs_file(struct wasi_fdinfo *fdinfo, lfs_t **lfsp, lfs_file_t **filep)
+fdinfo_to_lfs_file(struct wasi_fdinfo *fdinfo, struct wasi_vfs_lfs **vfs_lfsp,
+                   lfs_file_t **filep)
 {
-    struct wasi_fdinfo_lfs *fdinfo_lfs;
-    fdinfo_to_lfs(fdinfo, lfsp, &fdinfo_lfs);
-    if (fdinfo_lfs->type != WASI_LFS_TYPE_FILE) {
-        return EISDIR;
-    }
-    *filep = &fdinfo_lfs->u.file;
-    return 0;
+        struct wasi_fdinfo_lfs *fdinfo_lfs;
+        fdinfo_to_lfs(fdinfo, vfs_lfsp, &fdinfo_lfs);
+        if (fdinfo_lfs->type != WASI_LFS_TYPE_FILE) {
+                return EISDIR;
+        }
+        *filep = &fdinfo_lfs->u.file;
+        return 0;
 }
 #endif
 
 static int
-fdinfo_to_lfs_dir(struct wasi_fdinfo *fdinfo, lfs_t **lfsp, lfs_dir_t **dirp)
+fdinfo_to_lfs_dir(struct wasi_fdinfo *fdinfo, struct wasi_vfs_lfs **vfs_lfsp,
+                  lfs_dir_t **dirp)
 {
         struct wasi_fdinfo_lfs *fdinfo_lfs;
-        fdinfo_to_lfs(fdinfo, lfsp, &fdinfo_lfs);
+        fdinfo_to_lfs(fdinfo, vfs_lfsp, &fdinfo_lfs);
         if (fdinfo_lfs->type != WASI_LFS_TYPE_DIR) {
                 return ENOTDIR;
         }
@@ -155,18 +157,31 @@ int
 wasi_lfs_path_open(struct path_info *pi, const struct path_open_params *params,
                    struct wasi_fdinfo *fdinfo)
 {
-        lfs_t *lfs;
+        struct wasi_vfs_lfs *lfs;
         lfs_dir_t *dir;
         int ret = fdinfo_to_lfs_dir(pi->dirfdinfo, &lfs, &dir);
         if (ret != 0) {
                 return ret;
         }
         struct wasi_fdinfo_lfs *fdinfo_lfs = wasi_fdinfo_to_lfs(fdinfo);
-        ret = lfs_file_open(lfs, &fdinfo_lfs->u.file, pi->hostpath, 0);
+        ret = lfs_file_open(lfs->lfs, &fdinfo_lfs->u.file, pi->hostpath, 0);
+        if (ret == 0) {
+                fdinfo_lfs->type = WASI_LFS_TYPE_FILE;
+        }
+        if (ret == -LFS_ERR_ISDIR) {
+                ret = lfs_dir_open(lfs->lfs, &fdinfo_lfs->u.dir, pi->hostpath);
+                if (ret == 0) {
+                        fdinfo_lfs->type = WASI_LFS_TYPE_DIR;
+                        fdinfo_lfs->user.path = pi->hostpath;
+                        pi->hostpath = NULL;
+                }
+        }
         if (ret != 0) {
                 return lfs_error_to_errno(ret);
         }
-        return ENOTSUP;
+        fdinfo_lfs->user.blocking =
+                (params->fdflags & WASI_FDFLAG_NONBLOCK) == 0;
+        return 0;
 }
 
 int
