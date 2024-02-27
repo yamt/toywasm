@@ -137,6 +137,12 @@ option(TOYWASM_ENABLE_WASM_NAME_SECTION "Enable name section" ON)
 # enable WASI.
 option(TOYWASM_ENABLE_WASI "Enable WASI snapshow preview1" ON)
 
+cmake_dependent_option(TOYWASM_ENABLE_WASI_LITTLEFS
+    "Enbale WASI littlefs support"
+    ON
+    "TOYWASM_ENABLE_WASI"
+    OFF)
+
 # enable wasi-threads.
 cmake_dependent_option(TOYWASM_ENABLE_WASI_THREADS
     "Enable wasi-threads proposal"
