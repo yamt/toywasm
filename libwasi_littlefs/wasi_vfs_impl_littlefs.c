@@ -3,6 +3,7 @@
 
 #include "wasi_littlefs_impl.h"
 #include "wasi_littlefs_ops.h"
+#include "wasi_vfs_impl_littlefs.h"
 #include "wasi_vfs_ops.h"
 
 static const struct wasi_vfs_ops wasi_lfs_ops = {
@@ -37,14 +38,10 @@ static const struct wasi_vfs_ops wasi_lfs_ops = {
         .path_lutimes = wasi_lfs_path_lutimes,
 };
 
-struct wasi_vfs wasi_lfs_vfs = {
-        .ops = &wasi_lfs_ops,
-};
-
-const struct wasi_vfs *
-wasi_get_vfs_lfs()
+const struct wasi_vfs_ops *
+wasi_get_lfs_vfs_ops()
 {
-        return &wasi_lfs_vfs;
+        return &wasi_lfs_ops;
 }
 
 int
@@ -57,10 +54,7 @@ wasi_fdinfo_alloc_lfs(struct wasi_fdinfo **fdinfop, const struct wasi_vfs *vfs)
         }
         wasi_fdinfo_user_init(&fdinfo_lfs->user);
         fdinfo_lfs->user.vfs = vfs;
-#if 0
-        fdinfo_lfs->hostfd = -1;
-        fdinfo_lfs->dir = NULL;
-#endif
+        fdinfo_lfs->type = WASI_LFS_TYPE_NONE;
         *fdinfop = &fdinfo_lfs->user.fdinfo;
         return 0;
 }
@@ -69,5 +63,5 @@ bool
 wasi_fdinfo_is_lfs(struct wasi_fdinfo *fdinfo)
 {
         return fdinfo->type == WASI_FDINFO_USER &&
-               wasi_fdinfo_vfs(fdinfo) == &wasi_lfs_vfs;
+               wasi_fdinfo_vfs(fdinfo)->ops == &wasi_lfs_ops;
 }
