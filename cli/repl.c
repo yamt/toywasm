@@ -42,6 +42,9 @@
 #if defined(TOYWASM_ENABLE_WASI_THREADS)
 #include "wasi_threads.h"
 #endif
+#if defined(TOYWASM_ENABLE_WASI_LITTLEFS)
+#include "wasi_littlefs.h"
+#endif
 #include "xlog.h"
 
 /*
@@ -324,6 +327,18 @@ toywasm_repl_set_wasi_prestat_mapdir(struct repl_state *state,
                 return EPROTO;
         }
         return wasi_instance_prestat_add_mapdir(state->wasi, path);
+}
+#endif
+
+#if defined(TOYWASM_ENABLE_WASI_LITTLEFS)
+int
+toywasm_repl_set_wasi_prestat_mapdir_littlefs(struct repl_state *state,
+                                              const char *path)
+{
+        if (state->wasi == NULL) {
+                return EPROTO;
+        }
+        return wasi_instance_prestat_add_mapdir_littlefs(state->wasi, path);
 }
 #endif
 

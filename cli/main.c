@@ -12,6 +12,9 @@
 #if defined(TOYWASM_ENABLE_WASI_THREADS)
 #include "wasi_threads.h"
 #endif
+#if defined(TOYWASM_ENABLE_WASI_LITTLEFS)
+#include "wasi_littlefs.h"
+#endif
 #include "vec.h"
 #include "xlog.h"
 
@@ -46,6 +49,9 @@ enum longopt {
         opt_wasi_dir,
         opt_wasi_mapdir,
         opt_wasi_env,
+#endif
+#if defined(TOYWASM_ENABLE_WASI_LITTLEFS)
+        opt_wasi_mapdir_littlefs,
 #endif
 };
 
@@ -190,6 +196,14 @@ static const struct option longopts[] = {
                 opt_wasi_env,
         },
 #endif
+#if defined(TOYWASM_ENABLE_WASI_LITTLEFS)
+        {
+                "wasi-mapdir-littlefs",
+                required_argument,
+                NULL,
+                opt_wasi_mapdir_littlefs,
+        },
+#endif
         {
                 NULL,
                 0,
@@ -209,6 +223,9 @@ static const char *opt_metavars[] = {
         [opt_wasi_env] = "NAME=VAR",
         [opt_wasi_dir] = "DIR",
         [opt_wasi_mapdir] = "GUEST_DIR::HOST_DIR",
+#endif
+#if defined(TOYWASM_ENABLE_WASI_LITTLEFS)
+        [opt_wasi_mapdir_littlefs] = "LITTLEFS_IMAGE_PATH::LFS_DIR::GUEST_DIR",
 #endif
         [opt_timeout] = "TIMEOUT_MS",
 #if defined(TOYWASM_ENABLE_TRACING)
@@ -408,6 +425,15 @@ main(int argc, char *const *argv)
                         *VEC_PUSH(wasi_envs) = optarg;
                         ret = toywasm_repl_set_wasi_environ(
                                 state, wasi_envs.lsize, wasi_envs.p);
+                        if (ret != 0) {
+                                goto fail;
+                        }
+                        break;
+#endif
+#if defined(TOYWASM_ENABLE_WASI_LITTLEFS)
+                case opt_wasi_mapdir_littlefs:
+                        ret = toywasm_repl_set_wasi_prestat_mapdir_littlefs(
+                                state, optarg);
                         if (ret != 0) {
                                 goto fail;
                         }
