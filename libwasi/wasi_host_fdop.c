@@ -286,8 +286,6 @@ wasi_host_fd_close(struct wasi_fdinfo *fdinfo)
         if (fdinfo_host->dir != NULL) {
                 wasi_host_dir_close(fdinfo);
         }
-        free(fdinfo_host->user.path);
-        fdinfo_host->user.path = NULL;
         fdinfo_host->hostfd = -1;
         fdinfo_host->dir = NULL;
         return ret;
