@@ -56,6 +56,7 @@ set(cli_sources
 add_executable(toywasm-cli ${cli_sources})
 target_link_libraries(toywasm-cli toywasm-lib-core
 	$<$<BOOL:${TOYWASM_ENABLE_WASI}>:toywasm-lib-wasi>
+	$<$<BOOL:${TOYWASM_ENABLE_WASI_LITTLEFS}>:toywasm-lib-wasi-littlefs>
 	$<$<BOOL:${TOYWASM_ENABLE_DYLD}>:toywasm-lib-dyld>
     m)
 set_target_properties(toywasm-cli PROPERTIES OUTPUT_NAME toywasm)
