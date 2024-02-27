@@ -92,6 +92,10 @@ uint32_t wasi_convert_errno(int host_errno);
 #define wasi_copyin(c, h, w, l, a) host_func_copyin(c, h, w, l, a)
 
 struct exec_context;
+struct wasi_instance;
+
+int wasi_instance_prestat_add_vfs(struct wasi_instance *wasi, const char *path,
+                                  const struct wasi_vfs *vfs, bool is_mapdir);
 
 /* fdinfo */
 bool wasi_fdinfo_is_prestat(const struct wasi_fdinfo *fdinfo);
