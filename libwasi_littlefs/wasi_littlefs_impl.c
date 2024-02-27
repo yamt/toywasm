@@ -42,14 +42,14 @@ lfs_error_to_errno(enum lfs_error lfs_error)
         return error;
 }
 
-struct wasi_fdinfo_littlefs *
-wasi_fdinfo_to_littlefs(struct wasi_fdinfo *fdinfo)
+struct wasi_fdinfo_lfs *
+wasi_fdinfo_to_lfs(struct wasi_fdinfo *fdinfo)
 {
         return (void *)fdinfo;
 }
 
-struct wasi_vfs_littlefs *
-wasi_vfs_to_littlefs(const struct wasi_vfs *vfs)
+struct wasi_vfs_lfs *
+wasi_vfs_to_lfs(const struct wasi_vfs *vfs)
 {
         return (void *)vfs;
 }
