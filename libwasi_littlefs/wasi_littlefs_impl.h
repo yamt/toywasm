@@ -19,6 +19,8 @@ struct wasi_fdinfo_lfs {
 struct wasi_vfs_lfs {
         struct wasi_vfs vfs;
         lfs_t lfs;
+        struct lfs_config lfs_config;
+        int fd;
 };
 
 int lfs_error_to_errno(enum lfs_error lfs_error);
