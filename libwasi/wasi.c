@@ -206,9 +206,9 @@ wasi_instance_set_environ(struct wasi_instance *inst, int nenvs,
 #endif
 }
 
-static int
-wasi_instance_prestat_add_common(struct wasi_instance *wasi, const char *path,
-                                 bool is_mapdir)
+int
+wasi_instance_prestat_add_vfs(struct wasi_instance *wasi, const char *path,
+                              const struct wasi_vfs *vfs, bool is_mapdir)
 {
         struct wasi_fdinfo *fdinfo = NULL;
         char *host_path = NULL;
@@ -244,7 +244,7 @@ wasi_instance_prestat_add_common(struct wasi_instance *wasi, const char *path,
         }
         struct wasi_fdinfo_prestat *fdinfo_prestat =
                 wasi_fdinfo_to_prestat(fdinfo);
-        fdinfo_prestat->vfs = wasi_get_vfs_host();
+        fdinfo_prestat->vfs = vfs;
         fdinfo_prestat->prestat_path = host_path;
         fdinfo_prestat->wasm_path = wasm_path;
         host_path = NULL;
@@ -266,13 +266,15 @@ fail:
 int
 wasi_instance_prestat_add(struct wasi_instance *wasi, const char *path)
 {
-        return wasi_instance_prestat_add_common(wasi, path, false);
+        const struct wasi_vfs *vfs = wasi_get_vfs_host();
+        return wasi_instance_prestat_add_vfs(wasi, path, vfs, false);
 }
 
 int
 wasi_instance_prestat_add_mapdir(struct wasi_instance *wasi, const char *path)
 {
-        return wasi_instance_prestat_add_common(wasi, path, true);
+        const struct wasi_vfs *vfs = wasi_get_vfs_host();
+        return wasi_instance_prestat_add_vfs(wasi, path, vfs, true);
 }
 
 uint32_t
