@@ -4,6 +4,7 @@ set(lib_wasi_littlefs_sources
 	"wasi_vfs_impl_littlefs.c"
 	"wasi_littlefs.c"
 	"wasi_littlefs_impl.c"
+	"wasi_littlefs_mount.c"
 	"wasi_littlefs_ops.c"
 )
 

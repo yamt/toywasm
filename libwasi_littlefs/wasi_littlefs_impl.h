@@ -29,4 +29,5 @@ struct wasi_vfs_lfs {
 int lfs_error_to_errno(enum lfs_error lfs_error);
 
 struct wasi_fdinfo_lfs *wasi_fdinfo_to_lfs(struct wasi_fdinfo *fdinfo);
-struct wasi_vfs_lfs *wasi_vfs_to_lfs(const struct wasi_vfs *vfs);
+const struct wasi_vfs_lfs *wasi_vfs_to_lfs(const struct wasi_vfs *vfs);
+struct wasi_vfs_lfs *wasi_vfs_to_lfs_mut(struct wasi_vfs *vfs);
