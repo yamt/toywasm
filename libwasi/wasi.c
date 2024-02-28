@@ -210,7 +210,7 @@ wasi_instance_set_environ(struct wasi_instance *inst, int nenvs,
 
 int
 wasi_instance_prestat_add_vfs(struct wasi_instance *wasi, const char *path,
-                              const struct wasi_vfs *vfs, bool is_mapdir)
+                              struct wasi_vfs *vfs, bool is_mapdir)
 {
         struct wasi_fdinfo *fdinfo = NULL;
         char *host_path = NULL;
@@ -271,14 +271,14 @@ fail:
 int
 wasi_instance_prestat_add(struct wasi_instance *wasi, const char *path)
 {
-        const struct wasi_vfs *vfs = wasi_get_vfs_host();
+        struct wasi_vfs *vfs = wasi_get_vfs_host();
         return wasi_instance_prestat_add_vfs(wasi, path, vfs, false);
 }
 
 int
 wasi_instance_prestat_add_mapdir(struct wasi_instance *wasi, const char *path)
 {
-        const struct wasi_vfs *vfs = wasi_get_vfs_host();
+        struct wasi_vfs *vfs = wasi_get_vfs_host();
         return wasi_instance_prestat_add_vfs(wasi, path, vfs, true);
 }
 
