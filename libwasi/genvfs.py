@@ -92,21 +92,21 @@ def process(mode, out, prefix="wasi_vfs_", qual="static const"):
     if mode == Mode.VfsStructDefine:
         print("};", file=out)
 
-#with open("wasi_vfs_ops.h", "w") as fp:
-#    process(Mode.VfsStructDecl, fp)
-#
-#with open("wasi_vfs.h", "w") as fp:
-#    process(Mode.VfsPrototype, fp);
-#
-#with open("wasi_vfs_dispatch.h", "w") as fp:
-#    process(Mode.VfsDefine, fp)
+with open("wasi_vfs_ops.h", "w") as fp:
+    process(Mode.VfsStructDecl, fp)
+
+with open("wasi_vfs.h", "w") as fp:
+    process(Mode.VfsPrototype, fp);
+
+with open("wasi_vfs_dispatch.h", "w") as fp:
+    process(Mode.VfsDefine, fp)
 
 #with open("wasi_vfs_impl_host.h", "w") as fp:
 #    process(Mode.VfsPrototype, fp, prefix="wasi_host_")
 
 #process(Mode.VfsStructDefine, sys.stdout, prefix="wasi_host_");
 
-with open("wasi_littlefs_ops.h", "w") as fp:
-    process(Mode.VfsPrototype, fp, prefix="wasi_littlefs_")
-with open("wasi_littlefs_ops.c", "w") as fp:
-    process(Mode.VfsImplTemplate, fp, prefix="wasi_littlefs_")
+#with open("wasi_littlefs_ops.h", "w") as fp:
+#    process(Mode.VfsPrototype, fp, prefix="wasi_littlefs_")
+#with open("wasi_littlefs_ops.c", "w") as fp:
+#    process(Mode.VfsImplTemplate, fp, prefix="wasi_littlefs_")
