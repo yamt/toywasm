@@ -222,7 +222,7 @@ static const char *opt_metavars[] = {
 #if defined(TOYWASM_ENABLE_WASI)
         [opt_wasi_env] = "NAME=VAR",
         [opt_wasi_dir] = "DIR",
-        [opt_wasi_mapdir] = "GUEST_DIR::HOST_DIR",
+        [opt_wasi_mapdir] = "HOST_DIR::GUEST_DIR",
 #endif
 #if defined(TOYWASM_ENABLE_WASI_LITTLEFS)
         [opt_wasi_mapdir_littlefs] = "LITTLEFS_IMAGE_PATH::LFS_DIR::GUEST_DIR",

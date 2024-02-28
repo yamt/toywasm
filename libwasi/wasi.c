@@ -219,9 +219,12 @@ wasi_instance_prestat_add_vfs(struct wasi_instance *wasi, const char *path,
 
         if (is_mapdir) {
                 /*
-                 * <wasm dir>::<host dir>
+                 * <host dir>::<wasm dir>
                  *
-                 * intended to be compatible with wasmtime's --mapdir
+                 * intended to be compatible with wasmtime's --dir
+                 *
+                 * cf.
+                 * https://github.com/bytecodealliance/wasmtime/pull/7301
                  */
 
                 const char *colon = strchr(path, ':');
@@ -229,8 +232,8 @@ wasi_instance_prestat_add_vfs(struct wasi_instance *wasi, const char *path,
                         ret = EINVAL;
                         goto fail;
                 }
-                wasm_path = strndup(path, colon - path);
-                host_path = strdup(colon + 2);
+                host_path = strndup(path, colon - path);
+                wasm_path = strdup(colon + 2);
         } else {
                 host_path = strdup(path);
         }
