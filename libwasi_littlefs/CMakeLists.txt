@@ -16,6 +16,11 @@ set(littlefs_sources
     "littlefs/lfs_util.c"
 )
 
+if (NOT CMAKE_BUILD_TYPE MATCHES Debug)
+    add_definitions(-DLFS_NO_DEBUG)
+    add_definitions(-DLFS_NO_ASSERT)
+endif()
+
 add_library(toywasm-lib-wasi-littlefs STATIC ${lib_wasi_littlefs_sources} ${littlefs_sources})
 set_target_properties(toywasm-lib-wasi-littlefs PROPERTIES OUTPUT_NAME toywasm-wasi-littlefs)
 if (USE_IPO)
