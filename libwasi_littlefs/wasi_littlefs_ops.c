@@ -21,7 +21,7 @@ static void
 fdinfo_to_lfs(struct wasi_fdinfo *fdinfo, struct wasi_vfs_lfs **vfs_lfsp,
               struct wasi_fdinfo_lfs **fdinfo_lfsp)
 {
-        const struct wasi_vfs *vfs = wasi_fdinfo_vfs(fdinfo);
+        struct wasi_vfs *vfs = wasi_fdinfo_vfs(fdinfo);
         *vfs_lfsp = wasi_vfs_to_lfs(vfs);
         if (wasi_fdinfo_is_prestat(fdinfo)) {
                 *fdinfo_lfsp = NULL;
@@ -509,7 +509,7 @@ wasi_lfs_path_rename(const struct path_info *pi1, const struct path_info *pi2)
             wasi_fdinfo_is_prestat(pi2->dirfdinfo)) {
                 return ENOTSUP;
         }
-        const struct wasi_vfs *vfs = wasi_fdinfo_vfs(pi1->dirfdinfo);
+        struct wasi_vfs *vfs = wasi_fdinfo_vfs(pi1->dirfdinfo);
         struct wasi_vfs_lfs *lfs = wasi_vfs_to_lfs(vfs);
         int ret = lfs_rename(&lfs->lfs, pi1->hostpath, pi2->hostpath);
         return lfs_error_to_errno(ret);

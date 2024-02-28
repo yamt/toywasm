@@ -68,7 +68,7 @@ wasi_fdinfo_to_lfs(struct wasi_fdinfo *fdinfo)
 }
 
 struct wasi_vfs_lfs *
-wasi_vfs_to_lfs(const struct wasi_vfs *vfs)
+wasi_vfs_to_lfs(struct wasi_vfs *vfs)
 {
         return (void *)vfs;
 }
