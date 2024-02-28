@@ -214,9 +214,23 @@ int
 wasi_host_fd_lseek(struct wasi_fdinfo *fdinfo, wasi_off_t offset, int whence,
                    wasi_off_t *resultp)
 {
+        int hostwhence;
+        switch (whence) {
+        case WASI_SEEK_SET:
+                hostwhence = SEEK_SET;
+                break;
+        case WASI_SEEK_CUR:
+                hostwhence = SEEK_CUR;
+                break;
+        case WASI_SEEK_END:
+                hostwhence = SEEK_END;
+                break;
+        default:
+                return EINVAL;
+        }
         int hostfd = wasi_fdinfo_hostfd(fdinfo);
         errno = 0;
-        off_t off = lseek(hostfd, offset, whence);
+        off_t off = lseek(hostfd, offset, hostwhence);
         if (off == -1 && errno != 0) {
                 int ret = errno;
                 assert(errno > 0);

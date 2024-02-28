@@ -697,16 +697,10 @@ wasi_fd_seek(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        int hostwhence;
         switch (whence) {
-        case 0:
-                hostwhence = SEEK_SET;
-                break;
-        case 1:
-                hostwhence = SEEK_CUR;
-                break;
-        case 2:
-                hostwhence = SEEK_END;
+        case WASI_SEEK_SET:
+        case WASI_SEEK_CUR:
+        case WASI_SEEK_END:
                 break;
         default:
                 ret = EINVAL;
@@ -717,7 +711,7 @@ wasi_fd_seek(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         wasi_off_t off;
-        ret = wasi_vfs_fd_lseek(fdinfo, offset, hostwhence, &off);
+        ret = wasi_vfs_fd_lseek(fdinfo, offset, whence, &off);
         if (ret != 0) {
                 goto fail;
         }
@@ -753,16 +747,15 @@ wasi_unstable_fd_seek(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        int hostwhence;
         switch (whence) {
         case 0:
-                hostwhence = SEEK_CUR;
+                whence = WASI_SEEK_CUR;
                 break;
         case 1:
-                hostwhence = SEEK_END;
+                whence = WASI_SEEK_END;
                 break;
         case 2:
-                hostwhence = SEEK_SET;
+                whence = WASI_SEEK_SET;
                 break;
         default:
                 ret = EINVAL;
@@ -773,7 +766,7 @@ wasi_unstable_fd_seek(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         wasi_off_t off;
-        ret = wasi_vfs_fd_lseek(fdinfo, offset, hostwhence, &off);
+        ret = wasi_vfs_fd_lseek(fdinfo, offset, whence, &off);
         if (ret != 0) {
                 goto fail;
         }
