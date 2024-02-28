@@ -338,7 +338,14 @@ toywasm_repl_set_wasi_prestat_mapdir_littlefs(struct repl_state *state,
         if (state->wasi == NULL) {
                 return EPROTO;
         }
-        return wasi_instance_prestat_add_mapdir_littlefs(state->wasi, path);
+        struct wasi_vfs *vfs;
+        int ret = wasi_instance_prestat_add_mapdir_littlefs(state->wasi, path,
+                                                            &vfs);
+        if (ret != 0) {
+                return ret;
+        }
+        /* XXX record vfs and umount it in toywasm_repl_reset */
+        return 0;
 }
 #endif
 

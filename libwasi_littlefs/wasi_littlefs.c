@@ -22,7 +22,8 @@
 
 int
 wasi_instance_prestat_add_mapdir_littlefs(struct wasi_instance *wasi,
-                                          const char *path)
+                                          const char *path,
+                                          struct wasi_vfs **vfsp)
 {
         struct wasi_vfs *vfs = NULL;
         char *image_path = NULL;
@@ -52,6 +53,7 @@ wasi_instance_prestat_add_mapdir_littlefs(struct wasi_instance *wasi,
                 goto fail;
         }
         free(image_path);
+        *vfsp = vfs;
         return 0;
 fail:
         if (vfs != NULL) {
