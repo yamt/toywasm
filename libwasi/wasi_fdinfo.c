@@ -27,10 +27,10 @@ wasi_fdinfo_path(struct wasi_fdinfo *fdinfo)
         return NULL;
 }
 
-struct wasi_vfs *
+const struct wasi_vfs *
 wasi_fdinfo_vfs(struct wasi_fdinfo *fdinfo)
 {
-        struct wasi_vfs *vfs;
+        const struct wasi_vfs *vfs;
         switch (fdinfo->type) {
         case WASI_FDINFO_PRESTAT:
                 vfs = wasi_fdinfo_to_prestat(fdinfo)->vfs;
