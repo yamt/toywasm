@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <errno.h>
 
 #include "wasi_littlefs_impl.h"
