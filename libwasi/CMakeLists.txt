@@ -22,6 +22,7 @@ set(lib_wasi_sources
 	"wasi_poll_subr.c"
 	"wasi_subr.c"
 	"wasi_table.c"
+	"wasi_uio.c"
 	"wasi_vfs.c"
 	"wasi_vfs_impl_host.c"
 )
@@ -34,6 +35,7 @@ endif()
 set(lib_wasi_headers
 	"wasi.h"
 	"wasi_threads.h"
+	"wasi_uio.h"
 )
 
 add_library(toywasm-lib-wasi STATIC ${lib_wasi_sources})
