@@ -307,3 +307,13 @@ wasi_vfs_path_lutimes(const struct path_info *pi,
         }
         return ops->path_lutimes(pi, args);
 }
+
+int
+wasi_vfs_vfs_umount(struct wasi_vfs *vfs)
+{
+        const struct wasi_vfs_ops *ops = vfs->ops;
+        if (ops->vfs_umount == NULL) {
+                return ENOTSUP;
+        }
+        return ops->vfs_umount(vfs);
+}

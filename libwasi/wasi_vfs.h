@@ -46,3 +46,4 @@ int wasi_vfs_path_utimes(const struct path_info *pi,
                          const struct utimes_args *args);
 int wasi_vfs_path_lutimes(const struct path_info *pi,
                           const struct utimes_args *args);
+int wasi_vfs_vfs_umount(struct wasi_vfs *vfs);
