@@ -45,7 +45,7 @@ wasi_get_lfs_vfs_ops()
 }
 
 int
-wasi_fdinfo_alloc_lfs(struct wasi_fdinfo **fdinfop, const struct wasi_vfs *vfs)
+wasi_fdinfo_alloc_lfs(struct wasi_fdinfo **fdinfop, struct wasi_vfs *vfs)
 {
         struct wasi_fdinfo_lfs *fdinfo_lfs;
         fdinfo_lfs = malloc(sizeof(*fdinfo_lfs));
