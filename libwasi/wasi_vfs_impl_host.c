@@ -43,7 +43,7 @@ struct wasi_vfs wasi_host_vfs = {
         .ops = &wasi_host_ops,
 };
 
-const struct wasi_vfs *
+struct wasi_vfs *
 wasi_get_vfs_host()
 {
         return &wasi_host_vfs;

@@ -367,7 +367,7 @@ wasi_lfs_dir_read(struct wasi_fdinfo *fdinfo, struct wasi_dirent *wde,
 int
 wasi_lfs_path_fdinfo_alloc(struct path_info *pi, struct wasi_fdinfo **fdinfop)
 {
-        const struct wasi_vfs *vfs = wasi_fdinfo_vfs(pi->dirfdinfo);
+        struct wasi_vfs *vfs = wasi_fdinfo_vfs(pi->dirfdinfo);
         return wasi_fdinfo_alloc_lfs(fdinfop, vfs);
 }
 
