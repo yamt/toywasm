@@ -13,6 +13,8 @@
  *   family.
  *
  * - O_RESOLVE_BENEATH behavior is not implemented.
+ *   For isolation purposes, maybe you can use a separate filesystem instead.
+ *   See TOYWASM_ENABLE_WASI_LITTLEFS for an example.
  *
  * References:
  * https://github.com/WebAssembly/WASI/tree/main/phases/snapshot/witx
