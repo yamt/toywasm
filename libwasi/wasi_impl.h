@@ -20,12 +20,12 @@ struct wasi_fdinfo_prestat {
         struct wasi_fdinfo fdinfo;
         char *prestat_path;
         char *wasm_path; /* NULL means same as prestat_path */
-        struct wasi_vfs *vfs;
+        const struct wasi_vfs *vfs;
 };
 
 struct wasi_fdinfo_user {
         struct wasi_fdinfo fdinfo;
-        struct wasi_vfs *vfs;
+        const struct wasi_vfs *vfs;
         char *path;
         uint32_t blocking;
 };
@@ -95,12 +95,12 @@ struct exec_context;
 struct wasi_instance;
 
 int wasi_instance_prestat_add_vfs(struct wasi_instance *wasi, const char *path,
-                                  struct wasi_vfs *vfs, bool is_mapdir);
+                                  const struct wasi_vfs *vfs, bool is_mapdir);
 
 /* fdinfo */
 bool wasi_fdinfo_is_prestat(const struct wasi_fdinfo *fdinfo);
 const char *wasi_fdinfo_path(struct wasi_fdinfo *fdinfo);
-struct wasi_vfs *wasi_fdinfo_vfs(struct wasi_fdinfo *fdinfo);
+const struct wasi_vfs *wasi_fdinfo_vfs(struct wasi_fdinfo *fdinfo);
 void wasi_fdinfo_init(struct wasi_fdinfo *fdinfo);
 void wasi_fdinfo_user_init(struct wasi_fdinfo_user *fdinfo_user);
 void wasi_fdinfo_clear(struct wasi_fdinfo *fdinfo);
