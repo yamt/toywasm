@@ -12,7 +12,10 @@ struct wasi_fdinfo_lfs {
         } type;
         union {
                 lfs_file_t file;
-                lfs_dir_t dir;
+                struct {
+                        lfs_dir_t dir;
+                        struct lfs_info info;
+                } dir;
         } u;
 };
 
