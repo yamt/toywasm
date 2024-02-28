@@ -43,7 +43,7 @@ wasi_instance_prestat_add_mapdir_littlefs(struct wasi_instance *wasi,
 
         mapdir_string = colon + 2;
 
-        ret = wasi_littelfs_mount_file(image_path, &vfs);
+        ret = wasi_littlefs_mount_file(image_path, &vfs);
         if (ret != 0) {
                 goto fail;
         }
@@ -54,11 +54,9 @@ wasi_instance_prestat_add_mapdir_littlefs(struct wasi_instance *wasi,
         free(image_path);
         return 0;
 fail:
-        if (vfs_lfs != NULL) {
-                close(vfs_lfs->fd);
+        if (vfs != NULL) {
+                wasi_littlefs_umount_file(vfs);
         }
-        wasi_littlefs_umount(vfs);
-        free(vfs);
         free(image_path);
         return ret;
 }
