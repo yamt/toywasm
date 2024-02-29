@@ -226,7 +226,12 @@ toywasm_repl_reset(struct repl_state *state)
         }
         unsigned int i;
         for (i = 0; i < state->nvfses; i++) {
-                wasi_vfs_fs_umount(state->vfses[i]);
+                int ret = wasi_vfs_fs_umount(state->vfses[i]);
+                if (ret != 0) {
+                        /* log and ignore */
+                        xlog_error("%s: wasi_vfs_fs_umount failed with %d",
+                                   __func__, ret);
+                }
         }
         free(state->vfses);
         state->vfses = NULL;
