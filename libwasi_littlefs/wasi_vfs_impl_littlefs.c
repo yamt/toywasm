@@ -36,6 +36,7 @@ static const struct wasi_vfs_ops wasi_lfs_ops = {
         .path_lstat = wasi_lfs_path_lstat,
         .path_utimes = wasi_lfs_path_utimes,
         .path_lutimes = wasi_lfs_path_lutimes,
+        .fs_umount = wasi_lfs_fs_umount,
 };
 
 const struct wasi_vfs_ops *
