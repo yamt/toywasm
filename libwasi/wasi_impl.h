@@ -95,7 +95,7 @@ struct exec_context;
 struct wasi_instance;
 
 int wasi_instance_prestat_add_vfs(struct wasi_instance *wasi, const char *path,
-                                  struct wasi_vfs *vfs, bool is_mapdir);
+                                  struct wasi_vfs *vfs);
 
 /* fdinfo */
 bool wasi_fdinfo_is_prestat(const struct wasi_fdinfo *fdinfo);

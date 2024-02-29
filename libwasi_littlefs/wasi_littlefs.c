@@ -22,44 +22,40 @@
 #include "xlog.h"
 
 int
-wasi_instance_prestat_add_mapdir_littlefs(struct wasi_instance *wasi,
-                                          const char *path,
-                                          struct wasi_vfs **vfsp)
+wasi_instance_prestat_add_littlefs(struct wasi_instance *wasi,
+                                   const char *path, struct wasi_vfs **vfsp)
 {
         struct wasi_vfs *vfs = NULL;
         char *image_path = NULL;
         const char *mapdir_string;
         int ret;
 
-        /* IMAGE_FILE::HOST_DIR::MAP_DIR */
-        const char *colon = strchr(path, ':');
-        if (colon == NULL || colon[1] != ':') {
+        /* IMAGE_FILE::HOST_DIR[::GUEST_DIR] */
+        const char *coloncolon = strstr(path, "::");
+        if (coloncolon == NULL) {
                 ret = EINVAL;
                 goto fail;
         }
-        image_path = strndup(path, colon - path);
+        image_path = strndup(path, coloncolon - path);
         if (image_path == NULL) {
                 ret = ENOMEM;
                 goto fail;
         }
-
-        mapdir_string = colon + 2;
-
+        mapdir_string = coloncolon + 2;
         ret = wasi_littlefs_mount_file(image_path, &vfs);
-        if (ret != 0) {
-                goto fail;
-        }
-        ret = wasi_instance_prestat_add_vfs(wasi, mapdir_string, vfs, true);
-        if (ret != 0) {
-                goto fail;
-        }
         free(image_path);
+        if (ret != 0) {
+                goto fail;
+        }
+        ret = wasi_instance_prestat_add_vfs(wasi, mapdir_string, vfs);
+        if (ret != 0) {
+                goto fail;
+        }
         *vfsp = vfs;
         return 0;
 fail:
         if (vfs != NULL) {
                 wasi_littlefs_umount_file(vfs);
         }
-        free(image_path);
         return ret;
 }

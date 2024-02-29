@@ -85,7 +85,5 @@ int toywasm_repl_set_wasi_args(struct repl_state *state, int argc,
 int toywasm_repl_set_wasi_environ(struct repl_state *state, int nenvs,
                                   const char *const *envs);
 int toywasm_repl_set_wasi_prestat(struct repl_state *state, const char *path);
-int toywasm_repl_set_wasi_prestat_mapdir(struct repl_state *state,
-                                         const char *path);
-int toywasm_repl_set_wasi_prestat_mapdir_littlefs(struct repl_state *state,
-                                                  const char *path);
+int toywasm_repl_set_wasi_prestat_littlefs(struct repl_state *state,
+                                           const char *path);
