@@ -15,8 +15,8 @@
 #include "lfs.h"
 
 #include "util.h"
-#include "wasi_littlefs.h"
 #include "wasi_littlefs_impl.h"
+#include "wasi_littlefs_mount.h"
 #include "wasi_vfs_impl_littlefs.h"
 #include "xlog.h"
 

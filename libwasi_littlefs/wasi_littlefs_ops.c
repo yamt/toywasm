@@ -5,6 +5,7 @@
 
 #include "endian.h"
 #include "wasi_littlefs_impl.h"
+#include "wasi_littlefs_mount.h"
 #include "wasi_path_subr.h"
 #include "wasi_uio.h"
 #include "wasi_vfs_impl_littlefs.h"
@@ -567,4 +568,11 @@ wasi_lfs_path_lutimes(const struct path_info *pi,
         /* littlefs doesn't have timestamp */
         xlog_trace("%s: ignore unimplemented op", __func__);
         return 0;
+}
+
+int
+wasi_lfs_fs_umount(struct wasi_vfs *vfs)
+{
+        xlog_trace("%s: unmounting", __func__);
+        return wasi_littlefs_umount_file(vfs);
 }
