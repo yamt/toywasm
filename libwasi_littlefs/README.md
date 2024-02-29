@@ -34,7 +34,7 @@ api.
 Copy a file from a littlefs image to host /tmp.
 
 ```shell
-toywasm --wasi --wasi-mapdir /tmp::host --wasi-mapdir-littlefs littlefs.bin::/::lfs uutils.async.wasm cp lfs/pi2.js host/
+toywasm --wasi --wasi-dir /tmp::host --wasi-littlefs-dir littlefs.bin::/::lfs uutils.async.wasm cp lfs/pi2.js host/
 ```
 
 # Caveats
