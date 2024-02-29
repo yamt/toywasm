@@ -23,7 +23,7 @@ TOYWASM_ENABLE_WASI_LITTLEFS=ON
 
 # Usage
 
-You can use the `--wasi-mapdir-littlefs` cli option to add preopens
+You can use the `--wasi-littlefs-dir` cli option to add preopens
 backed by littlefs-backed.
 
 Or, make your embedder use the `wasi_instance_prestat_add_mapdir_littlefs`
