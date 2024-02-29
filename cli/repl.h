@@ -58,6 +58,8 @@ struct repl_state {
         struct val *result;
         struct wasi_instance *wasi;
         struct wasi_threads_instance *wasi_threads;
+        unsigned int nvfses;
+        struct wasi_vfs **vfses;
         struct repl_options opts;
         struct timespec abstimeout;
         bool has_timeout;

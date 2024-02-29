@@ -38,6 +38,7 @@
 #include "usched.h"
 #if defined(TOYWASM_ENABLE_WASI)
 #include "wasi.h"
+#include "wasi_vfs.h"
 #endif
 #if defined(TOYWASM_ENABLE_WASI_THREADS)
 #include "wasi_threads.h"
@@ -223,6 +224,13 @@ toywasm_repl_reset(struct repl_state *state)
                 state->wasi = NULL;
                 n--;
         }
+        unsigned int i;
+        for (i = 0; i < state->nvfses; i++) {
+                wasi_vfs_fs_umount(state->vfses[i]);
+        }
+        free(state->vfses);
+        state->vfses = NULL;
+        state->nvfses = 0;
 #endif
         assert(n == 0);
 }
@@ -338,13 +346,19 @@ toywasm_repl_set_wasi_prestat_mapdir_littlefs(struct repl_state *state,
         if (state->wasi == NULL) {
                 return EPROTO;
         }
+        int ret;
+        ret = resize_array((void **)&state->vfses, sizeof(*state->vfses),
+                           state->nvfses + 1);
+        if (ret != 0) {
+                return ret;
+        }
         struct wasi_vfs *vfs;
-        int ret = wasi_instance_prestat_add_mapdir_littlefs(state->wasi, path,
+        ret = wasi_instance_prestat_add_mapdir_littlefs(state->wasi, path,
                                                             &vfs);
         if (ret != 0) {
                 return ret;
         }
-        /* XXX record vfs and umount it in toywasm_repl_reset */
+        state->vfses[state->nvfses++] = vfs;
         return 0;
 }
 #endif
