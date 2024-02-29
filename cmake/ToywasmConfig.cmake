@@ -138,7 +138,7 @@ option(TOYWASM_ENABLE_WASM_NAME_SECTION "Enable name section" ON)
 option(TOYWASM_ENABLE_WASI "Enable WASI snapshow preview1" ON)
 
 cmake_dependent_option(TOYWASM_ENABLE_WASI_LITTLEFS
-    "Enbale WASI littlefs support"
+    "Enable WASI littlefs support"
     OFF
     "TOYWASM_ENABLE_WASI"
     OFF)
