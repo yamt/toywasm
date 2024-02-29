@@ -122,9 +122,11 @@ wasi_littlefs_mount_file(const char *path, struct wasi_vfs **vfsp)
         return 0;
 fail:
         if (vfs_lfs != NULL) {
-                close(vfs_lfs->fd);
+                if (vfs_lfs->fd != -1) {
+                        close(vfs_lfs->fd);
+                }
+                free(vfs_lfs);
         }
-        free(vfs_lfs);
         return ret;
 }
 
