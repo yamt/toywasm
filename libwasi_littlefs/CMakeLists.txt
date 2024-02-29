@@ -9,7 +9,7 @@ set(lib_wasi_littlefs_sources
 )
 
 set(lib_wasi_littlefs_headers
-	"wasi_littelfs.h"
+	"wasi_littlefs.h"
 )
 
 set(littlefs_sources
