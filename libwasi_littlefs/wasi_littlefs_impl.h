@@ -30,3 +30,4 @@ int lfs_error_to_errno(enum lfs_error lfs_error);
 
 struct wasi_fdinfo_lfs *wasi_fdinfo_to_lfs(struct wasi_fdinfo *fdinfo);
 struct wasi_vfs_lfs *wasi_vfs_to_lfs(struct wasi_vfs *vfs);
+int wasi_littlefs_umount_file(struct wasi_vfs *vfs);
