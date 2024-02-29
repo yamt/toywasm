@@ -139,7 +139,7 @@ option(TOYWASM_ENABLE_WASI "Enable WASI snapshow preview1" ON)
 
 cmake_dependent_option(TOYWASM_ENABLE_WASI_LITTLEFS
     "Enbale WASI littlefs support"
-    ON
+    OFF
     "TOYWASM_ENABLE_WASI"
     OFF)
 
