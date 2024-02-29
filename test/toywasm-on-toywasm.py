@@ -12,7 +12,6 @@ executable_wasm = os.getenv("TOYWASM_WASM", "./build.wasm/toywasm")
 
 parser = argparse.ArgumentParser(allow_abbrev=False)
 parser.add_argument("--wasi-dir", action="append", default=[])
-parser.add_argument("--wasi-mapdir", action="append", default=[])
 args, unknown = parser.parse_known_args()
 
 sys_prefix = "@TOYWASM@"
@@ -24,20 +23,16 @@ def translate_path(cat, name):
     if d == "":
         d = "."
     wasm_path = os.path.join(sys_prefix, cat)
-    options.append(f"--wasi-mapdir={wasm_path}::{d}")
+    options.append(f"--wasi-dir={d}::{wasm_path}")
     b = os.path.basename(name)
     return os.path.join(sys_prefix, cat, b)
 
 
 options = []
 
+# XXX handle HOST_DIR::GUEST_DIR case
 for x in args.wasi_dir:
     options.append(f"--wasi-dir={x}")
-
-for x in args.wasi_mapdir:
-    # REVISIT: translate host path?
-    g, h = x.split("::", maxsplit=2)
-    options.append(f"--wasi-dir={h}")
 
 # assume that the first argument which doesn't start with "--" is
 # a wasm module.
