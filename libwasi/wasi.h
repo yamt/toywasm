@@ -19,17 +19,12 @@ void wasi_instance_set_environ(struct wasi_instance *inst, int nenvs,
 void wasi_instance_destroy(struct wasi_instance *inst);
 
 /*
- * wasi_instance_prestat_add_mapdir specifies a host directory to
- * expose to the wasi instance. the "path" argument is a string in
- * a format of "GUEST_DIR::HOST_DIR".
+ * wasi_instance_prestat_add specifies a host directory to expose to
+ * the wasi instance. the "path" argument is a string in a format of
+ * "HOST_DIR[::GUEST_DIR]".
  * (the current api has an obvious flaw about names containing "::".)
- *
- * wasi_instance_prestat_add(i, "dir") is mostly an equivalent of
- * wasi_instance_prestat_add_mapdir("i, "dir::dir").
  */
 int wasi_instance_prestat_add(struct wasi_instance *wasi, const char *path);
-int wasi_instance_prestat_add_mapdir(struct wasi_instance *wasi,
-                                     const char *path);
 
 /*
  * wasi_instance_add_hostfd:

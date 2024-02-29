@@ -47,11 +47,10 @@ enum longopt {
 #if defined(TOYWASM_ENABLE_WASI)
         opt_wasi,
         opt_wasi_dir,
-        opt_wasi_mapdir,
         opt_wasi_env,
 #endif
 #if defined(TOYWASM_ENABLE_WASI_LITTLEFS)
-        opt_wasi_mapdir_littlefs,
+        opt_wasi_dir_littlefs,
 #endif
 };
 
@@ -184,12 +183,6 @@ static const struct option longopts[] = {
                 opt_wasi_dir,
         },
         {
-                "wasi-mapdir",
-                required_argument,
-                NULL,
-                opt_wasi_mapdir,
-        },
-        {
                 "wasi-env",
                 required_argument,
                 NULL,
@@ -198,10 +191,10 @@ static const struct option longopts[] = {
 #endif
 #if defined(TOYWASM_ENABLE_WASI_LITTLEFS)
         {
-                "wasi-mapdir-littlefs",
+                "wasi-dir-littlefs",
                 required_argument,
                 NULL,
-                opt_wasi_mapdir_littlefs,
+                opt_wasi_dir_littlefs,
         },
 #endif
         {
@@ -221,11 +214,10 @@ static const char *opt_metavars[] = {
 #endif
 #if defined(TOYWASM_ENABLE_WASI)
         [opt_wasi_env] = "NAME=VAR",
-        [opt_wasi_dir] = "DIR",
-        [opt_wasi_mapdir] = "HOST_DIR::GUEST_DIR",
+        [opt_wasi_dir] = "HOST_DIR[::GUEST_DIR]",
 #endif
 #if defined(TOYWASM_ENABLE_WASI_LITTLEFS)
-        [opt_wasi_mapdir_littlefs] = "LITTLEFS_IMAGE_PATH::LFS_DIR::GUEST_DIR",
+        [opt_wasi_dir_littlefs] = "LITTLEFS_IMAGE_PATH::LFS_DIR[::GUEST_DIR]",
 #endif
         [opt_timeout] = "TIMEOUT_MS",
 #if defined(TOYWASM_ENABLE_TRACING)
@@ -410,13 +402,6 @@ main(int argc, char *const *argv)
                                 goto fail;
                         }
                         break;
-                case opt_wasi_mapdir:
-                        ret = toywasm_repl_set_wasi_prestat_mapdir(state,
-                                                                   optarg);
-                        if (ret != 0) {
-                                goto fail;
-                        }
-                        break;
                 case opt_wasi_env:
                         ret = VEC_PREALLOC(wasi_envs, 1);
                         if (ret != 0) {
@@ -431,9 +416,9 @@ main(int argc, char *const *argv)
                         break;
 #endif
 #if defined(TOYWASM_ENABLE_WASI_LITTLEFS)
-                case opt_wasi_mapdir_littlefs:
-                        ret = toywasm_repl_set_wasi_prestat_mapdir_littlefs(
-                                state, optarg);
+                case opt_wasi_dir_littlefs:
+                        ret = toywasm_repl_set_wasi_prestat_littlefs(state,
+                                                                     optarg);
                         if (ret != 0) {
                                 goto fail;
                         }

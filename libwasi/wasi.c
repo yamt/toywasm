@@ -210,7 +210,7 @@ wasi_instance_set_environ(struct wasi_instance *inst, int nenvs,
 
 int
 wasi_instance_prestat_add_vfs(struct wasi_instance *wasi, const char *path,
-                              struct wasi_vfs *vfs, bool is_mapdir)
+                              struct wasi_vfs *vfs)
 {
         struct wasi_fdinfo *fdinfo = NULL;
         char *host_path = NULL;
@@ -219,7 +219,8 @@ wasi_instance_prestat_add_vfs(struct wasi_instance *wasi, const char *path,
         int ret;
         xlog_trace("prestat adding mapdir %s", path);
 
-        if (is_mapdir) {
+        const char *coloncolon = strstr(path, "::");
+        if (coloncolon != NULL) {
                 /*
                  * <host dir>::<wasm dir>
                  *
@@ -229,17 +230,16 @@ wasi_instance_prestat_add_vfs(struct wasi_instance *wasi, const char *path,
                  * https://github.com/bytecodealliance/wasmtime/pull/7301
                  */
 
-                const char *colon = strchr(path, ':');
-                if (colon == NULL || colon[1] != ':') {
-                        ret = EINVAL;
+                host_path = strndup(path, coloncolon - path);
+                wasm_path = strdup(coloncolon + 2);
+                if (wasm_path == NULL) {
+                        ret = ENOMEM;
                         goto fail;
                 }
-                host_path = strndup(path, colon - path);
-                wasm_path = strdup(colon + 2);
         } else {
                 host_path = strdup(path);
         }
-        if (host_path == NULL || (is_mapdir && wasm_path == NULL)) {
+        if (host_path == NULL) {
                 ret = ENOMEM;
                 goto fail;
         }
@@ -272,14 +272,7 @@ int
 wasi_instance_prestat_add(struct wasi_instance *wasi, const char *path)
 {
         struct wasi_vfs *vfs = wasi_get_vfs_host();
-        return wasi_instance_prestat_add_vfs(wasi, path, vfs, false);
-}
-
-int
-wasi_instance_prestat_add_mapdir(struct wasi_instance *wasi, const char *path)
-{
-        struct wasi_vfs *vfs = wasi_get_vfs_host();
-        return wasi_instance_prestat_add_vfs(wasi, path, vfs, true);
+        return wasi_instance_prestat_add_vfs(wasi, path, vfs);
 }
 
 uint32_t

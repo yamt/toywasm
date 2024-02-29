@@ -326,22 +326,12 @@ toywasm_repl_set_wasi_prestat(struct repl_state *state, const char *path)
         }
         return wasi_instance_prestat_add(state->wasi, path);
 }
-
-int
-toywasm_repl_set_wasi_prestat_mapdir(struct repl_state *state,
-                                     const char *path)
-{
-        if (state->wasi == NULL) {
-                return EPROTO;
-        }
-        return wasi_instance_prestat_add_mapdir(state->wasi, path);
-}
 #endif
 
 #if defined(TOYWASM_ENABLE_WASI_LITTLEFS)
 int
-toywasm_repl_set_wasi_prestat_mapdir_littlefs(struct repl_state *state,
-                                              const char *path)
+toywasm_repl_set_wasi_prestat_littlefs(struct repl_state *state,
+                                       const char *path)
 {
         if (state->wasi == NULL) {
                 return EPROTO;
@@ -353,8 +343,7 @@ toywasm_repl_set_wasi_prestat_mapdir_littlefs(struct repl_state *state,
                 return ret;
         }
         struct wasi_vfs *vfs;
-        ret = wasi_instance_prestat_add_mapdir_littlefs(state->wasi, path,
-                                                            &vfs);
+        ret = wasi_instance_prestat_add_littlefs(state->wasi, path, &vfs);
         if (ret != 0) {
                 return ret;
         }
