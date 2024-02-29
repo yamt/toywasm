@@ -50,7 +50,7 @@ enum longopt {
         opt_wasi_env,
 #endif
 #if defined(TOYWASM_ENABLE_WASI_LITTLEFS)
-        opt_wasi_dir_littlefs,
+        opt_wasi_littlefs_dir,
 #endif
 };
 
@@ -191,10 +191,10 @@ static const struct option longopts[] = {
 #endif
 #if defined(TOYWASM_ENABLE_WASI_LITTLEFS)
         {
-                "wasi-dir-littlefs",
+                "wasi-littlefs-dir",
                 required_argument,
                 NULL,
-                opt_wasi_dir_littlefs,
+                opt_wasi_littlefs_dir,
         },
 #endif
         {
@@ -217,7 +217,7 @@ static const char *opt_metavars[] = {
         [opt_wasi_dir] = "HOST_DIR[::GUEST_DIR]",
 #endif
 #if defined(TOYWASM_ENABLE_WASI_LITTLEFS)
-        [opt_wasi_dir_littlefs] = "LITTLEFS_IMAGE_PATH::LFS_DIR[::GUEST_DIR]",
+        [opt_wasi_littlefs_dir] = "LITTLEFS_IMAGE_PATH::LFS_DIR[::GUEST_DIR]",
 #endif
         [opt_timeout] = "TIMEOUT_MS",
 #if defined(TOYWASM_ENABLE_TRACING)
@@ -416,7 +416,7 @@ main(int argc, char *const *argv)
                         break;
 #endif
 #if defined(TOYWASM_ENABLE_WASI_LITTLEFS)
-                case opt_wasi_dir_littlefs:
+                case opt_wasi_littlefs_dir:
                         ret = toywasm_repl_set_wasi_prestat_littlefs(state,
                                                                      optarg);
                         if (ret != 0) {
