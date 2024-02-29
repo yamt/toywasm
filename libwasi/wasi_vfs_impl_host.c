@@ -44,7 +44,7 @@ struct wasi_vfs wasi_host_vfs = {
 };
 
 struct wasi_vfs *
-wasi_get_vfs_host()
+wasi_get_vfs_host(void)
 {
         return &wasi_host_vfs;
 }
