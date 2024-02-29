@@ -399,6 +399,9 @@ main(int argc, char *const *argv)
                 case opt_wasi_dir:
                         ret = toywasm_repl_set_wasi_prestat(state, optarg);
                         if (ret != 0) {
+                                xlog_error(
+                                        "failed to add preopen '%s' error %d",
+                                        optarg, ret);
                                 goto fail;
                         }
                         break;
@@ -420,6 +423,9 @@ main(int argc, char *const *argv)
                         ret = toywasm_repl_set_wasi_prestat_littlefs(state,
                                                                      optarg);
                         if (ret != 0) {
+                                xlog_error(
+                                        "failed to add preopen '%s' error %d",
+                                        optarg, ret);
                                 goto fail;
                         }
                         break;
