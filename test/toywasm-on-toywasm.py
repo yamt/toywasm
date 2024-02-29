@@ -1,5 +1,9 @@
 #! /usr/bin/env python3
 
+# TODO
+# - handle HOST_DIR::GUEST_DIR case
+# - handle --wasi-littlefs-dir
+
 import argparse
 import os
 import os.path
@@ -30,7 +34,6 @@ def translate_path(cat, name):
 
 options = []
 
-# XXX handle HOST_DIR::GUEST_DIR case
 for x in args.wasi_dir:
     options.append(f"--wasi-dir={x}")
 
