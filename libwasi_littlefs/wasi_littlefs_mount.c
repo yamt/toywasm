@@ -134,14 +134,16 @@ int
 wasi_littlefs_umount_file(struct wasi_vfs *vfs)
 {
         struct wasi_vfs_lfs *vfs_lfs = wasi_vfs_to_lfs(vfs);
+        assert(vfs_lfs->fd != -1);
         int ret = lfs_unmount(&vfs_lfs->lfs);
-        ret = lfs_error_to_errno(ret);
-        int ret1 = close(vfs_lfs->fd);
-        if (ret1 == -1) {
-                if (ret == 0) {
-                        ret = errno;
-                        assert(ret > 0);
-                }
+        if (ret != 0) {
+                xlog_trace("lfs_unmount failed with %d", ret);
+                return lfs_error_to_errno(ret);
         }
-        return ret;
+        ret = close(vfs_lfs->fd);
+        if (ret != 0) {
+                /* log and ignore. */
+                xlog_error("ignoring close failure %d", ret);
+        }
+        return 0;
 }
