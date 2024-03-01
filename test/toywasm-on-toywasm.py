@@ -40,8 +40,11 @@ def translate_path(cat, name):
 options = []
 
 for x in args.wasi_dir:
-    h, _ = x.split("::", maxsplit=1)
-    options.append(f"--wasi-dir={h}")
+    ss = x.split("::", maxsplit=1)
+    if len(ss) == 2:
+        options.append(f"--wasi-dir={ss[0]}")
+    else:
+        options.append(f"--wasi-dir={x}")
 
 
 # assume that the first argument which doesn't start with "--" is
