@@ -22,8 +22,8 @@
 #include "xlog.h"
 
 static int
-wasi_lfs_read(const struct lfs_config *cfg, lfs_block_t block, lfs_off_t off,
-              void *buffer, lfs_size_t size)
+wasi_lfs_bd_read(const struct lfs_config *cfg, lfs_block_t block,
+                 lfs_off_t off, void *buffer, lfs_size_t size)
 {
         struct wasi_vfs_lfs *lfs_vfs = cfg->context;
         int fd = lfs_vfs->fd;
@@ -38,8 +38,8 @@ wasi_lfs_read(const struct lfs_config *cfg, lfs_block_t block, lfs_off_t off,
 }
 
 static int
-wasi_lfs_prog(const struct lfs_config *cfg, lfs_block_t block, lfs_off_t off,
-              const void *buffer, lfs_size_t size)
+wasi_lfs_bd_prog(const struct lfs_config *cfg, lfs_block_t block,
+                 lfs_off_t off, const void *buffer, lfs_size_t size)
 {
         struct wasi_vfs_lfs *lfs_vfs = cfg->context;
         int fd = lfs_vfs->fd;
@@ -54,7 +54,7 @@ wasi_lfs_prog(const struct lfs_config *cfg, lfs_block_t block, lfs_off_t off,
 }
 
 static int
-wasi_lfs_erase(const struct lfs_config *cfg, lfs_block_t block)
+wasi_lfs_bd_erase(const struct lfs_config *cfg, lfs_block_t block)
 {
 #if defined(TOYWASM_ENABLE_LITTLEFS_STATS)
         struct wasi_vfs_lfs *lfs_vfs = cfg->context;
@@ -64,7 +64,7 @@ wasi_lfs_erase(const struct lfs_config *cfg, lfs_block_t block)
 }
 
 static int
-wasi_lfs_sync(const struct lfs_config *cfg)
+wasi_lfs_bd_sync(const struct lfs_config *cfg)
 {
         struct wasi_vfs_lfs *lfs_vfs = cfg->context;
         int fd = lfs_vfs->fd;
@@ -79,7 +79,7 @@ wasi_lfs_sync(const struct lfs_config *cfg)
 #define MUTEX(cfg) (&((struct wasi_vfs_lfs *)(cfg)->context)->lock)
 
 static int
-wasi_lfs_lock(const struct lfs_config *cfg) ACQUIRES(MUTEX(cfg))
+wasi_lfs_fs_lock(const struct lfs_config *cfg) ACQUIRES(MUTEX(cfg))
 {
         /*
          * REVISIT: toywasm_mutex_lock is not really appropriate because
@@ -92,7 +92,7 @@ wasi_lfs_lock(const struct lfs_config *cfg) ACQUIRES(MUTEX(cfg))
 }
 
 static int
-wasi_lfs_unlock(const struct lfs_config *cfg) RELEASES(MUTEX(cfg))
+wasi_lfs_fs_unlock(const struct lfs_config *cfg) RELEASES(MUTEX(cfg))
 {
         toywasm_mutex_unlock(MUTEX(cfg));
         return 0;
@@ -140,12 +140,12 @@ wasi_littlefs_mount_file(const char *path, struct wasi_vfs **vfsp)
         assert(block_count * block_size == st.st_size);
         struct lfs_config *lfs_config = &vfs_lfs->lfs_config;
         lfs_config->context = vfs_lfs;
-        lfs_config->read = wasi_lfs_read;
-        lfs_config->prog = wasi_lfs_prog;
-        lfs_config->erase = wasi_lfs_erase;
-        lfs_config->sync = wasi_lfs_sync;
-        lfs_config->lock = wasi_lfs_lock;
-        lfs_config->unlock = wasi_lfs_unlock;
+        lfs_config->read = wasi_lfs_bd_read;
+        lfs_config->prog = wasi_lfs_bd_prog;
+        lfs_config->erase = wasi_lfs_bd_erase;
+        lfs_config->sync = wasi_lfs_bd_sync;
+        lfs_config->lock = wasi_lfs_fs_lock;
+        lfs_config->unlock = wasi_lfs_fs_unlock;
         lfs_config->read_size = read_size;
         lfs_config->prog_size = prog_size;
         lfs_config->block_size = block_size;
