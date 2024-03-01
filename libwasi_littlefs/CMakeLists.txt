@@ -37,7 +37,7 @@ target_include_directories(toywasm-lib-wasi-littlefs
                            INTERFACE
                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
                            $<INSTALL_INTERFACE:include>
-                           PRIVATE littlefs)
+                           PRIVATE ${TOYWASM_LITTLEFS_SOURCE_DIR})
 target_compile_definitions(toywasm-lib-wasi-littlefs PRIVATE LFS_THREADSAFE)
 if (NOT CMAKE_BUILD_TYPE MATCHES Debug)
     target_compile_definitions(toywasm-lib-wasi-littlefs PRIVATE LFS_NO_DEBUG LFS_NO_ASSERT)
