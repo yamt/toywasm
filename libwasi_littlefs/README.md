@@ -12,6 +12,9 @@ Checkout littlefs source code in as "littlefs" in this directory.
 git clone https://github.com/littlefs-project/littlefs
 ```
 
+You can override the directory with the `TOYWASM_LITTLEFS_SOURCE_DIR`
+cmake variable.
+
 # Build
 
 Build toywasm with the following options.
@@ -26,7 +29,7 @@ TOYWASM_ENABLE_WASI_LITTLEFS=ON
 You can use the `--wasi-littlefs-dir` cli option to add preopens
 backed by a littlefs file image.
 
-Or, make your embedder use the `wasi_instance_prestat_add_mapdir_littlefs`
+Or, make your embedder use the `wasi_instance_prestat_add_littlefs`
 api.
 
 # Example
@@ -34,9 +37,9 @@ api.
 Copy a file from a littlefs image to host /tmp.
 
 ```shell
-toywasm --wasi --wasi-dir /tmp::host --wasi-littlefs-dir littlefs.bin::/::lfs uutils.async.wasm cp lfs/pi2.js host/
+toywasm --wasi --wasi-dir /tmp::host --wasi-littlefs-dir littlefs.bin::/::lfs cp.wasm lfs/srcfile host/dstfile
 ```
 
 # Caveats
 
-Curretly, block size and other filesystem parameters are hardcoded.
+Curretly, block size (4096) and other filesystem parameters are hardcoded.
