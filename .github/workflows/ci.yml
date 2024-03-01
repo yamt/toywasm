@@ -108,6 +108,7 @@ jobs:
             MISC_FEATURES: ON
             TOYWASM_ENABLE_WASM_THREADS: ON
             TOYWASM_ENABLE_WASI_THREADS: ON
+            TOYWASM_ENABLE_WASI_LITTLEFS: ON
             TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: ON
           - name: macos-11.0
             os: macos-latest
@@ -136,6 +137,7 @@ jobs:
             MISC_FEATURES: ON
             TOYWASM_ENABLE_WASM_THREADS: ON
             TOYWASM_ENABLE_WASI_THREADS: ON
+            TOYWASM_ENABLE_WASI_LITTLEFS: ON
             TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: ON
 
           - name: ubuntu-20.04-i386
@@ -222,6 +224,7 @@ jobs:
             MISC_FEATURES: ON
             TOYWASM_ENABLE_WASM_THREADS: ON
             TOYWASM_ENABLE_WASI_THREADS: ON
+            TOYWASM_ENABLE_WASI_LITTLEFS: ON
             TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: ON
           - name: full-ubuntu-20.04-arm64
             os: ubuntu-20.04
@@ -236,6 +239,7 @@ jobs:
             MISC_FEATURES: ON
             TOYWASM_ENABLE_WASM_THREADS: ON
             TOYWASM_ENABLE_WASI_THREADS: ON
+            TOYWASM_ENABLE_WASI_LITTLEFS: ON
             TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: ON
           - name: full-ubuntu-20.04-armhf
             os: ubuntu-20.04
@@ -250,6 +254,7 @@ jobs:
             MISC_FEATURES: ON
             TOYWASM_ENABLE_WASM_THREADS: ON
             TOYWASM_ENABLE_WASI_THREADS: ON
+            TOYWASM_ENABLE_WASI_LITTLEFS: ON
             TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: ON
           - name: full-ubuntu-20.04-s390x
             os: ubuntu-20.04
@@ -264,6 +269,7 @@ jobs:
             MISC_FEATURES: ON
             TOYWASM_ENABLE_WASM_THREADS: ON
             TOYWASM_ENABLE_WASI_THREADS: ON
+            TOYWASM_ENABLE_WASI_LITTLEFS: ON
             TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: ON
           - name: full-ubuntu-20.04-riscv64
             os: ubuntu-20.04
@@ -278,6 +284,7 @@ jobs:
             MISC_FEATURES: ON
             TOYWASM_ENABLE_WASM_THREADS: ON
             TOYWASM_ENABLE_WASI_THREADS: ON
+            TOYWASM_ENABLE_WASI_LITTLEFS: ON
             TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: ON
 
     runs-on: ${{matrix.os}}
@@ -304,6 +311,8 @@ jobs:
         echo "-DTOYWASM_ENABLE_WASM_TAILCALL=${{matrix.MISC_FEATURES}}" >> ${GITHUB_ENV}
         echo "-DTOYWASM_ENABLE_WASM_THREADS=${{matrix.TOYWASM_ENABLE_WASM_THREADS}}" >> ${GITHUB_ENV}
         echo "-DTOYWASM_ENABLE_WASI_THREADS=${{matrix.TOYWASM_ENABLE_WASI_THREADS}}"  >> ${GITHUB_ENV}
+        echo "-DTOYWASM_ENABLE_WASI_LITTLEFS=${{matrix.TOYWASM_ENABLE_WASI_LITTLEFS}}"  >> ${GITHUB_ENV}
+        echo "-DTOYWASM_LITTLEFS_SOURCE_DIR=${{github.workspace}}/littlefs" >> ${GITHUB_ENV}
         echo "-DTOYWASM_ENABLE_DYLD=${{matrix.MISC_FEATURES}}" >> ${GITHUB_ENV}
         echo "-DTOYWASM_ENABLE_DYLD_DLFCN=${{matrix.MISC_FEATURES}}" >> ${GITHUB_ENV}
         echo "EOF" >> ${GITHUB_ENV}
@@ -332,6 +341,13 @@ jobs:
 
     - uses: actions/checkout@v3
       with:
+        fetch-depth: 0
+
+    - uses: actions/checkout@v3
+      with:
+        repository: littlefs-project/littlefs
+        path: littlefs
+        ref: v2.9.0
         fetch-depth: 0
 
     - name: Install dependencies (ubuntu/focal native)
@@ -469,7 +485,7 @@ jobs:
         compiler: [clang]
         include:
           - name: full-wasm32-wasi
-            extra: "-DTOYWASM_ENABLE_WASM_EXTENDED_CONST=ON -DTOYWASM_ENABLE_WASM_MULTI_MEMORY=ON -DTOYWASM_ENABLE_WASM_TAILCALL=ON -DTOYWASM_ENABLE_WASM_THREADS=ON -DTOYWASM_ENABLE_WASI_THREADS=ON"
+            extra: "-DTOYWASM_ENABLE_WASM_EXTENDED_CONST=ON -DTOYWASM_ENABLE_WASM_MULTI_MEMORY=ON -DTOYWASM_ENABLE_WASM_TAILCALL=ON -DTOYWASM_ENABLE_WASM_THREADS=ON -DTOYWASM_ENABLE_WASI_THREADS=ON -DTOYWASM_ENABLE_WASI_LITTLEFS=ON"
 
     runs-on: ${{matrix.os}}
 
@@ -494,10 +510,17 @@ jobs:
       with:
         fetch-depth: 0
 
+    - uses: actions/checkout@v3
+      with:
+        repository: littlefs-project/littlefs
+        path: littlefs
+        ref: v2.9.0
+        fetch-depth: 0
+
     - name: Build and test
       env:
         # Note: we don't care about tarball suffix for native build here.
-        EXTRA_CMAKE_OPTIONS: -G Ninja -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/dist -DTOYWASM_TARBALL_SUFFIX=-${{matrix.name}} ${{matrix.extra}}
+        EXTRA_CMAKE_OPTIONS: -G Ninja -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/dist -DTOYWASM_TARBALL_SUFFIX=-${{matrix.name}} -DTOYWASM_LITTLEFS_SOURCE_DIR=${{github.workspace}}/littlefs ${{matrix.extra}}
       run: ./wasm-on-wasm.sh
 
     - name: toywasm --version
