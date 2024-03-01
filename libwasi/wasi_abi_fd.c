@@ -14,6 +14,7 @@
 #include "wasi_subr.h"
 #include "wasi_utimes.h"
 #include "wasi_vfs.h"
+#include "wasi_vfs_impl_host.h"
 #include "xlog.h"
 
 #include "wasi_hostfuncs.h"
@@ -311,18 +312,20 @@ wasi_fd_read(struct exec_context *ctx, struct host_instance *hi,
         }
         size_t n;
 
-        /* hack for tty. see the comment in wasi_instance_create. */
-        uint16_t fflags;
-        ret = wasi_vfs_fd_get_flags(fdinfo, &fflags);
-        if (ret != 0) {
-                goto fail;
-        }
-        if ((fflags & WASI_FDFLAG_NONBLOCK) == 0) {
-                /*
-                 * perform a poll first to avoid blocking in readv.
-                 */
-                ret = EAGAIN;
-                goto tty_hack;
+        if (wasi_fdinfo_is_host(fdinfo)) {
+                /* hack for tty. see the comment in wasi_instance_create. */
+                uint16_t fflags;
+                ret = wasi_vfs_fd_get_flags(fdinfo, &fflags);
+                if (ret != 0) {
+                        goto fail;
+                }
+                if ((fflags & WASI_FDFLAG_NONBLOCK) == 0) {
+                        /*
+                         * perform a poll first to avoid blocking in readv.
+                         */
+                        ret = EAGAIN;
+                        goto tty_hack;
+                }
         }
 retry:
         ret = wasi_vfs_fd_readv(fdinfo, hostiov, iov_count, &n);
