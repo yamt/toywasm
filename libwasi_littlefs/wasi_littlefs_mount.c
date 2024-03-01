@@ -71,6 +71,12 @@ wasi_lfs_sync(const struct lfs_config *cfg)
 static int
 wasi_lfs_lock(const struct lfs_config *cfg) ACQUIRES(MUTEX(cfg))
 {
+        /*
+         * REVISIT: toywasm_mutex_lock is not really appropriate because
+         * toywasm_mutex_lock is a no-op unless TOYWASM_ENABLE_WASM_THREADS
+         * is enabled. consider the cases where a mounted filesystem
+         * (wasi_vfs_lfs) is shared among single-threaded instances.
+         */
         toywasm_mutex_lock(MUTEX(cfg));
         return 0;
 }
