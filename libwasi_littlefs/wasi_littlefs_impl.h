@@ -21,6 +21,7 @@ struct wasi_fdinfo_lfs {
 
 struct wasi_vfs_lfs {
         struct wasi_vfs vfs;
+        TOYWASM_MUTEX_DEFINE(lock);
         lfs_t lfs;
         struct lfs_config lfs_config;
         int fd;
