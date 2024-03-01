@@ -432,7 +432,7 @@ main(int argc, char *const *argv)
 #endif
                 default:
                         print_usage();
-                        goto success;
+                        goto fail;
                 }
         }
         argc -= optind;
