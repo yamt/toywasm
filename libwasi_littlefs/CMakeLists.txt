@@ -13,9 +13,13 @@ set(lib_wasi_littlefs_headers
 	"wasi_littlefs_mount.h"
 )
 
+if(NOT DEFINED TOYWASM_LITTLEFS_SOURCE_DIR)
+set(TOYWASM_LITTLEFS_SOURCE_DIR "littlefs")
+endif()
+
 set(littlefs_sources
-    "littlefs/lfs.c"
-    "littlefs/lfs_util.c"
+    "${TOYWASM_LITTLEFS_SOURCE_DIR}/lfs.c"
+    "${TOYWASM_LITTLEFS_SOURCE_DIR}/lfs_util.c"
 )
 
 add_library(toywasm-lib-wasi-littlefs STATIC ${lib_wasi_littlefs_sources} ${littlefs_sources})
