@@ -218,6 +218,9 @@ wasi_convert_errno(int host_errno)
         case ENOMEM:
                 wasmerrno = 48;
                 break;
+        case ENOSPC:
+                wasmerrno = 51;
+                break;
         case ENOTDIR:
                 wasmerrno = 54;
                 break;
