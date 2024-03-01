@@ -10,12 +10,13 @@
 #include "wasi_uio.h"
 
 int
-wasi_iovec_flatten(const struct iovec *iov, int iovcnt, void **bufp,
+wasi_iovec_flatten(const struct iovec *iov0, int iovcnt, void **bufp,
                    size_t *lenp)
 {
         size_t sz = 0;
         int i;
         for (i = 0; i < iovcnt; i++) {
+                const struct iovec *iov = &iov0[i];
                 sz += iov->iov_len;
         }
         uint8_t *buf = malloc(sz);
@@ -24,6 +25,7 @@ wasi_iovec_flatten(const struct iovec *iov, int iovcnt, void **bufp,
         }
         uint8_t *p = buf;
         for (i = 0; i < iovcnt; i++) {
+                const struct iovec *iov = &iov0[i];
                 memcpy(p, iov->iov_base, iov->iov_len);
                 p += iov->iov_len;
         }
@@ -34,12 +36,13 @@ wasi_iovec_flatten(const struct iovec *iov, int iovcnt, void **bufp,
 }
 
 int
-wasi_iovec_flatten_uninitialized(const struct iovec *iov, int iovcnt,
+wasi_iovec_flatten_uninitialized(const struct iovec *iov0, int iovcnt,
                                  void **bufp, size_t *lenp)
 {
         size_t sz = 0;
         int i;
         for (i = 0; i < iovcnt; i++) {
+                const struct iovec *iov = &iov0[i];
                 sz += iov->iov_len;
         }
         uint8_t *buf = malloc(sz);
@@ -52,13 +55,14 @@ wasi_iovec_flatten_uninitialized(const struct iovec *iov, int iovcnt,
 }
 
 void
-wasi_iovec_commit_flattened_data(const struct iovec *iov, int iovcnt,
+wasi_iovec_commit_flattened_data(const struct iovec *iov0, int iovcnt,
                                  const void *buf, size_t len)
 {
         const uint8_t *p = buf;
         size_t left = len;
         int i;
         for (i = 0; i < iovcnt; i++) {
+                const struct iovec *iov = &iov0[i];
                 size_t sz = iov->iov_len;
                 if (left < sz) {
                         sz = left;
