@@ -160,18 +160,17 @@ bool
 emulate_blocking(struct exec_context *ctx, struct wasi_fdinfo *fdinfo,
                  short poll_event, int orig_ret, int *host_retp, int *retp)
 {
-        int hostfd = wasi_fdinfo_hostfd(fdinfo);
-        assert(hostfd != -1);
-        /* See the comment in wasi_instance_create */
-        assert(isatty(hostfd) ||
-               (fcntl(hostfd, F_GETFL, 0) & O_NONBLOCK) != 0);
-
-        if (!wasi_fdinfo_to_user(fdinfo)->blocking || !is_again(orig_ret)) {
+        if (!is_again(orig_ret) || !wasi_fdinfo_to_user(fdinfo)->blocking) {
                 *host_retp = 0;
                 *retp = orig_ret;
                 return false;
         }
 
+        int hostfd = wasi_fdinfo_hostfd(fdinfo);
+        assert(hostfd != -1);
+        /* See the comment in wasi_instance_create */
+        assert(isatty(hostfd) ||
+               (fcntl(hostfd, F_GETFL, 0) & O_NONBLOCK) != 0);
         int host_ret;
         int ret;
 
