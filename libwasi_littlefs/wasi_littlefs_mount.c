@@ -114,8 +114,14 @@ wasi_littlefs_mount_file(const char *path, struct wasi_vfs **vfsp)
                 assert(ret > 0);
                 goto fail;
         }
-        lfs_size_t sector_size = 256;
+        /* note: cache_size can affect inline_max */
+        lfs_size_t read_size = 256;
+        lfs_size_t prog_size = 256;
+        lfs_size_t cache_size = 256;
         lfs_size_t block_size = 4096;
+        assert((cache_size % read_size) == 0);
+        assert((cache_size % prog_size) == 0);
+        assert((block_size % cache_size) == 0);
         if ((st.st_size % block_size) != 0) {
                 ret = EINVAL;
                 goto fail;
@@ -130,12 +136,12 @@ wasi_littlefs_mount_file(const char *path, struct wasi_vfs **vfsp)
         lfs_config->sync = wasi_lfs_sync;
         lfs_config->lock = wasi_lfs_lock;
         lfs_config->unlock = wasi_lfs_unlock;
-        lfs_config->read_size = sector_size;
-        lfs_config->prog_size = sector_size;
+        lfs_config->read_size = read_size;
+        lfs_config->prog_size = prog_size;
         lfs_config->block_size = block_size;
         lfs_config->block_count = block_count;
         lfs_config->block_cycles = -1;
-        lfs_config->cache_size = sector_size;
+        lfs_config->cache_size = cache_size;
         lfs_config->lookahead_size = 8;
         ret = lfs_mount(&vfs_lfs->lfs, lfs_config);
         if (ret != 0) {
