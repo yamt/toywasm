@@ -33,6 +33,7 @@ A WebAssembly interpreter written in C.
 |[wasi_snapshot_preview1]|`TOYWASM_ENABLE_WASI`                   |See [the top comment in wasi.c]|
 |[wasi-threads]          |`TOYWASM_ENABLE_WASI_THREADS`           |          |
 |[dynamic-linking]       |`TOYWASM_ENABLE_DYLD`                   |          |
+|[littlefs for WASI]     |`TOYWASM_ENABLE_WASI_LITTLEFS`          |          |
 
 Note: As this runtime is relatively new, all proposals which had finished
 when I started this implementation are just included in the `WebAssembly`
@@ -55,6 +56,7 @@ It includes
 [wasi_snapshot_preview1]: https://github.com/WebAssembly/wasi
 [wasi-threads]: https://github.com/WebAssembly/wasi-threads
 [dynamic-linking]: https://github.com/WebAssembly/tool-conventions/blob/main/DynamicLinking.md
+[littlefs for WASI]: libwasi_littlefs/README.md
 [the top comment in insn_impl_eh.h]: lib/insn_impl_eh.h
 [the top comment in wasi.c]: libwasi/wasi.c
 
