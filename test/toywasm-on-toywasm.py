@@ -40,7 +40,9 @@ def translate_path(cat, name):
 options = []
 
 for x in args.wasi_dir:
-    options.append(f"--wasi-dir={x}")
+    h, _ = x.split("::", maxsplit=1)
+    options.append(f"--wasi-dir={h}")
+
 
 # assume that the first argument which doesn't start with "--" is
 # a wasm module.
@@ -69,6 +71,12 @@ for i in range(0, len(user_args)):
             _, wasm = user_args[i].split("=", 1)
             translated = translate_path(f"load-wasm-{i}", wasm)
             user_args[i] = f"--load={translated}"
+            continue
+        if user_args[i].startswith("--wasi-littlefs-dir="):
+            _, mapstr = user_args[i].split("=", maxsplit=1)
+            image_path, rest = mapstr.split("::", maxsplit=1)
+            translated = translate_path(f"wasi-littlefs-{i}", image_path)
+            user_args[i] = f"--wasi-littlefs-dir={translated}::{rest}"
             continue
     if options_done or not user_args[i].startswith("--"):
         user_args[i] = translate_path("user-wasm", user_args[i])
