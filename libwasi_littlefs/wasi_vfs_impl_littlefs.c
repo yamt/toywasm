@@ -40,7 +40,7 @@ static const struct wasi_vfs_ops wasi_lfs_ops = {
 };
 
 const struct wasi_vfs_ops *
-wasi_get_lfs_vfs_ops()
+wasi_get_lfs_vfs_ops(void)
 {
         return &wasi_lfs_ops;
 }
