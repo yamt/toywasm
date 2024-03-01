@@ -18,11 +18,6 @@ set(littlefs_sources
     "littlefs/lfs_util.c"
 )
 
-if (NOT CMAKE_BUILD_TYPE MATCHES Debug)
-    add_definitions(-DLFS_NO_DEBUG)
-    add_definitions(-DLFS_NO_ASSERT)
-endif()
-
 add_library(toywasm-lib-wasi-littlefs STATIC ${lib_wasi_littlefs_sources} ${littlefs_sources})
 set_target_properties(toywasm-lib-wasi-littlefs PROPERTIES OUTPUT_NAME toywasm-wasi-littlefs)
 if (USE_IPO)
@@ -39,6 +34,10 @@ target_include_directories(toywasm-lib-wasi-littlefs
                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
                            $<INSTALL_INTERFACE:include>
                            PRIVATE littlefs)
+target_compile_definitions(toywasm-lib-wasi-littlefs PRIVATE LFS_THREADSAFE)
+if (NOT CMAKE_BUILD_TYPE MATCHES Debug)
+    target_compile_definitions(toywasm-lib-wasi-littlefs PRIVATE LFS_NO_DEBUG LFS_NO_ASSERT)
+endif()
 
 install(TARGETS toywasm-lib-wasi-littlefs
         EXPORT toywasm-lib-wasi-littlefs-config

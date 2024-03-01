@@ -66,6 +66,22 @@ wasi_lfs_sync(const struct lfs_config *cfg)
         return 0;
 }
 
+#define MUTEX(cfg) (&((struct wasi_vfs_lfs *)(cfg)->context)->lock)
+
+static int
+wasi_lfs_lock(const struct lfs_config *cfg) ACQUIRES(MUTEX(cfg))
+{
+        toywasm_mutex_lock(MUTEX(cfg));
+        return 0;
+}
+
+static int
+wasi_lfs_unlock(const struct lfs_config *cfg) RELEASES(MUTEX(cfg))
+{
+        toywasm_mutex_unlock(MUTEX(cfg));
+        return 0;
+}
+
 int
 wasi_littlefs_mount_file(const char *path, struct wasi_vfs **vfsp)
 {
@@ -77,6 +93,7 @@ wasi_littlefs_mount_file(const char *path, struct wasi_vfs **vfsp)
                 ret = ENOMEM;
                 goto fail;
         }
+        toywasm_mutex_init(&vfs_lfs->lock);
         vfs_lfs->vfs.ops = wasi_get_lfs_vfs_ops();
         vfs_lfs->fd = open(path, O_RDWR);
         if (vfs_lfs->fd == -1) {
@@ -105,6 +122,8 @@ wasi_littlefs_mount_file(const char *path, struct wasi_vfs **vfsp)
         lfs_config->prog = wasi_lfs_prog;
         lfs_config->erase = wasi_lfs_erase;
         lfs_config->sync = wasi_lfs_sync;
+        lfs_config->lock = wasi_lfs_lock;
+        lfs_config->unlock = wasi_lfs_unlock;
         lfs_config->read_size = sector_size;
         lfs_config->prog_size = sector_size;
         lfs_config->block_size = block_size;
@@ -125,6 +144,7 @@ fail:
                 if (vfs_lfs->fd != -1) {
                         close(vfs_lfs->fd);
                 }
+                toywasm_mutex_destroy(&vfs_lfs->lock);
                 free(vfs_lfs);
         }
         return ret;
@@ -145,5 +165,6 @@ wasi_littlefs_umount_file(struct wasi_vfs *vfs)
                 /* log and ignore. */
                 xlog_error("ignoring close failure %d", ret);
         }
+        toywasm_mutex_destroy(&vfs_lfs->lock);
         return 0;
 }
