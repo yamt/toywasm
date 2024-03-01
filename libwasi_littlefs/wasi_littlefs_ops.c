@@ -148,7 +148,7 @@ int
 wasi_lfs_fd_get_flags(struct wasi_fdinfo *fdinfo, uint16_t *result)
 {
         /* XXX APPEND etc */
-        *result = WASI_FDFLAG_NONBLOCK;
+        *result = 0;
         return 0;
 }
 
