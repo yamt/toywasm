@@ -11,8 +11,13 @@ import shlex
 import sys
 import subprocess
 
-executable = os.getenv("TOYWASM_NATIVE", "./build.native/toywasm")
-executable_wasm = os.getenv("TOYWASM_WASM", "./build.wasm/toywasm")
+ourdir = os.path.dirname(os.path.abspath(__file__))
+executable = os.getenv(
+    "TOYWASM_NATIVE", os.path.join(ourdir, "../build.native/toywasm")
+)
+executable_wasm = os.getenv(
+    "TOYWASM_WASM", os.path.join(ourdir, "../build.wasm/toywasm")
+)
 
 parser = argparse.ArgumentParser(allow_abbrev=False)
 parser.add_argument("--wasi-dir", action="append", default=[])
