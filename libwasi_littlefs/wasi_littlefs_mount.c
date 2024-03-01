@@ -117,6 +117,34 @@ wasi_littlefs_mount_file(const char *path, struct wasi_vfs **vfsp)
                 assert(ret > 0);
                 goto fail;
         }
+
+        /*
+         * Note: lfs requires users to specify the correct block_size.
+         * ideally, this should be given by cli option / api params.
+         * alternatively, it's probably possible to auto-detect the block
+         * size by scanning the filesystem image.
+         * for now, we simply hardcode a value.
+         */
+        lfs_size_t block_size = 4096;
+
+        /*
+         * Note: read/prog sizes themselves do not affect the filesystem
+         * structure. there are some indirect relationships though.
+         * for example, cache_size, which restricts inline_max, should be
+         * a multiple of read/prog size.
+         */
+        lfs_size_t read_size = 256;
+        lfs_size_t prog_size = 256;
+        lfs_size_t cache_size = 256;
+        assert((cache_size % read_size) == 0);
+        assert((cache_size % prog_size) == 0);
+        assert((block_size % cache_size) == 0);
+
+        /*
+         * calculate block_count from the file size.
+         * alternatively, we can use block_size = 0 to tell littlefs
+         * to trust the value in the superblock.
+         */
         struct stat st;
         ret = fstat(vfs_lfs->fd, &st);
         if (ret != 0) {
@@ -124,20 +152,13 @@ wasi_littlefs_mount_file(const char *path, struct wasi_vfs **vfsp)
                 assert(ret > 0);
                 goto fail;
         }
-        /* note: cache_size can affect inline_max */
-        lfs_size_t read_size = 256;
-        lfs_size_t prog_size = 256;
-        lfs_size_t cache_size = 256;
-        lfs_size_t block_size = 4096;
-        assert((cache_size % read_size) == 0);
-        assert((cache_size % prog_size) == 0);
-        assert((block_size % cache_size) == 0);
         if ((st.st_size % block_size) != 0) {
                 ret = EINVAL;
                 goto fail;
         }
         lfs_size_t block_count = st.st_size / block_size;
         assert(block_count * block_size == st.st_size);
+
         struct lfs_config *lfs_config = &vfs_lfs->lfs_config;
         lfs_config->context = vfs_lfs;
         lfs_config->read = wasi_lfs_bd_read;
@@ -150,9 +171,21 @@ wasi_littlefs_mount_file(const char *path, struct wasi_vfs **vfsp)
         lfs_config->prog_size = prog_size;
         lfs_config->block_size = block_size;
         lfs_config->block_count = block_count;
+
+        /*
+         * disable block-level wear-leveling because there is little point
+         * to perform it on a filesystem image.
+         */
         lfs_config->block_cycles = -1;
+
         lfs_config->cache_size = cache_size;
+
+        /*
+         * arbitrary chosen.
+         * can cover (8 * lookahead_size) blocks.
+         */
         lfs_config->lookahead_size = 8;
+
         ret = lfs_mount(&vfs_lfs->lfs, lfs_config);
         if (ret != 0) {
                 xlog_error("lfs_mount failed with %d", ret);
