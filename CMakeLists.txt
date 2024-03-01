@@ -228,6 +228,15 @@ set_tests_properties(toywasm-cli-wasm3-wasi-test PROPERTIES ENVIRONMENT "${TEST_
 set_tests_properties(toywasm-cli-wasm3-wasi-test PROPERTIES LABELS "slow")
 endif() # TOYWASM_ENABLE_WASI
 
+if(TOYWASM_ENABLE_WASI_LITTLEFS)
+add_test(NAME toywasm-cli-littlefs-test
+	COMMAND ./test.sh
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test/littlefs
+)
+set_tests_properties(toywasm-cli-littlefs-test PROPERTIES ENVIRONMENT "${TEST_ENV}")
+set_tests_properties(toywasm-cli-littlefs-test PROPERTIES LABELS "wasi;littlefs")
+endif()
+
 # sample wasm files
 
 if(BUILD_TESTING)
