@@ -147,8 +147,20 @@ wasi_lfs_fd_pwritev(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
 int
 wasi_lfs_fd_get_flags(struct wasi_fdinfo *fdinfo, uint16_t *result)
 {
+        struct wasi_vfs_lfs *lfs;
+        lfs_file_t *file;
+        int ret = fdinfo_to_lfs_file(fdinfo, &lfs, &file);
+        uint16_t flags = 0;
+        if (ret != EISDIR) {
+                if (ret != 0) {
+                        return ret;
+                }
+                if ((file->flags & LFS_O_APPEND) != 0) {
+                        flags |= WASI_FDFLAG_APPEND;
+                }
+        }
         /* XXX APPEND etc */
-        *result = 0;
+        *result = flags;
         return 0;
 }
 
