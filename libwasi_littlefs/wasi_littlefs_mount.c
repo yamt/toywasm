@@ -172,5 +172,6 @@ wasi_littlefs_umount_file(struct wasi_vfs *vfs)
                 xlog_error("ignoring close failure %d", ret);
         }
         toywasm_mutex_destroy(&vfs_lfs->lock);
+        free(vfs_lfs);
         return 0;
 }
