@@ -14,6 +14,7 @@
 
 #include "lfs.h"
 
+#include "nbio.h"
 #include "util.h"
 #include "wasi_littlefs_impl.h"
 #include "wasi_littlefs_mount.h"
@@ -27,6 +28,8 @@ wasi_lfs_read(const struct lfs_config *cfg, lfs_block_t block, lfs_off_t off,
         struct wasi_vfs_lfs *lfs_vfs = cfg->context;
         int fd = lfs_vfs->fd;
         off_t offset = block * cfg->block_size + off;
+        LFS_STAT_INC(lfs_vfs->stat.bd_read);
+        LFS_STAT_ADD(lfs_vfs->stat.bd_read_bytes, size);
         ssize_t ssz = pread(fd, buffer, size, offset);
         if (ssz == -1) {
                 return LFS_ERR_IO;
@@ -41,6 +44,8 @@ wasi_lfs_prog(const struct lfs_config *cfg, lfs_block_t block, lfs_off_t off,
         struct wasi_vfs_lfs *lfs_vfs = cfg->context;
         int fd = lfs_vfs->fd;
         off_t offset = block * cfg->block_size + off;
+        LFS_STAT_INC(lfs_vfs->stat.bd_prog);
+        LFS_STAT_ADD(lfs_vfs->stat.bd_prog_bytes, size);
         ssize_t ssz = pwrite(fd, buffer, size, offset);
         if (ssz == -1) {
                 return LFS_ERR_IO;
@@ -51,6 +56,10 @@ wasi_lfs_prog(const struct lfs_config *cfg, lfs_block_t block, lfs_off_t off,
 static int
 wasi_lfs_erase(const struct lfs_config *cfg, lfs_block_t block)
 {
+#if defined(TOYWASM_ENABLE_LITTLEFS_STATS)
+        struct wasi_vfs_lfs *lfs_vfs = cfg->context;
+#endif
+        LFS_STAT_INC(lfs_vfs->stat.bd_erase);
         return 0;
 }
 
@@ -59,6 +68,7 @@ wasi_lfs_sync(const struct lfs_config *cfg)
 {
         struct wasi_vfs_lfs *lfs_vfs = cfg->context;
         int fd = lfs_vfs->fd;
+        LFS_STAT_INC(lfs_vfs->stat.bd_sync);
         int ret = fsync(fd);
         if (ret != 0) {
                 return LFS_ERR_IO;
@@ -162,6 +172,15 @@ fail:
         return ret;
 }
 
+#if defined(TOYWASM_ENABLE_LITTLEFS_STATS)
+#define LFS_PRINT_STAT(st, item)                                              \
+        nbio_printf("%s = %" PRIu64 "\n", #item, (st)->item)
+#else
+#define LFS_PRINT_STAT(st, item)                                              \
+        do {                                                                  \
+        } while (0)
+#endif
+
 int
 wasi_littlefs_umount_file(struct wasi_vfs *vfs)
 {
@@ -178,6 +197,12 @@ wasi_littlefs_umount_file(struct wasi_vfs *vfs)
                 xlog_error("ignoring close failure %d", ret);
         }
         toywasm_mutex_destroy(&vfs_lfs->lock);
+        LFS_PRINT_STAT(&vfs_lfs->stat, bd_read);
+        LFS_PRINT_STAT(&vfs_lfs->stat, bd_read_bytes);
+        LFS_PRINT_STAT(&vfs_lfs->stat, bd_prog);
+        LFS_PRINT_STAT(&vfs_lfs->stat, bd_prog_bytes);
+        LFS_PRINT_STAT(&vfs_lfs->stat, bd_erase);
+        LFS_PRINT_STAT(&vfs_lfs->stat, bd_sync);
         free(vfs_lfs);
         return 0;
 }

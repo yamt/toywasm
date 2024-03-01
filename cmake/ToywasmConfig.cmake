@@ -143,6 +143,12 @@ cmake_dependent_option(TOYWASM_ENABLE_WASI_LITTLEFS
     "TOYWASM_ENABLE_WASI"
     OFF)
 
+cmake_dependent_option(TOYWASM_ENABLE_LITTLEFS_STATS
+    "Enable littlefs stats (for debug)"
+    OFF
+    "TOYWASM_ENABLE_WASI"
+    OFF)
+
 # enable wasi-threads.
 cmake_dependent_option(TOYWASM_ENABLE_WASI_THREADS
     "Enable wasi-threads proposal"
