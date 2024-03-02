@@ -8,7 +8,7 @@ A runtime linker for [WebAssembly Dynamic Linking].
 
 # Portability notes
 
-While this library is implemented using the toywasm API directly.
+While this library is implemented using the toywasm API directly,
 it should be straightforward to port it to other runtime API like
 [wasm-c-api] except a few things listed below.
 
@@ -23,6 +23,9 @@ Maybe simply creating host functions (with `wasm_func_new_with_env`)
 and making it call the corresponding wasm function (with `wasm_func_call`)
 is enough for most cases. The approach is not compatible with tail call
 though.
+
+For toywasm, we use the [restart mechanism] to call the function to maintain
+the [tail call] guarantee. See [dyld_plt.c].
 
 ## WASI and other host functions, including our dlopen-like API
 
@@ -40,3 +43,9 @@ Eg. [wasmer-c-api-wasi], [wasmtime-c-api-wasi]
 [wasmer-c-api-wasi]: https://docs.rs/wasmer-c-api/4.1.0/wasmer/wasm_c_api/wasi/index.html
 
 [wasmtime-c-api-wasi]: https://docs.wasmtime.dev/examples-c-wasi.html
+
+[restart mechanism]: ../doc/check_interrupt.md
+
+[dyld_plt.c]: dyld_plt.c
+
+[tail call]: https://github.com/WebAssembly/tail-call
