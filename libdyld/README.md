@@ -21,11 +21,14 @@ sections. You need something runtime-specific.
 
 Maybe simply creating host functions (with `wasm_func_new_with_env`)
 and making it call the corresponding wasm function (with `wasm_func_call`)
-is enough for most cases. The approach is not compatible with tail call
-though.
+is enough for most cases. The approach is not safe if the call is made
+with [tail call] instructions though. Also, with the [exception-handling]
+proposal, such a host function need to propagate execeptions approprately.
+As of writing this, [wasi-c-api] doesn't have an API to deal with exceptions.
 
 For toywasm, we use the [restart mechanism] to call the function to maintain
-the [tail call] guarantee. See [dyld_plt.c].
+the [tail call] guarantee. As it doesn't leave host frames, it doesn't
+interfere exceptions either. See [dyld_plt.c].
 
 ## WASI and other host functions, including our dlopen-like API
 
@@ -49,3 +52,5 @@ Eg. [wasmer-c-api-wasi], [wasmtime-c-api-wasi]
 [dyld_plt.c]: dyld_plt.c
 
 [tail call]: https://github.com/WebAssembly/tail-call
+
+[exception]: https://github.com/WebAssembly/exception-handling
