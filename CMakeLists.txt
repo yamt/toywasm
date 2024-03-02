@@ -237,6 +237,15 @@ set_tests_properties(toywasm-cli-littlefs-test PROPERTIES ENVIRONMENT "${TEST_EN
 set_tests_properties(toywasm-cli-littlefs-test PROPERTIES LABELS "wasi;littlefs")
 endif()
 
+if(TOYWASM_ENABLE_DYLD_DLFCN)
+add_test(NAME toywasm-cli-dyld-test
+	COMMAND ./fetch-and-run-test.sh
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test/dyld
+)
+set_tests_properties(toywasm-cli-dyld-test PROPERTIES ENVIRONMENT "${TEST_ENV}")
+set_tests_properties(toywasm-cli-dyld-test PROPERTIES LABELS "wasi;dyld")
+endif()
+
 # sample wasm files
 
 if(BUILD_TESTING)
