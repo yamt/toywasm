@@ -24,7 +24,7 @@ and making it call the corresponding wasm function (with `wasm_func_call`)
 is enough for most cases. The approach is not safe if the call is made
 with [tail call] instructions though. Also, with the [exception-handling]
 proposal, such a host function need to propagate execeptions approprately.
-As of writing this, [wasi-c-api] doesn't have an API to deal with exceptions.
+As of writing this, [wasm-c-api] doesn't have an API to deal with exceptions.
 
 For toywasm, we use the [restart mechanism] to call the function to maintain
 the [tail call] guarantee. As it doesn't leave host frames, it doesn't
@@ -53,4 +53,4 @@ Eg. [wasmer-c-api-wasi], [wasmtime-c-api-wasi]
 
 [tail call]: https://github.com/WebAssembly/tail-call
 
-[exception]: https://github.com/WebAssembly/exception-handling
+[exception-handling]: https://github.com/WebAssembly/exception-handling
