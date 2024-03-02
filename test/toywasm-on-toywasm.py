@@ -57,11 +57,16 @@ user_args = sys.argv[1:]
 if debug:
     print(f"Original: {user_args}")
 load_arg = False
+dyld_path_arg = False
 options_done = False
 for i in range(0, len(user_args)):
     if load_arg:
         user_args[i] = translate_path(f"load-wasm-{i}", user_args[i])
         load_arg = False
+        continue
+    if dyld_path_arg:
+        user_args[i] = translate_path(f"wasi-dyld-path-{i}", user_args[i])
+        dyld_path_arg = False;
         continue
     if not options_done:
         if user_args[i] == "--":
@@ -80,6 +85,14 @@ for i in range(0, len(user_args)):
             image_path, rest = mapstr.split("::", maxsplit=1)
             translated = translate_path(f"wasi-littlefs-{i}", image_path)
             user_args[i] = f"--wasi-littlefs-dir={translated}::{rest}"
+            continue
+        if user_args[i] == "--dyld-path":
+            dyld_path_arg = True
+            continue
+        if user_args[i].startswith("--dyld-path="):
+            _, path = user_args[i].split("=", maxsplit=1)
+            translated = translate_path(f"wasi-dyld-path-{i}", path)
+            user_args[i] = f"--dyld-path={translated}"
             continue
     if options_done or not user_args[i].startswith("--"):
         user_args[i] = translate_path("user-wasm", user_args[i])
