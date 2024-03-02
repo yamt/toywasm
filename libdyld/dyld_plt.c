@@ -39,6 +39,9 @@ dyld_plt(struct exec_context *ctx, struct host_instance *hi,
 {
         struct dyld_plt *plt = (void *)hi;
         if (plt->finst == NULL) {
+                /*
+                 * resolve the symbol.
+                 */
                 assert(!compare_functype(funcinst_functype(&plt->pltfi), ft));
                 int ret = dyld_resolve_plt(ctx, plt);
                 if (ret != 0) {
@@ -55,6 +58,21 @@ dyld_plt(struct exec_context *ctx, struct host_instance *hi,
         plt->pltfi = *plt->finst;
 #endif
 
+        /*
+         * set up a call the resolved function.
+         *
+         * we rewind our host frame by returning a restartable error.
+         * the main interpreter loop will notice the event and call
+         * the target function for us. this is a kind of a tail-call.
+         *
+         * if our wasm-level caller was calling us with a tail-call
+         * instruction like `return_call`, it's important to rewind
+         * our host frame here to maintain the tail-call guarantee.
+         *
+         * also, this approach simplifies exception propagation.
+         * (toywasm doesn't have an embedder API to catch and rethrow
+         * an exception as of writing this.)
+         */
         ctx->event_u.call.func = plt->finst;
         ctx->event = EXEC_EVENT_CALL;
         return ETOYWASMRESTART;
