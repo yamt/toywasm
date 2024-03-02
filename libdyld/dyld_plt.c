@@ -59,11 +59,14 @@ dyld_plt(struct exec_context *ctx, struct host_instance *hi,
 #endif
 
         /*
-         * set up a call the resolved function.
+         * set up a call to the resolved function.
+         *
+         * note that we (PLT wrapper) and the resolved function share
+         * the same function type. this is a tail-call.
          *
          * we rewind our host frame by returning a restartable error.
          * the main interpreter loop will notice the event and call
-         * the target function for us. this is a kind of a tail-call.
+         * the target function for us.
          *
          * if our wasm-level caller was calling us with a tail-call
          * instruction like `return_call`, it's important to rewind
