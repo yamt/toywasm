@@ -22,6 +22,8 @@ wasi_fdinfo_path(struct wasi_fdinfo *fdinfo)
                 return wasi_fdinfo_to_prestat(fdinfo)->prestat_path;
         case WASI_FDINFO_USER:
                 return wasi_fdinfo_to_user(fdinfo)->path;
+        default:
+                assert(false);
         }
         assert(false);
         return NULL;
@@ -38,6 +40,11 @@ wasi_fdinfo_vfs(struct wasi_fdinfo *fdinfo)
         case WASI_FDINFO_USER:
                 vfs = wasi_fdinfo_to_user(fdinfo)->vfs;
                 break;
+        default:
+#if defined(__GNUC__) && !defined(__clang__)
+                vfs = NULL;
+#endif
+                assert(false);
         }
         assert(vfs != NULL);
         assert(vfs->ops != NULL);
