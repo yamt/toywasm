@@ -11,8 +11,8 @@
 #include "exec.h"
 #include "host_instance.h"
 #include "wasi_abi.h"
-#include "wasi_host_fdop.h"
 #include "wasi_subr.h"
+#include "wasi_vfs.h"
 #include "xlog.h"
 
 int
@@ -41,7 +41,7 @@ wasi_userfd_reject_directory(struct wasi_fdinfo *fdinfo)
         struct wasi_filestat st;
         int ret;
 
-        ret = wasi_host_fd_fstat(fdinfo, &st);
+        ret = wasi_vfs_fd_fstat(fdinfo, &st);
         if (ret == -1) {
                 ret = errno;
                 assert(ret > 0);
