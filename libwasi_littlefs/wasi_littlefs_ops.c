@@ -458,7 +458,19 @@ wasi_lfs_path_unlink(const struct path_info *pi)
         if (ret != 0) {
                 return ret;
         }
-        /* XXX lfs_remove removes directory too */
+        /*
+         * lfs_remove removes directory too.
+         * check file type by ourselves.
+         * XXX this check is racy.
+         */
+        struct lfs_info info;
+        ret = lfs_stat(&lfs->lfs, pi->hostpath, &info);
+        if (ret != 0) {
+                return lfs_error_to_errno(ret);
+        }
+        if (info.type != LFS_TYPE_REG) {
+                return EISDIR;
+        }
         ret = lfs_remove(&lfs->lfs, pi->hostpath);
         return lfs_error_to_errno(ret);
 }
@@ -485,7 +497,19 @@ wasi_lfs_path_rmdir(const struct path_info *pi)
         if (ret != 0) {
                 return ret;
         }
-        /* XXX lfs_remove removes regular files too */
+        /*
+         * lfs_remove removes regular files too.
+         * check file type by ourselves.
+         * XXX this check is racy.
+         */
+        struct lfs_info info;
+        ret = lfs_stat(&lfs->lfs, pi->hostpath, &info);
+        if (ret != 0) {
+                return lfs_error_to_errno(ret);
+        }
+        if (info.type != LFS_TYPE_DIR) {
+                return ENOTDIR;
+        }
         ret = lfs_remove(&lfs->lfs, pi->hostpath);
         return lfs_error_to_errno(ret);
 }
