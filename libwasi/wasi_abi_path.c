@@ -44,6 +44,11 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
         int ret;
         xlog_trace("wasm oflags %" PRIx32 " rights_base %" PRIx64, wasmoflags,
                    rights_base);
+        if ((wasmoflags & WASI_OFLAG_DIRECTORY) != 0 &&
+            (rights_base & WASI_RIGHT_FD_WRITE) != 0) {
+                ret = EISDIR;
+                goto fail;
+        }
         host_ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd, path,
                                                 pathlen, &pi, &ret);
         if (host_ret != 0 || ret != 0) {
