@@ -17,6 +17,7 @@
         "path_exists": "littlefs doesn't have symlink",
         "readlink": "littlefs doesn't have symlink",
         "unlink_file_trailing_slashes": "littlefs don't care trailing slash",
-        "path_rename_dir_trailing_slashes": "littlefs don't care trailing slash"
+        "path_rename_dir_trailing_slashes": "littlefs don't care trailing slash",
+        "file_unbuffered_write": "multiple opens"
     }
 }
