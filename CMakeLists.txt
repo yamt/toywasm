@@ -172,6 +172,15 @@ add_test(NAME toywasm-cli-wasi-testsuite
 set_tests_properties(toywasm-cli-wasi-testsuite PROPERTIES ENVIRONMENT "${TEST_ENV};TOYWASM=${TOYWASM_CLI};$<$<BOOL:${TOYWASM_ENABLE_WASI_THREADS}>:TESTS=proposals/wasi-threads/>")
 set_tests_properties(toywasm-cli-wasi-testsuite PROPERTIES LABELS "wasi-testsuite")
 
+if(TOYWASM_ENABLE_WASI_LITTLEFS)
+add_test(NAME toywasm-cli-wasi-testsuite-littlefs
+	COMMAND ./test/run-wasi-testsuite.sh
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+set_tests_properties(toywasm-cli-wasi-testsuite-littlefs PROPERTIES ENVIRONMENT "${TEST_ENV};TOYWASM=${TOYWASM_CLI};$<$<BOOL:${TOYWASM_ENABLE_WASI_THREADS}>:TESTS=proposals/wasi-threads/>;TOYWASM_WASI_FILESYSTEM_TYPE=littlefs")
+set_tests_properties(toywasm-cli-wasi-testsuite-littlefs PROPERTIES LABELS "wasi-testsuite;littlefs")
+endif()
+
 add_test(NAME toywasm-cli-wasmtime-wasi-tests
 	COMMAND ./test/run-wasmtime-wasi-tests.sh "${TOYWASM_CLI} --wasi --wasi-dir=."
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
