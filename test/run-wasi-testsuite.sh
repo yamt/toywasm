@@ -19,6 +19,8 @@ if [ ! -d ${DIR} ]; then
 fi
 
 TOYWASM=${TOYWASM:-toywasm}
+TOYWASM_WASI_FILESYSTEM_TYPE=${TOYWASM_WASI_FILESYSTEM_TYPE:-host}
+export TOYWASM_WASI_FILESYSTEM_TYPE
 
 FILTER_OPTIONS="--exclude-filter test/wasi-testsuite-skip.json"
 if ${TOYWASM} --version | grep -F "sizeof(void *) = 4"; then
@@ -27,6 +29,9 @@ fi
 OS_SKIPFILE="test/wasi-testsuite-skip-$(uname -s).json"
 if [ -f ${OS_SKIPFILE} ]; then
     FILTER_OPTIONS="${FILTER_OPTIONS} ${OS_SKIPFILE}"
+fi
+if [ ${TOYWASM_WASI_FILESYSTEM_TYPE} = littlefs ]; then
+    FILTER_OPTIONS="${FILTER_OPTIONS} test/wasi-testsuite-skip-littlefs.json"
 fi
 
 TESTS="${TESTS} assemblyscript/testsuite/"
@@ -45,6 +50,9 @@ find ${DIR}/tests -name "*.cleanup" | xargs rm -rf
 
 virtualenv venv
 . ./venv/bin/activate
+if [ ${TOYWASM_WASI_FILESYSTEM_TYPE} = littlefs ]; then
+    python3 -m pip install littlefs-python
+fi
 python3 -m pip install -r ${DIR}/test-runner/requirements.txt
 python3 test/pipe.py |
 python3 ${DIR}/test-runner/wasi_test_runner.py \
