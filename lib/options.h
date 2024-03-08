@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "platform.h"
 #include "toywasm_config.h"
 
 struct load_options {
@@ -24,6 +25,11 @@ struct exec_options {
          */
 };
 
+__BEGIN_EXTERN_C
+
 void load_options_set_defaults(struct load_options *opts);
 void exec_options_set_defaults(struct exec_options *opts);
+
+__END_EXTERN_C
+
 #endif /* !defined(_TOYWASM_OPTIONS_H) */

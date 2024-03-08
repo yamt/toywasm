@@ -48,6 +48,8 @@ struct context {
         struct validation_context *validation;
 };
 
+__BEGIN_EXTERN_C
+
 /*
  * This "pc" is intended to be compatible with
  * the offset shown by "wasm-objdump -d".
@@ -64,3 +66,5 @@ const uint8_t *pc2ptr(const struct module *m, uint32_t pc) __purefunc;
 int resulttype_alloc(uint32_t ntypes, const enum valtype *types,
                      struct resulttype **resultp);
 void resulttype_free(struct resulttype *p);
+
+__END_EXTERN_C

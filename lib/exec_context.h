@@ -7,6 +7,7 @@
 
 #include "list.h"
 #include "options.h"
+#include "platform.h"
 #include "report.h"
 #include "vec.h"
 
@@ -326,6 +327,8 @@ struct exec_context {
 /* for exec_stats */
 #define STAT_INC(CTX, NAME) (CTX)->stats.NAME++
 
+__BEGIN_EXTERN_C
+
 void exec_context_init(struct exec_context *ctx, struct instance *inst);
 void exec_context_clear(struct exec_context *ctx);
 void exec_context_print_stats(struct exec_context *ctx);
@@ -334,3 +337,5 @@ int exec_push_vals(struct exec_context *ctx, const struct resulttype *rt,
                    const struct val *params);
 void exec_pop_vals(struct exec_context *ctx, const struct resulttype *rt,
                    struct val *results);
+
+__END_EXTERN_C

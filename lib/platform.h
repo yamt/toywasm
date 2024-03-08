@@ -139,3 +139,13 @@
 #define __noinline
 #endif
 #endif /* !defined(__noinline) */
+
+#if !defined(__BEGIN_EXTERN_C)
+#if defined(__cplusplus)
+#define __BEGIN_EXTERN_C extern "C" {
+#define __END_EXTERN_C }
+#else
+#define __BEGIN_EXTERN_C
+#define __END_EXTERN_C
+#endif
+#endif

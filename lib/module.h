@@ -1,8 +1,12 @@
 #include <stdint.h>
 
+#include "platform.h"
+
 struct load_context;
 struct module;
 struct name;
+
+__BEGIN_EXTERN_C
 
 int module_create(struct module **mp, const uint8_t *p, const uint8_t *ep,
                   struct load_context *ctx);
@@ -12,3 +16,5 @@ int module_find_export(const struct module *m, const struct name *name,
 int module_find_export_func(const struct module *m, const struct name *name,
                             uint32_t *funcidxp);
 void module_print_stats(const struct module *m);
+
+__END_EXTERN_C

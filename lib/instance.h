@@ -1,5 +1,7 @@
 #include <stdint.h>
 
+#include "platform.h"
+
 struct module;
 struct instance;
 struct exec_context;
@@ -10,6 +12,8 @@ struct import_object;
 struct import_object_entry;
 struct report;
 struct name;
+
+__BEGIN_EXTERN_C
 
 /*
  * This API is inspired from js-api.
@@ -146,3 +150,5 @@ int create_satisfying_shared_memories(const struct module *module,
                                       struct import_object **imop);
 
 void instance_print_stats(const struct instance *inst);
+
+__END_EXTERN_C

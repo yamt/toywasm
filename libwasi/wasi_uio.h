@@ -1,6 +1,10 @@
 #include <sys/types.h>
 #include <sys/uio.h>
 
+#include "platform.h"
+
+__BEGIN_EXTERN_C
+
 /* for writev */
 int wasi_iovec_flatten(const struct iovec *iov, int iovcnt, void **bufp,
                        size_t *lenp);
@@ -11,3 +15,5 @@ void wasi_iovec_commit_flattened_data(const struct iovec *iov, int iovcnt,
                                       const void *buf, size_t len);
 
 void wasi_iovec_free_flattened_buffer(void *buf);
+
+__END_EXTERN_C

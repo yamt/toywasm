@@ -26,10 +26,14 @@ struct list_head {
         struct list_elem **tailnextp;
 };
 
+__BEGIN_EXTERN_C
+
 void list_head_init(struct list_head *h);
 void list_remove(struct list_head *h, void *elem, struct list_entry *e);
 void list_insert_tail(struct list_head *h, void *elem, struct list_entry *e);
 void list_insert_head(struct list_head *h, void *elem, struct list_entry *e);
+
+__END_EXTERN_C
 
 #define LIST_ENTRY(TYPE)                                                      \
         struct {                                                              \
