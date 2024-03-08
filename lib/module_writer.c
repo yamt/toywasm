@@ -254,7 +254,7 @@ write_exportdesc(struct writer *w, const struct exportdesc *desc)
 }
 
 static void
-write_export(struct writer *w, const struct export *ex)
+write_export(struct writer *w, const struct wasm_export *ex)
 {
         write_name(w, &ex->name);
         write_exportdesc(w, &ex->desc);

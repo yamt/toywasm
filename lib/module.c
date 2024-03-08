@@ -728,7 +728,7 @@ clear_import(struct import *im)
 
 static int
 read_export(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
-            struct export *ex, void *vctx)
+            struct wasm_export *ex, void *vctx)
 {
         struct load_context *ctx = vctx;
         const uint8_t *p = *pp;
@@ -751,7 +751,7 @@ fail:
 }
 
 static void
-clear_export(struct export *ex)
+clear_export(struct wasm_export *ex)
 {
         clear_name(&ex->name);
 }
@@ -764,7 +764,7 @@ print_import(const struct import *im)
 }
 
 static void
-print_export(const struct export *ex)
+print_export(const struct wasm_export *ex)
 {
         xlog_trace("export name %.*s type %u idx %" PRIu32, CSTR(&ex->name),
                    ex->desc.type, ex->desc.idx);
@@ -1183,8 +1183,9 @@ read_export_section(const uint8_t **pp, const uint8_t *ep,
         const uint8_t *p = *pp;
         int ret;
 
-        ret = read_vec_with_ctx(&p, ep, sizeof(struct export), read_export,
-                                clear_export, ctx, &m->nexports, &m->exports);
+        ret = read_vec_with_ctx(&p, ep, sizeof(struct wasm_export),
+                                read_export, clear_export, ctx, &m->nexports,
+                                &m->exports);
         if (ret != 0) {
                 goto fail;
         }
@@ -2006,8 +2007,8 @@ get_section_type(uint8_t id)
 static int
 cmp_export(const void *vp_a, const void *vp_b)
 {
-        const struct export *a = vp_a;
-        const struct export *b = vp_b;
+        const struct wasm_export *a = vp_a;
+        const struct wasm_export *b = vp_b;
         return compare_name(&a->name, &b->name);
 }
 #endif

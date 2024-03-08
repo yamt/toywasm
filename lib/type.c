@@ -66,7 +66,7 @@ module_find_export(const struct module *m, const struct name *name,
         uint32_t right = m->nexports;
         while (left < right) {
                 uint32_t mid = left + (right - left) / 2;
-                const struct export *ex = &m->exports[mid];
+                const struct wasm_export *ex = &m->exports[mid];
                 int cmp = compare_name(&ex->name, name);
                 if (cmp == 0) {
                         const struct exportdesc *exd = &ex->desc;
@@ -89,7 +89,7 @@ module_find_export(const struct module *m, const struct name *name,
          */
         uint32_t i;
         for (i = 0; i < m->nexports; i++) {
-                const struct export *ex = &m->exports[i];
+                const struct wasm_export *ex = &m->exports[i];
                 if (!compare_name(&ex->name, name)) {
                         const struct exportdesc *exd = &ex->desc;
                         if (exd->type == type) {

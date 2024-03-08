@@ -388,8 +388,7 @@ struct import {
         struct importdesc desc;
 };
 
-struct export
-{
+struct wasm_export {
         struct name name;
         struct exportdesc desc;
 };
@@ -494,7 +493,7 @@ struct module {
         struct import *imports;
 
         uint32_t nexports;
-        struct export *exports;
+        struct wasm_export *exports;
 
         const uint8_t *bin;
 

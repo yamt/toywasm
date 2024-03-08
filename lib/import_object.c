@@ -49,7 +49,7 @@ import_object_create_for_exports(struct instance *inst,
         }
         uint32_t i;
         for (i = 0; i < m->nexports; i++) {
-                const struct export *ex = &m->exports[i];
+                const struct wasm_export *ex = &m->exports[i];
                 const struct exportdesc *d = &ex->desc;
                 struct import_object_entry *e = &im->entries[i];
                 switch (d->type) {

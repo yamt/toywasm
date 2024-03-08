@@ -233,7 +233,7 @@ is_binding_weak(const struct module *m, const struct name *sym)
 }
 
 static bool
-is_func_export(const struct module *m, const struct export *ex)
+is_func_export(const struct module *m, const struct wasm_export *ex)
 {
         return ex->desc.type == EXTERNTYPE_FUNC;
 }
