@@ -10,7 +10,6 @@ set(lib_wasi_littlefs_sources
 
 set(lib_wasi_littlefs_headers
 	"wasi_littlefs.h"
-	"wasi_littlefs_mount.h"
 )
 
 if(NOT DEFINED TOYWASM_LITTLEFS_SOURCE_DIR)
