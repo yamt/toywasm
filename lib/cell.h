@@ -26,6 +26,8 @@ struct cell {
 #endif
 };
 
+__BEGIN_EXTERN_C
+
 uint32_t valtype_cellsize(enum valtype t) __constfunc;
 
 uint32_t resulttype_cellidx(const struct resulttype *rt, uint32_t idx,
@@ -51,5 +53,7 @@ void vals_from_cells(struct val *vals, const struct cell *cells,
 void cells_zero(struct cell *cells, uint32_t ncells);
 void cells_copy(struct cell *dst, const struct cell *src, uint32_t ncells);
 void cells_move(struct cell *dst, const struct cell *src, uint32_t ncells);
+
+__END_EXTERN_C
 
 #endif /* !defined(_TOYWASM_CELL_H) */

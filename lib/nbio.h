@@ -4,6 +4,10 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#include "platform.h"
+
+__BEGIN_EXTERN_C
+
 int set_nonblocking(int fd, bool nonblocking, bool *orig);
 bool is_again(int error);
 
@@ -24,3 +28,5 @@ int nbio_fprintf(FILE *fp, const char *fmt, ...)
 int nbio_printf(const char *fmt, ...)
         __attribute__((__format__(__printf__, 1, 2)));
 ssize_t nbio_getline(char **linep, size_t *linecapp, FILE *fp);
+
+__END_EXTERN_C

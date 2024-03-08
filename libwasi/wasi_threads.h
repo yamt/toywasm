@@ -1,10 +1,14 @@
 #include <stdatomic.h>
 
+#include "platform.h"
+
 struct wasi_threads_instance;
 struct import_object;
 struct sched;
 struct exec_context;
 struct trap_info;
+
+__BEGIN_EXTERN_C
 
 void wasi_threads_instance_destroy(struct wasi_threads_instance *inst);
 int wasi_threads_instance_create(struct wasi_threads_instance **instp);
@@ -39,3 +43,5 @@ void wasi_threads_complete_exec(struct wasi_threads_instance *wasi_threads,
 
 int import_object_create_for_wasi_threads(struct wasi_threads_instance *wasi,
                                           struct import_object **impp);
+
+__END_EXTERN_C

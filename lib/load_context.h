@@ -3,6 +3,7 @@
 
 #include "bitmap.h"
 #include "options.h"
+#include "platform.h"
 #include "report.h"
 
 struct load_context {
@@ -15,5 +16,9 @@ struct load_context {
         struct validation_context *vctx;
 };
 
+__BEGIN_EXTERN_C
+
 void load_context_init(struct load_context *ctx);
 void load_context_clear(struct load_context *ctx);
+
+__END_EXTERN_C

@@ -1,5 +1,7 @@
 #include "type.h"
 
+__BEGIN_EXTERN_C
+
 struct naming;
 
 struct namemap {
@@ -24,3 +26,5 @@ void nametable_lookup_func(struct nametable *table, const struct module *m,
                            uint32_t funcidx, struct name *name);
 void nametable_lookup_module(struct nametable *table, const struct module *m,
                              struct name *name);
+
+__END_EXTERN_C

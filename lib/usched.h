@@ -2,6 +2,7 @@
 #include <time.h>
 
 #include "list.h"
+#include "platform.h"
 
 struct exec_context;
 
@@ -10,8 +11,12 @@ struct sched {
         struct timespec next_resched;
 };
 
+__BEGIN_EXTERN_C
+
 void sched_enqueue(struct sched *sched, struct exec_context *ctx);
 void sched_run(struct sched *sched, struct exec_context *ctx);
 void sched_init(struct sched *sched);
 void sched_clear(struct sched *sched);
 bool sched_need_resched(struct sched *sched);
+
+__END_EXTERN_C

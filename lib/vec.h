@@ -13,10 +13,14 @@
                 uint32_t psize;                                               \
         }
 
+__BEGIN_EXTERN_C
+
 int __must_check _vec_resize(void *vec, size_t elem_size,
                              uint32_t new_elem_count);
 int __must_check _vec_prealloc(void *vec, size_t elem_size, uint32_t count);
 void _vec_free(void *vec);
+
+__END_EXTERN_C
 
 #define VEC_INIT(v) memset(&v, 0, sizeof(v))
 /*

@@ -1,7 +1,11 @@
 #include <stdint.h>
 #include <time.h>
 
+#include "platform.h"
+
 struct timespec;
+
+__BEGIN_EXTERN_C
 
 int timespec_cmp(const struct timespec *a, const struct timespec *b);
 int timespec_add(const struct timespec *a, const struct timespec *b,
@@ -22,3 +26,5 @@ int convert_timespec(clockid_t from_id, clockid_t to_id,
                      const struct timespec *from_ts, struct timespec *result);
 uint64_t timespec_to_ms(const struct timespec *tv);
 int timespec_sleep(clockid_t id, const struct timespec *absto);
+
+__END_EXTERN_C

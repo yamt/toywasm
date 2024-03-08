@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "platform.h"
 #include "vec.h"
 
 struct idalloc {
@@ -9,6 +10,8 @@ struct idalloc {
         uint32_t base;
         uint32_t maxid;
 };
+
+__BEGIN_EXTERN_C
 
 void idalloc_init(struct idalloc *ida, uint32_t minid, uint32_t maxid);
 void idalloc_destroy(struct idalloc *ida);
@@ -19,3 +22,5 @@ bool idalloc_test(struct idalloc *ida, uint32_t id);
 
 void idalloc_set_user(struct idalloc *ida, uint32_t id, void *user_data);
 void *idalloc_get_user(struct idalloc *ida, uint32_t id);
+
+__END_EXTERN_C

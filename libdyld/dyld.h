@@ -1,6 +1,7 @@
 #include <stdint.h>
 
 #include "list.h"
+#include "platform.h"
 #include "toywasm_config.h"
 #include "type.h"
 #include "vec.h"
@@ -74,6 +75,8 @@ struct dyld {
 #endif
 };
 
+__BEGIN_EXTERN_C
+
 struct import_object;
 
 void dyld_init(struct dyld *d);
@@ -82,3 +85,5 @@ int dyld_load(struct dyld *d, const char *filename);
 struct instance *dyld_main_object_instance(struct dyld *d);
 void dyld_options_set_defaults(struct dyld_options *opts);
 int import_object_create_for_dyld(struct dyld *d, struct import_object **impp);
+
+__END_EXTERN_C

@@ -1,5 +1,6 @@
 #include <stddef.h>
 
+#include "platform.h"
 #include "type.h"
 
 struct host_func {
@@ -49,6 +50,8 @@ struct host_module {
         size_t nfuncs;
 };
 
+__BEGIN_EXTERN_C
+
 struct import_object;
 int import_object_create_for_host_funcs(const struct host_module *modules,
                                         size_t n, struct host_instance *hi,
@@ -66,3 +69,5 @@ struct restart_info;
 int schedule_call_from_hostfunc(struct exec_context *ctx,
                                 struct restart_info *restart,
                                 const struct funcinst *func);
+
+__END_EXTERN_C

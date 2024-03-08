@@ -124,7 +124,6 @@ struct resulttype {
                                        .is_static = true,                     \
                                        CELLIDX_NONE}
 
-extern const struct resulttype g_empty_rt;
 #define empty_rt ((struct resulttype *)&g_empty_rt)
 
 struct functype {
@@ -651,6 +650,10 @@ struct import_object {
         struct import_object *next; /* NULL for the last import_object */
 };
 
+__BEGIN_EXTERN_C
+
+extern const struct resulttype g_empty_rt;
+
 bool is_numtype(enum valtype vt) __constfunc;
 bool is_vectype(enum valtype vt) __constfunc;
 bool is_reftype(enum valtype vt) __constfunc;
@@ -692,5 +695,7 @@ void clear_resulttype(struct resulttype *rt);
 
 void set_name_cstr(struct name *name, const char *cstr);
 void clear_name(struct name *name);
+
+__END_EXTERN_C
 
 #endif /* defined(_TOYWASM_TYPE_H) */

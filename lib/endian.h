@@ -2,6 +2,10 @@
 #define _TOYWASM_ENDIAN_H
 #include <stdint.h>
 
+#include "platform.h"
+
+__BEGIN_EXTERN_C
+
 uint8_t le8_to_host(uint8_t v);
 uint16_t le16_to_host(uint16_t v);
 uint32_t le32_to_host(uint32_t v);
@@ -66,5 +70,7 @@ lef64_decode(const void *p)
 #else
 double lef64_decode(const void *p);
 #endif
+
+__END_EXTERN_C
 
 #endif /* !defined(_TOYWASM_ENDIAN_H) */

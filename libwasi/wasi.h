@@ -1,5 +1,9 @@
+#include "platform.h"
+
 struct wasi_instance;
 struct import_object;
+
+__BEGIN_EXTERN_C
 
 /*
  * a wasi_instance represents all data associated with a WASI "process",
@@ -59,3 +63,5 @@ uint32_t wasi_instance_exit_code(struct wasi_instance *wasi);
  */
 int import_object_create_for_wasi(struct wasi_instance *wasi,
                                   struct import_object **impp);
+
+__END_EXTERN_C

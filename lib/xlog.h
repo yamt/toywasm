@@ -1,6 +1,8 @@
 #include "platform.h"
 #include "toywasm_config.h"
 
+__BEGIN_EXTERN_C
+
 void xlog_printf(const char *, ...)
         __attribute__((__format__(__printf__, 1, 2)));
 
@@ -13,6 +15,8 @@ void xlog_error(const char *, ...)
         __attribute__((__format__(__printf__, 1, 2)));
 
 extern int xlog_tracing;
+
+__END_EXTERN_C
 
 #if defined(TOYWASM_ENABLE_TRACING_INSN)
 #define xlog_trace_insn(...)                                                  \

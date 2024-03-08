@@ -3,6 +3,7 @@
 
 #include "toywasm_config.h"
 
+#include "platform.h"
 #include "timeutil.h"
 
 #if defined(TOYWASM_ENABLE_WASM_THREADS) && !defined(TOYWASM_USE_USER_SCHED)
@@ -42,6 +43,8 @@ struct CAPABILITY("mutex") toywasm_mutex {
         pthread_mutex_t lock;
 };
 
+__BEGIN_EXTERN_C
+
 #define TOYWASM_MUTEX_DEFINE(name) struct toywasm_mutex name
 void toywasm_mutex_init(struct toywasm_mutex *lock);
 void toywasm_mutex_destroy(struct toywasm_mutex *lock);
@@ -59,6 +62,9 @@ void toywasm_cv_signal(pthread_cond_t *cv, struct toywasm_mutex *lock)
         REQUIRES(lock);
 void toywasm_cv_broadcast(pthread_cond_t *cv, struct toywasm_mutex *lock)
         REQUIRES(lock);
+
+__END_EXTERN_C
+
 #else /* defined(USE_PTHREAD) */
 #define TOYWASM_MUTEX_DEFINE(name) _Static_assert(1, "suppress -Wextra-semi")
 #define toywasm_mutex_init(a)
