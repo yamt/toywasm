@@ -40,6 +40,21 @@ Copy a file from a littlefs image to host /tmp.
 toywasm --wasi --wasi-dir /tmp::host --wasi-littlefs-dir littlefs.bin::/::lfs cp.wasm lfs/srcfile host/dstfile
 ```
 
+# WASI incompatibility notes
+
+Littlefs have some incompatibilities with POSIX/WASI semantics.
+
+While some of them can be emulated with user-attributes,
+we don't bother to do so.
+
+* littlefs doesn't have unique file-id suitable for WASI file "inode number".
+* littlefs doesn't have file timestamps.
+* littlefs doesn't have pread/pwrite.
+* littlefs doesn't have fallocate.
+* littlefs doesn't have symlinks.
+* littlefs doesn't have hardlinks.
+* In littlefs, opened files are snapshot of the files at the time of open.
+
 # Caveats
 
 Curretly, block size (4096) and other filesystem parameters are hardcoded.
