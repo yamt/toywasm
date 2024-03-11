@@ -6,14 +6,14 @@ A simple wasi vfs implementation backed by [littlefs].
 
 # Prerequisites
 
-Checkout littlefs source code in as "littlefs" in this directory.
+Checkout littlefs source code as "littlefs" in this directory.
 
 ```shell
 git clone https://github.com/littlefs-project/littlefs
 ```
 
-You can override the directory with the `TOYWASM_LITTLEFS_SOURCE_DIR`
-cmake variable.
+Or, you can override the location of littlefs source code with
+the `TOYWASM_LITTLEFS_SOURCE_DIR` cmake variable.
 
 # Build
 
