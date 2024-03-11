@@ -12,8 +12,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "lfs.h"
-
 #include "util.h"
 #include "wasi_littlefs.h"
 #include "wasi_littlefs_impl.h"
