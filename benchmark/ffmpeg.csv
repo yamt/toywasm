@@ -1,14 +1,14 @@
-"toywasm(default configuration)",65.71,65.68,0.03,83177472
-"toywasm(128-bit fixed cells)",49.88,49.86,0.02,84365312
-"toywasm(64-bit fixed cells, SIMD disabled)",49.17,49.14,0.02,92266496
-"toywasm(annotations disabled, very slow)",529.35,529.16,0.13,85471232
-"Wasm3",17.82,17.78,0.03,94167040
-"iwasm(fast interpreter)",21.20,21.16,0.03,142209024
-"iwasm(classic interpreter)",204.04,203.98,0.05,80515072
-"wasmedge(interpreter)",195.16,194.97,0.18,643141632
-"wasmi_cli",34.43,34.30,0.07,137932800
-"wazero(interpreter)",151.67,151.84,0.45,1136283648
-"iwasm(fast jit)",3.40,6.06,0.13,148611072
-"wasmer",6.44,46.34,1.90,626634752
-"wasmtime-cli",6.05,41.03,1.71,593637376
-"wazero",7.65,7.56,0.15,445210624
+"toywasm(default configuration)",65.72,65.68,0.03,83165184
+"toywasm(128-bit fixed cells)",50.23,50.19,0.02,84369408
+"toywasm(64-bit fixed cells, SIMD disabled)",49.38,49.34,0.02,84230144
+"toywasm(annotations disabled, very slow)",543.74,543.54,0.12,84488192
+"Wasm3",18.49,18.45,0.02,84795392
+"iwasm(fast interpreter)",21.17,21.12,0.04,142503936
+"iwasm(classic interpreter)",207.37,207.21,0.09,80519168
+"wasmedge(interpreter)",207.52,207.13,0.36,602030080
+"wasmi_cli",31.75,31.69,0.03,101830656
+"wazero(interpreter)",152.26,152.48,0.47,1125650432
+"iwasm(fast jit)",3.43,6.09,0.13,148844544
+"wasmer",5.34,35.67,1.51,613113856
+"wasmtime-cli(90db6e99f 2024-02-28)",6.32,42.45,2.06,673558528
+"wazero",7.64,7.86,0.21,477995008
