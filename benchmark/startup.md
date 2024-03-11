@@ -25,11 +25,11 @@ print the `-version` message)
 
 ## Observations
 
-* The default wasm3 performs best.
-  However, it's mainly because of its lazy compilation/validation.
-  With lazy compilation/validation disabled with the `--compile` option,
-  it has certain compilation/validation overhead as shown in the
-  `wasm3 (no lazy)` row.
+* The default wasm3 and wasmi with lazy option (`wasmi (lazy)` row) perform
+  best. However, it's mainly because of their lazy compilation/validation.
+  With lazy compilation/validation disabled, they have certain
+  compilation/validation overhead as shown in the `wasm3 (no lazy)` and
+  `wasmi` rows.
 
   Note: While lazy validation is
   [explicitly allowed by the spec](https://webassembly.github.io/spec/core/appendix/implementation.html#validation),
