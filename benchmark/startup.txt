@@ -1,16 +1,16 @@
-toywasm (default),0.17,0.16,0.00,40255488
-toywasm (no annotations),0.16,0.15,0.00,37277696
+toywasm (default),0.17,0.16,0.00,40087552
+toywasm (no annotations),0.16,0.15,0.00,37453824
 wasm3 (default),0.03,0.02,0.01,35233792
-wasm3 (no lazy),0.40,0.37,0.03,135135232
-wamr (classic interp),0.17,0.15,0.01,36311040
+wasm3 (no lazy),0.40,0.36,0.03,134963200
+wamr (classic interp),0.19,0.17,0.01,36274176
 wamr (fast interp),0.66,0.63,0.02,97972224
-wasmi,0.31,0.29,0.01,69206016
-wasmi (lazy),0.05,0.03,0.01,55111680
-wazero (interp),0.94,1.09,0.13,643538944
-wasmedge (interp),1.15,0.82,0.33,595066880
-wamr (fast jit),1.16,3.85,0.12,107208704
-wamr (fast jit no lazy),1.15,3.84,0.10,105066496
-wasmer (first run),4.10,37.24,1.58,627310592
-wasmer (cached),0.24,0.13,0.10,341352448
-wasmtime (first run),5.19,44.62,2.33,589123584
-wasmtime (cached),0.27,0.21,0.05,217595904
+wasmi,0.31,0.29,0.02,68837376
+wasmi (lazy),0.05,0.03,0.01,55136256
+wazero (interp),0.94,1.12,0.14,643645440
+wasmedge (interp),1.15,0.82,0.32,594952192
+wamr (fast jit),0.43,1.18,0.04,66838528
+wamr (fast jit no lazy),1.16,3.86,0.10,105517056
+wasmer (first run),3.85,35.07,1.55,559534080
+wasmer (cached),0.25,0.13,0.11,341929984
+wasmtime (first run),5.27,45.38,2.22,608632832
+wasmtime (cached),0.26,0.20,0.05,215678976
