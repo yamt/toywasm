@@ -1,4 +1,4 @@
-#include "lfs.h"
+#include "lfs_namespace.h"
 
 #include "wasi_impl.h"
 #include "wasi_vfs_types.h"

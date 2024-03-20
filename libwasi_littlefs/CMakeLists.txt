@@ -16,9 +16,26 @@ if(NOT DEFINED TOYWASM_LITTLEFS_SOURCE_DIR)
 set(TOYWASM_LITTLEFS_SOURCE_DIR "littlefs")
 endif()
 
+# TOYWASM_LITTLEFS_PREFIX is intended to be used with
+# littlefs' scripts/changeprefix.py script.
+if(NOT DEFINED TOYWASM_LITTLEFS_PREFIX)
+set(TOYWASM_LITTLEFS_PREFIX "lfs")
+endif()
+string(TOUPPER ${TOYWASM_LITTLEFS_PREFIX} TOYWASM_LITTLEFS_PREFIX_UPPER)
+
+if(TOYWASM_LITTLEFS_PREFIX STREQUAL "lfs")
+unset(TOYWASM_LITTLEFS_USE_PREFIX)
+else()
+set(TOYWASM_LITTLEFS_USE_PREFIX 1)
+endif()
+
+configure_file("wasi_littlefs_config.h.in"
+    "${CMAKE_BINARY_DIR}/wasi_littlefs_config.h")
+include_directories(${CMAKE_BINARY_DIR})
+
 set(littlefs_sources
-    "${TOYWASM_LITTLEFS_SOURCE_DIR}/lfs.c"
-    "${TOYWASM_LITTLEFS_SOURCE_DIR}/lfs_util.c"
+    "${TOYWASM_LITTLEFS_SOURCE_DIR}/${TOYWASM_LITTLEFS_PREFIX}.c"
+    "${TOYWASM_LITTLEFS_SOURCE_DIR}/${TOYWASM_LITTLEFS_PREFIX}_util.c"
 )
 
 add_library(toywasm-lib-wasi-littlefs STATIC ${lib_wasi_littlefs_sources} ${littlefs_sources})
@@ -37,9 +54,9 @@ target_include_directories(toywasm-lib-wasi-littlefs
                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
                            $<INSTALL_INTERFACE:include>
                            PRIVATE ${TOYWASM_LITTLEFS_SOURCE_DIR})
-target_compile_definitions(toywasm-lib-wasi-littlefs PRIVATE LFS_THREADSAFE)
+target_compile_definitions(toywasm-lib-wasi-littlefs PRIVATE ${TOYWASM_LITTLEFS_PREFIX_UPPER}_THREADSAFE)
 if (NOT CMAKE_BUILD_TYPE MATCHES Debug)
-    target_compile_definitions(toywasm-lib-wasi-littlefs PRIVATE LFS_NO_DEBUG LFS_NO_ASSERT)
+    target_compile_definitions(toywasm-lib-wasi-littlefs PRIVATE ${TOYWASM_LITTLEFS_PREFIX_UPPER}_NO_DEBUG ${TOYWASM_LITTLEFS_PREFIX_UPPER}_NO_ASSERT)
 endif()
 
 install(TARGETS toywasm-lib-wasi-littlefs
