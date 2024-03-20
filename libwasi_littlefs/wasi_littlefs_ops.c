@@ -1,8 +1,6 @@
 #include <assert.h>
 #include <errno.h>
 
-#include "lfs.h"
-
 #include "endian.h"
 #include "wasi_littlefs_impl.h"
 #include "wasi_littlefs_mount.h"
