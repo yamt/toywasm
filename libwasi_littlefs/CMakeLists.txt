@@ -13,13 +13,13 @@ set(lib_wasi_littlefs_headers
 )
 
 if(NOT DEFINED TOYWASM_LITTLEFS_SOURCE_DIR)
-set(TOYWASM_LITTLEFS_SOURCE_DIR "littlefs")
+set(TOYWASM_LITTLEFS_SOURCE_DIR "littlefs" CACHE STRING "littlefs source path")
 endif()
 
 # TOYWASM_LITTLEFS_PREFIX is intended to be used with
 # littlefs' scripts/changeprefix.py script.
 if(NOT DEFINED TOYWASM_LITTLEFS_PREFIX)
-set(TOYWASM_LITTLEFS_PREFIX "lfs")
+set(TOYWASM_LITTLEFS_PREFIX "lfs" CACHE STRING "littlefs symbol prefix")
 endif()
 string(TOUPPER ${TOYWASM_LITTLEFS_PREFIX} TOYWASM_LITTLEFS_PREFIX_UPPER)
 
