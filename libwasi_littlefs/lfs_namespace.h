@@ -1,3 +1,18 @@
+/*
+ * littlefs has a script to change the prefix of its symbols and
+ * other definitions. it's useful to avoid conflicts when you happen to
+ * have multiple copies of littlefs in a single binary. eg. nuttx fs/littlefs
+ * and this library.
+ *
+ * https://github.com/littlefs-project/littlefs/blob/master/scripts/changeprefix.py
+ *
+ * this header basically renames those definitions back to the default names
+ * for easier consumption in this library. (libwasi_littlefs)
+ * an obvious alternative is to apply changeprefix.py to this library as well.
+ * but right now i'm not in a mood to try to keep our code changeprefix.py
+ * safe.
+ */
+
 #include "wasi_littlefs_config.h"
 
 #if defined(TOYWASM_LITTLEFS_USE_PREFIX)
