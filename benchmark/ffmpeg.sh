@@ -71,8 +71,8 @@ echo "+++++++++++ JIT ++++++++++++++++++++"
 # this particular wasm binary
 run "$(iwasm.fast-jit --version) (fast jit)" iwasm.fast-jit --dir=.video --jit-codecache-size=100000000
 
-run "$(wasmer --version)" wasmer run --dir .video --
-run "$(wasmtime --version)" wasmtime run --dir .video --
+run "$(wasmer --version)" wasmer run --mapdir .video::.video --
+run "$(wasmtime --version)" wasmtime run --mapdir .video::.video --
 
 # XXX i'm not sure how compilation cache works by default.
 run "wazero $(wazero version)" wazero run -mount .video --

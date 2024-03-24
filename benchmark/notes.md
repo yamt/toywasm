@@ -44,7 +44,7 @@ cp wasm3 ~/bin
 ### wasm-micro-runtime
 
 ```
-git checkout WAMR-1.2.3
+git checkout WAMR-1.3.2
 cd product-mini/platforms/darwin
 ```
 
@@ -57,7 +57,7 @@ installed with homebrew.
 ### wasmi
 
 ```
-git checkout v0.31.0
+git checkout v0.32.0-beta.7
 cargo build --profile bench
 cp target/release/wasmi_cli ~/bin
 ```
@@ -66,7 +66,7 @@ cp target/release/wasmi_cli ~/bin
 
 ```
 brew uninstall spdlog
-git checkout 0.13.3
+git checkout 0.13.5
 mkdir build
 cd build
 cmake \

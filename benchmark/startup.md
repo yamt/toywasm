@@ -25,11 +25,11 @@ print the `-version` message)
 
 ## Observations
 
-* The default wasm3 performs best.
-  However, it's mainly because of its lazy compilation/validation.
-  With lazy compilation/validation disabled with the `--compile` option,
-  it has certain compilation/validation overhead as shown in the
-  `wasm3 (no lazy)` row.
+* The default wasm3 and wasmi with lazy option (`wasmi (lazy)` row) perform
+  best. However, it's mainly because of their lazy compilation/validation.
+  With lazy compilation/validation disabled, they have certain
+  compilation/validation overhead as shown in the `wasm3 (no lazy)` and
+  `wasmi` rows.
 
   Note: While lazy validation is
   [explicitly allowed by the spec](https://webassembly.github.io/spec/core/appendix/implementation.html#validation),
@@ -44,10 +44,9 @@ print the `-version` message)
 * WAMR fast-jit seems lightweight for a JIT-based runtime as it's
   advertized.
   It also uses a lazy compilation strategy by default.
-  Unlike wasm3, it doesn't defer the validation though. Disabling
-  the lazy compilation (`-DWAMR_BUILD_LAZY_JIT=0`) doesn't make a much
-  difference as I expected. I'm not sure why.
-  Probably it's because of [a naive locking](https://github.com/bytecodealliance/wasm-micro-runtime/issues/2499).
+  Unlike wasm3 and wasmi, it doesn't defer the validation though.
+  The performance with lazy compilation is a bit unstable, probably
+  because of [a naive locking](https://github.com/bytecodealliance/wasm-micro-runtime/issues/2499).
 
 * Toywasm's annotations have small but measurable overheads.
   cf. [Overhead of the annotations (ffmpeg)](../doc/annotations.md#ffmpeg)

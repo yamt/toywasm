@@ -3,7 +3,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 
-df = pandas.read_csv("startup.txt", header=None)
+df = pandas.read_csv("startup.csv", header=None)
 print(df)
 df = df[::-1]
 
