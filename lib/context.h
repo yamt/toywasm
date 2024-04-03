@@ -12,7 +12,7 @@ struct module;
 /*
  * type of control frame (ctrlframe) used in validation logic.
  *
- * non-pseudo ones are only used by the validation logic.
+ * pseudo ones are only used by the validation logic.
  *
  * the others have the same values as the corresponding wasm opcodes.
  * they are (ab)used by exec.c as well.
