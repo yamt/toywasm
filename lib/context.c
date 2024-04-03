@@ -35,6 +35,16 @@ resulttype_alloc0(uint32_t ntypes, struct resulttype **resultp)
         return 0;
 }
 
+#define DEFINE_RESULTTYPE_WITH_SINGLE_TYPE(QUAL, TYPE)                        \
+        DEFINE_TYPES(QUAL, types_##TYPE, TYPE_##TYPE);                        \
+        DEFINE_RESULTTYPE(QUAL, rt_##TYPE, &types_##TYPE, 1)
+
+#define HANDLE_TYPE(TYPE)                                                     \
+        case TYPE_##TYPE: {                                                   \
+                p = &rt_##TYPE;                                               \
+                break;                                                        \
+        }
+
 /*
  * Note: resulttype_alloc/resulttype_free allocates the structure
  * differently from module.c.
@@ -43,6 +53,35 @@ int
 resulttype_alloc(uint32_t ntypes, const enum valtype *types,
                  struct resulttype **resultp)
 {
+        if (ntypes == 1) {
+                /* fast path for common cases */
+                DEFINE_RESULTTYPE_WITH_SINGLE_TYPE(static const, i32);
+                DEFINE_RESULTTYPE_WITH_SINGLE_TYPE(static const, i64);
+                DEFINE_RESULTTYPE_WITH_SINGLE_TYPE(static const, f32);
+                DEFINE_RESULTTYPE_WITH_SINGLE_TYPE(static const, f64);
+                DEFINE_RESULTTYPE_WITH_SINGLE_TYPE(static const, v128);
+                DEFINE_RESULTTYPE_WITH_SINGLE_TYPE(static const, EXNREF);
+                DEFINE_RESULTTYPE_WITH_SINGLE_TYPE(static const, FUNCREF);
+                DEFINE_RESULTTYPE_WITH_SINGLE_TYPE(static const, EXTERNREF);
+                enum valtype t = types[0];
+                const struct resulttype *p;
+                switch (t) {
+                        HANDLE_TYPE(i32)
+                        HANDLE_TYPE(i64)
+                        HANDLE_TYPE(f32)
+                        HANDLE_TYPE(f64)
+                        HANDLE_TYPE(v128)
+                        HANDLE_TYPE(EXNREF)
+                        HANDLE_TYPE(FUNCREF)
+                        HANDLE_TYPE(EXTERNREF)
+                case TYPE_ANYREF:
+                case TYPE_UNKNOWN:
+                        p = NULL;
+                        assert(false);
+                }
+                *resultp = (struct resulttype *)p; /* discard const */
+                return 0;
+        }
         struct resulttype *p;
         uint32_t i;
         int ret = resulttype_alloc0(ntypes, &p);
