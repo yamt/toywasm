@@ -69,6 +69,54 @@ fail:
         return ret;
 }
 
+int
+fetch_validate_next_insn(const uint8_t **pp, const uint8_t *ep,
+                         struct validation_context *vctx)
+{
+        const uint8_t *p = *pp;
+        const struct instruction_desc *desc;
+#if defined(TOYWASM_ENABLE_TRACING_INSN)
+        uint32_t pc = ptr2pc(vctx->module, p);
+#endif
+        int ret;
+
+        ret = read_op(&p, ep, &desc);
+        if (ret != 0) {
+                goto fail;
+        }
+        xlog_trace_insn("inst %06" PRIx32 " %s", pc, desc->name);
+#if defined(TOYWASM_ENABLE_TRACING_INSN)
+        uint32_t orig_n = vctx->valtypes.lsize;
+#endif
+        if (vctx->const_expr && (desc->flags & INSN_FLAG_CONST) == 0) {
+                ret = validation_failure(vctx,
+                                         "instruction \"%s\" not "
+                                         "allowed in a const expr",
+                                         desc->name);
+                goto fail;
+        }
+        if (desc->process != NULL) {
+                struct context ctx0;
+                struct context *ctx = &ctx0;
+                ctx->validation = vctx;
+                ctx->exec = NULL;
+                ret = desc->process(&p, ep, ctx);
+                if (ret != 0) {
+                        goto fail;
+                }
+        }
+        xlog_trace_insn("inst %s ctrls.size %" PRIu32
+                        " ctrls[0].height %" PRIu32 ": vals.size %" PRIu32
+                        " -> %" PRIu32,
+                        desc->name, vctx->cframes.lsize,
+                        VEC_LASTELEM(vctx->cframes).height, orig_n,
+                        vctx->valtypes.lsize);
+        *pp = p;
+        return 0;
+fail:
+        return ret;
+}
+
 static int
 read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
                  uint32_t nlocals, const struct localchunk *locals,
@@ -77,8 +125,6 @@ read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
                  struct load_context *lctx)
 {
         const uint8_t *p = *pp;
-        struct context ctx0;
-        struct context *ctx = &ctx0;
         int ret;
 
         struct validation_context *vctx = lctx->vctx;
@@ -90,8 +136,6 @@ read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
                 validation_context_init(vctx);
                 lctx->vctx = vctx;
         }
-        ctx->validation = vctx;
-        ctx->exec = NULL;
 
         assert(lctx->module != NULL);
         vctx->report = &lctx->report;
@@ -132,41 +176,13 @@ read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
                 goto fail;
         }
         while (true) {
-                const struct instruction_desc *desc;
-
-#if defined(TOYWASM_ENABLE_TRACING_INSN)
-                uint32_t pc = ptr2pc(vctx->module, p);
-#endif
-                ret = read_op(&p, ep, &desc);
+                ret = fetch_validate_next_insn(&p, ep, vctx);
                 if (ret != 0) {
                         goto fail;
-                }
-                xlog_trace_insn("inst %06" PRIx32 " %s", pc, desc->name);
-#if defined(TOYWASM_ENABLE_TRACING_INSN)
-                uint32_t orig_n = vctx->valtypes.lsize;
-#endif
-                if (const_expr && (desc->flags & INSN_FLAG_CONST) == 0) {
-                        ret = validation_failure(vctx,
-                                                 "instruction \"%s\" not "
-                                                 "allowed in a const expr",
-                                                 desc->name);
-                        goto fail;
-                }
-                if (desc->process != NULL) {
-                        ret = desc->process(&p, ep, ctx);
-                        if (ret != 0) {
-                                goto fail;
-                        }
                 }
                 if (vctx->cframes.lsize == 0) {
                         break;
                 }
-                xlog_trace_insn("inst %s ctrls.size %" PRIu32
-                                " ctrls[0].height %" PRIu32
-                                ": vals.size %" PRIu32 " -> %" PRIu32,
-                                desc->name, vctx->cframes.lsize,
-                                VEC_LASTELEM(vctx->cframes).height, orig_n,
-                                vctx->valtypes.lsize);
         }
 #if defined(TOYWASM_ENABLE_TRACING_INSN)
         for (i = 0; i < ei->njumps; i++) {
