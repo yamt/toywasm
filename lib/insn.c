@@ -537,8 +537,13 @@ schedule_exception(struct exec_context *ectx)
 #define EXECUTING (ctx->exec != NULL)
 #define ECTX (ctx->exec)
 #endif
+#if defined(TOYWASM_USE_SEPARATE_VALIDATE)
+#define VALIDATING false
+#define VCTX ((struct validation_context *)NULL)
+#else
 #define VALIDATING (ctx->validation != NULL)
 #define VCTX (ctx->validation)
+#endif
 #define INSN_IMPL(NAME)                                                       \
         int process_##NAME(const uint8_t **pp, const uint8_t *ep,             \
                            struct context *ctx)
@@ -656,6 +661,58 @@ schedule_exception(struct exec_context *ectx)
                 (v)->u.cells[0] = *(--stack);                                 \
         } while (0)
 #endif
+
+#include "insn_impl.h"
+
+#undef EXECUTING
+#undef ECTX
+#undef VALIDATING
+#undef VCTX
+#undef INSN_IMPL
+#undef LOAD_PC
+#undef SAVE_PC
+#undef RELOAD_PC
+#undef SAVE_STACK_PTR
+#undef LOAD_STACK_PTR
+#undef ORIG_PC
+#undef PREPARE_FOR_POSSIBLE_RESTART
+#undef INSN_SUCCESS
+#undef INSN_SUCCESS_RETURN
+#undef INSN_FAIL
+#undef INSN_FAIL_RESTARTABLE
+#undef ep
+#undef STACK
+#undef STACK_ADJ
+#endif /* defined(TOYWASM_USE_SEPARATE_EXECUTE) */
+
+#if defined(TOYWASM_USE_SEPARATE_VALIDATE)
+#define EXECUTING false
+#define ECTX ((struct exec_context *)NULL)
+#define VALIDATING true
+#define VCTX ctx
+#define INSN_IMPL(NAME)                                                       \
+        int validate_##NAME(const uint8_t **pp, const uint8_t *ep,             \
+                           struct validation_context *ctx)
+#define LOAD_PC const uint8_t *p __attribute__((__unused__)) = *pp
+#define SAVE_PC *pp = p
+#define RELOAD_PC
+#define SAVE_STACK_PTR
+#define LOAD_STACK_PTR
+#define ORIG_PC (*pp)
+#define INSN_SUCCESS return 0
+#define INSN_SUCCESS_RETURN INSN_SUCCESS
+#define PREPARE_FOR_POSSIBLE_RESTART
+#define INSN_FAIL_RESTARTABLE(NAME) INSN_FAIL
+#define INSN_FAIL                                                             \
+        assert(ret != 0);                                                     \
+        assert(!IS_RESTARTABLE(ret));                                         \
+        return ret
+#undef push_val
+#undef pop_val
+#define push_val(v, csz, ctx) do {} while (0)
+#define pop_val(v, csz, ctx) do {} while (0)
+#define STACK NULL
+#define STACK_ADJ(n) do {} while(0)
 
 #include "insn_impl.h"
 
