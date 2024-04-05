@@ -228,6 +228,7 @@ INSN_IMPL(end)
                                 return ret;
                         }
                 }
+                INSN_SUCCESS_RETURN;
         }
         INSN_SUCCESS;
 }

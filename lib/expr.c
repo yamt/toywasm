@@ -70,23 +70,26 @@ fail:
 }
 
 int
-fetch_validate_next_insn(const uint8_t **pp, const uint8_t *ep,
-                         struct validation_context *vctx)
+fetch_process_next_insn(const uint8_t **pp, const uint8_t *ep,
+                        struct context *ctx)
 {
-        const uint8_t *p = *pp;
         const struct instruction_desc *desc;
+        struct validation_context *vctx = ctx->validation;
 #if defined(TOYWASM_ENABLE_TRACING_INSN)
-        uint32_t pc = ptr2pc(vctx->module, p);
+        uint32_t pc;
+        if (vctx != NULL) {
+                pc = ptr2pc(vctx->module, *pp);
+        }
 #endif
         int ret;
 
-        ret = read_op(&p, ep, &desc);
+        ret = read_op(pp, ep, &desc);
         if (ret != 0) {
                 goto fail;
         }
         xlog_trace_insn("inst %06" PRIx32 " %s", pc, desc->name);
 #if defined(TOYWASM_ENABLE_TRACING_INSN)
-        uint32_t orig_n = vctx->valtypes.lsize;
+        // uint32_t orig_n = vctx->valtypes.lsize;
 #endif
         if (vctx->const_expr && (desc->flags & INSN_FLAG_CONST) == 0) {
                 ret = validation_failure(vctx,
@@ -95,24 +98,7 @@ fetch_validate_next_insn(const uint8_t **pp, const uint8_t *ep,
                                          desc->name);
                 goto fail;
         }
-        if (desc->process != NULL) {
-                struct context ctx0;
-                struct context *ctx = &ctx0;
-                ctx->validation = vctx;
-                ctx->exec = NULL;
-                ret = desc->process(&p, ep, ctx);
-                if (ret != 0) {
-                        goto fail;
-                }
-        }
-        xlog_trace_insn("inst %s ctrls.size %" PRIu32
-                        " ctrls[0].height %" PRIu32 ": vals.size %" PRIu32
-                        " -> %" PRIu32,
-                        desc->name, vctx->cframes.lsize,
-                        VEC_LASTELEM(vctx->cframes).height, orig_n,
-                        vctx->valtypes.lsize);
-        *pp = p;
-        return 0;
+        __musttail return desc->process(pp, ep, ctx);
 fail:
         return ret;
 }
@@ -175,8 +161,13 @@ read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
         if (ret != 0) {
                 goto fail;
         }
+
+        struct context ctx0;
+        struct context *ctx = &ctx0;
+        ctx->validation = vctx;
+        ctx->exec = NULL;
         while (true) {
-                ret = fetch_validate_next_insn(&p, ep, vctx);
+                ret = fetch_process_next_insn(&p, ep, ctx);
                 if (ret != 0) {
                         goto fail;
                 }

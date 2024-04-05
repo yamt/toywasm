@@ -548,8 +548,8 @@ schedule_exception(struct exec_context *ectx)
 #define SAVE_STACK_PTR
 #define LOAD_STACK_PTR
 #define ORIG_PC (*pp)
-#define INSN_SUCCESS return 0
-#define INSN_SUCCESS_RETURN INSN_SUCCESS
+#define INSN_SUCCESS __musttail return fetch_process_next_insn(pp, ep, ctx)
+#define INSN_SUCCESS_RETURN return 0
 #if defined(TOYWASM_USE_SEPARATE_EXECUTE)
 #define PREPARE_FOR_POSSIBLE_RESTART
 #define INSN_FAIL_RESTARTABLE(NAME) INSN_FAIL
