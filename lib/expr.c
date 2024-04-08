@@ -33,37 +33,37 @@ read_op(const uint8_t **pp, const uint8_t *ep,
                 goto fail;
         }
         inst = inst8;
-        const struct instruction_desc *desc;
-        if (__predict_false(inst >= table_size)) {
-                goto invalid_inst;
-        }
-        desc = &table[inst];
-        if (desc->next_table != NULL) {
-                table = desc->next_table;
-                table_size = desc->next_table_size;
-                group = desc->name;
-                /*
-                 * Note: wasm "sub" opcodes are LEB128.
-                 * cf. https://github.com/WebAssembly/spec/issues/1228
-                 */
-                ret = read_leb_u32(pp, ep, &inst);
-                if (__predict_false(ret != 0)) {
-                        goto fail;
-                }
-                if (__predict_false(inst >= table_size)) {
+        while (true) {
+                const struct instruction_desc *desc;
+                if (inst >= table_size) {
                         goto invalid_inst;
                 }
                 desc = &table[inst];
-        }
-        if (__predict_false(desc->name == NULL)) {
+                if (desc->next_table != NULL) {
+                        table = desc->next_table;
+                        table_size = desc->next_table_size;
+                        group = desc->name;
+                        /*
+                         * Note: wasm "sub" opcodes are LEB128.
+                         * cf. https://github.com/WebAssembly/spec/issues/1228
+                         */
+                        ret = read_leb_u32(pp, ep, &inst);
+                        if (ret != 0) {
+                                goto fail;
+                        }
+                        continue;
+                }
+                if (desc->name == NULL) {
 invalid_inst:
-                xlog_error("unimplemented instruction %02" PRIx32
-                           " in group '%s'",
-                           inst, group);
-                ret = EINVAL;
-                goto fail;
+                        xlog_error("unimplemented instruction %02" PRIx32
+                                   " in group '%s'",
+                                   inst, group);
+                        ret = EINVAL;
+                        goto fail;
+                }
+                *descp = desc;
+                break;
         }
-        *descp = desc;
         ret = 0;
 fail:
         return ret;
