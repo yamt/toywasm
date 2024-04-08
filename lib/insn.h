@@ -5,6 +5,7 @@
 
 struct context;
 struct exec_context;
+struct validation_context;
 struct cell;
 
 struct exec_instruction_desc {
@@ -22,6 +23,10 @@ struct instruction_desc {
         const char *name;
         int (*process)(const uint8_t **pp, const uint8_t *ep,
                        struct context *ctx);
+#if defined(TOYWASM_USE_SEPARATE_VALIDATE)
+        int (*validate)(const uint8_t *p, const uint8_t *ep,
+                        struct validation_context *vctx);
+#endif
         const struct instruction_desc *next_table;
         unsigned int next_table_size;
         unsigned int flags;
