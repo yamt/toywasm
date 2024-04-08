@@ -50,6 +50,10 @@ struct validation_context {
         struct bitmap *refs;
 
         const struct load_options *options;
+
+#if defined(TOYWASM_USE_SEPARATE_VALIDATE)
+        const uint8_t *p;
+#endif
 };
 
 /* validation */
@@ -85,3 +89,5 @@ int target_label_types(struct validation_context *ctx, uint32_t labelidx,
 
 int record_type_annotation(struct validation_context *vctx, const uint8_t *p,
                            enum valtype t);
+int fetch_validate_next_insn(const uint8_t *p, const uint8_t *ep,
+                             struct validation_context *vctx);

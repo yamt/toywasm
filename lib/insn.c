@@ -553,8 +553,9 @@ schedule_exception(struct exec_context *ectx)
 #define SAVE_STACK_PTR
 #define LOAD_STACK_PTR
 #define ORIG_PC (*pp)
-#define INSN_SUCCESS __musttail return fetch_process_next_insn(pp, ep, ctx)
-#define INSN_SUCCESS_RETURN return 0
+#define INSN_SUCCESS return 0
+#define INSN_SUCCESS_RETURN INSN_SUCCESS
+#define INSN_SUCCESS_BLOCK_END INSN_SUCCESS
 #if defined(TOYWASM_USE_SEPARATE_EXECUTE)
 #define PREPARE_FOR_POSSIBLE_RESTART
 #define INSN_FAIL_RESTARTABLE(NAME) INSN_FAIL
@@ -599,6 +600,7 @@ schedule_exception(struct exec_context *ectx)
 #undef PREPARE_FOR_POSSIBLE_RESTART
 #undef INSN_SUCCESS
 #undef INSN_SUCCESS_RETURN
+#undef INSN_SUCCESS_BLOCK_END
 #undef INSN_FAIL
 #undef INSN_FAIL_RESTARTABLE
 #undef STACK
@@ -628,6 +630,7 @@ schedule_exception(struct exec_context *ectx)
         SAVE_STACK_PTR;                                                       \
         ctx->p = p;                                                           \
         return 0
+#define INSN_SUCCESS_BLOCK_END assert(false)
 #define PREPARE_FOR_POSSIBLE_RESTART struct cell *saved_stack_ptr = stack
 #define INSN_FAIL_RESTARTABLE(NAME)                                           \
         assert(ret != 0);                                                     \
@@ -678,6 +681,7 @@ schedule_exception(struct exec_context *ectx)
 #undef PREPARE_FOR_POSSIBLE_RESTART
 #undef INSN_SUCCESS
 #undef INSN_SUCCESS_RETURN
+#undef INSN_SUCCESS_BLOCK_END
 #undef INSN_FAIL
 #undef INSN_FAIL_RESTARTABLE
 #undef ep
@@ -691,16 +695,19 @@ schedule_exception(struct exec_context *ectx)
 #define VALIDATING true
 #define VCTX ctx
 #define INSN_IMPL(NAME)                                                       \
-        int validate_##NAME(const uint8_t **pp, const uint8_t *ep,             \
-                           struct validation_context *ctx)
-#define LOAD_PC const uint8_t *p __attribute__((__unused__)) = *pp
-#define SAVE_PC *pp = p
+        int validate_##NAME(const uint8_t *p, const uint8_t *ep,              \
+                            struct validation_context *ctx)
+#define LOAD_PC const uint8_t *p0 __attribute__((__unused__)) = p
+#define SAVE_PC
 #define RELOAD_PC
 #define SAVE_STACK_PTR
 #define LOAD_STACK_PTR
-#define ORIG_PC (*pp)
-#define INSN_SUCCESS return 0
+#define ORIG_PC p0
+#define INSN_SUCCESS __musttail return fetch_validate_next_insn(p, ep, ctx)
 #define INSN_SUCCESS_RETURN INSN_SUCCESS
+#define INSN_SUCCESS_BLOCK_END                                                \
+        vctx->p = p;                                                          \
+        return 0
 #define PREPARE_FOR_POSSIBLE_RESTART
 #define INSN_FAIL_RESTARTABLE(NAME) INSN_FAIL
 #define INSN_FAIL                                                             \
@@ -709,10 +716,16 @@ schedule_exception(struct exec_context *ectx)
         return ret
 #undef push_val
 #undef pop_val
-#define push_val(v, csz, ctx) do {} while (0)
-#define pop_val(v, csz, ctx) do {} while (0)
+#define push_val(v, csz, ctx)                                                 \
+        do {                                                                  \
+        } while (0)
+#define pop_val(v, csz, ctx)                                                  \
+        do {                                                                  \
+        } while (0)
 #define STACK NULL
-#define STACK_ADJ(n) do {} while(0)
+#define STACK_ADJ(n)                                                          \
+        do {                                                                  \
+        } while (0)
 
 #include "insn_impl.h"
 
@@ -730,6 +743,7 @@ schedule_exception(struct exec_context *ectx)
 #undef PREPARE_FOR_POSSIBLE_RESTART
 #undef INSN_SUCCESS
 #undef INSN_SUCCESS_RETURN
+#undef INSN_SUCCESS_BLOCK_END
 #undef INSN_FAIL
 #undef INSN_FAIL_RESTARTABLE
 #undef ep
@@ -864,6 +878,16 @@ fetch_exec_next_insn_fe(const uint8_t *p, struct cell *stack,
 
 #endif /* defined(TOYWASM_USE_SEPARATE_EXECUTE) */
 
+#if defined(TOYWASM_USE_SEPARATE_VALIDATE)
+#define INSTRUCTION(b, n, f, FLAGS)                                           \
+        [b] = {                                                               \
+                .name = n,                                                    \
+                .process = process_##f,                                       \
+                .validate = validate_##f,                                     \
+                .flags = FLAGS,                                               \
+                .next_table = NULL,                                           \
+        },
+#else
 #define INSTRUCTION(b, n, f, FLAGS)                                           \
         [b] = {                                                               \
                 .name = n,                                                    \
@@ -871,6 +895,7 @@ fetch_exec_next_insn_fe(const uint8_t *p, struct cell *stack,
                 .flags = FLAGS,                                               \
                 .next_table = NULL,                                           \
         },
+#endif
 
 #define INSTRUCTION_INDIRECT(b, n)                                            \
         [b] = {                                                               \

@@ -11,7 +11,7 @@ INSN_IMPL(unreachable)
         } else if (VALIDATING) {
                 mark_unreachable(VCTX);
         }
-        return 0;
+        INSN_SUCCESS;
 }
 
 INSN_IMPL(nop) { INSN_SUCCESS; }
@@ -228,7 +228,7 @@ INSN_IMPL(end)
                                 return ret;
                         }
                 }
-                INSN_SUCCESS_RETURN;
+                INSN_SUCCESS_BLOCK_END;
         }
         INSN_SUCCESS;
 }

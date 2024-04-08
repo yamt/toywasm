@@ -33,64 +33,59 @@ read_op(const uint8_t **pp, const uint8_t *ep,
                 goto fail;
         }
         inst = inst8;
-        while (true) {
-                const struct instruction_desc *desc;
-                if (inst >= table_size) {
+        const struct instruction_desc *desc;
+        if (__predict_false(inst >= table_size)) {
+                goto invalid_inst;
+        }
+        desc = &table[inst];
+        if (desc->next_table != NULL) {
+                table = desc->next_table;
+                table_size = desc->next_table_size;
+                group = desc->name;
+                /*
+                 * Note: wasm "sub" opcodes are LEB128.
+                 * cf. https://github.com/WebAssembly/spec/issues/1228
+                 */
+                ret = read_leb_u32(pp, ep, &inst);
+                if (__predict_false(ret != 0)) {
+                        goto fail;
+                }
+                if (__predict_false(inst >= table_size)) {
                         goto invalid_inst;
                 }
                 desc = &table[inst];
-                if (desc->next_table != NULL) {
-                        table = desc->next_table;
-                        table_size = desc->next_table_size;
-                        group = desc->name;
-                        /*
-                         * Note: wasm "sub" opcodes are LEB128.
-                         * cf. https://github.com/WebAssembly/spec/issues/1228
-                         */
-                        ret = read_leb_u32(pp, ep, &inst);
-                        if (ret != 0) {
-                                goto fail;
-                        }
-                        continue;
-                }
-                if (desc->name == NULL) {
-invalid_inst:
-                        xlog_error("unimplemented instruction %02" PRIx32
-                                   " in group '%s'",
-                                   inst, group);
-                        ret = EINVAL;
-                        goto fail;
-                }
-                *descp = desc;
-                break;
         }
+        if (__predict_false(desc->name == NULL)) {
+invalid_inst:
+                xlog_error("unimplemented instruction %02" PRIx32
+                           " in group '%s'",
+                           inst, group);
+                ret = EINVAL;
+                goto fail;
+        }
+        *descp = desc;
         ret = 0;
 fail:
         return ret;
 }
 
 int
-fetch_process_next_insn(const uint8_t **pp, const uint8_t *ep,
-                        struct context *ctx)
+fetch_validate_next_insn(const uint8_t *p, const uint8_t *ep,
+                         struct validation_context *vctx)
 {
+        xassert(ep != NULL);
         const struct instruction_desc *desc;
-        struct validation_context *vctx = ctx->validation;
 #if defined(TOYWASM_ENABLE_TRACING_INSN)
         uint32_t pc;
-        if (vctx != NULL) {
-                pc = ptr2pc(vctx->module, *pp);
-        }
+        pc = ptr2pc(vctx->module, p);
 #endif
         int ret;
 
-        ret = read_op(pp, ep, &desc);
+        ret = read_op(&p, ep, &desc);
         if (ret != 0) {
                 goto fail;
         }
         xlog_trace_insn("inst %06" PRIx32 " %s", pc, desc->name);
-#if defined(TOYWASM_ENABLE_TRACING_INSN)
-        // uint32_t orig_n = vctx->valtypes.lsize;
-#endif
         if (vctx->const_expr && (desc->flags & INSN_FLAG_CONST) == 0) {
                 ret = validation_failure(vctx,
                                          "instruction \"%s\" not "
@@ -98,7 +93,7 @@ fetch_process_next_insn(const uint8_t **pp, const uint8_t *ep,
                                          desc->name);
                 goto fail;
         }
-        __musttail return desc->process(pp, ep, ctx);
+        __musttail return desc->validate(p, ep, vctx);
 fail:
         return ret;
 }
@@ -110,6 +105,7 @@ read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
                  struct resulttype *result_types, bool const_expr,
                  struct load_context *lctx)
 {
+        xassert(ep != NULL);
         const uint8_t *p = *pp;
         int ret;
 
@@ -162,15 +158,14 @@ read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
                 goto fail;
         }
 
-        struct context ctx0;
-        struct context *ctx = &ctx0;
-        ctx->validation = vctx;
-        ctx->exec = NULL;
         while (true) {
-                ret = fetch_process_next_insn(&p, ep, ctx);
+                ret = fetch_validate_next_insn(p, ep, vctx);
                 if (ret != 0) {
                         goto fail;
                 }
+                assert(vctx->p > p);
+                p = vctx->p;
+                assert(p <= ep);
                 if (vctx->cframes.lsize == 0) {
                         break;
                 }
