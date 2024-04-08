@@ -707,11 +707,11 @@ schedule_exception(struct exec_context *ectx)
         (defined(__HAVE_MUSTTAIL) || defined(TOYWASM_FORCE_USE_TAILCALL))
 #define INSN_SUCCESS __musttail return fetch_validate_next_insn(p, ep, ctx)
 #else
-#define INSN_SUCCESS return 0
+#define INSN_SUCCESS INSN_SUCCESS_BLOCK_END
 #endif
 #define INSN_SUCCESS_RETURN INSN_SUCCESS
 #define INSN_SUCCESS_BLOCK_END                                                \
-        vctx->p = p;                                                          \
+        VCTX->p = p;                                                          \
         return 0
 #define PREPARE_FOR_POSSIBLE_RESTART
 #define INSN_FAIL_RESTARTABLE(NAME) INSN_FAIL
