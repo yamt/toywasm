@@ -83,13 +83,13 @@ INSN_IMPL(local_get)
 
         LOAD_PC;
         READ_LEB_U32(localidx);
-        struct val val_c;
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
                 uint32_t csz;
                 local_get(ectx, localidx, STACK, &csz);
                 STACK_ADJ(csz);
         } else if (VALIDATING) {
+                struct val val_c;
                 CHECK(localidx < VCTX->locals.lsize);
                 PUSH_VAL(VEC_ELEM(VCTX->locals, localidx), c);
         }
