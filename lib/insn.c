@@ -703,7 +703,12 @@ schedule_exception(struct exec_context *ectx)
 #define SAVE_STACK_PTR
 #define LOAD_STACK_PTR
 #define ORIG_PC p0
+#if defined(TOYWASM_USE_TAILCALL) &&                                          \
+        (defined(__HAVE_MUSTTAIL) || defined(TOYWASM_FORCE_USE_TAILCALL))
 #define INSN_SUCCESS __musttail return fetch_validate_next_insn(p, ep, ctx)
+#else
+#define INSN_SUCCESS return 0
+#endif
 #define INSN_SUCCESS_RETURN INSN_SUCCESS
 #define INSN_SUCCESS_BLOCK_END                                                \
         vctx->p = p;                                                          \
