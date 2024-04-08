@@ -718,13 +718,18 @@ schedule_exception(struct exec_context *ectx)
 #undef pop_val
 #define push_val(v, csz, ctx)                                                 \
         do {                                                                  \
+                (void)v;                                                      \
+                (void)csz;                                                    \
         } while (0)
 #define pop_val(v, csz, ctx)                                                  \
         do {                                                                  \
+                (void)v;                                                      \
+                (void)csz;                                                    \
         } while (0)
 #define STACK NULL
 #define STACK_ADJ(n)                                                          \
         do {                                                                  \
+                (void)n;                                                      \
         } while (0)
 
 #include "insn_impl.h"
