@@ -17,7 +17,6 @@
 int
 push_valtype(enum valtype type, struct validation_context *ctx)
 {
-        uint32_t nsize = ctx->valtypes.lsize + 1;
         int ret;
 
         assert(type != TYPE_ANYREF);
@@ -35,10 +34,7 @@ push_valtype(enum valtype type, struct validation_context *ctx)
         assert(ctx->cframes.lsize > 0);
         const struct ctrlframe *cframe = &VEC_LASTELEM(ctx->cframes);
         assert(type != TYPE_UNKNOWN || cframe->unreachable);
-        if (nsize == 0) {
-                return EOVERFLOW;
-        }
-        ret = VEC_PREALLOC(ctx->valtypes, nsize);
+        ret = VEC_PREALLOC(ctx->valtypes, 1);
         if (ret != 0) {
                 return ret;
         }
@@ -178,11 +174,7 @@ push_ctrlframe(uint32_t pc, enum ctrlframe_op op, uint32_t jumpslot,
                         return ret;
                 }
         }
-        uint32_t nsize = ctx->cframes.lsize + 1;
-        if (nsize == 0) {
-                return EOVERFLOW;
-        }
-        ret = VEC_PREALLOC(ctx->cframes, nsize);
+        ret = VEC_PREALLOC(ctx->cframes, 1);
         if (ret != 0) {
                 return ret;
         }
@@ -209,7 +201,6 @@ push_ctrlframe(uint32_t pc, enum ctrlframe_op op, uint32_t jumpslot,
         cframe->unreachable = false;
         cframe->height = ctx->valtypes.lsize;
         cframe->height_cell = ctx->ncells;
-        assert(nsize == ctx->cframes.lsize);
         if (ctx->cframes.lsize > ei->maxlabels) {
                 ei->maxlabels = ctx->cframes.lsize;
         }
