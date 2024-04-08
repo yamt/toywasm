@@ -93,7 +93,10 @@ fetch_validate_next_insn(const uint8_t *p, const uint8_t *ep,
                                          desc->name);
                 goto fail;
         }
-        __musttail return desc->validate(p, ep, vctx);
+#if defined(TOYWASM_USE_TAILCALL)
+        __musttail
+#endif
+                return desc->validate(p, ep, vctx);
 fail:
         return ret;
 }
