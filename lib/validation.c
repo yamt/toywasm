@@ -14,12 +14,24 @@
 #include "validation.h"
 #include "xlog.h"
 
-static int
-push_valtype_common(enum valtype type, struct validation_context *ctx)
+static const struct ctrlframe *
+current_frame(const struct validation_context *ctx)
 {
         assert(ctx->cframes.lsize > 0);
         const struct ctrlframe *cframe = &VEC_LASTELEM(ctx->cframes);
-        const bool unreachable = cframe->unreachable;
+        return cframe;
+}
+
+static bool
+cframe_unreachable(const struct ctrlframe *cframe)
+{
+        return cframe->unreachable;
+}
+
+static int
+push_valtype_common(enum valtype type, struct validation_context *ctx)
+{
+        const bool unreachable = cframe_unreachable(current_frame(ctx));
         int ret;
 
         assert(type != TYPE_ANYREF);
@@ -60,10 +72,8 @@ int
 pop_valtype(enum valtype expected_type, enum valtype *typep,
             struct validation_context *ctx)
 {
-        assert(ctx->cframes.lsize > 0);
-        const struct ctrlframe *cframe = &VEC_LASTELEM(ctx->cframes);
-        const bool unreachable = cframe->unreachable;
-
+        const struct ctrlframe *cframe = current_frame(ctx);
+        const bool unreachable = cframe_unreachable(cframe);
         assert(ctx->valtypes.lsize >= cframe->height);
         assert(ctx->ncells >= cframe->height_cell);
         if (ctx->valtypes.lsize == cframe->height) {
