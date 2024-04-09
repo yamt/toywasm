@@ -69,11 +69,11 @@ push_valtype(enum valtype type, struct validation_context *ctx)
         return push_valtype_common(type, current_frame(ctx), ctx);
 }
 
-int
-pop_valtype(enum valtype expected_type, enum valtype *typep,
-            struct validation_context *ctx)
+static int
+pop_valtype_common(enum valtype expected_type, enum valtype *typep,
+                   const struct ctrlframe *cframe,
+                   struct validation_context *ctx)
 {
-        const struct ctrlframe *cframe = current_frame(ctx);
         const bool unreachable = cframe_unreachable(cframe);
         assert(ctx->valtypes.lsize >= cframe->height);
         assert(ctx->ncells >= cframe->height_cell);
@@ -104,6 +104,14 @@ pop_valtype(enum valtype expected_type, enum valtype *typep,
 }
 
 int
+pop_valtype(enum valtype expected_type, enum valtype *typep,
+            struct validation_context *ctx)
+{
+        return pop_valtype_common(expected_type, typep, current_frame(ctx),
+                                  ctx);
+}
+
+int
 push_valtypes(const struct resulttype *types, struct validation_context *ctx)
 {
         int ret;
@@ -125,11 +133,13 @@ push_valtypes(const struct resulttype *types, struct validation_context *ctx)
 int
 pop_valtypes(const struct resulttype *types, struct validation_context *ctx)
 {
+        const struct ctrlframe *cframe = current_frame(ctx);
         uint32_t left = types->ntypes;
         while (left > 0) {
                 left--;
                 enum valtype t;
-                int ret = pop_valtype(types->types[left], &t, ctx);
+                int ret = pop_valtype_common(types->types[left], &t, cframe,
+                                             ctx);
                 if (ret != 0) {
                         return ret;
                 }
