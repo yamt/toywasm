@@ -69,6 +69,20 @@ fail:
         return ret;
 }
 
+static int
+check_const_instruction(const struct instruction_desc *desc,
+                        struct validation_context *vctx)
+{
+        if (vctx->const_expr && (desc->flags & INSN_FLAG_CONST) == 0) {
+                return validation_failure(vctx,
+                                          "instruction \"%s\" not "
+                                          "allowed in a const expr",
+                                          desc->name);
+        }
+        return 0;
+}
+
+#if defined(TOYWASM_USE_SEPARATE_VALIDATE)
 int
 fetch_validate_next_insn(const uint8_t *p, const uint8_t *ep,
                          struct validation_context *vctx)
@@ -76,8 +90,7 @@ fetch_validate_next_insn(const uint8_t *p, const uint8_t *ep,
         xassert(ep != NULL);
         const struct instruction_desc *desc;
 #if defined(TOYWASM_ENABLE_TRACING_INSN)
-        uint32_t pc;
-        pc = ptr2pc(vctx->module, p);
+        uint32_t pc = ptr2pc(vctx->module, p);
 #endif
         int ret;
 
@@ -86,11 +99,8 @@ fetch_validate_next_insn(const uint8_t *p, const uint8_t *ep,
                 goto fail;
         }
         xlog_trace_insn("inst %06" PRIx32 " %s", pc, desc->name);
-        if (vctx->const_expr && (desc->flags & INSN_FLAG_CONST) == 0) {
-                ret = validation_failure(vctx,
-                                         "instruction \"%s\" not "
-                                         "allowed in a const expr",
-                                         desc->name);
+        ret = check_const_instruction(desc, vctx);
+        if (ret != 0) {
                 goto fail;
         }
 #if defined(TOYWASM_USE_TAILCALL)
@@ -100,6 +110,34 @@ fetch_validate_next_insn(const uint8_t *p, const uint8_t *ep,
 fail:
         return ret;
 }
+#else
+int
+fetch_process_next_insn(const uint8_t **pp, const uint8_t *ep,
+                        struct context *ctx)
+{
+        xassert(ep != NULL);
+        struct validation_context *vctx = ctx->validation;
+
+        const struct instruction_desc *desc;
+#if defined(TOYWASM_ENABLE_TRACING_INSN)
+        uint32_t pc = ptr2pc(vctx->module, p);
+#endif
+        int ret;
+
+        ret = read_op(pp, ep, &desc);
+        if (ret != 0) {
+                goto fail;
+        }
+        xlog_trace_insn("inst %06" PRIx32 " %s", pc, desc->name);
+        ret = check_const_instruction(desc, vctx);
+        if (ret != 0) {
+                goto fail;
+        }
+        return desc->process(pp, ep, ctx);
+fail:
+        return ret;
+}
+#endif /* defined(TOYWASM_USE_SEPARATE_VALIDATE) */
 
 static int
 read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
@@ -161,13 +199,26 @@ read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
                 goto fail;
         }
 
+#if !defined(TOYWASM_USE_SEPARATE_VALIDATE)
+        struct context ctx0;
+        struct context *ctx = &ctx0;
+        ctx->validation = vctx;
+        ctx->exec = NULL;
+#endif
         while (true) {
+#if defined(TOYWASM_USE_SEPARATE_VALIDATE)
                 ret = fetch_validate_next_insn(p, ep, vctx);
                 if (ret != 0) {
                         goto fail;
                 }
                 assert(vctx->p > p);
                 p = vctx->p;
+#else
+                ret = fetch_process_next_insn(&p, ep, ctx);
+                if (ret != 0) {
+                        goto fail;
+                }
+#endif
                 assert(p <= ep);
                 if (vctx->cframes.lsize == 0) {
                         break;
