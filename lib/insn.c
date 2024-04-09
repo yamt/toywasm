@@ -697,7 +697,9 @@ schedule_exception(struct exec_context *ectx)
 #define INSN_IMPL(NAME)                                                       \
         int validate_##NAME(const uint8_t *p, const uint8_t *ep,              \
                             struct validation_context *ctx)
-#define LOAD_PC const uint8_t *p0 __attribute__((__unused__)) = p
+#define LOAD_PC                                                               \
+        xassert(ep != NULL);                                                  \
+        const uint8_t *p0 __attribute__((__unused__)) = p
 #define SAVE_PC
 #define RELOAD_PC
 #define SAVE_STACK_PTR
