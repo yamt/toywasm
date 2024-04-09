@@ -286,7 +286,7 @@ mark_unreachable(struct validation_context *ctx)
 }
 
 const struct resulttype *
-label_types(struct ctrlframe *cframe)
+label_types(const struct ctrlframe *cframe)
 {
         if (cframe->op == FRAME_OP_LOOP) {
                 return cframe->start_types;
@@ -352,7 +352,7 @@ target_label_types(struct validation_context *ctx, uint32_t labelidx,
         if (labelidx >= ctx->cframes.lsize) {
                 return EINVAL;
         }
-        struct ctrlframe *cframe =
+        const struct ctrlframe *cframe =
                 &VEC_ELEM(ctx->cframes, ctx->cframes.lsize - labelidx - 1);
         const struct resulttype *rt = label_types(cframe);
         *rtp = rt;
