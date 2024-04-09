@@ -76,7 +76,7 @@ int push_ctrlframe(uint32_t pc, enum ctrlframe_op op, uint32_t jumpslot,
 int pop_ctrlframe(uint32_t pc, bool is_else, struct ctrlframe *cframe,
                   struct validation_context *ctx);
 void mark_unreachable(struct validation_context *ctx);
-const struct resulttype *label_types(struct ctrlframe *cframe);
+const struct resulttype *label_types(const struct ctrlframe *cframe);
 int validation_failure(struct validation_context *ctx, const char *fmt, ...)
         __attribute__((__format__(__printf__, 2, 3)));
 struct resulttype *returntype(struct validation_context *ctx);
