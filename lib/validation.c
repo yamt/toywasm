@@ -17,6 +17,9 @@
 int
 push_valtype(enum valtype type, struct validation_context *ctx)
 {
+        assert(ctx->cframes.lsize > 0);
+        const struct ctrlframe *cframe = &VEC_LASTELEM(ctx->cframes);
+        const bool unreachable = cframe->unreachable;
         int ret;
 
         assert(type != TYPE_ANYREF);
@@ -31,15 +34,13 @@ push_valtype(enum valtype type, struct validation_context *ctx)
          *      select ;; here
          *    end
          */
-        assert(ctx->cframes.lsize > 0);
-        const struct ctrlframe *cframe = &VEC_LASTELEM(ctx->cframes);
-        assert(type != TYPE_UNKNOWN || cframe->unreachable);
+        assert(type != TYPE_UNKNOWN || unreachable);
         ret = VEC_PREALLOC(ctx->valtypes, 1);
         if (ret != 0) {
                 return ret;
         }
         *VEC_PUSH(ctx->valtypes) = type;
-        if (!cframe->unreachable) {
+        if (!unreachable) {
                 ctx->ncells += valtype_cellsize(type);
                 if (ctx->ncells > ctx->ei->maxcells) {
                         ctx->ei->maxcells = ctx->ncells;
@@ -52,15 +53,15 @@ int
 pop_valtype(enum valtype expected_type, enum valtype *typep,
             struct validation_context *ctx)
 {
-        const struct ctrlframe *cframe;
-
         assert(ctx->cframes.lsize > 0);
-        cframe = &VEC_LASTELEM(ctx->cframes);
+        const struct ctrlframe *cframe = &VEC_LASTELEM(ctx->cframes);
+        const bool unreachable = cframe->unreachable;
+
         assert(ctx->valtypes.lsize >= cframe->height);
         assert(ctx->ncells >= cframe->height_cell);
         if (ctx->valtypes.lsize == cframe->height) {
                 assert(ctx->ncells == cframe->height_cell);
-                if (cframe->unreachable) {
+                if (unreachable) {
                         *typep = TYPE_UNKNOWN;
                         return 0;
                 }
@@ -68,8 +69,8 @@ pop_valtype(enum valtype expected_type, enum valtype *typep,
         }
         enum valtype t = *VEC_POP(ctx->valtypes);
         assert(t != TYPE_ANYREF);
-        assert(t != TYPE_UNKNOWN || cframe->unreachable);
-        if (!cframe->unreachable) {
+        assert(t != TYPE_UNKNOWN || unreachable);
+        if (!unreachable) {
                 uint32_t csz = valtype_cellsize(t);
                 assert(ctx->ncells >= csz);
                 ctx->ncells -= csz;
