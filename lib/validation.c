@@ -80,9 +80,7 @@ pop_valtype_common(enum valtype expected_type, enum valtype *typep,
         if (ctx->valtypes.lsize == cframe->height) {
                 assert(ctx->ncells == cframe->height_cell);
                 if (unreachable) {
-                        if (typep != NULL) {
-                                *typep = TYPE_UNKNOWN;
-                        }
+                        *typep = TYPE_UNKNOWN;
                         return 0;
                 }
                 return EINVAL;
@@ -101,9 +99,7 @@ pop_valtype_common(enum valtype expected_type, enum valtype *typep,
                 return validation_failure(ctx, "expected %x actual %x",
                                           expected_type, t);
         }
-        if (typep != NULL) {
-                *typep = t;
-        }
+        *typep = t;
         return 0;
 }
 
@@ -111,7 +107,6 @@ int
 pop_valtype(enum valtype expected_type, enum valtype *typep,
             struct validation_context *ctx)
 {
-        xassert(typep != NULL);
         return pop_valtype_common(expected_type, typep, current_frame(ctx),
                                   ctx);
 }
@@ -142,7 +137,8 @@ pop_valtypes(const struct resulttype *types, struct validation_context *ctx)
         uint32_t left = types->ntypes;
         while (left > 0) {
                 left--;
-                int ret = pop_valtype_common(types->types[left], NULL, cframe,
+                enum valtype t;
+                int ret = pop_valtype_common(types->types[left], &t, cframe,
                                              ctx);
                 if (ret != 0) {
                         return ret;
