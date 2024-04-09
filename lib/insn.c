@@ -530,6 +530,10 @@ schedule_exception(struct exec_context *ectx)
  * the main loop for extra processing of events.
  */
 
+/*
+ * generate the generic "process" callbacks.
+ */
+
 #if defined(TOYWASM_USE_SEPARATE_EXECUTE)
 #define EXECUTING false
 #define ECTX ((struct exec_context *)NULL)
@@ -607,6 +611,9 @@ schedule_exception(struct exec_context *ectx)
 #undef STACK_ADJ
 
 #if defined(TOYWASM_USE_SEPARATE_EXECUTE)
+/*
+ * generate the exec-only callbacks.
+ */
 #define EXECUTING true
 #define ECTX ctx
 #define VALIDATING false
@@ -690,6 +697,12 @@ schedule_exception(struct exec_context *ectx)
 #endif /* defined(TOYWASM_USE_SEPARATE_EXECUTE) */
 
 #if defined(TOYWASM_USE_SEPARATE_VALIDATE)
+/*
+ * define the validate-only callbacks.
+ *
+ * note that many of these callbacks are redundant.
+ * eg. the validation logic of i32.add and i32.sub are basically same.
+ */
 #define EXECUTING false
 #define ECTX ((struct exec_context *)NULL)
 #define VALIDATING true
