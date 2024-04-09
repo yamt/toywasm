@@ -4,8 +4,11 @@
 struct ctrlframe {
         struct resulttype *start_types;
         struct resulttype *end_types;
+
+        /* saved height of the valtype stack */
         uint32_t height;
-        uint32_t height_cell;
+        uint32_t height_cell; /* in cells */
+
         uint32_t jumpslot;
         enum ctrlframe_op op;
         bool unreachable;
@@ -18,7 +21,7 @@ struct validation_context {
         /* operand stack */
 
         VEC(, enum valtype) valtypes;
-        uint32_t ncells;
+        uint32_t ncells; /* valtypes height in cells */
 
         struct module *module;
         struct expr_exec_info *ei;
