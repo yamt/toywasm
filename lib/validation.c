@@ -29,9 +29,10 @@ cframe_unreachable(const struct ctrlframe *cframe)
 }
 
 static int
-push_valtype_common(enum valtype type, struct validation_context *ctx)
+push_valtype_common(enum valtype type, const struct ctrlframe *cframe,
+                    struct validation_context *ctx)
 {
-        const bool unreachable = cframe_unreachable(current_frame(ctx));
+        const bool unreachable = cframe_unreachable(cframe);
         int ret;
 
         assert(type != TYPE_ANYREF);
@@ -65,7 +66,7 @@ push_valtype(enum valtype type, struct validation_context *ctx)
         if (ret != 0) {
                 return ret;
         }
-        return push_valtype_common(type, ctx);
+        return push_valtype_common(type, current_frame(ctx), ctx);
 }
 
 int
@@ -110,9 +111,10 @@ push_valtypes(const struct resulttype *types, struct validation_context *ctx)
         if (ret != 0) {
                 return ret;
         }
+        const struct ctrlframe *cframe = current_frame(ctx);
         uint32_t i;
         for (i = 0; i < types->ntypes; i++) {
-                ret = push_valtype_common(types->types[i], ctx);
+                ret = push_valtype_common(types->types[i], cframe, ctx);
                 if (ret != 0) {
                         return ret;
                 }
