@@ -66,9 +66,9 @@ invalid_inst:
                         goto fail;
                 }
                 *descp = desc;
+                xlog_trace_insn("inst %06" PRIx32 " %s", pc, desc->name);
                 break;
         }
-        xlog_trace_insn("inst %06" PRIx32 " %s", pc, desc->name);
         ret = 0;
 fail:
         return ret;
