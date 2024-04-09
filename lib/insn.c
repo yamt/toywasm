@@ -932,7 +932,12 @@ const static struct instruction_desc instructions_fe[] = {
 };
 #endif
 
-const struct instruction_desc instructions[] = {
+/*
+ * Note: as 0xfc is occupied unconditionally anyway, allocating up to
+ * 0xff below doesn't waste much space. on the other hand, it might allow
+ * a few optimizations in the parser by allowing full uint8_t index.
+ */
+const struct instruction_desc instructions[256] = {
 #include "insn_list_base.h"
 #if defined(TOYWASM_ENABLE_WASM_TAILCALL)
 #include "insn_list_tailcall.h"
