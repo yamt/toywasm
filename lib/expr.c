@@ -19,7 +19,7 @@
 
 static int
 read_op(const uint8_t **pp, const uint8_t *ep,
-        const struct instruction_desc **descp)
+        const struct instruction_desc **descp, struct validation_context *vctx)
 {
         const struct instruction_desc *table = instructions;
         size_t table_size = instructions_size;
@@ -28,6 +28,9 @@ read_op(const uint8_t **pp, const uint8_t *ep,
         uint8_t inst8;
         uint32_t inst;
 
+#if defined(TOYWASM_ENABLE_TRACING_INSN)
+        uint32_t pc = ptr2pc(vctx->module, *pp);
+#endif
         ret = read_u8(pp, ep, &inst8);
         if (ret != 0) {
                 goto fail;
@@ -64,6 +67,7 @@ invalid_inst:
                 *descp = desc;
                 break;
         }
+        xlog_trace_insn("inst %06" PRIx32 " %s", pc, desc->name);
         ret = 0;
 fail:
         return ret;
@@ -89,16 +93,12 @@ fetch_validate_next_insn(const uint8_t *p, const uint8_t *ep,
 {
         xassert(ep != NULL);
         const struct instruction_desc *desc;
-#if defined(TOYWASM_ENABLE_TRACING_INSN)
-        uint32_t pc = ptr2pc(vctx->module, p);
-#endif
         int ret;
 
-        ret = read_op(&p, ep, &desc);
+        ret = read_op(&p, ep, &desc, vctx);
         if (ret != 0) {
                 goto fail;
         }
-        xlog_trace_insn("inst %06" PRIx32 " %s", pc, desc->name);
         ret = check_const_instruction(desc, vctx);
         if (ret != 0) {
                 goto fail;
@@ -119,16 +119,12 @@ fetch_process_next_insn(const uint8_t **pp, const uint8_t *ep,
         struct validation_context *vctx = ctx->validation;
 
         const struct instruction_desc *desc;
-#if defined(TOYWASM_ENABLE_TRACING_INSN)
-        uint32_t pc = ptr2pc(vctx->module, p);
-#endif
         int ret;
 
-        ret = read_op(pp, ep, &desc);
+        ret = read_op(pp, ep, &desc, vctx);
         if (ret != 0) {
                 goto fail;
         }
-        xlog_trace_insn("inst %06" PRIx32 " %s", pc, desc->name);
         ret = check_const_instruction(desc, vctx);
         if (ret != 0) {
                 goto fail;
