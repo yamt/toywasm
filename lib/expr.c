@@ -58,10 +58,11 @@ read_op(const uint8_t **pp, const uint8_t *ep,
                 }
                 if (desc->name == NULL) {
 invalid_inst:
-                        xlog_error("unimplemented instruction %02" PRIx32
-                                   " in group '%s'",
-                                   inst, group);
-                        ret = EINVAL;
+                        ret = validation_failure(
+                                vctx,
+                                "unimplemented instruction %02" PRIx32
+                                " in group '%s'",
+                                inst, group);
                         goto fail;
                 }
                 *descp = desc;
