@@ -88,11 +88,8 @@ int
 push_valtypes(const struct resulttype *types, struct validation_context *ctx)
 {
         uint32_t i;
-
         for (i = 0; i < types->ntypes; i++) {
-                int ret;
-
-                ret = push_valtype(types->types[i], ctx);
+                int ret = push_valtype(types->types[i], ctx);
                 if (ret != 0) {
                         return ret;
                 }
@@ -103,24 +100,14 @@ push_valtypes(const struct resulttype *types, struct validation_context *ctx)
 int
 pop_valtypes(const struct resulttype *types, struct validation_context *ctx)
 {
-        uint32_t i;
-
-        if (types->ntypes == 0) {
-                return 0;
-        }
-
-        for (i = types->ntypes - 1;;) {
+        uint32_t left = types->ntypes;
+        while (left > 0) {
+                left--;
                 enum valtype t;
-                int ret;
-
-                ret = pop_valtype(types->types[i], &t, ctx);
+                int ret = pop_valtype(types->types[left], &t, ctx);
                 if (ret != 0) {
                         return ret;
                 }
-                if (i == 0) {
-                        break;
-                }
-                i--;
         }
         return 0;
 }
