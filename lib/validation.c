@@ -14,8 +14,8 @@
 #include "validation.h"
 #include "xlog.h"
 
-int
-push_valtype(enum valtype type, struct validation_context *ctx)
+static int
+push_valtype_common(enum valtype type, struct validation_context *ctx)
 {
         assert(ctx->cframes.lsize > 0);
         const struct ctrlframe *cframe = &VEC_LASTELEM(ctx->cframes);
@@ -35,10 +35,7 @@ push_valtype(enum valtype type, struct validation_context *ctx)
          *    end
          */
         assert(type != TYPE_UNKNOWN || unreachable);
-        ret = VEC_PREALLOC(ctx->valtypes, 1);
-        if (ret != 0) {
-                return ret;
-        }
+        assert(ctx->valtypes.lsize < ctx->valtypes.psize);
         *VEC_PUSH(ctx->valtypes) = type;
         if (!unreachable) {
                 ctx->ncells += valtype_cellsize(type);
@@ -47,6 +44,16 @@ push_valtype(enum valtype type, struct validation_context *ctx)
                 }
         }
         return 0;
+}
+
+int
+push_valtype(enum valtype type, struct validation_context *ctx)
+{
+        int ret = VEC_PREALLOC(ctx->valtypes, 1);
+        if (ret != 0) {
+                return ret;
+        }
+        return push_valtype_common(type, ctx);
 }
 
 int
@@ -88,9 +95,14 @@ pop_valtype(enum valtype expected_type, enum valtype *typep,
 int
 push_valtypes(const struct resulttype *types, struct validation_context *ctx)
 {
+        int ret;
+        ret = VEC_PREALLOC(ctx->valtypes, types->ntypes);
+        if (ret != 0) {
+                return ret;
+        }
         uint32_t i;
         for (i = 0; i < types->ntypes; i++) {
-                int ret = push_valtype(types->types[i], ctx);
+                ret = push_valtype_common(types->types[i], ctx);
                 if (ret != 0) {
                         return ret;
                 }
