@@ -292,6 +292,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-builtin")
 endif()
 
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -fomit-frame-pointer")
+#set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Xclang -fmerge-functions")
 
 if (NOT CMAKE_BUILD_TYPE MATCHES "Debug")
 # Note: Release build disables assertions and thus yields a lot of
