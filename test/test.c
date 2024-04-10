@@ -217,10 +217,7 @@ test_leb128(void **state)
          */
 
         const uint8_t u_5_redundant[] = {
-                0x85,
-                0x80,
-                0x80,
-                0x80,
+                0x85, 0x80, 0x80, 0x80,
 #if 0
                 0x80, 0x80, 0x80, 0x80,
                 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
@@ -234,10 +231,7 @@ test_leb128(void **state)
         TEST_OK(s32, u_5_redundant, 5);
 
         const uint8_t s_minus5_redundant[] = {
-                0xfb,
-                0xff,
-                0xff,
-                0xff,
+                0xfb, 0xff, 0xff, 0xff,
 #if 0
                 0xff, 0xff, 0xff, 0xff,
 #endif
