@@ -63,7 +63,7 @@
  * > objects owned by the embedder and that can be passed into WebAssembly
  * > under this type.
  */
-#define EXTERNREF_0 ((uintptr_t)-1)
+#define EXTERNREF_0 ((uintptr_t)(-1))
 
 int
 str_to_uint(const char *s, int base, uintmax_t *resultp)
