@@ -69,7 +69,7 @@ __END_EXTERN_C
 #endif
 
 #define _LIST_NEXT_PTR_TO_ELEM(ELEM, TYPE, NAME)                              \
-        (TYPE *)((uintptr_t)(ELEM)-toywasm_offsetof(TYPE, NAME.next))
+        (TYPE *)((uintptr_t)(ELEM) - toywasm_offsetof(TYPE, NAME.next))
 
 #define LIST_FIRST(HEAD) (HEAD)->first
 #define LIST_LAST(HEAD, TYPE, NAME)                                           \
