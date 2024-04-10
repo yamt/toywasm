@@ -512,6 +512,22 @@ schedule_exception(struct exec_context *ectx)
 #endif
 
 /*
+ * We generate callbacks to validate/execute/skip instructions by
+ * including template headers via insn_impl.h multiple times.
+ *
+ * Depending on configurations, it can yield similar/identical functions
+ * a lot, compiler/linker code dedup functionalities might help.
+ * (eg. mergefunc, icf)
+ *
+ * Note: While we store pointers of these callback functions in the dispatch
+ * table, we do never compare the these pointers. If we can tell the situation
+ * to the compiler, (eg. by adding LLVM unnamed_addr attribute to these
+ * functions) it would be possible for the compiler to merge these identical
+ * functions. Unfortunately, however, clang doesn't seem to have a way to do
+ * that.
+ */
+
+/*
  * LOAD_PC: prepare PC on the entry of the function.
  *
  * SAVE_PC: use this when you advanced PC by parsing immediates.
