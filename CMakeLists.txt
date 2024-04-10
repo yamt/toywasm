@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-include(cmake/HomebrewLLVM.cmake)
+include(cmake/LLVM.cmake)
 
 project(toywasm LANGUAGES C)
 
