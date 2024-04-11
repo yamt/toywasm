@@ -605,26 +605,7 @@ schedule_exception(struct exec_context *ectx)
 #define STACK_ADJ(n) ECTX->stack.lsize += (n)
 
 #include "insn_impl.h"
-
-#undef EXECUTING
-#undef ECTX
-#undef VALIDATING
-#undef VCTX
-#undef INSN_IMPL
-#undef LOAD_PC
-#undef SAVE_PC
-#undef RELOAD_PC
-#undef SAVE_STACK_PTR
-#undef LOAD_STACK_PTR
-#undef ORIG_PC
-#undef PREPARE_FOR_POSSIBLE_RESTART
-#undef INSN_SUCCESS
-#undef INSN_SUCCESS_RETURN
-#undef INSN_SUCCESS_BLOCK_END
-#undef INSN_FAIL
-#undef INSN_FAIL_RESTARTABLE
-#undef STACK
-#undef STACK_ADJ
+#include "insn_undef.h"
 
 #if defined(TOYWASM_USE_SEPARATE_EXECUTE)
 /*
@@ -689,27 +670,7 @@ schedule_exception(struct exec_context *ectx)
 #endif
 
 #include "insn_impl.h"
-
-#undef EXECUTING
-#undef ECTX
-#undef VALIDATING
-#undef VCTX
-#undef INSN_IMPL
-#undef LOAD_PC
-#undef SAVE_PC
-#undef RELOAD_PC
-#undef SAVE_STACK_PTR
-#undef LOAD_STACK_PTR
-#undef ORIG_PC
-#undef PREPARE_FOR_POSSIBLE_RESTART
-#undef INSN_SUCCESS
-#undef INSN_SUCCESS_RETURN
-#undef INSN_SUCCESS_BLOCK_END
-#undef INSN_FAIL
-#undef INSN_FAIL_RESTARTABLE
-#undef ep
-#undef STACK
-#undef STACK_ADJ
+#include "insn_undef.h"
 #endif /* defined(TOYWASM_USE_SEPARATE_EXECUTE) */
 
 #if defined(TOYWASM_USE_SEPARATE_VALIDATE)
@@ -750,8 +711,6 @@ schedule_exception(struct exec_context *ectx)
         assert(ret != 0);                                                     \
         assert(!IS_RESTARTABLE(ret));                                         \
         return ret
-#undef push_val
-#undef pop_val
 #define push_val(v, csz, ctx)                                                 \
         do {                                                                  \
                 (void)v;                                                      \
@@ -769,27 +728,7 @@ schedule_exception(struct exec_context *ectx)
         } while (0)
 
 #include "insn_impl.h"
-
-#undef EXECUTING
-#undef ECTX
-#undef VALIDATING
-#undef VCTX
-#undef INSN_IMPL
-#undef LOAD_PC
-#undef SAVE_PC
-#undef RELOAD_PC
-#undef SAVE_STACK_PTR
-#undef LOAD_STACK_PTR
-#undef ORIG_PC
-#undef PREPARE_FOR_POSSIBLE_RESTART
-#undef INSN_SUCCESS
-#undef INSN_SUCCESS_RETURN
-#undef INSN_SUCCESS_BLOCK_END
-#undef INSN_FAIL
-#undef INSN_FAIL_RESTARTABLE
-#undef ep
-#undef STACK
-#undef STACK_ADJ
+#include "insn_undef.h"
 #endif /* defined(TOYWASM_USE_SEPARATE_EXECUTE) */
 
 #if defined(TOYWASM_USE_SEPARATE_EXECUTE)
