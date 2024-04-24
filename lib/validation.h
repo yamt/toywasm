@@ -7,7 +7,9 @@ struct ctrlframe {
 
         /* saved height of the valtype stack */
         uint32_t height;
+#if defined(TOYWASM_USE_SMALL_CELLS)
         uint32_t height_cell; /* in cells */
+#endif
 
         uint32_t jumpslot;
         enum ctrlframe_op op;
@@ -21,7 +23,9 @@ struct validation_context {
         /* operand stack */
 
         VEC(, enum valtype) valtypes;
+#if defined(TOYWASM_USE_SMALL_CELLS)
         uint32_t ncells; /* valtypes height in cells */
+#endif
 
         struct module *module;
         struct expr_exec_info *ei;
