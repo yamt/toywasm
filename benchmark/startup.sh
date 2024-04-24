@@ -32,6 +32,7 @@ sync;sync;sync;sleep 3
 
 run "toywasm (default)" "../b/toywasm --wasi --"
 run "toywasm (no annotations)" "../b/toywasm --disable-jump-table --disable-localtype-cellidx --disable-resulttype-cellidx --wasi --"
+run "toywasm (no annotations, fixed cells)" "../b.fix/toywasm --disable-jump-table --disable-localtype-cellidx --disable-resulttype-cellidx --wasi --"
 run "wasm3 (default)" wasm3
 run "wasm3 (no lazy)" wasm3 --compile
 run "wamr (classic interp)" iwasm.classic
