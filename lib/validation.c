@@ -181,6 +181,10 @@ push_ctrlframe(uint32_t pc, enum ctrlframe_op op, uint32_t jumpslot,
                         (unsigned int)op,
                         start_types != NULL ? start_types->ntypes : 0,
                         end_types->ntypes, ctx->valtypes.lsize);
+        ret = VEC_PREALLOC(ctx->cframes, 1);
+        if (ret != 0) {
+                return ret;
+        }
         struct expr_exec_info *ei = ctx->ei;
         uint32_t nslots = 1;
         /*
@@ -205,12 +209,6 @@ push_ctrlframe(uint32_t pc, enum ctrlframe_op op, uint32_t jumpslot,
                 if (ret != 0) {
                         return ret;
                 }
-        }
-        ret = VEC_PREALLOC(ctx->cframes, 1);
-        if (ret != 0) {
-                return ret;
-        }
-        if (nslots > 0) {
                 jumpslot = ei->njumps;
                 ei->njumps += nslots;
                 ei->jumps[jumpslot].pc = pc;
