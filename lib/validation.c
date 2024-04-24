@@ -49,9 +49,14 @@ push_valtype_common(enum valtype type, const struct ctrlframe *cframe,
         assert(ctx->valtypes.lsize < ctx->valtypes.psize);
         *VEC_PUSH(ctx->valtypes) = type;
         if (!unreachable) {
+#if defined(TOYWASM_USE_SMALL_CELLS)
                 ctx->ncells += valtype_cellsize(type);
-                if (ctx->ncells > ctx->ei->maxcells) {
-                        ctx->ei->maxcells = ctx->ncells;
+                uint32_t ncells = ctx->ncells;
+#else
+                uint32_t ncells = ctx->valtypes.lsize;
+#endif
+                if (ncells > ctx->ei->maxcells) {
+                        ctx->ei->maxcells = ncells;
                 }
         }
 }
@@ -74,9 +79,13 @@ pop_valtype_common(enum valtype expected_type, enum valtype *typep,
 {
         const bool unreachable = cframe_unreachable(cframe);
         assert(ctx->valtypes.lsize >= cframe->height);
+#if defined(TOYWASM_USE_SMALL_CELLS)
         assert(ctx->ncells >= cframe->height_cell);
+#endif
         if (ctx->valtypes.lsize == cframe->height) {
+#if defined(TOYWASM_USE_SMALL_CELLS)
                 assert(ctx->ncells == cframe->height_cell);
+#endif
                 if (unreachable) {
                         *typep = TYPE_UNKNOWN;
                         return 0;
@@ -86,11 +95,13 @@ pop_valtype_common(enum valtype expected_type, enum valtype *typep,
         enum valtype t = *VEC_POP(ctx->valtypes);
         assert(t != TYPE_ANYREF);
         assert(t != TYPE_UNKNOWN || unreachable);
+#if defined(TOYWASM_USE_SMALL_CELLS)
         if (!unreachable) {
                 uint32_t csz = valtype_cellsize(t);
                 assert(ctx->ncells >= csz);
                 ctx->ncells -= csz;
         }
+#endif
         if (expected_type != TYPE_UNKNOWN && t != TYPE_UNKNOWN &&
             t != expected_type &&
             !(expected_type == TYPE_ANYREF && is_reftype(t))) {
@@ -146,10 +157,14 @@ int
 peek_valtypes(const struct resulttype *types, struct validation_context *ctx)
 {
         uint32_t saved_height = ctx->valtypes.lsize;
+#if defined(TOYWASM_USE_SMALL_CELLS)
         uint32_t saved_ncells = ctx->ncells;
+#endif
         int ret = pop_valtypes(types, ctx);
         ctx->valtypes.lsize = saved_height;
+#if defined(TOYWASM_USE_SMALL_CELLS)
         ctx->ncells = saved_ncells;
+#endif
         return ret;
 }
 
@@ -217,7 +232,9 @@ push_ctrlframe(uint32_t pc, enum ctrlframe_op op, uint32_t jumpslot,
         cframe->end_types = end_types;
         cframe->unreachable = false;
         cframe->height = ctx->valtypes.lsize;
+#if defined(TOYWASM_USE_SMALL_CELLS)
         cframe->height_cell = ctx->ncells;
+#endif
         if (ctx->cframes.lsize > ei->maxlabels) {
                 ei->maxlabels = ctx->cframes.lsize;
         }
@@ -265,7 +282,9 @@ pop_ctrlframe(uint32_t pc, bool is_else, struct ctrlframe *cframep,
                                           " != %" PRIu32,
                                           ctx->valtypes.lsize, cframe->height);
         }
+#if defined(TOYWASM_USE_SMALL_CELLS)
         assert(ctx->ncells == cframe->height_cell);
+#endif
         *cframep = *cframe;
         ctx->cframes.lsize--;
         return 0;
@@ -276,7 +295,9 @@ mark_unreachable(struct validation_context *ctx)
 {
         struct ctrlframe *cframe = &VEC_LASTELEM(ctx->cframes);
         ctx->valtypes.lsize = cframe->height;
+#if defined(TOYWASM_USE_SMALL_CELLS)
         ctx->ncells = cframe->height_cell;
+#endif
         cframe->unreachable = true;
 }
 
@@ -320,7 +341,9 @@ validation_context_reuse(struct validation_context *ctx)
         }
         ctx->cframes.lsize = 0;
         ctx->valtypes.lsize = 0;
+#if defined(TOYWASM_USE_SMALL_CELLS)
         ctx->ncells = 0;
+#endif
         ctx->locals.lsize = 0;
 }
 
