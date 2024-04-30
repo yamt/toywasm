@@ -159,7 +159,7 @@ of the above example apps.
 * For macOS and similar posix-like environment, you can build it with
   cmake in a usual way.
 
-  ```
+  ```shell
   % cmake -B build
   % cmake --build build
   ```
@@ -169,7 +169,7 @@ of the above example apps.
   By default, it uses ThinLTO if available.
   You might want to use regular LTO instead to get a bit better optimization:
 
-  ```
+  ```shell
   % cmake -B build . -DUSE_IPO=OFF -DCMAKE_C_FLAGS=-flto=full
   % cmake --build build
   ```
@@ -177,14 +177,14 @@ of the above example apps.
   By default, it requires `wabt` and `cmocka` for tests. If you don't
   want to install them, you can disable tests.
 
-  ```
+  ```shell
   % cmake -B build -D BUILD_TESTING=OFF
   % cmake --build build
   ```
 
   Otherwise, after building it, you can run tests with:
 
-  ```
+  ```shell
   % cd build
   % ctest
   ```
