@@ -83,35 +83,34 @@ See toywasm command help message.
 
 ```shell
 Usage:
-        toywasm [OPTIONS] [--] <MODULE> [WASI-ARGS...]
+	toywasm [OPTIONS] [--] <MODULE> [WASI-ARGS...]
 Options:
-        --disable-jump-table
-        --disable-localtype-cellidx
-        --disable-resulttype-cellidx
-        --dyld
-        --dyld-bindnow
-        --dyld-dlfcn
-        --dyld-path LIBRARY_DIR
-        --dyld-stack-size C_STACK_SIZE_IN_BYTES
-        --invoke FUNCTION[ FUNCTION_ARGS...]
-        --load MODULE_PATH
-        --max-frames NUMBER_OF_FRAMES
-        --max-stack-cells NUMBER_OF_CELLS
-        --repl
-        --repl-prompt STRING
-        --print-stats
-        --timeout TIMEOUT_MS
-        --trace LEVEL
-        --version
-        --wasi
-        --wasi-dir DIR
-        --wasi-mapdir GUEST_DIR::HOST_DIR
-        --wasi-env NAME=VAR
+	--disable-jump-table
+	--disable-localtype-cellidx
+	--disable-resulttype-cellidx
+	--dyld
+	--dyld-bindnow
+	--dyld-dlfcn
+	--dyld-path LIBRARY_DIR
+	--dyld-stack-size C_STACK_SIZE_IN_BYTES
+	--invoke FUNCTION[ FUNCTION_ARGS...]
+	--load MODULE_PATH
+	--max-frames NUMBER_OF_FRAMES
+	--max-stack-cells NUMBER_OF_CELLS
+	--repl
+	--repl-prompt STRING
+	--print-stats
+	--timeout TIMEOUT_MS
+	--version
+	--wasi
+	--wasi-dir HOST_DIR[::GUEST_DIR]
+	--wasi-env NAME=VAR
+	--wasi-littlefs-dir LITTLEFS_IMAGE_PATH::LFS_DIR[::GUEST_DIR]
 Examples:
-        Run a wasi module
-                toywasm --wasi module
-        Load a module and invoke its function
-                toywasm --load module --invoke "func arg1 arg2"
+	Run a wasi module
+		toywasm --wasi module
+	Load a module and invoke its function
+		toywasm --load module --invoke "func arg1 arg2"
 ```
 
 ## Use as a library
