@@ -56,6 +56,10 @@ lfs_error_to_errno(enum lfs_error lfs_error)
                 error = ENAMETOOLONG;
                 break;
         }
+        if (error != 0) {
+                /* note: lfs_err is negative integer */
+                xlog_trace("%s: %d -> %d", __func__, (int)lfs_error, error);
+        }
         return error;
 }
 

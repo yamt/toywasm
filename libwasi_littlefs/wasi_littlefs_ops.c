@@ -352,6 +352,8 @@ wasi_lfs_dir_read(struct wasi_fdinfo *fdinfo, struct wasi_dirent *wde,
                 return lfs_error_to_errno(ret);
         }
         if (ret == 0) {
+                xlog_trace("%s: path %s -> eod", __func__,
+                           fdinfo_path(fdinfo));
                 *eod = true;
                 return 0;
         }
