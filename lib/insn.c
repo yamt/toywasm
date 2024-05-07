@@ -520,7 +520,7 @@ schedule_exception(struct exec_context *ectx)
  * (eg. mergefunc, icf)
  *
  * Note: While we store pointers of these callback functions in the dispatch
- * table, we do never compare the these pointers. If we can tell the situation
+ * table, we do never compare these pointers. If we can tell the situation
  * to the compiler, (eg. by adding LLVM unnamed_addr attribute to these
  * functions) it would be possible for the compiler to merge these identical
  * functions. Unfortunately, however, clang doesn't seem to have a way to do
