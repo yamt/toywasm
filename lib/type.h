@@ -307,6 +307,13 @@ struct limits {
 };
 
 /*
+ * MEMTYPE_FLAG_xxx is encoded in limits.
+ *
+ * https://webassembly.github.io/spec/core/binary/types.html#limits
+ * https://github.com/WebAssembly/threads/blob/main/proposals/threads/Overview.md#spec-changes
+ * https://github.com/WebAssembly/memory64/blob/main/proposals/memory64/Overview.md#binary-format
+ *
+ * (0x01: has max)
  * 0x02: shared (threads proposal)
  * 0x04: 64-bit (memory64 proposal)
  */
