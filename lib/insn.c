@@ -565,8 +565,8 @@ schedule_exception(struct exec_context *ectx)
 #define VCTX (ctx->validation)
 #endif
 #define INSN_IMPL(NAME)                                                       \
-        int process_##NAME(const uint8_t **pp, const uint8_t *ep,             \
-                           struct context *ctx)
+        static int process_##NAME(const uint8_t **pp, const uint8_t *ep,      \
+                                  struct context *ctx)
 #define LOAD_PC const uint8_t *p __attribute__((__unused__)) = *pp
 #define SAVE_PC *pp = p
 #define RELOAD_PC
@@ -616,8 +616,8 @@ schedule_exception(struct exec_context *ectx)
 #define VALIDATING false
 #define VCTX ((struct validation_context *)NULL)
 #define INSN_IMPL(NAME)                                                       \
-        int fetch_exec_##NAME(const uint8_t *p, struct cell *stack,           \
-                              struct exec_context *ctx)
+        static int fetch_exec_##NAME(const uint8_t *p, struct cell *stack,    \
+                                     struct exec_context *ctx)
 #define LOAD_PC const uint8_t *p0 __attribute__((__unused__)) = p
 #define SAVE_PC
 #define RELOAD_PC p = ctx->p
@@ -685,8 +685,8 @@ schedule_exception(struct exec_context *ectx)
 #define VALIDATING true
 #define VCTX ctx
 #define INSN_IMPL(NAME)                                                       \
-        int validate_##NAME(const uint8_t *p, const uint8_t *ep,              \
-                            struct validation_context *ctx)
+        static int validate_##NAME(const uint8_t *p, const uint8_t *ep,       \
+                                   struct validation_context *ctx)
 #define LOAD_PC                                                               \
         xassert(ep != NULL);                                                  \
         const uint8_t *p0 __attribute__((__unused__)) = p
