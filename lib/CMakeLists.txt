@@ -117,6 +117,7 @@ set_property(TARGET toywasm-lib-core PROPERTY PUBLIC_HEADER ${lib_core_headers})
 if(TOYWASM_USE_SHORT_ENUMS)
 target_compile_options(toywasm-lib-core PUBLIC "-fshort-enums")
 endif()
+#target_compile_options(toywasm-lib-core PUBLIC -Xclang -fmerge-functions -mllvm -mergefunc-use-aliases)
 target_include_directories(toywasm-lib-core
                            INTERFACE
                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
