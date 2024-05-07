@@ -7,7 +7,7 @@ endif()
 # TOYWASM_USE_SEPARATE_EXECUTE=ON -> faster execution
 # TOYWASM_USE_SEPARATE_EXECUTE=OFF -> smaller code
 option(TOYWASM_USE_SEPARATE_EXECUTE "Use separate execute callback" ON)
-option(TOYWASM_USE_SEPARATE_VALIDATE "Use separate validation callback" ON)
+option(TOYWASM_USE_SEPARATE_VALIDATE "Use separate validation callback" OFF)
 
 # TOYWASM_USE_TAILCALL=ON
 #   enable -mtail-call for wasm target
@@ -293,6 +293,7 @@ endif()
 
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -fomit-frame-pointer")
 #set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Xclang -fmerge-functions")
+#set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -mllvm -mergefunc-use-aliases")
 
 if (NOT CMAKE_BUILD_TYPE MATCHES "Debug")
 # Note: Release build disables assertions and thus yields a lot of
