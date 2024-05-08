@@ -2,18 +2,27 @@
 
 set -e
 
-rm -rf b
-rm -rf b.fix
-rm -rf b.fix.nosimd
-
 # REVISIT: should use full lto?
-#cmake -B b -G Ninja . -DUSE_IPO=OFF -DCMAKE_C_FLAGS=-flto=full
-cmake -B b -G Ninja .
-cmake --build b
-#exit 0
+cmake_config() {
+    BUILD_DIR=$1
+    shift 1
 
-cmake -B b.fix -G Ninja -DTOYWASM_USE_SMALL_CELLS=OFF .
-cmake --build b.fix
+    # an example to use full lto
+    # cmake -B ${BUILD_DIR} -G Ninja . -DUSE_IPO=OFF -DCMAKE_C_FLAGS=-flto=full "$@"
 
-cmake -B b.fix.nosimd -G Ninja -DTOYWASM_USE_SMALL_CELLS=OFF -DTOYWASM_ENABLE_WASM_SIMD=OFF .
-cmake --build b.fix.nosimd
+    # an example to use custom llvm
+    # cmake -B ${BUILD_DIR}  -G Ninja . -DCUSTOM_LLVM_HOME=/usr/local/opt/llvm@17 "$@"
+
+    cmake -B ${BUILD_DIR}  -G Ninja . "$@"
+}
+
+build() {
+    BUILD_DIR=$1
+    rm -rf ${BUILD_DIR}
+    cmake_config "$@"
+    cmake --build ${BUILD_DIR}
+}
+
+build b
+build b.fix -DTOYWASM_USE_SMALL_CELLS=OFF
+build b.fix.nosimd -DTOYWASM_USE_SMALL_CELLS=OFF -DTOYWASM_ENABLE_WASM_SIMD=OFF
