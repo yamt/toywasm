@@ -1,0 +1,30 @@
+;; many functions
+
+;; jinja2 -DNUM=1000000 many_func.wat.jinja | wat2wasm -o many_func.wasm -
+
+;; wasm3: 1000000
+;; https://github.com/wasm3/wasm3/blob/139076a98b8321b67f850a844f558b5e91b5ac83/source/m3_core.h#L166
+
+;; wasmparser: 1000000
+;; https://github.com/bytecodealliance/wasm-tools/blob/f5880b26906d0aeb4cd6976258940a2705023416/crates/wasmparser/src/limits.rs#L22
+
+{% set NUM = NUM | default(1000000) | int %}
+
+(module
+  (func $f0 (result i32)
+    i32.const 1234
+  )
+{%- for x in range(NUM) %}
+  (func $f{{x + 1}} (result i32)
+    call $f{{x}}
+  )
+{% endfor -%}
+  (func (export "_start")
+    call $f{{NUM}}
+    i32.const 1234
+    i32.eq
+    br_if 0
+    unreachable
+  )
+  (memory (export "memory") 0) ;; a workaround for wamr
+)

@@ -1,0 +1,14 @@
+;; many exports
+
+;; jinja2 -DNUM=1000000 many_export.wat.jinja | wat2wasm -o many_export.wasm -
+
+{% set NUM = NUM | default(1000000) | int %}
+
+(module
+  (func $f (result i32)
+    i32.const 1234
+  )
+{%- for x in range(NUM) %}
+  (export "f{{x}}" (func $f))
+{% endfor -%}
+)
