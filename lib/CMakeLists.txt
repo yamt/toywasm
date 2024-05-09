@@ -118,6 +118,7 @@ if(TOYWASM_USE_SHORT_ENUMS)
 target_compile_options(toywasm-lib-core PUBLIC "-fshort-enums")
 endif()
 #target_compile_options(toywasm-lib-core PUBLIC -Xclang -fmerge-functions -mllvm -mergefunc-use-aliases)
+#target_compile_options(toywasm-lib-core PUBLIC -mllvm -enable-machine-outliner)
 target_include_directories(toywasm-lib-core
                            INTERFACE
                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
