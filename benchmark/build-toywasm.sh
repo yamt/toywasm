@@ -11,9 +11,14 @@ cmake_config() {
     # cmake -B ${BUILD_DIR} -G Ninja . -DUSE_IPO=OFF -DCMAKE_C_FLAGS=-flto=full "$@"
 
     # an example to use custom llvm
-    # cmake -B ${BUILD_DIR}  -G Ninja . -DCUSTOM_LLVM_HOME=/usr/local/opt/llvm@17 "$@"
+    # cmake -B ${BUILD_DIR} -G Ninja . -DCUSTOM_LLVM_HOME=/usr/local/opt/llvm@17 "$@"
+    # note: IPO is not detected correctly for cross compiling.
+    # references:
+    # https://cmake.org/cmake/help/latest/policy/CMP0138.html
+    # https://gitlab.kitware.com/cmake/cmake/-/issues/25967
+    # cmake -B ${BUILD_DIR} -G Ninja . -DCUSTOM_LLVM_HOME=/Volumes/PortableSSD/llvm/build -DCMAKE_C_COMPILER_TARGET=x86_64-apple-darwin21.6.0 -DUSE_IPO=ON "$@"
 
-    cmake -B ${BUILD_DIR}  -G Ninja . "$@"
+    cmake -B ${BUILD_DIR} -G Ninja . "$@"
 }
 
 build() {
