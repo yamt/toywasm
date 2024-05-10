@@ -117,8 +117,14 @@ set_property(TARGET toywasm-lib-core PROPERTY PUBLIC_HEADER ${lib_core_headers})
 if(TOYWASM_USE_SHORT_ENUMS)
 target_compile_options(toywasm-lib-core PUBLIC "-fshort-enums")
 endif()
-#target_compile_options(toywasm-lib-core PUBLIC -Xclang -fmerge-functions -mllvm -mergefunc-use-aliases)
-#target_compile_options(toywasm-lib-core PUBLIC -mllvm -enable-machine-outliner)
+
+# random things to experiment
+#target_compile_options(toywasm-lib-core PUBLIC "SHELL:-Xclang -fmerge-functions" "SHELL:-mllvm -mergefunc-use-aliases")
+#target_compile_options(toywasm-lib-core PUBLIC "SHELL:-mllvm -enable-machine-outliner")
+#target_compile_options(toywasm-lib-core PUBLIC "SHELL:-mllvm -hot-cold-split")
+#target_compile_options(toywasm-lib-core PUBLIC "SHELL:-mllvm --enable-gvn-hoist")
+#target_compile_options(toywasm-lib-core PUBLIC "SHELL:-mllvm --enable-gvn-sink")
+
 target_include_directories(toywasm-lib-core
                            INTERFACE
                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
