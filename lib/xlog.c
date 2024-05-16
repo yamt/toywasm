@@ -17,7 +17,9 @@
 #include "nbio.h"
 #include "xlog.h"
 
+#if defined(TOYWASM_ENABLE_TRACING)
 int xlog_tracing = 0;
+#endif
 
 /*
  * NuttX: https://github.com/apache/incubator-nuttx/pull/6152
