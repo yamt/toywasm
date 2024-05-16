@@ -288,8 +288,22 @@ main(int argc, char *const *argv)
 
         int exit_status = 1;
 
-#if defined(__NuttX__)
+#if defined(__NuttX__) && defined(CONFIG_BUILD_FLAT)
+        /*
+         * in nuttx flat model, bss/data is shared among tasks.
+         *
+         * we only have a few mutable non-heap data in toywasm:
+         *
+         * - xlog_tracing, which we bluntly reset here, somehow assuming
+         *   a single user. hopefully it won't be a big problem as tracing
+         *   is rarely enabled. otherwise, we might want to introduce a
+         *   "xlog_context" or something along the line.
+         *
+         * - the "x" counter for interrupt_debug, which is ok with any values.
+         */
+#if defined(TOYWASM_ENABLE_TRACING)
         xlog_tracing = 0;
+#endif
 #endif
 
         state = malloc(sizeof(*state));

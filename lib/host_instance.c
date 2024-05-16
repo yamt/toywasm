@@ -93,6 +93,7 @@ fail:
 void
 host_func_dump_params(const struct functype *ft, const struct cell *params)
 {
+#if defined(TOYWASM_ENABLE_TRACING)
         if (xlog_tracing == 0) {
                 return;
         }
@@ -120,6 +121,7 @@ host_func_dump_params(const struct functype *ft, const struct cell *params)
 #endif
                 cidx += sz;
         }
+#endif /* defined(TOYWASM_ENABLE_TRACING) */
 }
 
 /*

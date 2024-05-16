@@ -14,7 +14,9 @@ void xlog__trace(const char *, ...)
 void xlog_error(const char *, ...)
         __attribute__((__format__(__printf__, 1, 2)));
 
+#if defined(TOYWASM_ENABLE_TRACING)
 extern int xlog_tracing;
+#endif
 
 __END_EXTERN_C
 
