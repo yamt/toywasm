@@ -14,8 +14,8 @@
 
 #define WASM_MAGIC 0x6d736100
 
-#define WASM_PAGE_SIZE 65536
-#define WASM_MAX_PAGES 65536
+#define WASM_PAGE_SHIFT 16
+#define WASM_MAX_MEMORY_SIZE 0x100000000
 
 /*
  * jump table. see doc/annotations.md
@@ -702,6 +702,8 @@ void clear_resulttype(struct resulttype *rt);
 
 void set_name_cstr(struct name *name, const char *cstr);
 void clear_name(struct name *name);
+
+uint32_t memtype_page_shift(const struct memtype *type);
 
 __END_EXTERN_C
 

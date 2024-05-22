@@ -327,7 +327,8 @@ static int
 read_memtype(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
              struct memtype *mt, void *vctx)
 {
-        return read_limits(pp, ep, &mt->lim, &mt->flags, WASM_MAX_PAGES);
+        return read_limits(pp, ep, &mt->lim, &mt->flags,
+                           WASM_MAX_MEMORY_SIZE >> WASM_PAGE_SHIFT);
 }
 
 static int

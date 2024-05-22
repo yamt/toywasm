@@ -163,7 +163,8 @@ memory_instance_create(struct meminst **mip,
 #else
                 uint32_t need_in_pages = mt->lim.min;
 #endif /* defined(TOYWASM_PREALLOC_SHARED_MEMORY) */
-                uint64_t need_in_bytes = need_in_pages * WASM_PAGE_SIZE;
+                uint32_t page_shift = memtype_page_shift(mt);
+                uint64_t need_in_bytes = need_in_pages << page_shift;
                 if (need_in_bytes > SIZE_MAX) {
                         free(mp);
                         ret = EOVERFLOW;
