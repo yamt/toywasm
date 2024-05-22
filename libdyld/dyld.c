@@ -467,8 +467,9 @@ dyld_allocate_memory(struct dyld *d, uint32_t align, uint32_t sz,
         uint32_t aligned = align_up_log(oldbase, align);
         uint32_t newbase = aligned + sz;
         assert(newbase >= oldbase);
-        uint32_t oldnpg = howmany(oldbase, WASM_PAGE_SIZE);
-        uint32_t newnpg = howmany(newbase, WASM_PAGE_SIZE);
+        const uint32_t page_size = 1 << memtype_page_shift(d->meminst->type);
+        uint32_t oldnpg = howmany(oldbase, page_size);
+        uint32_t newnpg = howmany(newbase, page_size);
         assert(newnpg >= oldnpg);
         if (newnpg > oldnpg) {
                 uint32_t ret = memory_grow(d->meminst, newnpg - oldnpg);
@@ -557,8 +558,8 @@ dyld_allocate_heap(struct dyld *d)
         /*
          * make __heap_end the next page boundary as LLVM wasm-ld does.
          */
-        assert(WASM_PAGE_SIZE == 1 << 16);
-        ret = dyld_allocate_memory(d, 16, 0, &end);
+        const uint32_t page_shift = memtype_page_shift(d->meminst->type);
+        ret = dyld_allocate_memory(d, page_shift, 0, &end);
         if (ret != 0) {
                 return ret;
         }
@@ -891,8 +892,10 @@ dyld_create_shared_resources(struct dyld *d)
 
                 assert(d->memory_base == 0);
                 struct memtype *mt = &d->u.pie.mt;
-                mt->lim.min = howmany(d->memory_base, WASM_PAGE_SIZE);
-                mt->lim.max = WASM_MAX_PAGES;
+                const uint32_t page_shift = WASM_PAGE_SHIFT;
+                const uint32_t page_size = 1 << page_shift;
+                mt->lim.min = howmany(d->memory_base, page_size);
+                mt->lim.max = WASM_MAX_MEMORY_SIZE >> page_shift;
                 mt->flags = 0;
                 ret = memory_instance_create(&d->meminst, mt);
                 if (ret != 0) {
@@ -1025,7 +1028,8 @@ dyld_adopt_shared_resources(struct dyld *d, const struct dyld_object *obj)
                 goto fail;
         }
         d->meminst = VEC_ELEM(inst->mems, memidx);
-        d->memory_base = d->meminst->type->lim.min * WASM_PAGE_SIZE;
+        uint32_t page_shift = memtype_page_shift(d->meminst->type);
+        d->memory_base = d->meminst->type->lim.min << page_shift;
 
         uint32_t tableidx;
         ret = module_find_export(m, &name_table, EXTERNTYPE_TABLE, &tableidx);

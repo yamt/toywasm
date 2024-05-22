@@ -367,3 +367,9 @@ check_functype_with_string(const struct module *m, uint32_t funcidx,
         functype_free(sig_ft);
         return ret;
 }
+
+uint32_t
+memtype_page_shift(const struct memtype *type)
+{
+        return WASM_PAGE_SHIFT;
+}

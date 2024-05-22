@@ -46,7 +46,8 @@ memory_getptr2(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
         const struct instance *inst = ctx->instance;
         struct meminst *meminst = VEC_ELEM(inst->mems, memidx);
         assert(meminst->allocated <=
-               (uint64_t)meminst->size_in_pages * WASM_PAGE_SIZE);
+               (uint64_t)meminst->size_in_pages
+                       << memtype_page_shift(meminst->type));
         if (__predict_false(offset > UINT32_MAX - ptr)) {
                 /*
                  * i failed to find this in the spec.
@@ -61,8 +62,9 @@ memory_getptr2(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
                  * this can be either from host functions or
                  * bulk instructions like memory.copy.
                  */
+                const uint32_t page_shift = memtype_page_shift(meminst->type);
                 if (ea > 0 &&
-                    (ea - 1) / WASM_PAGE_SIZE >= meminst->size_in_pages) {
+                    (ea - 1) >> page_shift >= meminst->size_in_pages) {
                         goto do_trap;
                 }
                 goto success;
@@ -72,7 +74,8 @@ memory_getptr2(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
         }
         uint32_t last_byte = ea + (size - 1);
         if (__predict_false(last_byte >= meminst->allocated)) {
-                uint32_t need_in_pages = last_byte / WASM_PAGE_SIZE + 1;
+                const uint32_t page_shift = memtype_page_shift(meminst->type);
+                uint32_t need_in_pages = (last_byte >> page_shift) + 1;
                 if (need_in_pages > meminst->size_in_pages) {
                         int ret;
 do_trap:
@@ -392,6 +395,8 @@ memory_grow_impl(struct exec_context *ctx, struct meminst *mi, uint32_t sz)
 {
         const struct memtype *mt = mi->type;
         const struct limits *lim = &mt->lim;
+        const uint32_t page_shift = memtype_page_shift(mt);
+        const uint32_t page_size = 1 << page_shift;
         /*
          * In case of non-shared memory, no serialization is necessary.
          * in that case, memory_lock is no-op.
@@ -410,7 +415,7 @@ retry:
 #endif
         orig_size = mi->size_in_pages;
         uint32_t new_size = orig_size + sz;
-        assert(lim->max <= WASM_MAX_PAGES);
+        assert(lim->max <= WASM_MAX_MEMORY_SIZE >> page_shift);
         if (new_size > lim->max) {
                 memory_unlock(mi);
                 return (uint32_t)-1; /* fail */
@@ -454,20 +459,18 @@ retry:
                         if (mi->size_in_pages != orig_size) {
                                 goto retry;
                         }
-                        assert((mi->allocated % WASM_PAGE_SIZE) == 0);
+                        assert((mi->allocated % page_size) == 0);
                 }
 #endif /* defined(TOYWASM_ENABLE_WASM_THREADS) */
-                assert(new_size > mi->allocated / WASM_PAGE_SIZE);
+                assert(new_size > mi->allocated >> page_shift);
                 int ret;
-                ret = resize_array((void **)&mi->data, WASM_PAGE_SIZE,
-                                   new_size);
+                ret = resize_array((void **)&mi->data, page_size, new_size);
                 if (ret == 0) {
                         /*
                          * Note: overflow check is already done in
                          * resize_array
                          */
-                        size_t new_allocated =
-                                (size_t)new_size * WASM_PAGE_SIZE;
+                        size_t new_allocated = (size_t)new_size << page_shift;
                         assert(new_allocated > mi->allocated);
                         memset(mi->data + mi->allocated, 0,
                                new_allocated - mi->allocated);
