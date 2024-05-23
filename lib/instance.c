@@ -111,6 +111,11 @@ check_memtype(const struct import_object_entry *e, const void *vp)
         if (mt_imported->flags != mt->flags) {
                 return EINVAL;
         }
+#if defined(TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES)
+        if (mt_imported->page_shift != mt->page_shift) {
+                return EINVAL;
+        }
+#endif
         if (!match_limits(&mt_imported->lim, &mt->lim, mi->size_in_pages)) {
                 return EINVAL;
         }
