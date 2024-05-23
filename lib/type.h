@@ -312,17 +312,23 @@ struct limits {
  * https://webassembly.github.io/spec/core/binary/types.html#limits
  * https://github.com/WebAssembly/threads/blob/main/proposals/threads/Overview.md#spec-changes
  * https://github.com/WebAssembly/memory64/blob/main/proposals/memory64/Overview.md#binary-format
+ * https://github.com/WebAssembly/custom-page-sizes/blob/main/proposals/custom-page-sizes/Overview.md#binary-encoding
  *
  * (0x01: has max)
  * 0x02: shared (threads proposal)
  * 0x04: 64-bit (memory64 proposal)
+ * 0x08: has custom page size (custom-page-sizes proposal)
  */
 #define MEMTYPE_FLAG_SHARED 0x02
 #define MEMTYPE_FLAG_64 0x04
+#define MEMTYPE_FLAG_CUSTOM_PAGE_SIZE 0x08
 
 struct memtype {
         struct limits lim;
         uint8_t flags; /* MEMTYPE_FLAGS_xxx */
+#if defined(TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES)
+        uint8_t page_shift;
+#endif
 };
 
 struct tabletype {
