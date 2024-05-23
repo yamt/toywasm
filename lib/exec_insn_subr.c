@@ -83,9 +83,11 @@ do_trap:
                                 ctx, TRAP_OUT_OF_BOUNDS_MEMORY_ACCESS,
                                 "invalid memory access at %04" PRIx32
                                 " %08" PRIx32 " + %08" PRIx32 ", size %" PRIu32
-                                ", meminst size %" PRIu32,
+                                ", meminst size %" PRIu32
+                                ", pagesize %" PRIu32,
                                 memidx, ptr, offset, size,
-                                meminst->size_in_pages);
+                                meminst->size_in_pages,
+                                1 << memtype_page_shift(meminst->type));
                         assert(ret != 0); /* appease clang-tidy */
                         return ret;
                 }
