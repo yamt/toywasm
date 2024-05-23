@@ -302,7 +302,13 @@ struct global {
 
 struct limits {
         uint32_t min;
-        /* Note: this implementation uses max=UINT32_MAX to mean "no max" */
+        /*
+         * Note: this implementation uses max=UINT32_MAX to mean "no max".
+         * It should be ok because the max possible table size (and memory
+         * size in pages with custom-page-sizes) is 2^32-1. (== UINT32_MAX)
+         *
+         * cf. https://github.com/WebAssembly/spec/issues/1752
+         */
         uint32_t max;
 };
 
