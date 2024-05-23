@@ -371,5 +371,9 @@ check_functype_with_string(const struct module *m, uint32_t funcidx,
 uint32_t
 memtype_page_shift(const struct memtype *type)
 {
+#if defined(TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES)
+        return type->page_shift;
+#else
         return WASM_PAGE_SHIFT;
+#endif
 }
