@@ -897,6 +897,9 @@ dyld_create_shared_resources(struct dyld *d)
                 mt->lim.min = howmany(d->memory_base, page_size);
                 mt->lim.max = WASM_MAX_MEMORY_SIZE >> page_shift;
                 mt->flags = 0;
+#if defined(TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES)
+                mt->page_shift = page_shift;
+#endif
                 ret = memory_instance_create(&d->meminst, mt);
                 if (ret != 0) {
                         goto fail;
