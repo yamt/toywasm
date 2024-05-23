@@ -30,6 +30,7 @@ A WebAssembly interpreter written in C.
 |[multi-memory]          |`TOYWASM_ENABLE_WASM_MULTI_MEMORY`      |          |
 |[tail-call]             |`TOYWASM_ENABLE_WASM_TAILCALL`          |          |
 |[threads]               |`TOYWASM_ENABLE_WASM_THREADS`           |          |
+|[custom-page-sizes]     |`TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES` |          |
 |[wasi_snapshot_preview1]|`TOYWASM_ENABLE_WASI`                   |See [the top comment in wasi.c]|
 |[wasi-threads]          |`TOYWASM_ENABLE_WASI_THREADS`           |          |
 |[dynamic-linking]       |`TOYWASM_ENABLE_DYLD`                   |          |
@@ -53,6 +54,7 @@ It includes
 [multi-memory]: https://github.com/WebAssembly/multi-memory
 [tail-call]: https://github.com/WebAssembly/tail-call
 [threads]: https://github.com/WebAssembly/threads
+[custom-page-sizes]: https://github.com/WebAssembly/custom-page-sizes
 [wasi_snapshot_preview1]: https://github.com/WebAssembly/wasi
 [wasi-threads]: https://github.com/WebAssembly/wasi-threads
 [dynamic-linking]: https://github.com/WebAssembly/tool-conventions/blob/main/DynamicLinking.md
