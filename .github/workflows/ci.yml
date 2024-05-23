@@ -33,6 +33,7 @@ jobs:
         TOYWASM_ENABLE_WASM_THREADS: [ON, OFF]
         TOYWASM_ENABLE_WASI_THREADS: [ON, OFF]
         TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: [ON, OFF]
+        TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: [ON, OFF]
         exclude:
           # I haven't used gcc for macos
           - os: macos-latest
@@ -81,6 +82,7 @@ jobs:
             TOYWASM_ENABLE_WASM_THREADS: OFF
             TOYWASM_ENABLE_WASI_THREADS: OFF
             TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: OFF
+            TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: OFF
           - name: ubuntu-20.04-amd64
             os: ubuntu-20.04
             compiler: clang
@@ -95,6 +97,7 @@ jobs:
             TOYWASM_ENABLE_WASM_THREADS: OFF
             TOYWASM_ENABLE_WASI_THREADS: OFF
             TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: OFF
+            TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: OFF
           - name: full-ubuntu-20.04-amd64
             os: ubuntu-20.04
             compiler: clang
@@ -110,6 +113,7 @@ jobs:
             TOYWASM_ENABLE_WASI_THREADS: ON
             TOYWASM_ENABLE_WASI_LITTLEFS: ON
             TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: ON
+            TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: ON
           - name: macos-11.0
             os: macos-latest
             compiler: clang
@@ -124,6 +128,7 @@ jobs:
             TOYWASM_ENABLE_WASM_THREADS: OFF
             TOYWASM_ENABLE_WASI_THREADS: OFF
             TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: OFF
+            TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: OFF
           - name: full-macos-11.0
             os: macos-latest
             compiler: clang
@@ -139,6 +144,7 @@ jobs:
             TOYWASM_ENABLE_WASI_THREADS: ON
             TOYWASM_ENABLE_WASI_LITTLEFS: ON
             TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: ON
+            TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: ON
 
           - name: ubuntu-20.04-i386
             os: ubuntu-20.04
@@ -154,6 +160,7 @@ jobs:
             TOYWASM_ENABLE_WASM_THREADS: OFF
             TOYWASM_ENABLE_WASI_THREADS: OFF
             TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: OFF
+            TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: OFF
           - name: ubuntu-20.04-arm64
             os: ubuntu-20.04
             compiler: clang
@@ -168,6 +175,7 @@ jobs:
             TOYWASM_ENABLE_WASM_THREADS: OFF
             TOYWASM_ENABLE_WASI_THREADS: OFF
             TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: OFF
+            TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: OFF
           - name: ubuntu-20.04-armhf
             os: ubuntu-20.04
             compiler: clang
@@ -182,6 +190,7 @@ jobs:
             TOYWASM_ENABLE_WASM_THREADS: OFF
             TOYWASM_ENABLE_WASI_THREADS: OFF
             TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: OFF
+            TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: OFF
           - name: ubuntu-20.04-s390x
             os: ubuntu-20.04
             compiler: clang
@@ -196,6 +205,7 @@ jobs:
             TOYWASM_ENABLE_WASM_THREADS: OFF
             TOYWASM_ENABLE_WASI_THREADS: OFF
             TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: OFF
+            TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: OFF
           - name: ubuntu-20.04-riscv64
             os: ubuntu-20.04
             compiler: clang
@@ -210,6 +220,7 @@ jobs:
             TOYWASM_ENABLE_WASM_THREADS: OFF
             TOYWASM_ENABLE_WASI_THREADS: OFF
             TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: OFF
+            TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: OFF
 
           - name: full-ubuntu-20.04-i386
             os: ubuntu-20.04
@@ -226,6 +237,7 @@ jobs:
             TOYWASM_ENABLE_WASI_THREADS: ON
             TOYWASM_ENABLE_WASI_LITTLEFS: ON
             TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: ON
+            TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: ON
           - name: full-ubuntu-20.04-arm64
             os: ubuntu-20.04
             compiler: clang
@@ -271,6 +283,7 @@ jobs:
             TOYWASM_ENABLE_WASI_THREADS: ON
             TOYWASM_ENABLE_WASI_LITTLEFS: ON
             TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: ON
+            TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: ON
           - name: full-ubuntu-20.04-riscv64
             os: ubuntu-20.04
             compiler: clang
@@ -286,6 +299,7 @@ jobs:
             TOYWASM_ENABLE_WASI_THREADS: ON
             TOYWASM_ENABLE_WASI_LITTLEFS: ON
             TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: ON
+            TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: ON
 
     runs-on: ${{matrix.os}}
 
@@ -306,6 +320,7 @@ jobs:
         echo "-DTOYWASM_USE_SMALL_CELLS=${{matrix.TOYWASM_USE_SMALL_CELLS}}" >> ${GITHUB_ENV}
         echo "-DTOYWASM_USE_SEPARATE_LOCALS=${{matrix.TOYWASM_USE_SEPARATE_LOCALS}}" >> ${GITHUB_ENV}
         echo "-DTOYWASM_ENABLE_WASM_EXCEPTION_HANDLING=${{matrix.TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING}}"  >> ${GITHUB_ENV}
+        echo "-DTOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES=${{matrix.TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES}}"  >> ${GITHUB_ENV}
         echo "-DTOYWASM_ENABLE_WASM_EXTENDED_CONST=${{matrix.MISC_FEATURES}}" >> ${GITHUB_ENV}
         echo "-DTOYWASM_ENABLE_WASM_MULTI_MEMORY=${{matrix.MISC_FEATURES}}" >> ${GITHUB_ENV}
         echo "-DTOYWASM_ENABLE_WASM_TAILCALL=${{matrix.MISC_FEATURES}}" >> ${GITHUB_ENV}
@@ -475,7 +490,7 @@ jobs:
         compiler: [clang]
         include:
           - name: full-wasm32-wasi
-            extra: "-DTOYWASM_ENABLE_WASM_EXTENDED_CONST=ON -DTOYWASM_ENABLE_WASM_MULTI_MEMORY=ON -DTOYWASM_ENABLE_WASM_TAILCALL=ON -DTOYWASM_ENABLE_WASM_THREADS=ON -DTOYWASM_ENABLE_WASI_THREADS=ON -DTOYWASM_ENABLE_WASI_LITTLEFS=ON -DTOYWASM_ENABLE_WASM_EXCEPTION_HANDLING=ON -DTOYWASM_ENABLE_DYLD=ON -DTOYWASM_ENABLE_DYLD_DLFCN=ON"
+            extra: "-DTOYWASM_ENABLE_WASM_EXTENDED_CONST=ON -DTOYWASM_ENABLE_WASM_MULTI_MEMORY=ON -DTOYWASM_ENABLE_WASM_TAILCALL=ON -DTOYWASM_ENABLE_WASM_THREADS=ON -DTOYWASM_ENABLE_WASI_THREADS=ON -DTOYWASM_ENABLE_WASI_LITTLEFS=ON -DTOYWASM_ENABLE_WASM_EXCEPTION_HANDLING=ON -DTOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES=ON TOYWASM_ENABLE_DYLD=ON -DTOYWASM_ENABLE_DYLD_DLFCN=ON"
 
     runs-on: ${{matrix.os}}
 
