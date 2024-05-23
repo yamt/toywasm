@@ -740,8 +740,9 @@ instance_print_stats(const struct instance *inst)
                 const struct limits *lim = &mi->type->lim;
                 nbio_printf("memory[%" PRIu32
                             "] %zu bytes allocated for %" PRIu32
-                            " pages (min/max=%" PRIu32 "/%" PRIu32 ")\n",
+                            " pages (min/max=%" PRIu32 "/%" PRIu32
+                            " pagesize=%" PRIu32 ")\n",
                             i, mi->allocated, mi->size_in_pages, lim->min,
-                            lim->max);
+                            lim->max, 1 << memtype_page_shift(mi->type));
         }
 }
