@@ -255,7 +255,8 @@ print_functype(uint32_t i, const struct functype *ft)
 
 static int
 read_limits(const uint8_t **pp, const uint8_t *ep, struct limits *lim,
-            uint8_t *extra_memory_flagsp, uint32_t typemax)
+            uint8_t *extra_memory_flagsp, uint8_t *shiftp,
+            uint8_t default_shift, uint64_t typemax)
 {
         const uint8_t *p = *pp;
         uint8_t u8;
@@ -266,6 +267,8 @@ read_limits(const uint8_t **pp, const uint8_t *ep, struct limits *lim,
                 goto fail;
         }
         bool has_max;
+        bool has_shift = false;
+        uint8_t shift;
         if (u8 & 0x01) {
                 has_max = true;
         } else {
@@ -286,6 +289,15 @@ read_limits(const uint8_t **pp, const uint8_t *ep, struct limits *lim,
                 *extra_memory_flagsp = u8 & mask;
                 u8 &= ~mask;
         }
+        if (shiftp != NULL) {
+#if defined(TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES)
+                const uint8_t mask = MEMTYPE_FLAG_CUSTOM_PAGE_SIZE;
+#else
+                const uint8_t mask = 0;
+#endif
+                has_shift = u8 & mask;
+                u8 &= ~mask;
+        }
         if (u8 != 0) {
                 ret = EINVAL;
                 goto fail;
@@ -300,17 +312,40 @@ read_limits(const uint8_t **pp, const uint8_t *ep, struct limits *lim,
                 if (ret != 0) {
                         goto fail;
                 }
-                if (typemax < lim->max) {
+        }
+        if (has_shift) {
+                uint32_t u32;
+                ret = read_leb_u32(&p, ep, &u32);
+                if (ret != 0) {
+                        goto fail;
+                }
+                /* only 1 byte and 64KB pages are allowed */
+                if (u32 != 0 && u32 != WASM_PAGE_SHIFT) {
+                        ret = EINVAL;
+                        goto fail;
+                }
+                shift = u32;
+        } else {
+                shift = default_shift;
+        }
+        if (shiftp != NULL) {
+                *shiftp = shift;
+        }
+        uint64_t typemax_shifted = typemax >> shift;
+        assert(typemax == (uint64_t)typemax_shifted << shift);
+        assert(typemax_shifted <= UINT32_MAX + 1);
+        if (has_max) {
+                if (typemax_shifted < lim->max) {
                         ret = EOVERFLOW;
                         goto fail;
                 }
         } else {
                 lim->max = UINT32_MAX;
-                if (typemax < lim->max) {
-                        lim->max = typemax;
+                if (typemax_shifted < lim->max) {
+                        lim->max = typemax_shifted;
                 }
         }
-        if (typemax < lim->min) {
+        if (typemax_shifted < lim->min) {
                 ret = EOVERFLOW;
                 goto fail;
         }
@@ -328,7 +363,12 @@ read_memtype(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
              struct memtype *mt, void *vctx)
 {
         return read_limits(pp, ep, &mt->lim, &mt->flags,
-                           WASM_MAX_MEMORY_SIZE >> WASM_PAGE_SHIFT);
+#if defined(TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES)
+                           &mt->page_shift,
+#else
+                           NULL,
+#endif
+                           WASM_PAGE_SHIFT, WASM_MAX_MEMORY_SIZE);
 }
 
 static int
@@ -490,7 +530,7 @@ read_tabletype(const uint8_t **pp, const uint8_t *ep, struct tabletype *tt)
                 ret = EINVAL;
                 goto fail;
         }
-        ret = read_limits(&p, ep, &tt->lim, NULL, UINT32_MAX);
+        ret = read_limits(&p, ep, &tt->lim, NULL, NULL, 0, UINT32_MAX);
         if (ret != 0) {
                 goto fail;
         }
