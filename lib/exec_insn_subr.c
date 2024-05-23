@@ -336,7 +336,7 @@ table_grow(struct tableinst *t, const struct val *val, uint32_t n)
 
         uint32_t newsize = t->size + n;
         uint32_t csz = valtype_cellsize(t->type->et);
-        uint32_t newncells = newsize * csz;
+        size_t newncells = (size_t)newsize * csz;
         int ret;
         if (newncells / csz != newsize) {
                 ret = EOVERFLOW;
