@@ -138,7 +138,8 @@ write_name(struct writer *w, const struct name *name)
 }
 
 static void
-write_limits(struct writer *w, const struct limits *lim, uint8_t extra_flags)
+write_limits(struct writer *w, const struct limits *lim, uint8_t extra_flags,
+             uint8_t shift)
 {
         if (lim->max == UINT32_MAX) {
                 WRITE_U8(0x00 | extra_flags);
@@ -148,19 +149,30 @@ write_limits(struct writer *w, const struct limits *lim, uint8_t extra_flags)
                 WRITE_LEB_U32(lim->min);
                 WRITE_LEB_U32(lim->max);
         }
+        if ((extra_flags & MEMTYPE_FLAG_CUSTOM_PAGE_SIZE) != 0) {
+                WRITE_LEB_U32(shift);
+        }
 }
 
 static void
 write_tabletype(struct writer *w, const struct tabletype *tt)
 {
         write_valtype(w, tt->et);
-        write_limits(w, &tt->lim, 0);
+        write_limits(w, &tt->lim, 0, 0);
 }
 
 static void
 write_memtype(struct writer *w, const struct memtype *mt)
 {
-        write_limits(w, &mt->lim, mt->flags);
+        uint8_t extra_flags = mt->flags;
+        uint8_t shift = 0;
+#if defined(TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES)
+        if (mt->page_shift != WASM_PAGE_SHIFT) {
+                extra_flags |= MEMTYPE_FLAG_CUSTOM_PAGE_SIZE;
+                shift = mt->page_shift;
+        }
+#endif
+        write_limits(w, &mt->lim, extra_flags, shift);
 }
 
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
