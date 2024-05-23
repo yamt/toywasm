@@ -333,7 +333,7 @@ read_limits(const uint8_t **pp, const uint8_t *ep, struct limits *lim,
         }
         uint64_t typemax_shifted = typemax >> shift;
         assert(typemax == (uint64_t)typemax_shifted << shift);
-        assert(typemax_shifted <= UINT32_MAX + 1);
+        assert(typemax_shifted <= (uint64_t)UINT32_MAX + 1);
         if (has_max) {
                 if (typemax_shifted < lim->max) {
                         ret = EOVERFLOW;
