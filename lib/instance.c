@@ -276,7 +276,7 @@ table_instance_create(struct tableinst **tip, const struct tabletype *tt)
         tinst->type = tt;
         tinst->size = tinst->type->lim.min;
         uint32_t csz = valtype_cellsize(tt->et);
-        uint32_t ncells = tinst->size * csz;
+        size_t ncells = (size_t)tinst->size * csz;
         if (ncells / csz != tinst->size) {
                 ret = EOVERFLOW;
                 goto fail;
