@@ -414,6 +414,10 @@ memory_grow_impl(struct exec_context *ctx, struct meminst *mi, uint32_t sz)
 retry:
 #endif
         orig_size = mi->size_in_pages;
+        if (sz > UINT32_MAX - orig_size) {
+                memory_unlock(mi);
+                return (uint32_t)-1; /* fail */
+        }
         uint32_t new_size = orig_size + sz;
         assert(lim->max <= WASM_MAX_MEMORY_SIZE >> page_shift);
         if (new_size > lim->max) {
