@@ -11,7 +11,8 @@ int suspend_check_interrupt(struct exec_context *ctx, const struct cluster *c);
  * suspend_parked: called by each thread when it's suspended.
  *
  * called by instance_execute_handle_restart or its variations.
- * threads are blocked within this function until its execution is resumed.
+ * the calling thread will be blocked within this function until its
+ * execution is resumed.
  */
 void suspend_parked(struct cluster *c);
 
