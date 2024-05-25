@@ -1874,7 +1874,7 @@ clear_dylink_needs(struct dylink_needs *needs)
         }
 }
 
-void
+static void
 clear_dylink(struct dylink *dy)
 {
         clear_dylink_needs(&dy->needs);
