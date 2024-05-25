@@ -26,5 +26,3 @@ struct dylink {
         uint32_t nimport_info;
         struct dylink_import_info *import_info;
 };
-
-void clear_dylink(struct dylink *dy);
