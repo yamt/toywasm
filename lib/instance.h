@@ -6,7 +6,6 @@ struct module;
 struct instance;
 struct exec_context;
 struct resulttype;
-struct val;
 struct import;
 struct import_object;
 struct import_object_entry;
