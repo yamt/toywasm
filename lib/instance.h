@@ -55,7 +55,7 @@ void instance_destroy(struct instance *inst);
  * execute the function.
  *
  * in addition to usual <errno.h> error numbers, this function can
- * return following toywasm-specific errors.
+ * return a few toywasm-specific errors.
  * see the comment on ETOYWASMxxx macros in exec_context.h.
  */
 int instance_execute_func(struct exec_context *ctx, uint32_t funcidx,
