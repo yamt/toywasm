@@ -12,6 +12,10 @@ struct bitmap {
 
 __BEGIN_EXTERN_C
 
+/*
+ * Note: a bitmap initalized by bitmap_alloc has all bits cleared.
+ */
+
 int bitmap_alloc(struct bitmap *b, uint32_t n);
 void bitmap_free(struct bitmap *b);
 void bitmap_set(struct bitmap *b, uint32_t idx);
