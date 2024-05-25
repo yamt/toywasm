@@ -516,6 +516,15 @@ struct module {
         const uint8_t *bin;
 
 #if defined(TOYWASM_ENABLE_WASM_NAME_SECTION)
+        /*
+         * Unlike other sections, we don't parse the name section
+         * when loading a module. Thus, a broken name section is not a
+         * validation error.
+         *
+         * We provide some APIs (name.h) for embedders who want to use
+         * the names in the section. We expect it's done only when
+         * necessary. eg. When printing traces for debugging purposes.
+         */
         const uint8_t *name_section_start;
         const uint8_t *name_section_end;
 #endif
