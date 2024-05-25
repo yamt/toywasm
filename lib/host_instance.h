@@ -1,3 +1,7 @@
+/*
+ * These APIs are used by implementations of host functions.
+ */
+
 #include <stddef.h>
 
 #include "platform.h"
