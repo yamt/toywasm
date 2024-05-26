@@ -27,14 +27,8 @@ set(lib_wasi_sources
 	"wasi_vfs_impl_host.c"
 )
 
-if(TOYWASM_ENABLE_WASI_THREADS)
-list(APPEND lib_wasi_sources
-	"wasi_threads.c")
-endif()
-
 set(lib_wasi_headers
 	"wasi.h"
-	"wasi_threads.h"
 	"wasi_uio.h"
 )
 

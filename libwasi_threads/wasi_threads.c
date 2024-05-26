@@ -21,6 +21,7 @@
 #include "suspend.h"
 #include "type.h"
 #include "usched.h"
+#include "wasi.h" /* wasi_convert_errno */
 #include "wasi_impl.h"
 #include "wasi_threads.h"
 #include "wasi_threads_abi.h"
