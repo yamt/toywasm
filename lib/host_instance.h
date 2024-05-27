@@ -26,7 +26,7 @@ struct host_func {
 
 #define HOST_FUNC(NAME, FUNC, TYPE)                                           \
         {                                                                     \
-                .name = NAME_FROM_CSTR_LITERAL(#NAME), .type = TYPE,          \
+                .name = NAME_FROM_CSTR_LITERAL(NAME), .type = TYPE,           \
                 .func = FUNC,                                                 \
         }
 
