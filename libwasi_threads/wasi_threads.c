@@ -14,6 +14,7 @@
 #include "cluster.h"
 #include "endian.h"
 #include "exec.h"
+#include "host_instance.h"
 #include "idalloc.h"
 #include "instance.h"
 #include "lock.h"
@@ -22,7 +23,6 @@
 #include "type.h"
 #include "usched.h"
 #include "wasi.h" /* wasi_convert_errno */
-#include "wasi_impl.h"
 #include "wasi_threads.h"
 #include "wasi_threads_abi.h"
 #include "xlog.h"
@@ -495,7 +495,7 @@ wasi_thread_spawn_old(struct exec_context *ctx, struct host_instance *hi,
                       const struct functype *ft, const struct cell *params,
                       struct cell *results)
 {
-        WASI_TRACE;
+        HOST_FUNC_TRACE;
         struct wasi_threads_instance *wasi = (void *)hi;
         HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t user_arg = HOST_FUNC_PARAM(ft, params, 0, i32);
@@ -521,7 +521,7 @@ wasi_thread_spawn(struct exec_context *ctx, struct host_instance *hi,
                   const struct functype *ft, const struct cell *params,
                   struct cell *results)
 {
-        WASI_TRACE;
+        HOST_FUNC_TRACE;
         struct wasi_threads_instance *wasi = (void *)hi;
         HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t user_arg = HOST_FUNC_PARAM(ft, params, 0, i32);
@@ -542,7 +542,7 @@ wasi_thread_spawn(struct exec_context *ctx, struct host_instance *hi,
                 le32_encode(&r.u.tid, tid);
         }
         HOST_FUNC_FREE_CONVERTED_PARAMS();
-        return wasi_copyout(ctx, &r, retp, sizeof(r), WASI_U32_ALIGN);
+        return host_func_copyout(ctx, &r, retp, sizeof(r), WASI_U32_ALIGN);
 }
 
 static int
@@ -550,7 +550,7 @@ wasi_thread_exit(struct exec_context *ctx, struct host_instance *hi,
                  const struct functype *ft, const struct cell *params,
                  struct cell *results)
 {
-        WASI_TRACE;
+        HOST_FUNC_TRACE;
         xlog_trace("wasi_thread_exit");
         return trap_with_id(ctx, TRAP_VOLUNTARY_THREAD_EXIT, "thread_exit");
 }
@@ -565,23 +565,23 @@ const struct host_func wasi_threads_funcs[] = {
          * https://github.com/WebAssembly/wasi-threads/pull/28
          * https://github.com/WebAssembly/wasi-libc/pull/385
          */
-        WASI_HOST_FUNC2("thread-spawn", wasi_thread_spawn, "(ii)"),
+        HOST_FUNC("thread-spawn", wasi_thread_spawn, "(ii)"),
         /*
          * https://github.com/WebAssembly/wasi-threads/pull/26
          * https://github.com/WebAssembly/wasi-libc/pull/387
          */
-        WASI_HOST_FUNC2("thread-spawn", wasi_thread_spawn_old, "(i)i"),
+        HOST_FUNC("thread-spawn", wasi_thread_spawn_old, "(i)i"),
         /*
          * The "original" version.
          */
-        WASI_HOST_FUNC2("thread_spawn", wasi_thread_spawn_old, "(i)i"),
+        HOST_FUNC("thread_spawn", wasi_thread_spawn_old, "(i)i"),
 
         /*
          * Note: thread_exit is not a part of the current wasi-threads.
          * It's implemented here just for my experiments.
          * cf. https://github.com/WebAssembly/wasi-threads/issues/7
          */
-        WASI_HOST_FUNC(thread_exit, "()"),
+        HOST_FUNC("thread_exit", wasi_thread_exit, "()"),
 };
 
 const struct name wasi_threads_module_name = NAME_FROM_CSTR_LITERAL("wasi");
