@@ -18,10 +18,16 @@ struct host_func {
                  const struct functype *ft, const struct cell *params,        \
                  struct cell *results)
 
-#define HOST_FUNC(FUNC_PREFIX, NAME, TYPE)                                    \
+#define HOST_FUNC_PREFIX(FUNC_PREFIX, NAME, TYPE)                             \
         {                                                                     \
                 .name = NAME_FROM_CSTR_LITERAL(#NAME), .type = TYPE,          \
                 .func = FUNC_PREFIX##NAME,                                    \
+        }
+
+#define HOST_FUNC(NAME, FUNC, TYPE)                                           \
+        {                                                                     \
+                .name = NAME_FROM_CSTR_LITERAL(#NAME), .type = TYPE,          \
+                .func = FUNC,                                                 \
         }
 
 #define HOST_FUNC_CONVERT_PARAMS(FT, PARAMS)                                  \
@@ -43,6 +49,18 @@ struct host_func {
                         resulttype_cellidx(&(FT)->result, (IDX), &csz);       \
                 val_to_cells(&tmp, &(RESULTS)[cidx], csz);                    \
         } while (0)
+
+#if defined(TOYWASM_ENABLE_TRACING)
+#define HOST_FUNC_TRACE                                                       \
+        do {                                                                  \
+                xlog_trace("host func %s called", __func__);                  \
+                host_func_dump_params(ft, params);                            \
+        } while (0)
+#else
+#define HOST_FUNC_TRACE                                                       \
+        do {                                                                  \
+        } while (0)
+#endif
 
 struct host_instance {
         int dummy;
