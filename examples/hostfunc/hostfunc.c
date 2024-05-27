@@ -229,9 +229,9 @@ fail:
 }
 
 static const struct host_func my_host_inst_funcs[] = {
-        HOST_FUNC(my_host_inst_, load, "(i)i"),
-        HOST_FUNC(my_host_inst_, load_call, "(i)i"),
-        HOST_FUNC(my_host_inst_, load_call_add, "(i)i"),
+        HOST_FUNC_PREFIX(my_host_inst_, load, "(i)i"),
+        HOST_FUNC_PREFIX(my_host_inst_, load_call, "(i)i"),
+        HOST_FUNC_PREFIX(my_host_inst_, load_call_add, "(i)i"),
 };
 
 static const struct name name_my_host_inst =
