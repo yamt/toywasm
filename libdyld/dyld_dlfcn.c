@@ -208,8 +208,8 @@ fail:
 }
 
 static const struct host_func dyld_funcs[] = {
-        HOST_FUNC(dyld_dlfcn_, load_object, "(iiii)i"),
-        HOST_FUNC(dyld_dlfcn_, resolve_symbol, "(iiiii)i"),
+        HOST_FUNC_PREFIX(dyld_dlfcn_, load_object, "(iiii)i"),
+        HOST_FUNC_PREFIX(dyld_dlfcn_, resolve_symbol, "(iiiii)i"),
 };
 
 static const struct name name_dyld = NAME_FROM_CSTR_LITERAL("dyld");
