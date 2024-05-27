@@ -62,29 +62,9 @@ struct wasi_instance {
         uint32_t exit_code;
 };
 
-#define WASI_HOST_FUNC(NAME, TYPE)                                            \
-        {                                                                     \
-                .name = NAME_FROM_CSTR_LITERAL(#NAME), .type = TYPE,          \
-                .func = wasi_##NAME,                                          \
-        }
-
-#define WASI_HOST_FUNC2(NAME, FUNC, TYPE)                                     \
-        {                                                                     \
-                .name = NAME_FROM_CSTR_LITERAL(NAME), .type = TYPE,           \
-                .func = FUNC,                                                 \
-        }
-
-#if defined(TOYWASM_ENABLE_TRACING)
-#define WASI_TRACE                                                            \
-        do {                                                                  \
-                xlog_trace("WASI: %s called", __func__);                      \
-                host_func_dump_params(ft, params);                            \
-        } while (0)
-#else
-#define WASI_TRACE                                                            \
-        do {                                                                  \
-        } while (0)
-#endif
+#define WASI_HOST_FUNC(NAME, TYPE) HOST_FUNC_PREFIX(wasi_, NAME, TYPE)
+#define WASI_HOST_FUNC2(NAME, FUNC, TYPE) HOST_FUNC(NAME, FUNC, TYPE)
+#define WASI_TRACE HOST_FUNC_TRACE
 
 uint32_t wasi_convert_errno(int host_errno);
 
