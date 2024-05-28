@@ -323,6 +323,10 @@ dyld_search_and_load_object_from_file(struct dyld *d, const struct name *name,
 static int
 dyld_load_needed_objects(struct dyld *d, struct dyld_object *start)
 {
+        /*
+         * Note: dyld_search_and_load_object_from_file adds a new object
+         * to the list we are iterating on.
+         */
         int ret = 0;
         struct dyld_object *obj;
         for (obj = start; obj != NULL; obj = LIST_NEXT(obj, q)) {
