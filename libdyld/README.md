@@ -6,6 +6,12 @@ A runtime linker for [WebAssembly Dynamic Linking].
 
 * Optional [dlopen-like API](../examples/libdl)
 
+# TODO
+
+* Have a cache of loaded modules (struct module) so that they can be
+  actually shared among programs. A simple mechanism for a limited list
+  of libraries (eg. libc) might be good enough.
+
 # Portability notes
 
 While this library is implemented using the toywasm API directly,
