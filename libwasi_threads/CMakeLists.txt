@@ -18,6 +18,8 @@ if (USE_IPO)
 set_property(TARGET toywasm-lib-wasi-threads PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 endif()
 set_property(TARGET toywasm-lib-wasi-threads PROPERTY PUBLIC_HEADER ${lib_wasi_threads_headers})
+# Note: while this library is mostly independent from libwasi,
+# it uses wasi_convert_errno from libwasi.
 target_link_libraries(toywasm-lib-wasi-threads toywasm-lib-wasi)
 target_include_directories(toywasm-lib-wasi-threads
                            INTERFACE
