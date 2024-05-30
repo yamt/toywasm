@@ -45,3 +45,12 @@ report_clear(struct report *r)
         free(r->msg);
         r->msg = NULL;
 }
+
+const char *
+report_getmessage(const struct report *r)
+{
+        if (r->msg == NULL) {
+                return "no message";
+        }
+        return r->msg;
+}
