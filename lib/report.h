@@ -11,6 +11,12 @@ struct report {
 
 __BEGIN_EXTERN_C
 
+/*
+ * APIs to report descriptive messages for human users
+ *
+ * Note: if report_error is called multiple times, the first one wins.
+ */
+
 void vreport(struct report *r, const char *fmt, va_list ap);
 void report_error(struct report *r, const char *fmt, ...)
         __attribute__((__format__(__printf__, 2, 3)));
