@@ -314,13 +314,10 @@ done_thread_start_func(struct exec_context *ctx, const struct thread_arg *arg,
                                 "%s: wasi_thread_start exited voluntarily %u",
                                 __func__, ctx->trap.trapid);
                         ret = 0;
-                } else if (ctx->report->msg != NULL) {
+                } else {
                         xlog_trace("%s: wasi_thread_start trapped %u: %s",
                                    __func__, ctx->trap.trapid,
-                                   ctx->report->msg);
-                } else {
-                        xlog_trace("%s: wasi_thread_start trapped %u",
-                                   __func__, ctx->trap.trapid);
+                                   report_getmessage(ctx->report));
                 }
         }
         exec_context_clear(ctx);
@@ -431,15 +428,13 @@ wasi_thread_spawn_common(struct exec_context *ctx,
         struct report report;
         report_init(&report);
         ret = instance_create(wasi->module, &inst, wasi->imports, &report);
-        if (report.msg != NULL) {
-                xlog_trace("%s: instance_create: %s", __func__, report.msg);
-        }
-        report_clear(&report);
         if (ret != 0) {
-                xlog_trace("%s: instance_create failed with %d", __func__,
-                           ret);
+                xlog_trace("%s: instance_create failed with %d: %s", __func__,
+                           ret, report_getmessage(&report));
+                report_clear(&report);
                 goto fail;
         }
+        report_clear(&report);
         toywasm_mutex_lock(&wasi->cluster.lock);
         ret = idalloc_alloc(&wasi->tids, &tid);
         if (ret != 0) {
