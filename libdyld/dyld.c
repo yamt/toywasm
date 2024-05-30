@@ -776,7 +776,7 @@ dyld_load_object_from_file(struct dyld *d, const struct name *name,
                             &lctx);
         if (ret != 0) {
                 xlog_error("module_create failed with %d: %s", ret,
-                           lctx.report.msg);
+                           report_getmessage(&lctx.report));
                 load_context_clear(&lctx);
                 goto fail;
         }
@@ -840,7 +840,7 @@ dyld_load_object_from_file(struct dyld *d, const struct name *name,
                               obj->local_import_obj, &report);
         if (ret != 0) {
                 xlog_error("instance_create failed with %d: %s", ret,
-                           report.msg);
+                           report_getmessage(&report));
                 report_clear(&report);
                 goto fail;
         }

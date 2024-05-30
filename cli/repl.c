@@ -410,7 +410,7 @@ print_trap(const struct exec_context *ctx, const struct trap_info *trap)
         /* the messages here are aimed to match assert_trap in wast */
         enum trapid id = trap->trapid;
         const char *msg = "unknown";
-        const char *trapmsg = ctx->report->msg;
+        const char *trapmsg = report_getmessage(ctx->report);
         switch (id) {
         case TRAP_DIV_BY_ZERO:
                 msg = "integer divide by zero";
@@ -453,9 +453,6 @@ print_trap(const struct exec_context *ctx, const struct trap_info *trap)
                 break;
         default:
                 break;
-        }
-        if (trapmsg == NULL) {
-                trapmsg = "no message";
         }
         nbio_printf("Error: [trap] %s (%u): %s\n", msg, id, trapmsg);
 
@@ -572,11 +569,10 @@ repl_load_from_buf(struct repl_state *state, const char *modname,
         ctx.options = state->opts.load_options;
         ret = module_create(&mod->module, mod->buf, mod->buf + mod->bufsize,
                             &ctx);
-        if (ctx.report.msg != NULL) {
-                xlog_error("load/validation error: %s", ctx.report.msg);
-                nbio_printf("load/validation error: %s\n", ctx.report.msg);
-        } else if (ret != 0) {
-                nbio_printf("load/validation error: no message\n");
+        if (ret != 0) {
+                const char *msg = report_getmessage(&ctx.report);
+                xlog_error("load/validation error: %s", msg);
+                nbio_printf("load/validation error: %s\n", msg);
         }
         load_context_clear(&ctx);
         if (ret != 0) {
@@ -604,15 +600,12 @@ repl_load_from_buf(struct repl_state *state, const char *modname,
         report_init(&report);
         ret = instance_create_no_init(mod->module, &mod->inst, imports,
                                       &report);
-        if (report.msg != NULL) {
-                xlog_error("instance_create: %s", report.msg);
-                nbio_printf("instantiation error: %s\n", report.msg);
-        } else if (ret != 0) {
-                nbio_printf("instantiation error: no message\n");
-        }
-        report_clear(&report);
         if (ret != 0) {
-                xlog_printf("instance_create_no_init failed with %d\n", ret);
+                const char *msg = report_getmessage(&report);
+                xlog_error("instance_create_no_init failed with %d: %s", ret,
+                           msg);
+                nbio_printf("instantiation error: %s\n", msg);
+                report_clear(&report);
                 goto fail;
         }
         ret = repl_exec_init(state, mod, trap_ok);
