@@ -36,7 +36,9 @@ runwasi(const char *filename, unsigned int ndirs, char **dirs,
         load_context_init(&lctx);
         ret = module_create(&m, p, p + sz, &lctx);
         if (ret != 0) {
-                xlog_error("module_load failed with %d", ret);
+                xlog_error("module_load failed with %d: %s", ret,
+                           report_getmessage(&lctx.report));
+                load_context_clear(&lctx);
                 goto fail;
         }
         load_context_clear(&lctx);
@@ -105,7 +107,8 @@ runwasi(const char *filename, unsigned int ndirs, char **dirs,
         wasi_import_object->next = base_imports;
         ret = instance_create(m, &inst, wasi_import_object, &report);
         if (ret != 0) {
-                xlog_error("instance_create failed with %d", ret);
+                const char *msg = report_getmessage(&report);
+                xlog_error("instance_create failed with %d: %s", ret, msg);
                 report_clear(&report);
                 goto fail;
         }
@@ -124,8 +127,9 @@ runwasi(const char *filename, unsigned int ndirs, char **dirs,
                 if (trap->trapid == TRAP_VOLUNTARY_EXIT) {
                         wasi_exit_code = wasi_instance_exit_code(wasi);
                 } else {
-                        xlog_error("got a trap %u",
-                                   (unsigned int)trap->trapid);
+                        xlog_error("got a trap %u: %s",
+                                   (unsigned int)trap->trapid,
+                                   report_getmessage(ectx.report));
                         exec_context_clear(&ectx);
                         goto fail;
                 }
