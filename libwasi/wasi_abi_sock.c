@@ -1,3 +1,5 @@
+#define _NETBSD_SOURCE /* for old netbsd */
+
 #include <sys/socket.h>
 
 #include <assert.h>
