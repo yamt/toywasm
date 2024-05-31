@@ -1,5 +1,6 @@
 #define _DARWIN_C_SOURCE /* strnstr */
 #define _GNU_SOURCE      /* strnlen */
+#define _NETBSD_SOURCE   /* strnlen */
 
 #include <assert.h>
 #include <errno.h>
