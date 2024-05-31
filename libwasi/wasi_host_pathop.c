@@ -1,4 +1,5 @@
 #define _DARWIN_C_SOURCE /* symlink etc */
+#define _NETBSD_SOURCE   /* symlink etc */
 #define _GNU_SOURCE      /* symlink etc */
 
 #if defined(__NuttX__)
