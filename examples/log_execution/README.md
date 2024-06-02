@@ -6,7 +6,7 @@ An example of a host function for Binaryen's log-execution pass.
 
 ```
 % wasm-opt -g -o toywasm.log.wasm --log-execution=env toywasm.wasm
-% log-execute toywasm.log.wasm
+% log-execution toywasm.log.wasm
 log-execution idx=00000004 callerpc=00145e (toywasm:_start)
 log-execution idx=00000000 callerpc=00144d (toywasm:__wasm_call_ctors)
 log-execution idx=00000198 callerpc=007416 (toywasm:__main_void)
