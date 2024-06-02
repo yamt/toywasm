@@ -2,10 +2,12 @@
 
 An example of a host function for Binaryen's log-execution pass.
 
-# Example
+This example assumes the module name of the `log_execution` function
+is `env`. We recommend to use the latest binaryen with
+https://github.com/WebAssembly/binaryen/pull/6629, which allows
+to specify the module name explicitly.
 
-This example assumes the latest binaryen with
-https://github.com/WebAssembly/binaryen/pull/6629.
+# Example
 
 ```
 % wasm-opt -g -o toywasm.log.wasm --log-execution=env toywasm.wasm
