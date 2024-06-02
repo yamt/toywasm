@@ -4,6 +4,9 @@ An example of a host function for Binaryen's log-execution pass.
 
 # Example
 
+This example assumes the latest binaryen with
+https://github.com/WebAssembly/binaryen/pull/6629.
+
 ```
 % wasm-opt -g -o toywasm.log.wasm --log-execution=env toywasm.wasm
 % log-execution toywasm.log.wasm
