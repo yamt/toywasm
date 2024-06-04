@@ -644,11 +644,14 @@ schedule_exception(struct exec_context *ectx)
                 SAVE_STACK_PTR;                                               \
                 ctx->event = EXEC_EVENT_RESTART_INSN;                         \
                 ctx->event_u.restart_insn.fetch_exec = fetch_exec_##NAME;     \
+        } else {                                                              \
+                ctx->p = p;                                                   \
         }                                                                     \
         return ret
 #define INSN_FAIL                                                             \
         assert(ret != 0);                                                     \
         assert(!IS_RESTARTABLE(ret));                                         \
+        ctx->p = p;                                                           \
         return ret
 #define ep NULL
 #define STACK stack
