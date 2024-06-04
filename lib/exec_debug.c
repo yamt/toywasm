@@ -142,6 +142,16 @@ print_trace(const struct exec_context *ctx)
         uint32_t restartidx = ctx->restarts.lsize;
         uint32_t bottom = ctx->bottom;
         const char *prefix = "  "; /* indent a bit */
+
+        /*
+         * first, print our best idea of the current PC.
+         *
+         * Note: ctx->p can be a bit outdated because we don't always
+         * keep it updated, especially on errors.
+         */
+        uint32_t pc = ptr2pc(ctx->instance->module, ctx->p);
+        nbio_printf("current pc %06" PRIx32 "\n", pc);
+
         nametable_init(&table);
         while (true) {
                 if (frameidx == bottom) {
