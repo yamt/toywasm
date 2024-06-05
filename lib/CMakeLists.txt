@@ -71,6 +71,7 @@ set(lib_core_headers
 	"host_instance.h"
 	"idalloc.h"
 	"instance.h"
+	"leb128.h"
 	"list.h"
 	"load_context.h"
 	"lock.h"
