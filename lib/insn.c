@@ -636,6 +636,11 @@ schedule_exception(struct exec_context *ectx)
         return 0
 #define INSN_SUCCESS_BLOCK_END assert(false)
 #define PREPARE_FOR_POSSIBLE_RESTART struct cell *saved_stack_ptr = stack
+/*
+ * "ctx->p = p" for non-restartable errors in INSN_FAIL_RESTARTABLE/INSN_FAIL
+ * below are merely for the convenience of post-mortem investigations.
+ * (eg. print_trace)
+ */
 #define INSN_FAIL_RESTARTABLE(NAME)                                           \
         assert(ret != 0);                                                     \
         if (IS_RESTARTABLE(ret)) {                                            \
