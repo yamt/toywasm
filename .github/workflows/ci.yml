@@ -465,6 +465,13 @@ jobs:
         cd ..
         BIN=./build/hostfunc ./run.sh
 
+    - name: Test "callgraph" example with the library we built
+      if: matrix.arch == 'native'
+      run: |
+        ./test/build-example.sh callgraph ${{env.builddir}}/toywasm-v*.tgz build
+        wat2wasm --debug-names wat/wasi/recursive_hello_arg.wat
+        ./examples/callgraph/build/callgraph $(pwd)/recursive_hello_arg.wasm
+
     - name: Upload artifacts
       if: matrix.name != 'noname'
       uses: actions/upload-artifact@v3
