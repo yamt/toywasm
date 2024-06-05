@@ -7,5 +7,6 @@ cd wasm
 cd ..
 
 # use a debug build to enable assertions for now
-EXTRA_CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Debug" \
+TOYWASM_EXTRA_CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Debug" \
+APP_EXTRA_CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Debug" \
 ../build-toywasm-and-app.sh
