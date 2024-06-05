@@ -82,9 +82,9 @@ callgraph(const struct module *m)
                        i);
         }
         /*
-         * here we only implement an active element with a list of
-         * funcidxes. ie. the case where no bytecode execution is
-         * involved. although it's limited, it should be enough to
+         * here we only implement active elements with funcidxes.
+         * ie. the case where we don't need to execute exprs.
+         * although it's limited, it should be enough to
          * cover the most of common cases.
          */
         for (i = 0; i < m->nelems; i++) {
