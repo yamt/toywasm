@@ -31,7 +31,8 @@ main(int argc, char **argv)
         load_context_init(&ctx);
         ret = module_create(&m, p, p + sz, &ctx);
         if (ret != 0) {
-                xlog_error("module_load failed with %d", ret);
+                xlog_error("module_load failed with %d: %s", ret,
+                           report_getmessage(&ctx.report));
                 exit(1);
         }
         module_print_stats(m);
