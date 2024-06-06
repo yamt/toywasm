@@ -124,6 +124,16 @@ callgraph(const struct module *m)
                 printf("export%" PRIu32 " -> f%" PRIu32 " [color=red]\n", i,
                        ex->desc.idx);
         }
+        if (m->has_start) {
+                /*
+                 * group the start function together with exports as
+                 * their functionalites are similar for our purpose.
+                 */
+                printf("subgraph cluster_export { start [shape=plaintext]; "
+                       "label=exports; "
+                       "color=red;rank=source }\n");
+                printf("start -> f%" PRIu32 " [color=red]\n", m->start);
+        }
         for (i = 0; i < m->nfuncs; i++) {
                 dump_calls(m, i, &table);
         }
