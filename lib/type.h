@@ -717,6 +717,8 @@ int functype_from_string(const char *p, struct functype **resultp);
 void functype_free(struct functype *ft);
 int check_functype_with_string(const struct module *m, uint32_t funcidx,
                                const char *sig);
+int functype_to_string(char **p, const struct functype *ft);
+void functype_string_free(char *p);
 
 void clear_functype(struct functype *ft);
 void clear_resulttype(struct resulttype *rt);
