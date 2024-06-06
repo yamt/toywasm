@@ -377,6 +377,7 @@ void
 test_functype(void **state)
 {
         struct functype *ft;
+        char *ftstr;
         int ret;
 
         ret = functype_from_string("(iIi)fF", &ft);
@@ -388,27 +389,43 @@ test_functype(void **state)
         assert_int_equal(ft->result.ntypes, 2);
         assert_int_equal(ft->result.types[0], TYPE_f32);
         assert_int_equal(ft->result.types[1], TYPE_f64);
+        ret = functype_to_string(&ftstr, ft);
+        assert_int_equal(ret, 0);
+        assert_string_equal("(iIi)fF", ftstr);
         functype_free(ft);
+        functype_string_free(ftstr);
 
         ret = functype_from_string("()i", &ft);
         assert_int_equal(ret, 0);
         assert_int_equal(ft->parameter.ntypes, 0);
         assert_int_equal(ft->result.ntypes, 1);
         assert_int_equal(ft->result.types[0], TYPE_i32);
+        ret = functype_to_string(&ftstr, ft);
+        assert_int_equal(ret, 0);
+        assert_string_equal("()i", ftstr);
         functype_free(ft);
+        functype_string_free(ftstr);
 
         ret = functype_from_string("(i)", &ft);
         assert_int_equal(ret, 0);
         assert_int_equal(ft->parameter.ntypes, 1);
         assert_int_equal(ft->parameter.types[0], TYPE_i32);
         assert_int_equal(ft->result.ntypes, 0);
+        ret = functype_to_string(&ftstr, ft);
+        assert_int_equal(ret, 0);
+        assert_string_equal("(i)", ftstr);
         functype_free(ft);
+        functype_string_free(ftstr);
 
         ret = functype_from_string("()", &ft);
         assert_int_equal(ret, 0);
         assert_int_equal(ft->parameter.ntypes, 0);
         assert_int_equal(ft->result.ntypes, 0);
+        ret = functype_to_string(&ftstr, ft);
+        assert_int_equal(ret, 0);
+        assert_string_equal("()", ftstr);
         functype_free(ft);
+        functype_string_free(ftstr);
 
         ret = functype_from_string("", &ft);
         assert_int_equal(ret, EINVAL);
