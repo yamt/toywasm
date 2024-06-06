@@ -368,6 +368,67 @@ check_functype_with_string(const struct module *m, uint32_t funcidx,
         return ret;
 }
 
+static char
+valtype_to_char(enum valtype t)
+{
+        switch (t) {
+        case TYPE_i32:
+                return 'i';
+        case TYPE_i64:
+                return 'I';
+        case TYPE_f32:
+                return 'f';
+        case TYPE_f64:
+                return 'F';
+        case TYPE_v128:
+                return 'v';
+        case TYPE_EXNREF:
+                return 'x';
+        case TYPE_FUNCREF:
+                return 'c';
+        case TYPE_EXTERNREF:
+                return 'e';
+        default:
+                break;
+        }
+        xassert(false);
+        return 'X';
+}
+
+void
+resulttype_to_string(char *p, const struct resulttype *rt)
+{
+        uint32_t i;
+        for (i = 0; i < rt->ntypes; i++) {
+                p[i] = valtype_to_char(rt->types[i]);
+        }
+}
+
+int
+functype_to_string(char **pp, const struct functype *ft)
+{
+        size_t len = 1 + ft->parameter.ntypes + 1 + ft->result.ntypes + 1;
+        char *p = malloc(len);
+        if (p == NULL) {
+                return ENOMEM;
+        }
+        *pp = p;
+        *p++ = '(';
+        resulttype_to_string(p, &ft->parameter);
+        p += ft->parameter.ntypes;
+        *p++ = ')';
+        resulttype_to_string(p, &ft->result);
+        p += ft->result.ntypes;
+        *p = 0;
+        return 0;
+}
+
+void
+functype_string_free(char *p)
+{
+        free(p);
+}
+
 uint32_t
 memtype_page_shift(const struct memtype *type)
 {
