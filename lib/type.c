@@ -395,7 +395,7 @@ valtype_to_char(enum valtype t)
         return 'X';
 }
 
-void
+static void
 resulttype_to_string(char *p, const struct resulttype *rt)
 {
         uint32_t i;
