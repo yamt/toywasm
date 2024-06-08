@@ -2,11 +2,28 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <toywasm/expr_parser.h>
 #include <toywasm/leb128.h>
 #include <toywasm/name.h>
 #include <toywasm/type.h>
+
+static void
+fatal(int error)
+{
+        fprintf(stderr, "fatal error %d: %s", error, strerror(error));
+        exit(1);
+}
+
+void
+dump_table_type(uint32_t tableidx, const char *typestr)
+{
+        printf("subgraph cluster_table_%" PRIu32 " { \"table%" PRIu32
+               "_%s\" [label=\"%s\",shape=box]; label=table_%" PRIu32
+               "; color=purple }\n",
+               tableidx, tableidx, typestr, typestr, tableidx);
+}
 
 static void
 dump_calls(const struct module *m, uint32_t i, struct nametable *table)
@@ -21,6 +38,10 @@ dump_calls(const struct module *m, uint32_t i, struct nametable *table)
                 struct name callee_func_name;
                 uint32_t callee;
                 uint32_t tableidx;
+                uint32_t typeidx;
+                const struct functype *ft;
+                char *typestr;
+                int ret;
                 switch (insn[0]) {
                 case 0x10: /* call */
                         imm = &insn[1];
@@ -32,11 +53,18 @@ dump_calls(const struct module *m, uint32_t i, struct nametable *table)
                         break;
                 case 0x11: /* call_indirect */
                         imm = &insn[1];
-                        read_leb_u32_nocheck(&imm); /* typeidx */
+                        typeidx = read_leb_u32_nocheck(&imm);
                         tableidx = read_leb_u32_nocheck(&imm);
-                        printf("f%" PRIu32 " -> table%" PRIu32
-                               " [color=purple]\n",
-                               funcidx, tableidx);
+                        ft = &m->types[typeidx];
+                        ret = functype_to_string(&typestr, ft);
+                        if (ret != 0) {
+                                fatal(ret);
+                        }
+                        dump_table_type(tableidx, typestr);
+                        printf("f%" PRIu32 " -> \"table%" PRIu32
+                               "_%s\" [color=purple]\n",
+                               funcidx, tableidx, typestr);
+                        functype_string_free(typestr);
                         break;
 #if defined(TOYWASM_ENABLE_WASM_TAILCALL)
                         /* XXX implement tail-call instructions */
@@ -61,6 +89,7 @@ dump_calls(const struct module *m, uint32_t i, struct nametable *table)
 void
 callgraph(const struct module *m)
 {
+        int ret;
         uint32_t i;
         struct nametable table;
         nametable_init(&table);
@@ -76,10 +105,6 @@ callgraph(const struct module *m)
                 nametable_lookup_func(&table, m, i, &func_name);
                 printf("f%" PRIu32 " [label=\"%.*s\",color=%s]\n", i,
                        CSTR(&func_name), color);
-        }
-        for (i = 0; i < m->ntables; i++) {
-                printf("table%" PRIu32 " [shape=parallelogram,color=purple]\n",
-                       i);
         }
         /*
          * here we only implement active elements with funcidxes.
@@ -97,9 +122,20 @@ callgraph(const struct module *m)
                 }
                 uint32_t j;
                 for (j = 0; j < e->init_size; j++) {
-                        printf("table%" PRIu32 " -> f%" PRIu32
+                        uint32_t funcidx = e->funcs[j];
+                        uint32_t tableidx = e->table;
+                        const struct functype *ft =
+                                module_functype(m, funcidx);
+                        char *typestr;
+                        ret = functype_to_string(&typestr, ft);
+                        if (ret != 0) {
+                                fatal(ret);
+                        }
+                        dump_table_type(tableidx, typestr);
+                        printf("\"table%" PRIu32 "_%s\" -> f%" PRIu32
                                " [color=purple]\n",
-                               e->table, e->funcs[j]);
+                               tableidx, typestr, funcidx);
+                        functype_string_free(typestr);
                 }
         }
         for (i = 0; i < m->nimports; i++) {
