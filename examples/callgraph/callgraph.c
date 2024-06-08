@@ -114,6 +114,9 @@ callgraph(const struct module *m)
 #if defined(TOYWASM_ENABLE_WRITER)
                         struct func *func = &m->funcs[i - m->nimportedfuncs];
                         expr_size = json_integer(func->e.end - func->e.start);
+                        if (expr_size == NULL) {
+                                jsonutil_fatal();
+                        }
 #endif
                 }
                 jsonutil_pack_and_append(a, "{ss#sisssbso*so*}", "name",
@@ -171,7 +174,9 @@ callgraph(const struct module *m)
                 jsonutil_object_set_u32(j, "start", m->start);
         }
         nametable_clear(&table);
-        json_dumpf(j, stdout, JSON_INDENT(4));
+        if (json_dumpf(j, stdout, JSON_INDENT(4))) {
+                jsonutil_fatal();
+        }
         json_decref(j);
         printf("\n");
 }
