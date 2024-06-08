@@ -72,13 +72,7 @@ dump_calls(const struct module *m, uint32_t i, struct nametable *table)
 }
 
 /*
- * print the function callgraph of the given module in the graphviz format.
- *
- * XXX should escape the names
- *
- * references:
- * https://graphviz.org/doc/info/lang.html
- * https://graphviz.org/doc/info/attrs.html
+ * print the function callgraph of the given module in json.
  */
 void
 callgraph(const struct module *m)

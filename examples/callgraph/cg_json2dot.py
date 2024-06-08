@@ -1,3 +1,12 @@
+# A script to read the JSON output of the "callgraph" sample program
+# and produce a graph in the graphviz dot format.
+#
+# XXX should escape the names
+#
+# references:
+# https://graphviz.org/doc/info/lang.html
+# https://graphviz.org/doc/info/attrs.html
+
 import json
 import sys
 
