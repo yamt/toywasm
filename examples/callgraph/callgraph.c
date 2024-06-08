@@ -98,13 +98,19 @@ callgraph(const struct module *m)
                         fatal(ret);
                 }
                 json_t *calls = NULL;
+                json_t *expr_size = NULL;
                 if (!imported) {
                         calls = dump_calls(m, i - m->nimportedfuncs, &table);
+#if defined(TOYWASM_ENABLE_WRITER)
+                        struct func *func = &m->funcs[i - m->nimportedfuncs];
+                        expr_size = json_integer(func->e.end - func->e.start);
+#endif
                 }
-                json_pack_and_append(a, "{ss#sisssbso*}", "name",
+                json_pack_and_append(a, "{ss#sisssbso*so*}", "name",
                                      func_name.data, (int)func_name.nbytes,
                                      "idx", i, "type", typestr, "imported",
-                                     (int)imported, "calls", calls);
+                                     (int)imported, "calls", calls,
+                                     "expr_size", expr_size);
                 functype_string_free(typestr);
         }
         /*
