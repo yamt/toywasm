@@ -341,10 +341,12 @@ jobs:
       if: matrix.os == 'ubuntu-latest' && matrix.arch == 'native'
       run: sudo apt-get update && sudo apt-get install -y clang lld llvm-dev
 
+    # Note: jansson is for examples/callgraph
+
     - name: Install dependencies (ubuntu native)
       # for cross build, cross-setup.sh takes care of the toolchain
       if: startsWith(matrix.os, 'ubuntu-') && matrix.arch == 'native'
-      run: sudo apt-get install -y wabt libcmocka-dev
+      run: sudo apt-get install -y wabt libcmocka-dev libjansson-dev
 
     - name: Install dependencies (macOS)
       if: startsWith(matrix.os, 'macos-')
@@ -353,6 +355,7 @@ jobs:
         brew install cmocka
         brew install virtualenv
         brew install ninja
+        brew install jansson
 
     - uses: actions/checkout@v3
       with:
