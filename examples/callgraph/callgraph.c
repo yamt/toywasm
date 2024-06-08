@@ -39,13 +39,25 @@ dump_calls(const struct module *m, uint32_t i, struct nametable *table)
                 char *typestr;
                 int ret;
                 uint32_t pc = ptr2pc(m, insn);
+                bool tailcall = false;
                 switch (insn[0]) {
+#if defined(TOYWASM_ENABLE_WASM_TAILCALL)
+                case 0x12: /* return_call */
+                        tailcall = true;
+                        /* fallthrough */
+#endif
                 case 0x10: /* call */
                         imm = &insn[1];
                         callee = read_leb_u32_nocheck(&imm);
-                        json_pack_and_append(a, "{sisi}", "pc", pc, "callee",
+                        json_pack_and_append(a, "{sisbsi}", "pc", pc,
+                                             "tailcall", tailcall, "callee",
                                              callee);
                         break;
+#if defined(TOYWASM_ENABLE_WASM_TAILCALL)
+                case 0x13: /* return_call_indirect */
+                        tailcall = true;
+                        /* fallthrough */
+#endif
                 case 0x11: /* call_indirect */
                         imm = &insn[1];
                         typeidx = read_leb_u32_nocheck(&imm);
@@ -55,13 +67,11 @@ dump_calls(const struct module *m, uint32_t i, struct nametable *table)
                         if (ret != 0) {
                                 fatal(ret);
                         }
-                        json_pack_and_append(a, "{sisiss}", "pc", pc, "table",
+                        json_pack_and_append(a, "{sisbsiss}", "pc", pc,
+                                             "tailcall", tailcall, "table",
                                              tableidx, "type", typestr);
                         functype_string_free(typestr);
                         break;
-#if defined(TOYWASM_ENABLE_WASM_TAILCALL)
-                        /* XXX implement tail-call instructions */
-#endif
                 default:
                         break;
                 }
