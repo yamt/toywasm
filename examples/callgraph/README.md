@@ -19,8 +19,7 @@ main(int argc, char **argv)
 
 ```shell
 % /opt/wasi-sdk-22.0/bin/clang a.c
-% callgraph a.out > a.gv
-% dot -Tsvg -o hello.svg a.gv
+% callgraph a.out | python3 cg_json2dot.py | dot -Tsvg -o hello.svg
 ```
 
 ![hello world call graph](./hello.svg)
