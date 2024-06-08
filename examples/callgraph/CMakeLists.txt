@@ -7,11 +7,16 @@ project(callgraph LANGUAGES C)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wvla -Werror")
 
 find_package(toywasm-lib-core REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(JANSSON REQUIRED jansson)
 
 set(app_sources
 	"main.c"
 	"callgraph.c"
+	"jsonutil.c"
 )
 
 add_executable(callgraph ${app_sources})
-target_link_libraries(callgraph toywasm-lib-core m)
+target_include_directories(callgraph PRIVATE ${JANSSON_INCLUDE_DIRS})
+target_link_directories(callgraph PRIVATE ${JANSSON_LIBRARY_DIRS})
+target_link_libraries(callgraph toywasm-lib-core m ${JANSSON_LIBRARIES})

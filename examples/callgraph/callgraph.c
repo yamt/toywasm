@@ -4,10 +4,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <toywasm/context.h>
 #include <toywasm/expr_parser.h>
 #include <toywasm/leb128.h>
 #include <toywasm/name.h>
 #include <toywasm/type.h>
+
+#include "jsonutil.h"
 
 static void
 fatal(int error)
@@ -16,40 +19,32 @@ fatal(int error)
         exit(1);
 }
 
-void
-dump_table_type(uint32_t tableidx, const char *typestr)
-{
-        printf("subgraph cluster_table_%" PRIu32 " { \"table%" PRIu32
-               "_%s\" [label=\"%s\",shape=box]; label=table_%" PRIu32
-               "; color=purple }\n",
-               tableidx, tableidx, typestr, typestr, tableidx);
-}
-
-static void
+static json_t *
 dump_calls(const struct module *m, uint32_t i, struct nametable *table)
 {
-        uint32_t funcidx = m->nimportedfuncs + i;
         const struct func *func = &m->funcs[i];
         const uint8_t *insn = func->e.start;
+        json_t *a = json_array();
+        if (a == NULL) {
+                json_fatal();
+        }
         struct parse_expr_context ctx;
         parse_expr_context_init(&ctx);
         do {
                 const uint8_t *imm;
-                struct name callee_func_name;
                 uint32_t callee;
                 uint32_t tableidx;
                 uint32_t typeidx;
                 const struct functype *ft;
                 char *typestr;
                 int ret;
+                uint32_t pc = ptr2pc(m, insn);
                 switch (insn[0]) {
                 case 0x10: /* call */
                         imm = &insn[1];
                         callee = read_leb_u32_nocheck(&imm);
-                        nametable_lookup_func(table, m, callee,
-                                              &callee_func_name);
-                        printf("f%" PRIu32 " -> f%" PRIu32 "\n", funcidx,
-                               callee);
+                        json_pack_and_append(a, "{sisi}", "pc", pc, "callee",
+                                             callee);
                         break;
                 case 0x11: /* call_indirect */
                         imm = &insn[1];
@@ -60,10 +55,8 @@ dump_calls(const struct module *m, uint32_t i, struct nametable *table)
                         if (ret != 0) {
                                 fatal(ret);
                         }
-                        dump_table_type(tableidx, typestr);
-                        printf("f%" PRIu32 " -> \"table%" PRIu32
-                               "_%s\" [color=purple]\n",
-                               funcidx, tableidx, typestr);
+                        json_pack_and_append(a, "{sisiss}", "pc", pc, "table",
+                                             tableidx, "type", typestr);
                         functype_string_free(typestr);
                         break;
 #if defined(TOYWASM_ENABLE_WASM_TAILCALL)
@@ -75,6 +68,7 @@ dump_calls(const struct module *m, uint32_t i, struct nametable *table)
                 parse_expr(&insn, &ctx);
         } while (insn != NULL);
         parse_expr_context_clear(&ctx);
+        return a;
 }
 
 /*
@@ -91,20 +85,33 @@ callgraph(const struct module *m)
 {
         int ret;
         uint32_t i;
+        json_t *j = json_object();
+        if (j == NULL) {
+                json_fatal();
+        }
+        json_t *a;
         struct nametable table;
         nametable_init(&table);
-        printf("strict digraph {\n");
+        a = json_object_set_array(j, "funcs");
         for (i = 0; i < m->nimportedfuncs + m->nfuncs; i++) {
-                const char *color;
-                if (i < m->nimportedfuncs) {
-                        color = "blue";
-                } else {
-                        color = "black"; /* default */
-                }
+                bool imported = i < m->nimportedfuncs;
                 struct name func_name;
                 nametable_lookup_func(&table, m, i, &func_name);
-                printf("f%" PRIu32 " [label=\"%.*s\",color=%s]\n", i,
-                       CSTR(&func_name), color);
+                const struct functype *ft = module_functype(m, i);
+                char *typestr;
+                ret = functype_to_string(&typestr, ft);
+                if (ret != 0) {
+                        fatal(ret);
+                }
+                json_t *calls = NULL;
+                if (!imported) {
+                        calls = dump_calls(m, i - m->nimportedfuncs, &table);
+                }
+                json_pack_and_append(a, "{ss#sisssbso*}", "name",
+                                     func_name.data, (int)func_name.nbytes,
+                                     "idx", i, "type", typestr, "imported",
+                                     (int)imported, "calls", calls);
+                functype_string_free(typestr);
         }
         /*
          * here we only implement active elements with funcidxes.
@@ -112,6 +119,7 @@ callgraph(const struct module *m)
          * although it's limited, it should be enough to
          * cover the most of common cases.
          */
+        a = json_object_set_array(j, "elements");
         for (i = 0; i < m->nelems; i++) {
                 const struct element *e = &m->elems[i];
                 if (e->mode != ELEM_MODE_ACTIVE) {
@@ -124,55 +132,35 @@ callgraph(const struct module *m)
                 for (j = 0; j < e->init_size; j++) {
                         uint32_t funcidx = e->funcs[j];
                         uint32_t tableidx = e->table;
-                        const struct functype *ft =
-                                module_functype(m, funcidx);
-                        char *typestr;
-                        ret = functype_to_string(&typestr, ft);
-                        if (ret != 0) {
-                                fatal(ret);
-                        }
-                        dump_table_type(tableidx, typestr);
-                        printf("\"table%" PRIu32 "_%s\" -> f%" PRIu32
-                               " [color=purple]\n",
-                               tableidx, typestr, funcidx);
-                        functype_string_free(typestr);
+                        json_pack_and_append(a, "{sisi}", "tableidx", tableidx,
+                                             "funcidx", funcidx);
                 }
         }
+        a = json_object_set_array(j, "imports");
         for (i = 0; i < m->nimports; i++) {
                 const struct import *im = &m->imports[i];
-                printf("subgraph \"cluster_import_%.*s\" { import%" PRIu32
-                       " [label=\"%.*s\",shape=rectangle]; label=\"%.*s\"; "
-                       "color=blue;rank=sink }\n",
-                       CSTR(&im->module_name), i, CSTR(&im->name),
-                       CSTR(&im->module_name));
-                printf("f%" PRIu32 " -> import%" PRIu32 " [color=blue]\n", i,
-                       i);
+                if (im->desc.type != EXTERNTYPE_FUNC) {
+                        continue;
+                }
+                json_pack_and_append(
+                        a, "{ss#ss#si}", "module_name", im->module_name.data,
+                        (int)im->module_name.nbytes, "name", im->name.data,
+                        (int)im->name.nbytes, "idx", i);
         }
+        a = json_object_set_array(j, "exports");
         for (i = 0; i < m->nexports; i++) {
                 const struct wasm_export *ex = &m->exports[i];
                 if (ex->desc.type != EXTERNTYPE_FUNC) {
                         continue;
                 }
-                printf("subgraph cluster_export { export%" PRIu32
-                       " [label=\"%.*s\",shape=rectangle]; label=exports; "
-                       "color=red;rank=source }\n",
-                       i, CSTR(&ex->name));
-                printf("export%" PRIu32 " -> f%" PRIu32 " [color=red]\n", i,
-                       ex->desc.idx);
+                json_pack_and_append(a, "{ss#si}", "name", ex->name.data,
+                                     (int)ex->name.nbytes, "idx",
+                                     ex->desc.idx);
         }
         if (m->has_start) {
-                /*
-                 * group the start function together with exports as
-                 * their functionalites are similar for our purpose.
-                 */
-                printf("subgraph cluster_export { start [shape=plaintext]; "
-                       "label=exports; "
-                       "color=red;rank=source }\n");
-                printf("start -> f%" PRIu32 " [color=red]\n", m->start);
+                json_object_set_u32(j, "start", m->start);
         }
-        for (i = 0; i < m->nfuncs; i++) {
-                dump_calls(m, i, &table);
-        }
-        printf("}\n");
         nametable_clear(&table);
+        json_dumpf(j, stdout, JSON_INDENT(4));
+        printf("\n");
 }
