@@ -156,5 +156,6 @@ callgraph(const struct module *m)
         }
         nametable_clear(&table);
         json_dumpf(j, stdout, JSON_INDENT(4));
+        json_decref(j);
         printf("\n");
 }
