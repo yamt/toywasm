@@ -210,7 +210,7 @@ static const char *opt_metavars[] = {
         [opt_load] = "MODULE_PATH",
 #if defined(TOYWASM_ENABLE_DYLD)
         [opt_dyld_path] = "LIBRARY_DIR",
-        [opt_dyld_stack_size] = "C_STACK_SIZE_IN_BYTES",
+        [opt_dyld_stack_size] = "C_STACK_SIZE_FOR_PIE_IN_BYTES",
 #endif
 #if defined(TOYWASM_ENABLE_WASI)
         [opt_wasi_env] = "NAME=VAR",
