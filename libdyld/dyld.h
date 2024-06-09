@@ -14,6 +14,10 @@ struct dyld_options {
         /*
          * stack size.
          * something similar to wasm-ld's "-z stack-size=xxx" option.
+         *
+         * Note: this option is used only when the main module is PIE.
+         * otherwise, the stack in the main module is just used in the
+         * same way as non dynamic-linking modules.
          */
         uint32_t stack_size;
 
