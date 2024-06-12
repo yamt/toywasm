@@ -321,8 +321,11 @@ list(APPEND SANITIZER_FLAGS "-fsanitize=undefined")
 list(APPEND SANITIZER_FLAGS "-fno-sanitize-recover=undefined")
 list(APPEND SANITIZER_FLAGS "-fsanitize=integer")
 list(APPEND SANITIZER_FLAGS "-fno-sanitize-recover=integer")
+# unsigned-shift-base was introduced by LLVM 12.
+if(CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL 12.0.0)
 # unsigned-shift-base: not an undefined behavior. used in leb128 etc.
 list(APPEND SANITIZER_FLAGS "-fno-sanitize=unsigned-shift-base")
+endif()
 # unsigned-integer-overflow: not an undefined behavior. used in leb128 etc.
 list(APPEND SANITIZER_FLAGS "-fno-sanitize=unsigned-integer-overflow")
 # implicit-integer-sign-change: we relies on it for a lot of opcodes.
@@ -372,6 +375,7 @@ message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 message(STATUS "CMAKE_SYSTEM_NAME: ${CMAKE_SYSTEM_NAME}")
 message(STATUS "CMAKE_C_COMPILER: ${CMAKE_C_COMPILER}")
 message(STATUS "CMAKE_C_COMPILER_ID: ${CMAKE_C_COMPILER_ID}")
+message(STATUS "CMAKE_C_COMPILER_VERSION: ${CMAKE_C_COMPILER_VERSION}")
 message(STATUS "CMAKE_AR: ${CMAKE_AR}")
 message(STATUS "CMAKE_C_COMPILER_AR: ${CMAKE_C_COMPILER_AR}")
 message(STATUS "CMAKE_RANLIB: ${CMAKE_RANLIB}")
