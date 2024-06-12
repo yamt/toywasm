@@ -25,8 +25,10 @@ bool
 is_vectype(enum valtype vt)
 {
         switch (vt) {
+#if defined(TOYWASM_ENABLE_WASM_SIMD)
         case TYPE_v128:
                 return true;
+#endif
         default:
                 break;
         }
@@ -37,7 +39,9 @@ bool
 is_reftype(enum valtype vt)
 {
         switch (vt) {
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
         case TYPE_EXNREF:
+#endif
         case TYPE_FUNCREF:
         case TYPE_EXTERNREF:
                 return true;
