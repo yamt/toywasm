@@ -866,6 +866,32 @@ fail:
         return ret;
 }
 
+static void
+clear_expr_exec_info(struct expr_exec_info *ei)
+{
+        free(ei->jumps);
+#if defined(TOYWASM_USE_SMALL_CELLS)
+        free(ei->type_annotations.types);
+#endif
+}
+
+static void
+clear_expr(struct expr *expr)
+{
+        clear_expr_exec_info(&expr->ei);
+}
+
+static void
+clear_func(struct func *func)
+{
+        struct localtype *lt = &func->localtype;
+        free(lt->localchunks);
+#if defined(TOYWASM_USE_LOCALTYPE_CELLIDX)
+        free(lt->cellidx.cellidxes);
+#endif
+        clear_expr(&func->e);
+}
+
 #if defined(TOYWASM_USE_LOCALTYPE_CELLIDX)
 static int
 populate_localtype_cellidx(struct localtype *lt)
@@ -992,6 +1018,10 @@ read_func(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
         uint32_t size;
         int ret;
 
+        func->e.ei.jumps = NULL;
+#if defined(TOYWASM_USE_SMALL_CELLS)
+        func->e.ei.type_annotations.types = NULL;
+#endif
         lt->localchunks = NULL;
 #if defined(TOYWASM_USE_LOCALTYPE_CELLIDX)
         lt->cellidx.cellidxes = NULL;
@@ -1016,6 +1046,10 @@ read_func(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
         }
 
         const uint8_t *cep = p + size;
+        if (ep < cep) {
+                ret = EINVAL;
+                goto fail;
+        }
         ret = read_locals(&p, cep, func, ctx);
         if (ret != 0) {
                 goto fail;
@@ -1033,34 +1067,8 @@ read_func(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
         *pp = p;
         return 0;
 fail:
-        free(lt->localchunks);
+        clear_func(func);
         return ret;
-}
-
-static void
-clear_expr_exec_info(struct expr_exec_info *ei)
-{
-        free(ei->jumps);
-#if defined(TOYWASM_USE_SMALL_CELLS)
-        free(ei->type_annotations.types);
-#endif
-}
-
-static void
-clear_expr(struct expr *expr)
-{
-        clear_expr_exec_info(&expr->ei);
-}
-
-static void
-clear_func(struct func *func)
-{
-        struct localtype *lt = &func->localtype;
-        free(lt->localchunks);
-#if defined(TOYWASM_USE_LOCALTYPE_CELLIDX)
-        free(lt->cellidx.cellidxes);
-#endif
-        clear_expr(&func->e);
 }
 
 static int
@@ -1291,6 +1299,20 @@ read_element_init_expr(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
         return read_const_expr(pp, ep, e, elem->type, ctx->lctx);
 }
 
+static void
+clear_element(struct element *elem)
+{
+        if (elem->init_exprs != NULL) {
+                uint32_t i;
+                for (i = 0; i < elem->init_size; i++) {
+                        clear_expr(&elem->init_exprs[i]);
+                }
+                free(elem->init_exprs);
+        }
+        free(elem->funcs);
+        clear_expr(&elem->offset);
+}
+
 /*
  * https://webassembly.github.io/spec/core/binary/modules.html#element-section
  * https://webassembly.github.io/spec/core/valid/modules.html#element-segments
@@ -1456,22 +1478,10 @@ read_element(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
         }
         ret = 0;
         *pp = p;
+        return 0;
 fail:
+        clear_element(elem);
         return ret;
-}
-
-static void
-clear_element(struct element *elem)
-{
-        if (elem->init_exprs != NULL) {
-                uint32_t i;
-                for (i = 0; i < elem->init_size; i++) {
-                        clear_expr(&elem->init_exprs[i]);
-                }
-                free(elem->init_exprs);
-        }
-        free(elem->funcs);
-        clear_expr(&elem->offset);
 }
 
 static void

@@ -286,14 +286,20 @@ table_instance_create(struct tableinst **tip, const struct tabletype *tt)
                 ret = EOVERFLOW;
                 goto fail;
         }
+        if (ncells > UINT32_MAX) {
+                /* implementation limit */
+                ret = EOVERFLOW;
+                goto fail;
+        }
         ret = ARRAY_RESIZE(tinst->cells, ncells);
         if (ret != 0) {
-                free(tinst);
                 goto fail;
         }
         memset(tinst->cells, 0, ncells * sizeof(*tinst->cells));
         *tip = tinst;
+        return 0;
 fail:
+        free(tinst);
         return ret;
 }
 

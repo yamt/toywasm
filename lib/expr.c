@@ -242,6 +242,7 @@ read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
 fail:
         validation_context_reuse(vctx);
         free(ei->jumps);
+        ei->jumps = NULL;
         return ret;
 }
 
