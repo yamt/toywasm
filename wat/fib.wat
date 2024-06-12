@@ -1,7 +1,26 @@
 ;; return the n-th number in fibonacci sequence
 
 (module
-  (func $fib (export "fib") (param i64 i64 i64) (result i64)
+  (func $fib-slow (export "fib-slow") (param i64) (result i64)
+    local.get 0
+    i64.const 2
+    i64.le_u
+    if
+      i64.const 1
+      return
+    end
+    local.get 0
+    i64.const 1
+    i64.sub
+    call $fib-slow
+    local.get 0
+    i64.const 2
+    i64.sub
+    call $fib-slow
+    i64.add
+  )
+
+  (func $fib-recurse-sub (param i64 i64 i64) (result i64)
     local.get 0
     i64.eqz
     if
@@ -15,14 +34,14 @@
     local.get 1
     local.get 2
     i64.add
-    call $fib
+    call $fib-recurse-sub
   )
 
   (func $fib-recurse (export "fib-recurse") (param i64) (result i64)
     local.get 0
     i64.const 0
     i64.const 1
-    call $fib
+    call $fib-recurse-sub
   )
 
   (func $fib-loop (export "fib-loop") (param i64) (result i64)
@@ -126,8 +145,11 @@
     call $test-func
     i32.const 2
     call $test-func
+    ;; commented out because fib-slow is very slow
+    ;; i32.const 3
+    ;; call $test-func
   )
 
-  (table 3 funcref)
-  (elem (i32.const 0) $fib-recurse $fib-loop $fib-math)
+  (table 4 funcref)
+  (elem (i32.const 0) $fib-recurse $fib-loop $fib-math $fib-slow)
 )
