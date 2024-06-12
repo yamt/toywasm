@@ -100,12 +100,12 @@ _read_vec_with_ctx_impl(const uint8_t **pp, const uint8_t *ep,
         uint32_t vec_count;
         int ret;
 
+        uint32_t orig_count = *countp;
+        assert((orig_count == 0) == (*resultp == NULL));
         ret = read_vec_count(&p, ep, &vec_count);
         if (ret != 0) {
                 goto fail;
         }
-        uint32_t orig_count = *countp;
-        assert((orig_count == 0) == (*resultp == NULL));
         uint32_t total_count = orig_count + vec_count;
         ret = resize_array(resultp, elem_size, total_count);
         if (ret != 0) {
@@ -130,7 +130,12 @@ _read_vec_with_ctx_impl(const uint8_t **pp, const uint8_t *ep,
         ret = 0;
         *pp = p;
         *countp = total_count;
+        return 0;
 fail:
+        if (orig_count == 0) {
+                free(*resultp);
+                *resultp = NULL;
+        }
         return ret;
 }
 
