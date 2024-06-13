@@ -146,7 +146,7 @@ void table_instance_destroy(struct mem_context *mctx, struct tableinst *ti);
  * mainly for wasi-threads, where it's host's responsibility to
  * provide the linear memory.
  */
-int create_satisfying_shared_memories(const struct module *module,
+int create_satisfying_shared_memories(struct mem_context *mctx, const struct module *module,
                                       struct import_object **imop);
 
 void instance_print_stats(const struct instance *inst);
