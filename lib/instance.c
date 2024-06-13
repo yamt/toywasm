@@ -8,6 +8,7 @@
 #include "exec.h"
 #include "instance.h"
 #include "module.h"
+#include "mem.h"
 #include "nbio.h"
 #include "shared_memory_impl.h"
 #include "suspend.h"
@@ -150,13 +151,13 @@ check_tagtype(const struct import_object_entry *e, const void *vp)
 #endif
 
 int
-memory_instance_create(struct meminst **mip,
+memory_instance_create(struct mem_context *mctx, struct meminst **mip,
                        const struct memtype *mt) NO_THREAD_SAFETY_ANALYSIS
 {
         struct meminst *mp;
         int ret;
 
-        mp = zalloc(sizeof(*mp));
+        mp = mem_zalloc(mctx, sizeof(*mp));
         if (mp == NULL) {
                 ret = ENOMEM;
                 goto fail;
@@ -171,21 +172,21 @@ memory_instance_create(struct meminst **mip,
                 uint32_t page_shift = memtype_page_shift(mt);
                 uint64_t need_in_bytes = need_in_pages << page_shift;
                 if (need_in_bytes > SIZE_MAX) {
-                        free(mp);
+                        mem_free(mctx, mp, sizeof(*mp));
                         ret = EOVERFLOW;
                         goto fail;
                 }
-                mp->shared = zalloc(sizeof(*mp->shared));
+                mp->shared = mem_zalloc(mctx, sizeof(*mp->shared));
                 if (mp->shared == NULL) {
-                        free(mp);
+                        mem_free(mctx, mp, sizeof(*mp));
                         ret = ENOMEM;
                         goto fail;
                 }
                 if (need_in_bytes > 0) {
-                        mp->data = zalloc(need_in_bytes);
+                        mp->data = mem_zalloc(mctx->need_in_bytes);
                         if (mp->data == NULL) {
-                                free(mp->shared);
-                                free(mp);
+                                mem_free(mctx, mp->shared, sizeof(*mp->shared));
+                                mem_free(mctx, mp, sizeof(*mp));
                                 ret = ENOMEM;
                                 goto fail;
                         }
@@ -197,6 +198,7 @@ memory_instance_create(struct meminst **mip,
 #endif
         mp->size_in_pages = mt->lim.min;
         mp->type = mt;
+        mp->mctx = mctx;
         *mip = mp;
         return 0;
 fail:
@@ -204,27 +206,29 @@ fail:
 }
 
 void
-memory_instance_destroy(struct meminst *mi)
+memory_instance_destroy(struct mem_context *mctx, struct meminst *mi)
 {
         if (mi != NULL) {
+                assert(mctx == mi->mctx);
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
                 struct shared_meminst *shared = mi->shared;
                 if (shared != NULL) {
                         toywasm_mutex_destroy(&shared->lock);
                         free(shared);
+                        mem_free(mctx, mp->shared, sizeof(*mp->shared));
                 }
 #endif
-                free(mi->data);
+                mem_free(mctx, mi->data, mi->allocated);
         }
-        free(mi);
+        mem_free(mctx, mi, sizeof(*mi));
 }
 
 int
-global_instance_create(struct globalinst **gip, const struct globaltype *gt)
+global_instance_create(struct mem_context *mctx, struct globalinst **gip, const struct globaltype *gt)
 {
         struct globalinst *ginst;
         int ret;
-        ginst = zalloc(sizeof(*ginst));
+        ginst = mem_alloc(mctx, sizeof(*ginst));
         if (ginst == NULL) {
                 ret = ENOMEM;
                 goto fail;
@@ -238,18 +242,18 @@ fail:
 }
 
 void
-global_instance_destroy(struct globalinst *gi)
+global_instance_destroy(struct mem_context *mctx, struct globalinst *gi)
 {
-        free(gi);
+        mem_free(mctx, gi, sizeof(*gi));
 }
 
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
 int
-tag_instance_create(struct taginst **tip, const struct functype *ft)
+tag_instance_create(struct mem_context *mctx, struct taginst **tip, const struct functype *ft)
 {
         struct taginst *ti;
         int ret;
-        ti = zalloc(sizeof(*ti));
+        ti = mem_zalloc(mctx, sizeof(*ti));
         if (ti == NULL) {
                 ret = ENOMEM;
                 goto fail;
@@ -262,18 +266,18 @@ fail:
 }
 
 void
-tag_instance_destroy(struct taginst *ti)
+tag_instance_destroy(struct mem_context *mctx, struct taginst *ti)
 {
-        free(ti);
+        mem_free(mctx, ti);
 }
 #endif
 
 int
-table_instance_create(struct tableinst **tip, const struct tabletype *tt)
+table_instance_create(struct mem_context *mctx, struct tableinst **tip, const struct tabletype *tt)
 {
         struct tableinst *tinst;
         int ret;
-        tinst = zalloc(sizeof(*tinst));
+        tinst = mem_zalloc(mctx, sizeof(*tinst));
         if (tinst == NULL) {
                 ret = ENOMEM;
                 goto fail;
@@ -291,38 +295,42 @@ table_instance_create(struct tableinst **tip, const struct tabletype *tt)
                 ret = EOVERFLOW;
                 goto fail;
         }
-        ret = ARRAY_RESIZE(tinst->cells, ncells);
+        ret = ARRAY_RESIZE(mctx, tinst->cells, 0, ncells);
         if (ret != 0) {
                 goto fail;
         }
         memset(tinst->cells, 0, ncells * sizeof(*tinst->cells));
+        tinst->mctx = mctx;
         *tip = tinst;
         return 0;
 fail:
-        free(tinst);
+        mem_free(mctx, tinst, sizeof(*tinst));
         return ret;
 }
 
 void
-table_instance_destroy(struct tableinst *ti)
+table_instance_destroy(struct mem_context *mctx ,struct tableinst *ti)
 {
+		assert(mctx == ti->mctx);
         if (ti != NULL) {
-                free(ti->cells);
+                uint32_t csz = valtype_cellsize(ti->type->et);
+                size_t ncells = (size_t)ti->size * csz;
+                mem_free(mctx, ti->cells, ncells);
         }
-        free(ti);
+        mem_free(mctx, ti, sizeof(*ti));
 }
 
 /* https://webassembly.github.io/spec/core/exec/modules.html#exec-instantiation
  */
 
 int
-instance_create(const struct module *m, struct instance **instp,
+instance_create(struct mem_context *mctx, const struct module *m, struct instance **instp,
                 const struct import_object *imports, struct report *report)
 {
         struct instance *inst;
         int ret;
 
-        ret = instance_create_no_init(m, &inst, imports, report);
+        ret = instance_create_no_init(mctx, m, &inst, imports, report);
         if (ret != 0) {
                 return ret;
         }
@@ -440,7 +448,7 @@ fail:
 }
 
 int
-instance_create_no_init(const struct module *m, struct instance **instp,
+instance_create_no_init(struct mem_context *mctx, const struct module *m, struct instance **instp,
                         const struct import_object *imports,
                         struct report *report)
 {
@@ -448,36 +456,37 @@ instance_create_no_init(const struct module *m, struct instance **instp,
         uint32_t i;
         int ret;
 
-        inst = zalloc(sizeof(*inst));
+        inst = mem_zalloc(mctx, sizeof(*inst));
         if (inst == NULL) {
                 ret = ENOMEM;
                 goto fail;
         }
         inst->module = m;
+        inst->mctx = mctx;
 
         uint32_t nfuncs = m->nimportedfuncs + m->nfuncs;
-        ret = VEC_RESIZE(inst->funcs, nfuncs);
+        ret = VEC_RESIZE(mctx, inst->funcs, nfuncs);
         if (ret != 0) {
                 goto fail;
         }
         uint32_t nmems = m->nimportedmems + m->nmems;
-        ret = VEC_RESIZE(inst->mems, nmems);
+        ret = VEC_RESIZE(mctx, inst->mems, nmems);
         if (ret != 0) {
                 goto fail;
         }
         uint32_t nglobals = m->nimportedglobals + m->nglobals;
-        ret = VEC_RESIZE(inst->globals, nglobals);
+        ret = VEC_RESIZE(mctx, inst->globals, nglobals);
         if (ret != 0) {
                 goto fail;
         }
         uint32_t ntables = m->nimportedtables + m->ntables;
-        ret = VEC_RESIZE(inst->tables, ntables);
+        ret = VEC_RESIZE(mctx, inst->tables, ntables);
         if (ret != 0) {
                 goto fail;
         }
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
         uint32_t ntags = m->nimportedtags + m->ntags;
-        ret = VEC_RESIZE(inst->tags, ntags);
+        ret = VEC_RESIZE(mctx, inst->tags, ntags);
         if (ret != 0) {
                 goto fail;
         }
@@ -489,7 +498,7 @@ instance_create_no_init(const struct module *m, struct instance **instp,
         }
 
         for (i = m->nimportedfuncs; i < nfuncs; i++) {
-                struct funcinst *fp = zalloc(sizeof(*fp));
+                struct funcinst *fp = mem_zalloc(mctx, sizeof(*fp));
                 if (fp == NULL) {
                         ret = ENOMEM;
                         goto fail;
@@ -503,7 +512,7 @@ instance_create_no_init(const struct module *m, struct instance **instp,
         for (i = m->nimportedmems; i < nmems; i++) {
                 struct meminst *mp;
                 const struct memtype *mt = module_memtype(m, i);
-                ret = memory_instance_create(&mp, mt);
+                ret = memory_instance_create(mctx, &mp, mt);
                 if (ret != 0) {
                         goto fail;
                 }
@@ -513,7 +522,7 @@ instance_create_no_init(const struct module *m, struct instance **instp,
         for (i = m->nimportedglobals; i < nglobals; i++) {
                 struct globalinst *ginst;
                 const struct globaltype *gt = module_globaltype(m, i);
-                ret = global_instance_create(&ginst, gt);
+                ret = global_instance_create(mctx, &ginst, gt);
                 if (ret != 0) {
                         goto fail;
                 }
@@ -523,7 +532,7 @@ instance_create_no_init(const struct module *m, struct instance **instp,
         for (i = m->nimportedtables; i < ntables; i++) {
                 struct tableinst *tinst;
                 const struct tabletype *tt = module_tabletype(m, i);
-                ret = table_instance_create(&tinst, tt);
+                ret = table_instance_create(mctx, &tinst, tt);
                 if (ret != 0) {
                         goto fail;
                 }
@@ -535,7 +544,7 @@ instance_create_no_init(const struct module *m, struct instance **instp,
                 struct taginst *tinst;
                 const struct tagtype *tt = module_tagtype(m, i);
                 const struct functype *ft = module_tagtype_functype(m, tt);
-                ret = tag_instance_create(&tinst, ft);
+                ret = tag_instance_create(mctx, &tinst, ft);
                 if (ret != 0) {
                         goto fail;
                 }
@@ -629,52 +638,53 @@ void
 instance_destroy(struct instance *inst)
 {
         const struct module *m = inst->module;
+        struct mem_context *mctx = inst->mctx;
         uint32_t i;
         struct funcinst **fp;
         VEC_FOREACH_IDX(i, fp, inst->funcs) {
                 if (i < m->nimportedfuncs) {
                         continue;
                 }
-                free(*fp);
+                mem_free(mctx, *fp, sizeof(**fp));
         }
-        VEC_FREE(inst->funcs);
+        VEC_FREE(mctx, inst->funcs);
         struct meminst **mp;
         VEC_FOREACH_IDX(i, mp, inst->mems) {
                 if (i < m->nimportedmems) {
                         continue;
                 }
-                memory_instance_destroy(*mp);
+                memory_instance_destroy(mctx, *mp);
         }
-        VEC_FREE(inst->mems);
+        VEC_FREE(mctx, inst->mems);
         struct globalinst **gp;
         VEC_FOREACH_IDX(i, gp, inst->globals) {
                 if (i < m->nimportedglobals) {
                         continue;
                 }
-                global_instance_destroy(*gp);
+                global_instance_destroy(mctx, *gp);
         }
-        VEC_FREE(inst->globals);
+        VEC_FREE(mctx, inst->globals);
         struct tableinst **tp;
         VEC_FOREACH_IDX(i, tp, inst->tables) {
                 if (i < m->nimportedtables) {
                         continue;
                 }
-                table_instance_destroy(*tp);
+                table_instance_destroy(mctx, *tp);
         }
-        VEC_FREE(inst->tables);
+        VEC_FREE(mctx, inst->tables);
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
         struct taginst **tagp;
         VEC_FOREACH_IDX(i, tagp, inst->tags) {
                 if (i < m->nimportedtags) {
                         continue;
                 }
-                tag_instance_destroy(*tagp);
+                tag_instance_destroy(mctx, *tagp);
         }
-        VEC_FREE(inst->tags);
+        VEC_FREE(mctx, inst->tags);
 #endif
         bitmap_free(&inst->data_dropped);
         bitmap_free(&inst->elem_dropped);
-        free(inst);
+        mem_free(mctx, inst, sizeof(*inst));
 }
 
 int

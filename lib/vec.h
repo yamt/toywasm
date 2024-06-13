@@ -6,6 +6,8 @@
 #include "platform.h"
 #include "util.h"
 
+struct mem_context;
+
 #define VEC(TAG, TYPE)                                                        \
         struct TAG {                                                          \
                 TYPE *p;                                                      \
@@ -15,10 +17,10 @@
 
 __BEGIN_EXTERN_C
 
-int __must_check _vec_resize(void *vec, size_t elem_size,
+int __must_check _vec_resize(struct mem_context *ctx, void *vec, size_t elem_size,
                              uint32_t new_elem_count);
-int __must_check _vec_prealloc(void *vec, size_t elem_size, uint32_t count);
-void _vec_free(void *vec);
+int __must_check _vec_prealloc(struct mem_context *ctx, void *vec, size_t elem_size, uint32_t count);
+void _vec_free(struct mem_context *ctx, void *vec);
 
 __END_EXTERN_C
 
@@ -28,14 +30,14 @@ __END_EXTERN_C
  * when extending the vector, it initializes newly allocated elements
  * with zeros.
  */
-#define VEC_RESIZE(v, sz) _vec_resize(&v, sizeof(*v.p), sz);
+#define VEC_RESIZE(ctx, v, sz) _vec_resize(ctx, &v, sizeof(*v.p), sz);
 /*
  * VEC_PREALLOC ensures the vector to have enough tail room to store the
  * given number of elements. that is, psize >= lsize + needed.
  * it doesn't initialize newly allocated elements.
  */
-#define VEC_PREALLOC(v, needed) _vec_prealloc(&v, sizeof(*v.p), needed);
-#define VEC_FREE(v) _vec_free(&v)
+#define VEC_PREALLOC(ctx, v, needed) _vec_prealloc(ctx, &v, sizeof(*v.p), needed);
+#define VEC_FREE(ctx, v) _vec_free(ctx, &v)
 #define VEC_FOREACH(it, v) ARRAY_FOREACH(it, v.p, v.lsize)
 #define VEC_FOREACH_IDX(i, it, v) for (i = 0, it = v.p; i < v.lsize; i++, it++)
 #define VEC_ELEM(v, idx) (v.p[idx])

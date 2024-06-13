@@ -33,9 +33,8 @@ resize_array(void **p, size_t elem_size, uint32_t new_elem_count)
         return 0;
 }
 
-#if !defined(__NuttX__) /* Avoid conflicting with libc zalloc */
 void *
-zalloc(size_t sz)
+xzalloc(size_t sz)
 {
         assert(sz > 0);
         void *p = malloc(sz);
@@ -44,7 +43,6 @@ zalloc(size_t sz)
         }
         return p;
 }
-#endif
 
 char *
 xstrnstr(const char *haystack, const char *needle, size_t len)

@@ -21,6 +21,7 @@ set(lib_core_sources
 	"leb128.c"
 	"list.c"
 	"load_context.c"
+	"mem.c"
 	"module.c"
 	"name.c"
 	"nbio.c"

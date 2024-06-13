@@ -9,6 +9,7 @@ struct idalloc {
         VEC(, void *) vec;
         uint32_t base;
         uint32_t maxid;
+        struct mem_context *mctx;
 };
 
 __BEGIN_EXTERN_C

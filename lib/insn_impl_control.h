@@ -359,7 +359,15 @@ INSN_IMPL(br_table)
                  */
                 INSN_SUCCESS_RETURN;
         }
-        ret = read_vec_u32(&p, ep, &vec_count, &table);
+        struct mem_context *mctx;
+        struct mem_context mctx0;
+        if (VALIDATING) {
+            mctx = VCTX->mctx;
+		} else {
+            mctx = &mctx0;
+            mem_context_init(mctx);
+        }
+        ret = read_vec_u32(mctx, &p, ep, &vec_count, &table);
         CHECK_RET(ret);
         READ_LEB_U32(defaultidx);
         POP_VAL(TYPE_i32, l);
@@ -394,7 +402,10 @@ INSN_IMPL(br_table)
                 }
                 mark_unreachable(vctx);
         }
-        free(table);
+        mem_free(mctx, table, vec_count * sizeof(uint32_t));
+        if (!VALIDATING) {
+            mem_context_clear(mctx);
+		}
         SAVE_PC;
         INSN_SUCCESS;
 fail:

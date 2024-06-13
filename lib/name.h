@@ -1,3 +1,4 @@
+#include "mem.h"
 #include "type.h"
 
 __BEGIN_EXTERN_C
@@ -13,6 +14,7 @@ struct nametable {
         const struct module *module;
         struct name module_name;
         struct namemap funcs;
+        struct mem_context mctx;
 };
 
 void nametable_init(struct nametable *table);

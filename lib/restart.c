@@ -36,7 +36,7 @@ restart_info_prealloc(struct exec_context *ctx)
         if (ctx->restarts.lsize < ctx->restarts.psize) {
                 return 0;
         }
-        int ret = VEC_PREALLOC(ctx->restarts, 1);
+        int ret = VEC_PREALLOC(exec_mctx(ctx), ctx->restarts, 1);
         if (ret != 0) {
                 return ret;
         }

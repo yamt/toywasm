@@ -49,7 +49,7 @@ import_object_create_for_host_funcs(const struct host_module *modules,
         if (ret != 0) {
                 goto fail;
         }
-        fis = zalloc(nfuncs * sizeof(*fis));
+        fis = xzalloc(nfuncs * sizeof(*fis));
         if (fis == NULL) {
                 ret = ENOMEM;
                 goto fail;

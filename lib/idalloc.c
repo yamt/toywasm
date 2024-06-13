@@ -27,7 +27,7 @@ idalloc_init(struct idalloc *ida, uint32_t minid, uint32_t maxid)
 void
 idalloc_destroy(struct idalloc *ida)
 {
-        VEC_FREE(ida->vec);
+        VEC_FREE(ida->mctx, ida->vec);
 }
 
 int
@@ -47,7 +47,7 @@ idalloc_alloc(struct idalloc *ida, uint32_t *idp)
         if (ida->maxid < id) {
                 return ERANGE;
         }
-        ret = VEC_RESIZE(ida->vec, id + 1);
+        ret = VEC_RESIZE(ida->mctx, ida->vec, id + 1);
         if (ret != 0) {
                 return ret;
         }

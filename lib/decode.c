@@ -74,10 +74,10 @@ fail:
 }
 
 int
-read_vec_u32(const uint8_t **pp, const uint8_t *ep, uint32_t *countp,
+read_vec_u32(struct mem_context *mctx, const uint8_t **pp, const uint8_t *ep, uint32_t *countp,
              uint32_t **resultp)
 {
-        return read_vec(pp, ep, sizeof(uint32_t),
+        return read_vec(mctx, pp, ep, sizeof(uint32_t),
                         (read_elem_func_t)read_leb_u32, NULL, countp,
                         (void *)resultp);
 }
@@ -89,7 +89,7 @@ read_vec_u32(const uint8_t **pp, const uint8_t *ep, uint32_t *countp,
  * - the ctx pointer
  */
 int
-_read_vec_with_ctx_impl(const uint8_t **pp, const uint8_t *ep,
+_read_vec_with_ctx_impl(struct mem_context *mctx, const uint8_t **pp, const uint8_t *ep,
                         size_t elem_size,
                         int (*read_elem)(const uint8_t **pp, const uint8_t *ep,
                                          uint32_t idx, void *elem, void *),
@@ -107,7 +107,7 @@ _read_vec_with_ctx_impl(const uint8_t **pp, const uint8_t *ep,
                 goto fail;
         }
         uint32_t total_count = orig_count + vec_count;
-        ret = resize_array(resultp, elem_size, total_count);
+        ret = resize_array(mctx, resultp, elem_size, orig_count, total_count);
         if (ret != 0) {
                 goto fail;
         }
@@ -154,13 +154,13 @@ read_elem_wrapper(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
 }
 
 int
-read_vec(const uint8_t **pp, const uint8_t *ep, size_t elem_size,
+read_vec(struct mem_context *mctx, const uint8_t **pp, const uint8_t *ep, size_t elem_size,
          int (*read_elem)(const uint8_t **pp, const uint8_t *ep, void *elem),
          void (*clear_elem)(void *elem), uint32_t *countp, void **resultp)
 {
         struct read_vec_ctx ctx = {
                 .read_elem = read_elem,
         };
-        return _read_vec_with_ctx_impl(pp, ep, elem_size, read_elem_wrapper,
+        return _read_vec_with_ctx_impl(mctx, pp, ep, elem_size, read_elem_wrapper,
                                        clear_elem, &ctx, countp, resultp);
 }

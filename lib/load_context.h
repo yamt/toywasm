@@ -13,8 +13,11 @@ struct load_context {
         bool has_datacount;
         uint32_t ndatas_in_datacount;
         struct load_options options;
+        struct mem_context *mctx;
         struct validation_context *vctx;
 };
+
+#define load_mctx(l) (l)->mctx
 
 __BEGIN_EXTERN_C
 

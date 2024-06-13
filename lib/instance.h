@@ -9,6 +9,7 @@ struct resulttype;
 struct import;
 struct import_object;
 struct import_object_entry;
+struct mem_context;
 struct report;
 struct name;
 
@@ -18,7 +19,7 @@ __BEGIN_EXTERN_C
  * This API is inspired from js-api.
  * https://webassembly.github.io/spec/js-api/index.html#instances
  */
-int instance_create(const struct module *m, struct instance **instp,
+int instance_create(struct mem_context *mctx, const struct module *m, struct instance **instp,
                     const struct import_object *imports,
                     struct report *report);
 
@@ -32,7 +33,7 @@ int instance_create(const struct module *m, struct instance **instp,
  * note than instance_execute_init can return a restartable error.
  * see also: instance_execute_continue.
  */
-int instance_create_no_init(const struct module *m, struct instance **instp,
+int instance_create_no_init(struct mem_context *mctx, const struct module *m, struct instance **instp,
                             const struct import_object *imports,
                             struct report *report);
 int instance_execute_init(struct exec_context *ctx);
@@ -122,19 +123,19 @@ int import_object_find_entry(
 
 struct meminst;
 struct memtype;
-int memory_instance_create(struct meminst **mip, const struct memtype *mt);
-void memory_instance_destroy(struct meminst *mi);
+int memory_instance_create(struct mem_context *mctx, struct meminst **mip, const struct memtype *mt);
+void memory_instance_destroy(struct mem_context *mctx, struct meminst *mi);
 
 struct globalinst;
 struct globaltype;
-int global_instance_create(struct globalinst **gip,
+int global_instance_create(struct mem_context *mctx, struct globalinst **gip,
                            const struct globaltype *gt);
-void global_instance_destroy(struct globalinst *gi);
+void global_instance_destroy(struct mem_context *mctx, struct globalinst *gi);
 
 struct tableinst;
 struct tabletype;
-int table_instance_create(struct tableinst **tip, const struct tabletype *tt);
-void table_instance_destroy(struct tableinst *ti);
+int table_instance_create(struct mem_context *mctx, struct tableinst **tip, const struct tabletype *tt);
+void table_instance_destroy(struct mem_context *mctx, struct tableinst *ti);
 
 /*
  * create_satisfying_shared_memories:

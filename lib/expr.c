@@ -167,10 +167,11 @@ read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
         vctx->options = &lctx->options;
         struct expr_exec_info *ei;
         vctx->ei = ei = &expr->ei;
+        vctx->mctx = lctx->mctx;
         memset(ei, 0, sizeof(*ei));
 
         uint32_t lsize = parameter_types->ntypes + nlocals;
-        ret = VEC_PREALLOC(vctx->locals, lsize);
+        ret = VEC_PREALLOC(vctx->mctx, vctx->locals, lsize);
         if (ret != 0) {
                 goto fail;
         }

@@ -314,12 +314,16 @@ struct exec_context {
         void *exec_done_arg;
 #endif
 
+		struct mem_context *mctx;
+
         /* Options */
         struct exec_options options;
 
         /* Statistics */
         struct exec_stat stats;
 };
+
+#define exec_mctx(ectx) (ectx)->mctx
 
 /* For funcframe.funcidx */
 #define FUNCIDX_INVALID UINT32_MAX

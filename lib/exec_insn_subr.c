@@ -8,6 +8,7 @@
 #include "bitmap.h"
 #include "exec.h"
 #include "leb128.h"
+#include "mem.h"
 #include "platform.h"
 #include "restart.h"
 #include "shared_memory_impl.h"
@@ -103,10 +104,11 @@ do_trap:
 #endif
                 size_t need = (size_t)last_byte + 1;
                 assert(need > meminst->allocated);
-                int ret = resize_array((void **)&meminst->data, need, 1);
-                if (ret != 0) {
-                        return ret;
+                void *np = mem_resize(meminst->mctx, meminst->data, meminst->allocated, need);
+                if (np == NULL) {
+                        return ENOMEM;
                 }
+                meminst->data = np;
                 xlog_trace_insn("extend memory %" PRIu32 " from %zu to %zu",
                                 memidx, meminst->allocated, need);
                 if (movedp != NULL) {
@@ -343,7 +345,8 @@ table_grow(struct tableinst *t, const struct val *val, uint32_t n)
         if (newncells / csz != newsize) {
                 ret = EOVERFLOW;
         } else {
-                ret = ARRAY_RESIZE(t->cells, newncells);
+                size_t oldncells = t->size * csz;
+                ret = ARRAY_RESIZE(t->mctx, t->cells, oldncells, newncells);
         }
         if (ret != 0) {
                 return (uint32_t)-1;
@@ -470,17 +473,21 @@ retry:
 #endif /* defined(TOYWASM_ENABLE_WASM_THREADS) */
                 assert(new_size > mi->allocated >> page_shift);
                 int ret;
-                ret = resize_array((void **)&mi->data, page_size, new_size);
-                if (ret == 0) {
-                        /*
-                         * Note: overflow check is already done in
-                         * resize_array
-                         */
-                        size_t new_allocated = (size_t)new_size << page_shift;
-                        assert(new_allocated > mi->allocated);
+                size_t new_size_in_bytes = (size_t)new_size << page_shift;
+                if (new_size_in_bytes >> page_shift != new_size) {
+                        ret = EOVERFLOW;
+                } else {
+                        void *np = mem_resize(mi->mctx, mi->data, mi->allocated, new_size_in_bytes);
+                        if (np == NULL) {
+                            ret = ENOMEM;
+                        } else {
+                        ret = 0;
+                            mi->data = np;
+                        assert(new_size_in_bytes > mi->allocated);
                         memset(mi->data + mi->allocated, 0,
-                               new_allocated - mi->allocated);
-                        mi->allocated = new_allocated;
+                               new_size_in_bytes - mi->allocated);
+                        mi->allocated = new_size_in_bytes;
+                        }
                 }
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
                 if (shared && c != NULL) {

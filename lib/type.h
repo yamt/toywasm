@@ -578,6 +578,7 @@ struct meminst {
          */
         struct shared_meminst *shared;
 #endif
+		struct mem_context *mctx;
 };
 
 struct globalinst {
@@ -598,6 +599,7 @@ struct tableinst {
         struct cell *cells;
         uint32_t size; /* overrides type->min */
         const struct tabletype *type;
+        struct mem_context *mctx;
 };
 
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
@@ -635,6 +637,8 @@ struct instance {
          */
         struct bitmap data_dropped;
         struct bitmap elem_dropped;
+
+        struct mem_context *mctx;
 };
 
 /*
