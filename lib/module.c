@@ -20,6 +20,7 @@
 #include "leb128.h"
 #include "load_context.h"
 #include "module.h"
+#include "mem.h"
 #include "nbio.h"
 #include "report.h"
 #include "type.h"
@@ -145,7 +146,7 @@ read_resulttype(const uint8_t **pp, const uint8_t *ep, struct resulttype *rt,
 #if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
         rt->cellidx.cellidxes = NULL;
 #endif
-        ret = read_vec(&p, ep, sizeof(*rt->types),
+        ret = read_vec(load_mctx(ctx), &p, ep, sizeof(*rt->types),
                        (read_elem_func_t)read_valtype, NULL, &rt->ntypes,
                        (void *)&rt->types);
         if (ret != 0) {
@@ -819,7 +820,7 @@ read_type_section(const uint8_t **pp, const uint8_t *ep,
         const uint8_t *p = *pp;
         int ret;
 
-        ret = read_vec_with_ctx(&p, ep, sizeof(*m->types), read_functype,
+        ret = read_vec_with_ctx(load_mctx(ctx),&p, ep, sizeof(*m->types), read_functype,
                                 clear_functype, ctx, &m->ntypes, &m->types);
         if (ret != 0) {
                 goto fail;
@@ -844,7 +845,7 @@ read_import_section(const uint8_t **pp, const uint8_t *ep,
         const uint8_t *p = *pp;
         int ret;
 
-        ret = read_vec_with_ctx(&p, ep, sizeof(struct import), read_import,
+        ret = read_vec_with_ctx(load_mctx(ctx), &p, ep, sizeof(struct import), read_import,
                                 clear_import, ctx, &m->nimports, &m->imports);
         if (ret != 0) {
                 goto fail;
@@ -1079,7 +1080,7 @@ read_function_section(const uint8_t **pp, const uint8_t *ep,
         const uint8_t *p = *pp;
         int ret;
 
-        ret = read_vec_u32(&p, ep, &m->nfuncs, &m->functypeidxes);
+        ret = read_vec_u32(load_mctx(ctx), &p, ep, &m->nfuncs, &m->functypeidxes);
         if (ret != 0) {
                 goto fail;
         }
@@ -1121,7 +1122,7 @@ read_table_section(const uint8_t **pp, const uint8_t *ep,
         const uint8_t *p = *pp;
         int ret;
 
-        ret = read_vec(&p, ep, sizeof(*m->tables),
+        ret = read_vec(load_mctx(ctx), &p, ep, sizeof(*m->tables),
                        (read_elem_func_t)read_tabletype, NULL, &m->ntables,
                        (void *)&m->tables);
         if (ret != 0) {
@@ -1149,7 +1150,7 @@ read_memory_section(const uint8_t **pp, const uint8_t *ep,
         const uint8_t *p = *pp;
         int ret;
 
-        ret = read_vec_with_ctx(&p, ep, sizeof(*m->mems), read_memtype, NULL,
+        ret = read_vec_with_ctx(load_mctx(ctx), &p, ep, sizeof(*m->mems), read_memtype, NULL,
                                 ctx, &m->nmems, &m->mems);
         if (ret != 0) {
                 xlog_trace("failed to load mems with %d", ret);
@@ -1205,7 +1206,7 @@ read_global_section(const uint8_t **pp, const uint8_t *ep,
         const uint8_t *p = *pp;
         int ret;
 
-        ret = read_vec_with_ctx(&p, ep, sizeof(*m->globals), read_global,
+        ret = read_vec_with_ctx(load_mctx(ctx), &p, ep, sizeof(*m->globals), read_global,
                                 clear_global, ctx, &m->nglobals, &m->globals);
         if (ret != 0) {
                 goto fail;
@@ -1232,7 +1233,7 @@ read_export_section(const uint8_t **pp, const uint8_t *ep,
         const uint8_t *p = *pp;
         int ret;
 
-        ret = read_vec_with_ctx(&p, ep, sizeof(struct wasm_export),
+        ret = read_vec_with_ctx(load_mctx(ctx), &p, ep, sizeof(struct wasm_export),
                                 read_export, clear_export, ctx, &m->nexports,
                                 &m->exports);
         if (ret != 0) {
@@ -1431,7 +1432,7 @@ read_element(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
                  * vec(funcidx)
                  */
                 assert(elem->type == TYPE_FUNCREF);
-                ret = read_vec_u32(&p, ep, &elem->init_size, &elem->funcs);
+                ret = read_vec_u32(load_mctx(ctx), &p, ep, &elem->init_size, &elem->funcs);
                 if (ret != 0) {
                         goto fail;
                 }
@@ -1451,7 +1452,7 @@ read_element(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
                 /*
                  * vec(expr)
                  */
-                ret = read_vec_with_ctx(&p, ep, sizeof(*elem->init_exprs),
+                ret = read_vec_with_ctx(load_mctx(ctx), &p, ep, sizeof(*elem->init_exprs),
                                         read_element_init_expr, clear_expr,
                                         &init_expr_ctx, &elem->init_size,
                                         &elem->init_exprs);
@@ -1498,7 +1499,7 @@ read_element_section(const uint8_t **pp, const uint8_t *ep,
         const uint8_t *p = *pp;
         int ret;
 
-        ret = read_vec_with_ctx(&p, ep, sizeof(*m->elems), read_element,
+        ret = read_vec_with_ctx(load_mctx(ctx), &p, ep, sizeof(*m->elems), read_element,
                                 clear_element, ctx, &m->nelems, &m->elems);
         if (ret != 0) {
                 goto fail;
@@ -1525,7 +1526,7 @@ read_code_section(const uint8_t **pp, const uint8_t *ep,
 
         assert(m->funcs == NULL);
         uint32_t nfuncs_in_code = 0;
-        ret = read_vec_with_ctx(&p, ep, sizeof(*m->funcs), read_func,
+        ret = read_vec_with_ctx(load_mctx(ctx), &p, ep, sizeof(*m->funcs), read_func,
                                 clear_func, ctx, &nfuncs_in_code, &m->funcs);
         if (ret != 0) {
                 assert(nfuncs_in_code == 0);
@@ -1637,7 +1638,7 @@ read_data_section(const uint8_t **pp, const uint8_t *ep,
         const uint8_t *p = *pp;
         int ret;
 
-        ret = read_vec_with_ctx(&p, ep, sizeof(*m->datas), read_data,
+        ret = read_vec_with_ctx(load_mctx(ctx), &p, ep, sizeof(*m->datas), read_data,
                                 clear_data, ctx, &m->ndatas, &m->datas);
         if (ret != 0) {
                 goto fail;
@@ -2215,9 +2216,9 @@ fail:
 }
 
 static int
-module_create0(struct module **mp)
+module_create0(struct mem_context *mctx, struct module **mp)
 {
-        struct module *m = zalloc(sizeof(*m));
+        struct module *m = mem_zalloc(mctx, sizeof(*m));
         if (m == NULL) {
                 return ENOMEM;
         }
@@ -2226,17 +2227,17 @@ module_create0(struct module **mp)
 }
 
 int
-module_create(struct module **mp, const uint8_t *p, const uint8_t *ep,
+module_create(struct mem_context *mctx, struct module **mp, const uint8_t *p, const uint8_t *ep,
               struct load_context *ctx)
 {
         struct module *m;
-        int ret = module_create0(&m);
+        int ret = module_create0(mctx, &m);
         if (ret != 0) {
                 return ret;
         }
         ret = module_load_into(m, p, ep, ctx);
         if (ret != 0) {
-                module_destroy(m);
+                module_destroy(mctx, m);
                 return ret;
         }
         *mp = m;
@@ -2244,62 +2245,62 @@ module_create(struct module **mp, const uint8_t *p, const uint8_t *ep,
 }
 
 static void
-module_unload(struct module *m)
+module_unload(struct mem_context *mctx, struct module *m)
 {
         uint32_t i;
 
         for (i = 0; i < m->ntypes; i++) {
                 clear_functype(&m->types[i]);
         }
-        free(m->types);
+        mem_free(mctx, m->types, m->ntypes * sizeof(*m->types));
 
         if (m->funcs != NULL) {
                 for (i = 0; i < m->nfuncs; i++) {
                         clear_func(&m->funcs[i]);
                 }
-                free(m->funcs);
+                mem_free(mctx, m->funcs, m->nfuncs * sizeof(*m->funcs));
         }
-        free(m->functypeidxes);
+        mem_free(mctx, m->functypeidxes, m->nfuncs * sizeof(*m->functypeidxes));
 
-        free(m->tables);
-        free(m->mems);
+        mem_free(mctx, m->tables, m->ntables * sizeof(*m->tables));
+        mem_free(mctx, m->mems, m->nmems * sizeof(*m->mems));
 
         for (i = 0; i < m->nglobals; i++) {
                 clear_global(&m->globals[i]);
         }
-        free(m->globals);
+        mem_free(mctx, m->globals, m->nglobals * sizeof(*m->globals));
 
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
         for (i = 0; i < m->ntags; i++) {
                 clear_tagtype(&m->tags[i]);
         }
-        free(m->tags);
+        mem_free(mctx, m->tags, m->ntags * sizeof(*m->tags));
 #endif
 
         for (i = 0; i < m->nelems; i++) {
                 clear_element(&m->elems[i]);
         }
-        free(m->elems);
+        mem_free(mctx, m->elems, m->nelems * sizeof(*m->elems));
 
         for (i = 0; i < m->ndatas; i++) {
                 clear_data(&m->datas[i]);
         }
-        free(m->datas);
+        mem_free(mctx, m->datas, m->ndatas * sizeof(*m->datas));
 
         for (i = 0; i < m->nimports; i++) {
                 clear_import(&m->imports[i]);
         }
-        free(m->imports);
+        mem_free(mctx, m->imports, m->nimports * sizeof(*m->imports));
 
         for (i = 0; i < m->nexports; i++) {
                 clear_export(&m->exports[i]);
         }
-        free(m->exports);
+        mem_free(mctx, m->exports, m->nexports * sizeof(*m->exports));
 
 #if defined(TOYWASM_ENABLE_DYLD)
         if (m->dylink != NULL) {
                 clear_dylink(m->dylink);
-                free(m->dylink);
+                mem_free(mctx, m->dylink, sizeof(*m->dylink));
         }
 #endif
 
@@ -2307,11 +2308,11 @@ module_unload(struct module *m)
 }
 
 void
-module_destroy(struct module *m)
+module_destroy(struct mem_context *mctx, struct module *m)
 {
         assert(m != NULL);
-        module_unload(m);
-        free(m);
+        module_unload(mctx, m);
+        mem_free(mctx, m, sizeof(*m));
 }
 
 #if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)

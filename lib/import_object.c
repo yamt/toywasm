@@ -12,13 +12,13 @@ import_object_alloc(uint32_t nentries, struct import_object **resultp)
 {
         struct import_object *im;
 
-        im = zalloc(sizeof(*im));
+        im = xzalloc(sizeof(*im));
         if (im == NULL) {
                 return ENOMEM;
         }
         im->nentries = nentries;
         if (nentries > 0) {
-                im->entries = zalloc(nentries * sizeof(*im->entries));
+                im->entries = xzalloc(nentries * sizeof(*im->entries));
                 if (im->entries == NULL) {
                         free(im);
                         return ENOMEM;

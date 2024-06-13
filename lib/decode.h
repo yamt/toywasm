@@ -4,12 +4,14 @@
 
 #include "platform.h"
 
+struct mem_context;
+
 int read_u8(const uint8_t **pp, const uint8_t *ep, uint8_t *resultp);
 int read_u32(const uint8_t **pp, const uint8_t *ep, uint32_t *resultp);
 int read_u64(const uint8_t **pp, const uint8_t *ep, uint64_t *resultp);
 
 int read_vec_count(const uint8_t **pp, const uint8_t *ep, uint32_t *resultp);
-int read_vec_u32(const uint8_t **pp, const uint8_t *ep, uint32_t *countp,
+int read_vec_u32(struct mem_context *mctx, const uint8_t **pp, const uint8_t *ep, uint32_t *countp,
                  uint32_t **resultp);
 
 typedef int (*read_elem_func_t)(const uint8_t **pp, const uint8_t *ep,
@@ -18,11 +20,11 @@ typedef int (*read_elem_with_ctx_func_t)(const uint8_t **pp, const uint8_t *ep,
                                          uint32_t idx, void *elem, void *ctx);
 typedef void (*clear_elem_func_t)(void *elem);
 
-int read_vec(const uint8_t **pp, const uint8_t *ep, size_t elem_size,
+int read_vec(struct mem_context *mctx, const uint8_t **pp, const uint8_t *ep, size_t elem_size,
              read_elem_func_t read_elem, clear_elem_func_t clear_elem,
              uint32_t *countp, void **resultp);
 
-int _read_vec_with_ctx_impl(const uint8_t **pp, const uint8_t *ep,
+int _read_vec_with_ctx_impl(struct mem_context *mctx, const uint8_t **pp, const uint8_t *ep,
                             size_t elem_size,
                             read_elem_with_ctx_func_t read_elem,
                             clear_elem_func_t clear_elem, void *ctx,
@@ -42,22 +44,22 @@ int _read_vec_with_ctx_impl(const uint8_t **pp, const uint8_t *ep,
 
 #if defined(toywasm_typeof)
 /* a version with non-standard checks */
-#define read_vec_with_ctx(pp, ep, elem_size, read_elem, clear_elem, ctx,      \
+#define read_vec_with_ctx(mctx, pp, ep, elem_size, read_elem, clear_elem, ctx,      \
                           countp, resultp)                                    \
         ({                                                                    \
                 int (*_r)(const uint8_t **, const uint8_t *, uint32_t,        \
                           toywasm_typeof(*resultp), void *) = read_elem;      \
                 void (*_c)(toywasm_typeof(*resultp)) = clear_elem;            \
                 assert(sizeof(**resultp) == elem_size);                       \
-                _read_vec_with_ctx_impl(pp, ep, elem_size,                    \
+                _read_vec_with_ctx_impl(mctx, pp, ep, elem_size,                    \
                                         (read_elem_with_ctx_func_t)_r,        \
                                         (clear_elem_func_t)_c, ctx, countp,   \
                                         (void **)resultp);                    \
         })
 #else
-#define read_vec_with_ctx(pp, ep, elem_size, read_elem, clear_elem, ctx,      \
+#define read_vec_with_ctx(mctx, pp, ep, elem_size, read_elem, clear_elem, ctx,      \
                           countp, resultp)                                    \
-        _read_vec_with_ctx_impl(                                              \
+        _read_vec_with_ctx_impl(mctx,                                              \
                 pp, ep, elem_size, (read_elem_with_ctx_func_t)read_elem,      \
                 (clear_elem_func_t)clear_elem, ctx, countp, (void **)resultp)
 #endif

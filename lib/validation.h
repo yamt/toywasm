@@ -57,6 +57,7 @@ struct validation_context {
         struct bitmap *refs;
 
         const struct load_options *options;
+        struct mem_context *mctx;
 
 #if defined(TOYWASM_USE_SEPARATE_VALIDATE)
         const uint8_t *p;

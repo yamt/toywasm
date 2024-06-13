@@ -67,7 +67,7 @@ stack_prealloc(struct exec_context *ctx, uint32_t count)
                 return trap_with_id(ctx, TRAP_TOO_MANY_STACKCELLS,
                                     "too many values on the operand stack");
         }
-        return VEC_PREALLOC(ctx->stack, count);
+        return VEC_PREALLOC(exec_mctx(ctx), ctx->stack, count);
 }
 
 static void
@@ -177,7 +177,7 @@ frame_enter(struct exec_context *ctx, struct instance *inst, uint32_t funcidx,
                 return trap_with_id(ctx, TRAP_TOO_MANY_FRAMES,
                                     "too many frames");
         }
-        ret = VEC_PREALLOC(ctx->frames, 1);
+        ret = VEC_PREALLOC(exec_mctx(ctx), ctx->frames, 1);
         if (ret != 0) {
                 return ret;
         }
@@ -191,14 +191,14 @@ frame_enter(struct exec_context *ctx, struct instance *inst, uint32_t funcidx,
         frame->labelidx = ctx->labels.lsize;
 #if defined(TOYWASM_USE_SEPARATE_LOCALS)
         frame->localidx = ctx->locals.lsize;
-        ret = VEC_PREALLOC(ctx->locals, nlocals);
+        ret = VEC_PREALLOC(exec_mctx(ctx), ctx->locals, nlocals);
         if (ret != 0) {
                 return ret;
         }
 #endif
         if (ei->maxlabels > 1) {
                 frame->labelidx = ctx->labels.lsize;
-                ret = VEC_PREALLOC(ctx->labels, ei->maxlabels - 1);
+                ret = VEC_PREALLOC(exec_mctx(ctx), ctx->labels, ei->maxlabels - 1);
                 if (ret != 0) {
                         return ret;
                 }
@@ -1511,13 +1511,13 @@ exec_context_clear(struct exec_context *ctx)
         VEC_FOREACH(frame, ctx->frames) {
                 frame_clear(frame);
         }
-        VEC_FREE(ctx->frames);
-        VEC_FREE(ctx->stack);
-        VEC_FREE(ctx->labels);
+        VEC_FREE(exec_mctx(ctx), ctx->frames);
+        VEC_FREE(exec_mctx(ctx), ctx->stack);
+        VEC_FREE(exec_mctx(ctx), ctx->labels);
 #if defined(TOYWASM_USE_SEPARATE_LOCALS)
-        VEC_FREE(ctx->locals);
+        VEC_FREE(exec_mctx(ctx), ctx->locals);
 #endif
-        VEC_FREE(ctx->restarts);
+        VEC_FREE(exec_mctx(ctx), ctx->restarts);
         report_clear(&ctx->report0);
         ctx->report = NULL;
 }
