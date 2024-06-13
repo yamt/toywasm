@@ -19,8 +19,8 @@
 #include "expr.h"
 #include "leb128.h"
 #include "load_context.h"
-#include "module.h"
 #include "mem.h"
+#include "module.h"
 #include "nbio.h"
 #include "report.h"
 #include "type.h"
@@ -820,8 +820,9 @@ read_type_section(const uint8_t **pp, const uint8_t *ep,
         const uint8_t *p = *pp;
         int ret;
 
-        ret = read_vec_with_ctx(load_mctx(ctx),&p, ep, sizeof(*m->types), read_functype,
-                                clear_functype, ctx, &m->ntypes, &m->types);
+        ret = read_vec_with_ctx(load_mctx(ctx), &p, ep, sizeof(*m->types),
+                                read_functype, clear_functype, ctx, &m->ntypes,
+                                &m->types);
         if (ret != 0) {
                 goto fail;
         }
@@ -845,8 +846,9 @@ read_import_section(const uint8_t **pp, const uint8_t *ep,
         const uint8_t *p = *pp;
         int ret;
 
-        ret = read_vec_with_ctx(load_mctx(ctx), &p, ep, sizeof(struct import), read_import,
-                                clear_import, ctx, &m->nimports, &m->imports);
+        ret = read_vec_with_ctx(load_mctx(ctx), &p, ep, sizeof(struct import),
+                                read_import, clear_import, ctx, &m->nimports,
+                                &m->imports);
         if (ret != 0) {
                 goto fail;
         }
@@ -1080,7 +1082,8 @@ read_function_section(const uint8_t **pp, const uint8_t *ep,
         const uint8_t *p = *pp;
         int ret;
 
-        ret = read_vec_u32(load_mctx(ctx), &p, ep, &m->nfuncs, &m->functypeidxes);
+        ret = read_vec_u32(load_mctx(ctx), &p, ep, &m->nfuncs,
+                           &m->functypeidxes);
         if (ret != 0) {
                 goto fail;
         }
@@ -1150,8 +1153,8 @@ read_memory_section(const uint8_t **pp, const uint8_t *ep,
         const uint8_t *p = *pp;
         int ret;
 
-        ret = read_vec_with_ctx(load_mctx(ctx), &p, ep, sizeof(*m->mems), read_memtype, NULL,
-                                ctx, &m->nmems, &m->mems);
+        ret = read_vec_with_ctx(load_mctx(ctx), &p, ep, sizeof(*m->mems),
+                                read_memtype, NULL, ctx, &m->nmems, &m->mems);
         if (ret != 0) {
                 xlog_trace("failed to load mems with %d", ret);
                 goto fail;
@@ -1206,8 +1209,9 @@ read_global_section(const uint8_t **pp, const uint8_t *ep,
         const uint8_t *p = *pp;
         int ret;
 
-        ret = read_vec_with_ctx(load_mctx(ctx), &p, ep, sizeof(*m->globals), read_global,
-                                clear_global, ctx, &m->nglobals, &m->globals);
+        ret = read_vec_with_ctx(load_mctx(ctx), &p, ep, sizeof(*m->globals),
+                                read_global, clear_global, ctx, &m->nglobals,
+                                &m->globals);
         if (ret != 0) {
                 goto fail;
         }
@@ -1233,9 +1237,9 @@ read_export_section(const uint8_t **pp, const uint8_t *ep,
         const uint8_t *p = *pp;
         int ret;
 
-        ret = read_vec_with_ctx(load_mctx(ctx), &p, ep, sizeof(struct wasm_export),
-                                read_export, clear_export, ctx, &m->nexports,
-                                &m->exports);
+        ret = read_vec_with_ctx(load_mctx(ctx), &p, ep,
+                                sizeof(struct wasm_export), read_export,
+                                clear_export, ctx, &m->nexports, &m->exports);
         if (ret != 0) {
                 goto fail;
         }
@@ -1432,7 +1436,8 @@ read_element(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
                  * vec(funcidx)
                  */
                 assert(elem->type == TYPE_FUNCREF);
-                ret = read_vec_u32(load_mctx(ctx), &p, ep, &elem->init_size, &elem->funcs);
+                ret = read_vec_u32(load_mctx(ctx), &p, ep, &elem->init_size,
+                                   &elem->funcs);
                 if (ret != 0) {
                         goto fail;
                 }
@@ -1452,10 +1457,10 @@ read_element(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
                 /*
                  * vec(expr)
                  */
-                ret = read_vec_with_ctx(load_mctx(ctx), &p, ep, sizeof(*elem->init_exprs),
-                                        read_element_init_expr, clear_expr,
-                                        &init_expr_ctx, &elem->init_size,
-                                        &elem->init_exprs);
+                ret = read_vec_with_ctx(
+                        load_mctx(ctx), &p, ep, sizeof(*elem->init_exprs),
+                        read_element_init_expr, clear_expr, &init_expr_ctx,
+                        &elem->init_size, &elem->init_exprs);
                 if (ret != 0) {
                         goto fail;
                 }
@@ -1499,8 +1504,9 @@ read_element_section(const uint8_t **pp, const uint8_t *ep,
         const uint8_t *p = *pp;
         int ret;
 
-        ret = read_vec_with_ctx(load_mctx(ctx), &p, ep, sizeof(*m->elems), read_element,
-                                clear_element, ctx, &m->nelems, &m->elems);
+        ret = read_vec_with_ctx(load_mctx(ctx), &p, ep, sizeof(*m->elems),
+                                read_element, clear_element, ctx, &m->nelems,
+                                &m->elems);
         if (ret != 0) {
                 goto fail;
         }
@@ -1526,8 +1532,9 @@ read_code_section(const uint8_t **pp, const uint8_t *ep,
 
         assert(m->funcs == NULL);
         uint32_t nfuncs_in_code = 0;
-        ret = read_vec_with_ctx(load_mctx(ctx), &p, ep, sizeof(*m->funcs), read_func,
-                                clear_func, ctx, &nfuncs_in_code, &m->funcs);
+        ret = read_vec_with_ctx(load_mctx(ctx), &p, ep, sizeof(*m->funcs),
+                                read_func, clear_func, ctx, &nfuncs_in_code,
+                                &m->funcs);
         if (ret != 0) {
                 assert(nfuncs_in_code == 0);
                 goto fail;
@@ -1638,8 +1645,9 @@ read_data_section(const uint8_t **pp, const uint8_t *ep,
         const uint8_t *p = *pp;
         int ret;
 
-        ret = read_vec_with_ctx(load_mctx(ctx), &p, ep, sizeof(*m->datas), read_data,
-                                clear_data, ctx, &m->ndatas, &m->datas);
+        ret = read_vec_with_ctx(load_mctx(ctx), &p, ep, sizeof(*m->datas),
+                                read_data, clear_data, ctx, &m->ndatas,
+                                &m->datas);
         if (ret != 0) {
                 goto fail;
         }
@@ -2227,8 +2235,8 @@ module_create0(struct mem_context *mctx, struct module **mp)
 }
 
 int
-module_create(struct mem_context *mctx, struct module **mp, const uint8_t *p, const uint8_t *ep,
-              struct load_context *ctx)
+module_create(struct mem_context *mctx, struct module **mp, const uint8_t *p,
+              const uint8_t *ep, struct load_context *ctx)
 {
         struct module *m;
         int ret = module_create0(mctx, &m);
@@ -2260,7 +2268,8 @@ module_unload(struct mem_context *mctx, struct module *m)
                 }
                 mem_free(mctx, m->funcs, m->nfuncs * sizeof(*m->funcs));
         }
-        mem_free(mctx, m->functypeidxes, m->nfuncs * sizeof(*m->functypeidxes));
+        mem_free(mctx, m->functypeidxes,
+                 m->nfuncs * sizeof(*m->functypeidxes));
 
         mem_free(mctx, m->tables, m->ntables * sizeof(*m->tables));
         mem_free(mctx, m->mems, m->nmems * sizeof(*m->mems));

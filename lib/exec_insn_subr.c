@@ -104,7 +104,8 @@ do_trap:
 #endif
                 size_t need = (size_t)last_byte + 1;
                 assert(need > meminst->allocated);
-                void *np = mem_resize(meminst->mctx, meminst->data, meminst->allocated, need);
+                void *np = mem_resize(meminst->mctx, meminst->data,
+                                      meminst->allocated, need);
                 if (np == NULL) {
                         return ENOMEM;
                 }
@@ -477,16 +478,18 @@ retry:
                 if (new_size_in_bytes >> page_shift != new_size) {
                         ret = EOVERFLOW;
                 } else {
-                        void *np = mem_resize(mi->mctx, mi->data, mi->allocated, new_size_in_bytes);
+                        void *np =
+                                mem_resize(mi->mctx, mi->data, mi->allocated,
+                                           new_size_in_bytes);
                         if (np == NULL) {
-                            ret = ENOMEM;
+                                ret = ENOMEM;
                         } else {
-                        ret = 0;
-                            mi->data = np;
-                        assert(new_size_in_bytes > mi->allocated);
-                        memset(mi->data + mi->allocated, 0,
-                               new_size_in_bytes - mi->allocated);
-                        mi->allocated = new_size_in_bytes;
+                                ret = 0;
+                                mi->data = np;
+                                assert(new_size_in_bytes > mi->allocated);
+                                memset(mi->data + mi->allocated, 0,
+                                       new_size_in_bytes - mi->allocated);
+                                mi->allocated = new_size_in_bytes;
                         }
                 }
 #if defined(TOYWASM_ENABLE_WASM_THREADS)

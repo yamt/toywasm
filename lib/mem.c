@@ -32,23 +32,22 @@ mem_alloc(struct mem_context *ctx, size_t sz)
 void *
 mem_zalloc(struct mem_context *ctx, size_t sz)
 {
-	void *p = mem_alloc(ctx, sz);
-    if (p != NULL) {
-        memset(p, 0, sz);
-    }
-    return p;
+        void *p = mem_alloc(ctx, sz);
+        if (p != NULL) {
+                memset(p, 0, sz);
+        }
+        return p;
 }
 
 void *
 mem_calloc(struct mem_context *ctx, size_t a, size_t b)
 {
-	size_t sz = a * b;
-    if (sz / a != b) {
-        return NULL;
-    }
-    return mem_zalloc(ctx, sz);
+        size_t sz = a * b;
+        if (sz / a != b) {
+                return NULL;
+        }
+        return mem_zalloc(ctx, sz);
 }
-
 
 static int
 mem_reserve(struct mem_context *ctx, size_t diff)

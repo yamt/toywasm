@@ -578,7 +578,7 @@ struct meminst {
          */
         struct shared_meminst *shared;
 #endif
-		struct mem_context *mctx;
+        struct mem_context *mctx;
 };
 
 struct globalinst {

@@ -7,8 +7,8 @@
 #include "bitmap.h"
 #include "exec.h"
 #include "instance.h"
-#include "module.h"
 #include "mem.h"
+#include "module.h"
 #include "nbio.h"
 #include "shared_memory_impl.h"
 #include "suspend.h"
@@ -185,7 +185,8 @@ memory_instance_create(struct mem_context *mctx, struct meminst **mip,
                 if (need_in_bytes > 0) {
                         mp->data = mem_zalloc(mctx->need_in_bytes);
                         if (mp->data == NULL) {
-                                mem_free(mctx, mp->shared, sizeof(*mp->shared));
+                                mem_free(mctx, mp->shared,
+                                         sizeof(*mp->shared));
                                 mem_free(mctx, mp, sizeof(*mp));
                                 ret = ENOMEM;
                                 goto fail;
@@ -224,7 +225,8 @@ memory_instance_destroy(struct mem_context *mctx, struct meminst *mi)
 }
 
 int
-global_instance_create(struct mem_context *mctx, struct globalinst **gip, const struct globaltype *gt)
+global_instance_create(struct mem_context *mctx, struct globalinst **gip,
+                       const struct globaltype *gt)
 {
         struct globalinst *ginst;
         int ret;
@@ -249,7 +251,8 @@ global_instance_destroy(struct mem_context *mctx, struct globalinst *gi)
 
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
 int
-tag_instance_create(struct mem_context *mctx, struct taginst **tip, const struct functype *ft)
+tag_instance_create(struct mem_context *mctx, struct taginst **tip,
+                    const struct functype *ft)
 {
         struct taginst *ti;
         int ret;
@@ -273,7 +276,8 @@ tag_instance_destroy(struct mem_context *mctx, struct taginst *ti)
 #endif
 
 int
-table_instance_create(struct mem_context *mctx, struct tableinst **tip, const struct tabletype *tt)
+table_instance_create(struct mem_context *mctx, struct tableinst **tip,
+                      const struct tabletype *tt)
 {
         struct tableinst *tinst;
         int ret;
@@ -309,9 +313,9 @@ fail:
 }
 
 void
-table_instance_destroy(struct mem_context *mctx ,struct tableinst *ti)
+table_instance_destroy(struct mem_context *mctx, struct tableinst *ti)
 {
-		assert(mctx == ti->mctx);
+        assert(mctx == ti->mctx);
         if (ti != NULL) {
                 uint32_t csz = valtype_cellsize(ti->type->et);
                 size_t ncells = (size_t)ti->size * csz;
@@ -324,8 +328,9 @@ table_instance_destroy(struct mem_context *mctx ,struct tableinst *ti)
  */
 
 int
-instance_create(struct mem_context *mctx, const struct module *m, struct instance **instp,
-                const struct import_object *imports, struct report *report)
+instance_create(struct mem_context *mctx, const struct module *m,
+                struct instance **instp, const struct import_object *imports,
+                struct report *report)
 {
         struct instance *inst;
         int ret;
@@ -448,7 +453,8 @@ fail:
 }
 
 int
-instance_create_no_init(struct mem_context *mctx, const struct module *m, struct instance **instp,
+instance_create_no_init(struct mem_context *mctx, const struct module *m,
+                        struct instance **instp,
                         const struct import_object *imports,
                         struct report *report)
 {

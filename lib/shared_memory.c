@@ -17,7 +17,8 @@ _dtor(struct import_object *imo)
 }
 
 int
-create_satisfying_shared_memories(struct mem_context *mctx, const struct module *m,
+create_satisfying_shared_memories(struct mem_context *mctx,
+                                  const struct module *m,
                                   struct import_object **imop)
 {
         struct import_object *imo = NULL;
