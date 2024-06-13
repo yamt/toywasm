@@ -93,17 +93,17 @@ clear_naming(struct naming *ft)
 /* https://github.com/WebAssembly/design/blob/main/BinaryEncoding.md#name-map
  */
 static int
-parse_namemap(struct nametable *table, struct namemap *map, const struct module *m, const uint8_t *p,
-              const uint8_t *ep)
+parse_namemap(struct nametable *table, struct namemap *map,
+              const struct module *m, const uint8_t *p, const uint8_t *ep)
 {
         struct read_naming_context ctx;
         int ret;
 
         ctx.module = m;
         map->entries = NULL;
-        ret = read_vec_with_ctx(&table->mctx, &p, ep, sizeof(struct naming), read_naming,
-                                clear_naming, &ctx, &map->nentries,
-                                &map->entries);
+        ret = read_vec_with_ctx(&table->mctx, &p, ep, sizeof(struct naming),
+                                read_naming, clear_naming, &ctx,
+                                &map->nentries, &map->entries);
         if (ret != 0) {
                 goto fail;
         }
@@ -203,7 +203,8 @@ namemap_init(struct namemap *map)
 static void
 namemap_clear(struct nametable *table, struct namemap *map)
 {
-        mem_free(&table->mctx, map->entries, map->nentries * sizeof(*map->entries));
+        mem_free(&table->mctx, map->entries,
+                 map->nentries * sizeof(*map->entries));
         map->nentries = 0;
         map->entries = NULL;
 }

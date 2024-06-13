@@ -19,7 +19,8 @@ __BEGIN_EXTERN_C
  * This API is inspired from js-api.
  * https://webassembly.github.io/spec/js-api/index.html#instances
  */
-int instance_create(struct mem_context *mctx, const struct module *m, struct instance **instp,
+int instance_create(struct mem_context *mctx, const struct module *m,
+                    struct instance **instp,
                     const struct import_object *imports,
                     struct report *report);
 
@@ -33,7 +34,8 @@ int instance_create(struct mem_context *mctx, const struct module *m, struct ins
  * note than instance_execute_init can return a restartable error.
  * see also: instance_execute_continue.
  */
-int instance_create_no_init(struct mem_context *mctx, const struct module *m, struct instance **instp,
+int instance_create_no_init(struct mem_context *mctx, const struct module *m,
+                            struct instance **instp,
                             const struct import_object *imports,
                             struct report *report);
 int instance_execute_init(struct exec_context *ctx);
@@ -123,7 +125,8 @@ int import_object_find_entry(
 
 struct meminst;
 struct memtype;
-int memory_instance_create(struct mem_context *mctx, struct meminst **mip, const struct memtype *mt);
+int memory_instance_create(struct mem_context *mctx, struct meminst **mip,
+                           const struct memtype *mt);
 void memory_instance_destroy(struct mem_context *mctx, struct meminst *mi);
 
 struct globalinst;
@@ -134,7 +137,8 @@ void global_instance_destroy(struct mem_context *mctx, struct globalinst *gi);
 
 struct tableinst;
 struct tabletype;
-int table_instance_create(struct mem_context *mctx, struct tableinst **tip, const struct tabletype *tt);
+int table_instance_create(struct mem_context *mctx, struct tableinst **tip,
+                          const struct tabletype *tt);
 void table_instance_destroy(struct mem_context *mctx, struct tableinst *ti);
 
 /*
@@ -146,7 +150,8 @@ void table_instance_destroy(struct mem_context *mctx, struct tableinst *ti);
  * mainly for wasi-threads, where it's host's responsibility to
  * provide the linear memory.
  */
-int create_satisfying_shared_memories(struct mem_context *mctx, const struct module *module,
+int create_satisfying_shared_memories(struct mem_context *mctx,
+                                      const struct module *module,
                                       struct import_object **imop);
 
 void instance_print_stats(const struct instance *inst);

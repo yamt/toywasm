@@ -198,7 +198,8 @@ frame_enter(struct exec_context *ctx, struct instance *inst, uint32_t funcidx,
 #endif
         if (ei->maxlabels > 1) {
                 frame->labelidx = ctx->labels.lsize;
-                ret = VEC_PREALLOC(exec_mctx(ctx), ctx->labels, ei->maxlabels - 1);
+                ret = VEC_PREALLOC(exec_mctx(ctx), ctx->labels,
+                                   ei->maxlabels - 1);
                 if (ret != 0) {
                         return ret;
                 }

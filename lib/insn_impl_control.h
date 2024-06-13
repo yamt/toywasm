@@ -362,10 +362,10 @@ INSN_IMPL(br_table)
         struct mem_context *mctx;
         struct mem_context mctx0;
         if (VALIDATING) {
-            mctx = VCTX->mctx;
-		} else {
-            mctx = &mctx0;
-            mem_context_init(mctx);
+                mctx = VCTX->mctx;
+        } else {
+                mctx = &mctx0;
+                mem_context_init(mctx);
         }
         ret = read_vec_u32(mctx, &p, ep, &vec_count, &table);
         CHECK_RET(ret);
@@ -404,8 +404,8 @@ INSN_IMPL(br_table)
         }
         mem_free(mctx, table, vec_count * sizeof(uint32_t));
         if (!VALIDATING) {
-            mem_context_clear(mctx);
-		}
+                mem_context_clear(mctx);
+        }
         SAVE_PC;
         INSN_SUCCESS;
 fail:
