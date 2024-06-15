@@ -105,15 +105,60 @@ fail:
         return ret;
 }
 
+#if defined(TOYWASM_USE_RESULTTYPE_CELLIDX) ||                                \
+        defined(TOYWASM_USE_LOCALTYPE_CELLIDX)
+static int
+cellidx_bytesize(uint32_t n, size_t *resultp)
+{
+        if (n >= UINT32_MAX) {
+                return EOVERFLOW;
+        }
+#if SIZE_MAX <= UINT32_MAX /* -Wtautological-constant-out-of-range-compare */
+        if (n + 1 > SIZE_MAX / sizeof(uint16_t)) {
+                return EOVERFLOW;
+        }
+#endif
+        size_t bytesize = (n + 1) * sizeof(uint16_t);
+        assert(bytesize / sizeof(uint16_t) == n + 1);
+        *resultp = bytesize;
+        return 0;
+}
+
+static int
+cellidx_alloc(struct mem_context *mctx, uint32_t n, uint16_t **resultp)
+{
+        size_t sz;
+        int ret = cellidx_bytesize(n, &sz);
+        if (ret != 0) {
+                return ret;
+        }
+        uint16_t *p = mem_zalloc(mctx, sz);
+        if (p == NULL) {
+                return ENOMEM;
+        }
+        *resultp = p;
+        return 0;
+}
+
+static void
+cellidx_free(struct mem_context *mctx, uint32_t n, uint16_t *p)
+{
+        size_t sz;
+        int ret = cellidx_bytesize(n, &sz);
+        assert(ret == 0);
+        mem_free(mctx, p, sz);
+}
+#endif
+
 #if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
 static int
-populate_resulttype_cellidx(struct resulttype *rt)
+populate_resulttype_cellidx(struct mem_context *mctx, struct resulttype *rt)
 {
-        uint16_t *idxes = calloc(rt->ntypes + 1, sizeof(*idxes));
+        uint16_t *idxes;
         int ret;
-        if (idxes == NULL) {
-                ret = ENOMEM;
-                goto fail;
+        ret = cellidx_alloc(mctx, rt->ntypes, &idxes);
+        if (ret != 0) {
+                return ret;
         }
         uint32_t i;
         uint32_t off = 0;
@@ -129,7 +174,7 @@ populate_resulttype_cellidx(struct resulttype *rt)
         rt->cellidx.cellidxes = idxes;
         return 0;
 fail:
-        free(idxes);
+        cellidx_free(mctx, rt->ntypes, idxes);
         return ret;
 }
 #endif
@@ -156,7 +201,7 @@ read_resulttype(const uint8_t **pp, const uint8_t *ep, struct resulttype *rt,
 #if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
         if (populate_idx && rt->ntypes > 0 &&
             ctx->options.generate_resulttype_cellidx) {
-                ret = populate_resulttype_cellidx(rt);
+                ret = populate_resulttype_cellidx(load_mctx(ctx), rt);
                 if (ret != 0) {
                         /* this failure is not critical. let's ignore. */
                         xlog_trace("populate_resulttype_cellidx failed with "
@@ -178,7 +223,7 @@ clear_resulttype(struct mem_context *mctx, struct resulttype *rt)
                 mem_free(mctx, rt->types, rt->ntypes * sizeof(*rt->types));
         }
 #if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
-        free(rt->cellidx.cellidxes);
+        cellidx_free(mctx, rt->ntypes, rt->cellidx.cellidxes);
 #endif
 }
 
@@ -893,20 +938,20 @@ clear_func(struct mem_context *mctx, struct func *func)
         struct localtype *lt = &func->localtype;
         free(lt->localchunks);
 #if defined(TOYWASM_USE_LOCALTYPE_CELLIDX)
-        free(lt->cellidx.cellidxes);
+        cellidx_free(mctx, lt->nlocals, lt->cellidx.cellidxes);
 #endif
         clear_expr(mctx, &func->e);
 }
 
 #if defined(TOYWASM_USE_LOCALTYPE_CELLIDX)
 static int
-populate_localtype_cellidx(struct localtype *lt)
+populate_localtype_cellidx(struct mem_context *mctx, struct localtype *lt)
 {
-        uint16_t *idxes = calloc(lt->nlocals + 1, sizeof(*idxes));
+        uint16_t *idxes;
         int ret;
-        if (idxes == NULL) {
-                ret = ENOMEM;
-                goto fail;
+        ret = cellidx_alloc(mctx, lt->nlocals, &idxes);
+        if (ret != 0) {
+                return ret;
         }
         uint32_t i;
         uint32_t off = 0;
@@ -934,7 +979,7 @@ populate_localtype_cellidx(struct localtype *lt)
         lt->cellidx.cellidxes = idxes;
         return 0;
 fail:
-        free(idxes);
+        cellidx_free(mctx, lt->nlocals, idxes);
         return ret;
 }
 #endif
@@ -997,7 +1042,7 @@ read_locals(const uint8_t **pp, const uint8_t *ep, struct func *func,
         lt->nlocals = nlocals;
 #if defined(TOYWASM_USE_LOCALTYPE_CELLIDX)
         if (lt->nlocals > 0 && ctx->options.generate_localtype_cellidx) {
-                ret = populate_localtype_cellidx(lt);
+                ret = populate_localtype_cellidx(load_mctx(ctx), lt);
                 if (ret != 0) {
                         /* this failure is not critical. let's ignore. */
                         xlog_trace("populate_localtype_cellidx failed with "
