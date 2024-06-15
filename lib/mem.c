@@ -46,6 +46,15 @@ mem_reserve(struct mem_context *ctx, size_t diff)
         return 0;
 }
 
+static void
+assert_malloc_size(void *p, size_t sz)
+{
+#if !defined(NDEBUG) && defined(__APPLE__)
+        size_t msz = malloc_size(p);
+        assert(msz == sz);
+#endif
+}
+
 void
 mem_context_init(struct mem_context *ctx)
 {
@@ -103,10 +112,7 @@ mem_free(struct mem_context *ctx, void *p, size_t sz)
                 return;
         }
         assert(sz > 0);
-#if !defined(NDEBUG) && defined(__APPLE__)
-        size_t msz = malloc_size(p);
-        assert(msz == sz);
-#endif
+        assert_malloc_size(p, sz);
         free(p);
         mem_unreserve(ctx, sz);
 }
@@ -114,6 +120,12 @@ mem_free(struct mem_context *ctx, void *p, size_t sz)
 void *
 mem_resize(struct mem_context *ctx, void *p, size_t oldsz, size_t newsz)
 {
+        if (p != NULL) {
+                assert(oldsz > 0);
+                assert_malloc_size(p, oldsz);
+        } else {
+                assert(oldsz == 0);
+        }
         if (oldsz < newsz) {
                 size_t diff = newsz - oldsz;
                 if (mem_reserve(ctx, diff)) {
