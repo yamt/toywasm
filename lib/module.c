@@ -1904,7 +1904,8 @@ static void
 clear_dylink(struct mem_context *mctx, struct dylink *dy)
 {
         clear_dylink_needs(mctx, &dy->needs);
-        mem_free(mctx, dy->import_info, sizeof(*dy->import_info));
+        mem_free(mctx, dy->import_info,
+                 dy->nimport_info * sizeof(*dy->import_info));
 }
 
 /* https://github.com/WebAssembly/tool-conventions/blob/main/DynamicLinking.md
