@@ -936,7 +936,8 @@ static void
 clear_func(struct mem_context *mctx, struct func *func)
 {
         struct localtype *lt = &func->localtype;
-        free(lt->localchunks);
+        mem_free(mctx, lt->localchunks,
+                 lt->nlocalchunks * sizeof(*lt->localchunks));
 #if defined(TOYWASM_USE_LOCALTYPE_CELLIDX)
         cellidx_free(mctx, lt->nlocals, lt->cellidx.cellidxes);
 #endif
@@ -996,12 +997,13 @@ read_locals(const uint8_t **pp, const uint8_t *ep, struct func *func,
 
         ret = read_vec_count(&p, ep, &vec_count);
         if (ret != 0) {
-                goto fail;
+                return ret;
         }
         struct localtype *lt = &func->localtype;
         lt->nlocalchunks = vec_count;
         if (vec_count > 0) {
-                chunks = calloc(vec_count, sizeof(*chunks));
+                chunks =
+                        mem_calloc(load_mctx(ctx), vec_count, sizeof(*chunks));
         }
 
         uint32_t i;
@@ -1054,7 +1056,7 @@ read_locals(const uint8_t **pp, const uint8_t *ep, struct func *func,
         *pp = p;
         return 0;
 fail:
-        free(chunks);
+        mem_free(load_mctx(ctx), chunks, lt->nlocalchunks * sizeof(*chunks));
         return ret;
 }
 
