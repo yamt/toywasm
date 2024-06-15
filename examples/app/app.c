@@ -4,6 +4,7 @@
 
 #include <toywasm/fileio.h>
 #include <toywasm/load_context.h>
+#include <toywasm/mem.h>
 #include <toywasm/module.h>
 #include <toywasm/name.h>
 #include <toywasm/type.h>
@@ -12,6 +13,8 @@
 int
 main(int argc, char **argv)
 {
+        struct mem_context mctx;
+        mem_context_init(&mctx);
         if (argc != 2) {
                 xlog_error("unexpected number of args");
                 exit(2);
@@ -28,13 +31,14 @@ main(int argc, char **argv)
                 exit(1);
         }
         struct load_context ctx;
-        load_context_init(&ctx);
+        load_context_init(&ctx, &mctx);
         ret = module_create(&m, p, p + sz, &ctx);
         if (ret != 0) {
                 xlog_error("module_load failed with %d: %s", ret,
                            report_getmessage(&ctx.report));
                 exit(1);
         }
+        load_context_clear(&ctx);
         module_print_stats(m);
 
         /* perform some investigations on the loaded module */
@@ -163,6 +167,8 @@ main(int argc, char **argv)
         }
 #endif
         nametable_clear(&table);
+        module_destroy(&mctx, m);
+        mem_context_clear(&mctx);
 
         exit(0);
 }
