@@ -598,6 +598,17 @@ repl_load_from_buf(struct repl_state *state, const char *modname,
                 return ENOTSUP;
         }
 #endif
+        struct mem_context *mctx2 =
+                mem_alloc(state->mctx, 2 * sizeof(struct mem_context));
+        if (mctx2 == NULL) {
+                return ENOMEM;
+        }
+        mod->module_mctx = mctx2;
+        mod->instance_mctx = mctx2 + 1;
+        mem_context_init(mod->module_mctx);
+        mem_context_init(mod->instance_mctx);
+        mod->module_mctx->parent = state->mctx;
+        mod->instance_mctx->parent = state->mctx;
         struct load_context ctx;
         load_context_init(&ctx, mod->module_mctx);
         ctx.options = state->opts.load_options;
@@ -702,17 +713,6 @@ toywasm_repl_load(struct repl_state *state, const char *modname,
 #endif
         struct repl_module_state *mod = &mod_u->u.repl;
         memset(mod, 0, sizeof(*mod));
-        struct mem_context *mctx2 =
-                mem_alloc(state->mctx, 2 * sizeof(struct mem_context));
-        if (mctx2 == NULL) {
-                return ENOMEM;
-        }
-        mod->module_mctx = mctx2;
-        mod->instance_mctx = mctx2 + 1;
-        mem_context_init(mod->module_mctx);
-        mem_context_init(mod->instance_mctx);
-        mod->module_mctx->parent = state->mctx;
-        mod->instance_mctx->parent = state->mctx;
         ret = map_file(filename, (void **)&mod->buf, &mod->bufsize);
         if (ret != 0) {
                 xlog_error("failed to map %s (error %d)", filename, ret);
