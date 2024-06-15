@@ -263,7 +263,12 @@ read_const_expr(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
                 enum valtype type, struct load_context *lctx)
 {
         DEFINE_RESULTTYPE(, resulttype, &type, 1);
-
-        return read_expr_common(pp, ep, expr, 0, NULL, empty_rt, &resulttype,
-                                true, lctx);
+        int ret = read_expr_common(pp, ep, expr, 0, NULL, empty_rt,
+                                   &resulttype, true, lctx);
+        /* a const expr does never require these annotations */
+        assert(expr->ei.jumps == NULL);
+#if defined(TOYWASM_USE_SMALL_CELLS)
+        assert(expr->ei.type_annotations.types == NULL);
+#endif
+        return ret;
 }
