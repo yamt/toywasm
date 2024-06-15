@@ -239,6 +239,7 @@ void
 nametable_init(struct nametable *table)
 {
 #if defined(TOYWASM_ENABLE_WASM_NAME_SECTION)
+        mem_context_init(&table->mctx);
         namemap_init(&table->funcs);
         table->module_name.data = NULL;
         table->module = NULL;
