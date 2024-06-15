@@ -1531,10 +1531,10 @@ fail:
 static void
 module_funcs_clear(struct mem_context *mctx, struct module *m, uint32_t nfuncs)
 {
-        assert((m->funcs == NULL) == (nfuncs == 0));
         if (m->funcs == NULL) {
                 return;
         }
+        assert(nfuncs > 0);
         uint32_t i;
         for (i = 0; i < nfuncs; i++) {
                 clear_func(mctx, &m->funcs[i]);
