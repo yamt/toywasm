@@ -1,3 +1,6 @@
+#if !defined(_TOYWASM_MEM_H)
+#define _TOYWASM_MEM_H
+
 #include <stddef.h>
 
 #include "platform.h"
@@ -22,3 +25,5 @@ void *__must_check mem_resize(struct mem_context *ctx, void *p, size_t oldsz,
                               size_t newsz) __malloc_like __alloc_size(4);
 
 __END_EXTERN_C
+
+#endif /* !defined(_TOYWASM_MEM_H) */
