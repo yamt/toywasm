@@ -10,6 +10,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include <toywasm/instance.h>
+#include <toywasm/mem.h>
 #include <toywasm/xlog.h>
 
 #include "hostfunc.h"
@@ -33,15 +35,19 @@ main(int argc, char **argv)
                 xlog_error("failed to process cli arguments");
                 exit(1);
         }
+        struct mem_context mctx;
+        mem_context_init(&mctx);
         struct import_object *import_obj;
-        ret = import_object_create_for_my_host_inst(NULL, &import_obj);
+        ret = import_object_create_for_my_host_inst(&mctx, NULL, &import_obj);
         if (ret != 0) {
                 exit(1);
         }
-        ret = runwasi(a->filename, a->ndirs, a->dirs, a->nenvs,
+        ret = runwasi(&mctx, a->filename, a->ndirs, a->dirs, a->nenvs,
                       (const char *const *)a->envs, a->argc,
                       (const char *const *)a->argv, stdio_fds, import_obj,
                       &wasi_exit_code);
+        import_object_destroy(&mctx, import_obj);
+        mem_context_clear(&mctx);
         free(a->dirs);
         free(a->envs);
         if (ret != 0) {
