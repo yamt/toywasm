@@ -76,6 +76,7 @@ set(lib_core_headers
 	"list.h"
 	"load_context.h"
 	"lock.h"
+	"mem.h"
 	"module.h"
 	"module_writer.h"
 	"name.h"
