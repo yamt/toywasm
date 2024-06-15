@@ -139,7 +139,7 @@ wasi_table_expand(struct wasi_instance *wasi, enum wasi_table_idx idx,
         if (maxfd < osize) {
                 return 0;
         }
-        int ret = VEC_RESIZE(table->table, maxfd + 1);
+        int ret = VEC_RESIZE(wasi->mctx, table->table, maxfd + 1);
         if (ret != 0) {
                 return ret;
         }
@@ -171,7 +171,7 @@ wasi_table_clear(struct wasi_instance *wasi,
                 }
                 free(fdinfo);
         }
-        VEC_FREE(table->table);
+        VEC_FREE(wasi->mctx, table->table);
 }
 
 int

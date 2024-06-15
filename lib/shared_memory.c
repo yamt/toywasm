@@ -4,14 +4,14 @@
 #include "type.h"
 
 static void
-_dtor(struct import_object *imo)
+_dtor(struct mem_context *mctx, struct import_object *imo)
 {
         uint32_t i;
         for (i = 0; i < imo->nentries; i++) {
                 struct import_object_entry *e = &imo->entries[i];
                 struct meminst *mi = e->u.mem;
                 if (mi != NULL) {
-                        memory_instance_destroy(mi->mctx, mi);
+                        memory_instance_destroy(mctx, mi);
                 }
         }
 }
@@ -40,7 +40,7 @@ create_satisfying_shared_memories(struct mem_context *mctx,
                 nsharedimports++;
         }
 
-        ret = import_object_alloc(nsharedimports, &imo);
+        ret = import_object_alloc(mctx, nsharedimports, &imo);
         if (ret != 0) {
                 goto fail;
         }
@@ -72,7 +72,7 @@ create_satisfying_shared_memories(struct mem_context *mctx,
         return 0;
 fail:
         if (imo != NULL) {
-                import_object_destroy(imo);
+                import_object_destroy(mctx, imo);
         }
         if (mi != NULL) {
                 memory_instance_destroy(mctx, mi);

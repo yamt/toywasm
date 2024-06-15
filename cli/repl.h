@@ -29,6 +29,8 @@ struct repl_module_state {
 #if defined(TOYWASM_ENABLE_WASI_THREADS)
         struct import_object *extra_import;
 #endif
+        struct mem_context *module_mctx;
+        struct mem_context *instance_mctx;
 };
 
 struct repl_module_state_u {
@@ -49,20 +51,20 @@ struct registered_name {
 };
 
 struct repl_state {
-        struct repl_module_state_u *modules;
-        unsigned int nmodules;
+        VEC(, struct repl_module_state_u) modules;
         struct import_object *imports;
         unsigned int nregister;
         struct registered_name *registered_names;
-        struct val *param;
-        struct val *result;
+        VEC(, struct val) param;
+        VEC(, struct val) result;
         struct wasi_instance *wasi;
         struct wasi_threads_instance *wasi_threads;
-        unsigned int nvfses;
-        struct wasi_vfs **vfses;
+        VEC(, struct wasi_vfs *) vfses;
         struct repl_options opts;
         struct timespec abstimeout;
         bool has_timeout;
+        struct mem_context *mctx;
+        struct mem_context *wasi_mctx;
 };
 
 void toywasm_repl_state_init(struct repl_state *state);

@@ -11,6 +11,7 @@
 #include "idalloc.h"
 #include "leb128.h"
 #include "list.h"
+#include "mem.h"
 #include "timeutil.h"
 #include "type.h"
 #include "util.h"
@@ -376,11 +377,14 @@ test_endian(void **state)
 void
 test_functype(void **state)
 {
+        struct mem_context mctx0;
+        struct mem_context *mctx = &mctx0;
         struct functype *ft;
         char *ftstr;
         int ret;
 
-        ret = functype_from_string("(iIi)fF", &ft);
+        mem_context_init(mctx);
+        ret = functype_from_string(mctx, "(iIi)fF", &ft);
         assert_int_equal(ret, 0);
         assert_int_equal(ft->parameter.ntypes, 3);
         assert_int_equal(ft->parameter.types[0], TYPE_i32);
@@ -392,10 +396,10 @@ test_functype(void **state)
         ret = functype_to_string(&ftstr, ft);
         assert_int_equal(ret, 0);
         assert_string_equal("(iIi)fF", ftstr);
-        functype_free(ft);
+        functype_free(mctx, ft);
         functype_string_free(ftstr);
 
-        ret = functype_from_string("()i", &ft);
+        ret = functype_from_string(mctx, "()i", &ft);
         assert_int_equal(ret, 0);
         assert_int_equal(ft->parameter.ntypes, 0);
         assert_int_equal(ft->result.ntypes, 1);
@@ -403,10 +407,10 @@ test_functype(void **state)
         ret = functype_to_string(&ftstr, ft);
         assert_int_equal(ret, 0);
         assert_string_equal("()i", ftstr);
-        functype_free(ft);
+        functype_free(mctx, ft);
         functype_string_free(ftstr);
 
-        ret = functype_from_string("(i)", &ft);
+        ret = functype_from_string(mctx, "(i)", &ft);
         assert_int_equal(ret, 0);
         assert_int_equal(ft->parameter.ntypes, 1);
         assert_int_equal(ft->parameter.types[0], TYPE_i32);
@@ -414,67 +418,74 @@ test_functype(void **state)
         ret = functype_to_string(&ftstr, ft);
         assert_int_equal(ret, 0);
         assert_string_equal("(i)", ftstr);
-        functype_free(ft);
+        functype_free(mctx, ft);
         functype_string_free(ftstr);
 
-        ret = functype_from_string("()", &ft);
+        ret = functype_from_string(mctx, "()", &ft);
         assert_int_equal(ret, 0);
         assert_int_equal(ft->parameter.ntypes, 0);
         assert_int_equal(ft->result.ntypes, 0);
         ret = functype_to_string(&ftstr, ft);
         assert_int_equal(ret, 0);
         assert_string_equal("()", ftstr);
-        functype_free(ft);
+        functype_free(mctx, ft);
         functype_string_free(ftstr);
 
-        ret = functype_from_string("", &ft);
+        ret = functype_from_string(mctx, "", &ft);
         assert_int_equal(ret, EINVAL);
 
-        ret = functype_from_string("(X)", &ft);
+        ret = functype_from_string(mctx, "(X)", &ft);
         assert_int_equal(ret, EINVAL);
 
-        ret = functype_from_string("()X", &ft);
+        ret = functype_from_string(mctx, "()X", &ft);
         assert_int_equal(ret, EINVAL);
 
-        ret = functype_from_string("(i", &ft);
+        ret = functype_from_string(mctx, "(i", &ft);
         assert_int_equal(ret, EINVAL);
 
-        ret = functype_from_string("i)", &ft);
+        ret = functype_from_string(mctx, "i)", &ft);
         assert_int_equal(ret, EINVAL);
 
-        ret = functype_from_string("i", &ft);
+        ret = functype_from_string(mctx, "i", &ft);
         assert_int_equal(ret, EINVAL);
+
+        assert_int_equal(mctx->allocated, 0);
+        mem_context_clear(mctx);
 }
 
 void
 test_idalloc(void **state)
 {
+        struct mem_context mctx0;
+        struct mem_context *mctx = &mctx0;
         struct idalloc a;
         uint32_t bm = 0;
         uint32_t id;
         int dummy;
         int ret;
 
+        mem_context_init(mctx);
+
         /* allocater with ids 1..3 */
         idalloc_init(&a, 1, 3);
 
         /* allocate all slots */
-        ret = idalloc_alloc(&a, &id);
+        ret = idalloc_alloc(&a, &id, mctx);
         assert_int_equal(ret, 0);
         assert_in_range(id, 1, 3);
         bm |= 1 << id;
-        ret = idalloc_alloc(&a, &id);
+        ret = idalloc_alloc(&a, &id, mctx);
         assert_int_equal(ret, 0);
         assert_in_range(id, 1, 3);
         bm |= 1 << id;
-        ret = idalloc_alloc(&a, &id);
+        ret = idalloc_alloc(&a, &id, mctx);
         assert_int_equal(ret, 0);
         assert_in_range(id, 1, 3);
         bm |= 1 << id;
         assert_int_equal(bm, 14);
 
         /* no slots to allocate */
-        ret = idalloc_alloc(&a, &id);
+        ret = idalloc_alloc(&a, &id, mctx);
         assert_int_equal(ret, ERANGE);
 
         /* check initial user data is NULL */
@@ -492,17 +503,18 @@ test_idalloc(void **state)
         assert_ptr_equal(idalloc_get_user(&a, 3), &dummy);
 
         /* still no slots to allocate */
-        ret = idalloc_alloc(&a, &id);
+        ret = idalloc_alloc(&a, &id, mctx);
         assert_int_equal(ret, ERANGE);
 
         /* free one of them and reallocate it */
-        idalloc_free(&a, 2);
-        ret = idalloc_alloc(&a, &id);
+        idalloc_free(&a, 2, mctx);
+        ret = idalloc_alloc(&a, &id, mctx);
         assert_int_equal(ret, 0);
         assert_int_equal(id, 2);
 
         /* done */
-        idalloc_destroy(&a);
+        idalloc_destroy(&a, mctx);
+        mem_context_clear(mctx);
 }
 
 void

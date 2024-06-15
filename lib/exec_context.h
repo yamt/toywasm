@@ -12,6 +12,7 @@
 #include "vec.h"
 
 struct val;
+struct mem_context;
 
 struct label {
         uint32_t pc;
@@ -333,7 +334,8 @@ struct exec_context {
 
 __BEGIN_EXTERN_C
 
-void exec_context_init(struct exec_context *ctx, struct instance *inst);
+void exec_context_init(struct exec_context *ctx, struct instance *inst,
+                       struct mem_context *mctx);
 void exec_context_clear(struct exec_context *ctx);
 void exec_context_print_stats(struct exec_context *ctx);
 

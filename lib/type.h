@@ -677,7 +677,7 @@ struct import_object {
 #endif
         size_t nentries;
         struct import_object_entry *entries;
-        void (*dtor)(struct import_object *im);
+        void (*dtor)(struct mem_context *mctx, struct import_object *im);
         void *dtor_arg;
         struct import_object *next; /* NULL for the last import_object */
 };
@@ -717,15 +717,16 @@ const struct functype *funcinst_functype(const struct funcinst *fi);
 const struct functype *taginst_functype(const struct taginst *ti);
 const struct func *funcinst_func(const struct funcinst *fi);
 
-int functype_from_string(const char *p, struct functype **resultp);
-void functype_free(struct functype *ft);
+int functype_from_string(struct mem_context *mctx, const char *p,
+                         struct functype **resultp);
+void functype_free(struct mem_context *mctx, struct functype *ft);
 int check_functype_with_string(const struct module *m, uint32_t funcidx,
                                const char *sig);
 int functype_to_string(char **p, const struct functype *ft);
 void functype_string_free(char *p);
 
-void clear_functype(struct functype *ft);
-void clear_resulttype(struct resulttype *rt);
+void clear_functype(struct mem_context *mctx, struct functype *ft);
+void clear_resulttype(struct mem_context *mctx, struct resulttype *rt);
 
 void set_name_cstr(struct name *name, const char *cstr);
 void clear_name(struct name *name);

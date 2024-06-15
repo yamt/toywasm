@@ -18,6 +18,7 @@
 #include "idalloc.h"
 #include "instance.h"
 #include "lock.h"
+#include "mem.h"
 #include "module.h"
 #include "suspend.h"
 #include "type.h"
@@ -57,6 +58,8 @@ struct wasi_threads_instance {
 #if defined(TOYWASM_USE_USER_SCHED)
         struct sched sched;
 #endif
+
+        struct mem_context *mctx;
 };
 
 /*
@@ -82,15 +85,17 @@ wasi_threads_sched(struct wasi_threads_instance *wasi)
 #endif
 
 int
-wasi_threads_instance_create(struct wasi_threads_instance **instp)
+wasi_threads_instance_create(struct mem_context *mctx,
+                             struct wasi_threads_instance **instp)
         NO_THREAD_SAFETY_ANALYSIS
 {
         struct wasi_threads_instance *inst;
 
-        inst = zalloc(sizeof(*inst));
+        inst = mem_zalloc(mctx, sizeof(*inst));
         if (inst == NULL) {
                 return ENOMEM;
         }
+        inst->mctx = mctx;
         /*
          * Note: wasi:thread_spawn uses negative values to indicate
          * an error.
@@ -109,12 +114,13 @@ wasi_threads_instance_create(struct wasi_threads_instance **instp)
 void
 wasi_threads_instance_destroy(struct wasi_threads_instance *inst)
 {
-        idalloc_destroy(&inst->tids);
+        struct mem_context *mctx = inst->mctx;
+        idalloc_destroy(&inst->tids, mctx);
         cluster_destroy(&inst->cluster);
 #if defined(TOYWASM_USE_USER_SCHED)
         sched_clear(&inst->sched);
 #endif
-        free(inst);
+        mem_free(mctx, inst, sizeof(*inst));
 }
 
 void
@@ -263,6 +269,7 @@ wasi_threads_propagate_trap(struct wasi_threads_instance *wasi,
 
 struct thread_arg {
         struct wasi_threads_instance *wasi;
+        struct mem_context *mctx;
         struct instance *inst;
         uint32_t user_arg;
         int32_t tid;
@@ -330,7 +337,7 @@ done_thread_start_func(struct exec_context *ctx, const struct thread_arg *arg,
 fail:
         instance_destroy(inst);
         toywasm_mutex_lock(&wasi->cluster.lock);
-        idalloc_free(&wasi->tids, tid);
+        idalloc_free(&wasi->tids, tid, wasi->mctx);
         cluster_remove_thread(&wasi->cluster);
         toywasm_mutex_unlock(&wasi->cluster.lock);
 }
@@ -357,7 +364,7 @@ user_runner_exec_start(struct thread_arg *arg)
                 ret = ENOMEM;
                 goto fail;
         }
-        exec_context_init(ctx, arg->inst);
+        exec_context_init(ctx, arg->inst, arg->mctx);
         ctx->exec_done = user_runner_exec_done;
         ctx->exec_done_arg = arg;
         ret = exec_thread_start_func(ctx, arg);
@@ -380,7 +387,7 @@ runner(void *vp)
 
         struct exec_context ctx0;
         struct exec_context *ctx = &ctx0;
-        exec_context_init(ctx, arg->inst);
+        exec_context_init(ctx, arg->inst, arg->mctx);
 
         ret = exec_thread_start_func(ctx, arg);
         while (IS_RESTARTABLE(ret)) {
@@ -427,7 +434,9 @@ wasi_thread_spawn_common(struct exec_context *ctx,
 
         struct report report;
         report_init(&report);
-        ret = instance_create(wasi->module, &inst, wasi->imports, &report);
+        /* REVISIT: it isn't appropraite to use wasi-threads mctx here */
+        ret = instance_create(wasi->mctx, wasi->module, &inst, wasi->imports,
+                              &report);
         if (ret != 0) {
                 xlog_trace("%s: instance_create failed with %d: %s", __func__,
                            ret, report_getmessage(&report));
@@ -436,7 +445,7 @@ wasi_thread_spawn_common(struct exec_context *ctx,
         }
         report_clear(&report);
         toywasm_mutex_lock(&wasi->cluster.lock);
-        ret = idalloc_alloc(&wasi->tids, &tid);
+        ret = idalloc_alloc(&wasi->tids, &tid, wasi->mctx);
         if (ret != 0) {
                 toywasm_mutex_unlock(&wasi->cluster.lock);
                 xlog_trace("%s: TID allocation failed with %d", __func__, ret);
@@ -449,6 +458,7 @@ wasi_thread_spawn_common(struct exec_context *ctx,
         arg->inst = inst;
         arg->tid = tid;
         arg->user_arg = user_arg;
+        arg->mctx = ctx->mctx; /* inherit mctx from the parent exec_context */
 
 #if defined(TOYWASM_USE_USER_SCHED)
         ret = user_runner_exec_start(arg);
@@ -457,7 +467,7 @@ wasi_thread_spawn_common(struct exec_context *ctx,
         ret = pthread_create(&t, NULL, runner, arg);
         if (ret != 0) {
                 toywasm_mutex_lock(&wasi->cluster.lock);
-                idalloc_free(&wasi->tids, tid);
+                idalloc_free(&wasi->tids, tid, wasi->mctx);
                 cluster_remove_thread(&wasi->cluster);
                 toywasm_mutex_unlock(&wasi->cluster.lock);
                 xlog_trace("%s: pthread_create failed with %d", __func__, ret);
@@ -589,9 +599,9 @@ static const struct host_module module_wasi_threads = {
 
 int
 import_object_create_for_wasi_threads(
-        struct wasi_threads_instance *wasi_threads,
+        struct mem_context *mctx, struct wasi_threads_instance *wasi_threads,
         struct import_object **impp)
 {
-        return import_object_create_for_host_funcs(&module_wasi_threads, 1,
-                                                   &wasi_threads->hi, impp);
+        return import_object_create_for_host_funcs(mctx, &module_wasi_threads,
+                                                   1, &wasi_threads->hi, impp);
 }

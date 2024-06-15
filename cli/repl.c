@@ -26,6 +26,7 @@
 #include "fileio.h"
 #include "instance.h"
 #include "load_context.h"
+#include "mem.h"
 #include "module.h"
 #include "module_writer.h"
 #include "nbio.h"
@@ -137,14 +138,19 @@ read_hex_from_stdin(uint8_t *p, size_t left)
 }
 
 static void
-repl_unload(struct repl_module_state *mod)
+repl_unload(struct repl_state *state, struct repl_module_state *mod)
 {
         if (mod->inst != NULL) {
+                if (state->opts.print_stats) {
+                        nbio_printf("instance memory consumption immediately "
+                                    "before destroy: %zu\n",
+                                    mod->instance_mctx->allocated);
+                }
                 instance_destroy(mod->inst);
                 mod->inst = NULL;
         }
         if (mod->module != NULL) {
-                module_destroy(mod->module);
+                module_destroy(mod->module_mctx, mod->module);
                 mod->module = NULL;
         }
         if (mod->buf != NULL) {
@@ -161,10 +167,20 @@ repl_unload(struct repl_module_state *mod)
         }
 #if defined(TOYWASM_ENABLE_WASI_THREADS)
         if (mod->extra_import != NULL) {
-                import_object_destroy(mod->extra_import);
+                import_object_destroy(state->mctx, mod->extra_import);
                 mod->extra_import = NULL;
         }
 #endif
+        assert((mod->instance_mctx == NULL) == (mod->module_mctx == NULL));
+        if (mod->module_mctx != NULL) {
+                assert(mod->module_mctx + 1 == mod->instance_mctx);
+                mem_context_clear(mod->instance_mctx);
+                mem_context_clear(mod->module_mctx);
+                mem_free(state->mctx, mod->module_mctx,
+                         2 * sizeof(*mod->module_mctx));
+        }
+        mod->module_mctx = NULL;
+        mod->instance_mctx = NULL;
 }
 
 static void
@@ -178,17 +194,25 @@ repl_unload_u(struct repl_state *state, struct repl_module_state_u *mod_u)
         }
 #endif
         struct repl_module_state *mod = &mod_u->u.repl;
-        repl_unload(mod);
+        repl_unload(state, mod);
 }
 
 void
 toywasm_repl_reset(struct repl_state *state)
 {
+        if (state->opts.print_stats) {
+                nbio_printf("repl memory consumption immediately "
+                            "before a reset: %zu\n",
+                            state->mctx->allocated);
+                nbio_printf("wasi memory consumption immediately "
+                            "before a reset: %zu\n",
+                            state->wasi_mctx->allocated);
+        }
         uint32_t n = 0;
         while (state->imports != NULL) {
                 struct import_object *im = state->imports;
                 state->imports = im->next;
-                import_object_destroy(im);
+                import_object_destroy(state->mctx, im);
                 n++;
         }
         while (state->nregister > 0) {
@@ -200,16 +224,14 @@ toywasm_repl_reset(struct repl_state *state)
                 free(rname);
                 n--;
         }
-        while (state->nmodules > 0) {
-                repl_unload_u(state, &state->modules[--state->nmodules]);
-        }
-        free(state->param);
-        state->param = NULL;
-        free(state->result);
-        state->result = NULL;
-        free(state->modules);
-        state->modules = NULL;
         assert(state->registered_names == NULL);
+        struct repl_module_state_u *mod_u;
+        VEC_FOREACH(mod_u, state->modules) {
+                repl_unload_u(state, mod_u);
+        }
+        VEC_FREE(state->mctx, state->modules);
+        VEC_FREE(state->mctx, state->param);
+        VEC_FREE(state->mctx, state->result);
 
 #if defined(TOYWASM_ENABLE_WASI_THREADS)
         if (state->wasi_threads != NULL) {
@@ -224,20 +246,26 @@ toywasm_repl_reset(struct repl_state *state)
                 state->wasi = NULL;
                 n--;
         }
-        unsigned int i;
-        for (i = 0; i < state->nvfses; i++) {
-                int ret = wasi_vfs_fs_umount(state->vfses[i]);
+        struct wasi_vfs **vfsp;
+        VEC_FOREACH(vfsp, state->vfses) {
+                int ret = wasi_vfs_fs_umount(*vfsp);
                 if (ret != 0) {
                         /* log and ignore */
                         xlog_error("%s: wasi_vfs_fs_umount failed with %d",
                                    __func__, ret);
                 }
         }
-        free(state->vfses);
-        state->vfses = NULL;
-        state->nvfses = 0;
+        VEC_FREE(state->mctx, state->vfses);
 #endif
         assert(n == 0);
+        if (state->opts.print_stats) {
+                nbio_printf("repl memory consumption immediately "
+                            "after a reset: %zu\n",
+                            state->mctx->allocated);
+                nbio_printf("wasi memory consumption immediately "
+                            "after a reset: %zu\n",
+                            state->wasi_mctx->allocated);
+        }
 }
 
 int
@@ -249,7 +277,7 @@ toywasm_repl_load_wasi(struct repl_state *state)
                 return EPROTO;
         }
         int ret;
-        ret = wasi_instance_create(&state->wasi);
+        ret = wasi_instance_create(state->wasi_mctx, &state->wasi);
         if (ret != 0) {
                 goto fail;
         }
@@ -258,7 +286,7 @@ toywasm_repl_load_wasi(struct repl_state *state)
                 goto undo_wasi_create;
         }
         struct import_object *im;
-        ret = import_object_create_for_wasi(state->wasi, &im);
+        ret = import_object_create_for_wasi(state->mctx, state->wasi, &im);
         if (ret != 0) {
                 goto undo_wasi_create;
         }
@@ -267,11 +295,13 @@ toywasm_repl_load_wasi(struct repl_state *state)
 #endif
 #if defined(TOYWASM_ENABLE_WASI_THREADS)
         assert(state->wasi_threads == NULL);
-        ret = wasi_threads_instance_create(&state->wasi_threads);
+        ret = wasi_threads_instance_create(state->wasi_mctx,
+                                           &state->wasi_threads);
         if (ret != 0) {
                 goto undo_wasi;
         }
-        ret = import_object_create_for_wasi_threads(state->wasi_threads, &im);
+        ret = import_object_create_for_wasi_threads(state->mctx,
+                                                    state->wasi_threads, &im);
         if (ret != 0) {
                 goto undo_wasi_threads_create;
         }
@@ -288,7 +318,7 @@ undo_wasi:
         assert(state->wasi != NULL);
         im = state->imports;
         state->imports = im->next;
-        import_object_destroy(im);
+        import_object_destroy(state->mctx, im);
 #endif
 #if defined(TOYWASM_ENABLE_WASI)
 undo_wasi_create:
@@ -342,8 +372,7 @@ toywasm_repl_set_wasi_prestat_littlefs(struct repl_state *state,
                 return EPROTO;
         }
         int ret;
-        ret = resize_array((void **)&state->vfses, sizeof(*state->vfses),
-                           state->nvfses + 1);
+        ret = VEC_PREALLOC(state->vfses, 1);
         if (ret != 0) {
                 return ret;
         }
@@ -352,7 +381,7 @@ toywasm_repl_set_wasi_prestat_littlefs(struct repl_state *state,
         if (ret != 0) {
                 return ret;
         }
-        state->vfses[state->nvfses++] = vfs;
+        *VEC_PUSH(state->vfses) = vfs;
         return 0;
 }
 #endif
@@ -361,12 +390,12 @@ int
 find_mod_u(struct repl_state *state, const char *modname,
            struct repl_module_state_u **modp)
 {
-        if (state->nmodules == 0) {
+        if (state->modules.lsize == 0) {
                 xlog_printf("no module loaded\n");
                 return EPROTO;
         }
         if (modname == NULL) {
-                *modp = &state->modules[state->nmodules - 1];
+                *modp = &VEC_LASTELEM(state->modules);
                 return 0;
         }
 #if defined(TOYWASM_ENABLE_DYLD)
@@ -374,9 +403,8 @@ find_mod_u(struct repl_state *state, const char *modname,
                 return ENOTSUP;
         }
 #endif
-        uint32_t i;
-        for (i = 0; i < state->nmodules; i++) {
-                struct repl_module_state_u *mod_u = &state->modules[i];
+        struct repl_module_state_u *mod_u;
+        VEC_FOREACH(mod_u, state->modules) {
                 struct repl_module_state *mod = &mod_u->u.repl;
                 if (mod->name != NULL && !strcmp(modname, mod->name)) {
                         *modp = mod_u;
@@ -525,7 +553,7 @@ repl_exec_init(struct repl_state *state, struct repl_module_state *mod,
         struct exec_context ctx0;
         struct exec_context *ctx = &ctx0;
         int ret;
-        exec_context_init(ctx, mod->inst);
+        exec_context_init(ctx, mod->inst, mod->instance_mctx);
         ctx->options = state->opts.exec_options;
         if (has_timeout) {
                 setup_timeout(ctx);
@@ -565,7 +593,7 @@ repl_load_from_buf(struct repl_state *state, const char *modname,
         }
 #endif
         struct load_context ctx;
-        load_context_init(&ctx);
+        load_context_init(&ctx, mod->module_mctx);
         ctx.options = state->opts.load_options;
         ret = module_create(&mod->module, mod->buf, mod->buf + mod->bufsize,
                             &ctx);
@@ -579,6 +607,10 @@ repl_load_from_buf(struct repl_state *state, const char *modname,
                 xlog_printf("module_load failed\n");
                 goto fail;
         }
+        if (state->opts.print_stats) {
+                nbio_printf("module memory overhead: %zu\n",
+                            mod->module_mctx->allocated);
+        }
 
         struct import_object *imports = state->imports;
 #if defined(TOYWASM_ENABLE_WASI_THREADS)
@@ -586,7 +618,12 @@ repl_load_from_buf(struct repl_state *state, const char *modname,
                 assert(mod->extra_import == NULL);
                 /* create matching shared memory automatically */
                 struct import_object *imo;
-                ret = create_satisfying_shared_memories(mod->module, &imo);
+                /*
+                 * REVISIT: it's a bit awkward to use state->mctx mctx here
+                 * especially when it includes shared linear memories.
+                 */
+                ret = create_satisfying_shared_memories(state->mctx,
+                                                        mod->module, &imo);
                 if (ret != 0) {
                         goto fail;
                 }
@@ -598,8 +635,8 @@ repl_load_from_buf(struct repl_state *state, const char *modname,
 
         struct report report;
         report_init(&report);
-        ret = instance_create_no_init(mod->module, &mod->inst, imports,
-                                      &report);
+        ret = instance_create_no_init(mod->instance_mctx, mod->module,
+                                      &mod->inst, imports, &report);
         if (ret != 0) {
                 const char *msg = report_getmessage(&report);
                 xlog_error("instance_create_no_init failed with %d: %s", ret,
@@ -612,6 +649,11 @@ repl_load_from_buf(struct repl_state *state, const char *modname,
         if (ret != 0) {
                 xlog_printf("repl_exec_init failed\n");
                 goto fail;
+        }
+        if (state->opts.print_stats) {
+                nbio_printf("instance memory consumption immediately after "
+                            "instantiation: %zu\n",
+                            mod->instance_mctx->allocated);
         }
         if (modname != NULL) {
                 mod->name = strdup(modname);
@@ -630,12 +672,11 @@ toywasm_repl_load(struct repl_state *state, const char *modname,
                   const char *filename, bool trap_ok)
 {
         int ret;
-        ret = resize_array((void **)&state->modules, sizeof(*state->modules),
-                           state->nmodules + 1);
+        ret = VEC_PREALLOC(state->mctx, state->modules, 1);
         if (ret != 0) {
                 return ret;
         }
-        struct repl_module_state_u *mod_u = &state->modules[state->nmodules];
+        struct repl_module_state_u *mod_u = &VEC_NEXTELEM(state->modules);
 #if defined(TOYWASM_ENABLE_DYLD)
         if (state->opts.enable_dyld) {
                 if (trap_ok) {
@@ -649,12 +690,23 @@ toywasm_repl_load(struct repl_state *state, const char *modname,
                 if (ret != 0) {
                         return ret;
                 }
-                state->nmodules++;
+                state->modules.lsize++;
                 return 0;
         }
 #endif
         struct repl_module_state *mod = &mod_u->u.repl;
         memset(mod, 0, sizeof(*mod));
+        struct mem_context *mctx2 =
+                mem_alloc(state->mctx, 2 * sizeof(struct mem_context));
+        if (mctx2 == NULL) {
+                return ENOMEM;
+        }
+        mod->module_mctx = mctx2;
+        mod->instance_mctx = mctx2 + 1;
+        mem_context_init(mod->module_mctx);
+        mem_context_init(mod->instance_mctx);
+        mod->module_mctx->parent = state->mctx;
+        mod->instance_mctx->parent = state->mctx;
         ret = map_file(filename, (void **)&mod->buf, &mod->bufsize);
         if (ret != 0) {
                 xlog_error("failed to map %s (error %d)", filename, ret);
@@ -665,10 +717,10 @@ toywasm_repl_load(struct repl_state *state, const char *modname,
         if (ret != 0) {
                 goto fail;
         }
-        state->nmodules++;
+        state->modules.lsize++;
         return 0;
 fail:
-        repl_unload(mod);
+        repl_unload(state, mod);
         return ret;
 }
 
@@ -682,12 +734,11 @@ toywasm_repl_load_hex(struct repl_state *state, const char *modname,
         }
 #endif
         int ret;
-        ret = resize_array((void **)&state->modules, sizeof(*state->modules),
-                           state->nmodules + 1);
+        ret = VEC_PREALLOC(state->mctx, state->modules, 1);
         if (ret != 0) {
                 return ret;
         }
-        struct repl_module_state_u *mod_u = &state->modules[state->nmodules];
+        struct repl_module_state_u *mod_u = &VEC_NEXTELEM(state->modules);
         struct repl_module_state *mod = &mod_u->u.repl;
         memset(mod, 0, sizeof(*mod));
         size_t sz = atoi(opt);
@@ -708,10 +759,10 @@ toywasm_repl_load_hex(struct repl_state *state, const char *modname,
         if (ret != 0) {
                 goto fail;
         }
-        state->nmodules++;
+        state->modules.lsize++;
         return 0;
 fail:
-        repl_unload(mod);
+        repl_unload(state, mod);
         return ret;
 }
 
@@ -719,7 +770,7 @@ static int
 repl_save(struct repl_state *state, const char *modname, const char *filename)
 {
 #if defined(TOYWASM_ENABLE_WRITER)
-        if (state->nmodules == 0) {
+        if (state->modules.lsize == 0) {
                 return EPROTO;
         }
         struct repl_module_state *mod;
@@ -747,7 +798,7 @@ toywasm_repl_register(struct repl_state *state, const char *modname,
                       const char *register_name)
 {
         int ret;
-        if (state->nmodules == 0) {
+        if (state->modules.lsize == 0) {
                 return EPROTO;
         }
         struct repl_module_state *mod;
@@ -768,7 +819,7 @@ toywasm_repl_register(struct repl_state *state, const char *modname,
         }
         struct name *name = &rname->name;
         set_name_cstr(name, register_modname1);
-        ret = import_object_create_for_exports(inst, name, &im);
+        ret = import_object_create_for_exports(state->mctx, inst, name, &im);
         if (ret != 0) {
                 free(rname);
                 free(register_modname1);
@@ -1080,6 +1131,7 @@ toywasm_repl_invoke(struct repl_state *state, const char *modname,
                 goto fail;
         }
         struct instance *inst;
+        struct mem_context *mctx;
 #if defined(TOYWASM_ENABLE_DYLD)
         if (state->opts.enable_dyld) {
                 struct dyld *d = &mod_u->u.dyld;
@@ -1089,6 +1141,7 @@ toywasm_repl_invoke(struct repl_state *state, const char *modname,
         {
                 struct repl_module_state *mod = &mod_u->u.repl;
                 inst = mod->inst;
+                mctx = mod->instance_mctx;
         }
         const struct module *module = inst->module;
         assert(inst != NULL);
@@ -1103,16 +1156,16 @@ toywasm_repl_invoke(struct repl_state *state, const char *modname,
         const struct functype *ft = module_functype(module, funcidx);
         const struct resulttype *ptype = &ft->parameter;
         const struct resulttype *rtype = &ft->result;
-        ret = ARRAY_RESIZE(state->param, ptype->ntypes);
+        ret = VEC_RESIZE(state->mctx, state->param, ptype->ntypes);
         if (ret != 0) {
                 goto fail;
         }
-        ret = ARRAY_RESIZE(state->result, rtype->ntypes);
+        ret = VEC_RESIZE(state->mctx, state->result, rtype->ntypes);
         if (ret != 0) {
                 goto fail;
         }
-        struct val *param = state->param;
-        struct val *result = state->result;
+        struct val *param = &VEC_ELEM(state->param, 0);
+        struct val *result = &VEC_ELEM(state->result, 0);
         uint32_t i;
         for (i = 0; i < ptype->ntypes; i++) {
                 char *arg = strtok(NULL, " ");
@@ -1134,7 +1187,7 @@ toywasm_repl_invoke(struct repl_state *state, const char *modname,
         }
         struct exec_context ctx0;
         struct exec_context *ctx = &ctx0;
-        exec_context_init(ctx, inst);
+        exec_context_init(ctx, inst, mctx);
         ctx->options = state->opts.exec_options;
         const struct trap_info *trap;
 #if defined(TOYWASM_ENABLE_WASI_THREADS)
@@ -1375,6 +1428,10 @@ void
 toywasm_repl_state_init(struct repl_state *state)
 {
         memset(state, 0, sizeof(*state));
+        VEC_INIT(state->param);
+        VEC_INIT(state->result);
+        VEC_INIT(state->modules);
+        VEC_INIT(state->vfses);
         repl_options_init(&state->opts);
 }
 

@@ -6,11 +6,47 @@
 
 #include "mem.h"
 
+static void
+mem_unreserve(struct mem_context *ctx, size_t diff)
+{
+        assert(ctx->allocated <= ctx->limit);
+        assert(ctx->allocated >= diff);
+        size_t ov = atomic_fetch_sub(&ctx->allocated, diff);
+        assert(ov >= diff);
+        if (ctx->parent != NULL) {
+                mem_unreserve(ctx->parent, diff);
+        }
+}
+
+static int
+mem_reserve(struct mem_context *ctx, size_t diff)
+{
+        size_t ov;
+        size_t nv;
+        do {
+                ov = ctx->allocated;
+                assert(ov <= ctx->limit);
+                if (ctx->limit - ov < diff) {
+                        return ENOMEM;
+                }
+                nv = ov + diff;
+        } while (!atomic_compare_exchange_weak(&ctx->allocated, &ov, nv));
+        if (ctx->parent != NULL) {
+                int ret = mem_reserve(ctx->parent, diff);
+                if (ret != 0) {
+                        mem_unreserve(ctx, diff);
+                        return ret;
+                }
+        }
+        return 0;
+}
+
 void
 mem_context_init(struct mem_context *ctx)
 {
         ctx->allocated = 0;
         ctx->limit = SIZE_MAX;
+        ctx->parent = NULL;
 }
 
 void
@@ -22,6 +58,10 @@ mem_context_clear(struct mem_context *ctx)
 void *
 mem_alloc(struct mem_context *ctx, size_t sz)
 {
+        if (mem_reserve(ctx, sz)) {
+                return NULL;
+        }
+        assert(sz > 0);
         void *p = malloc(sz);
         if (p == NULL) {
                 return NULL;
@@ -49,34 +89,13 @@ mem_calloc(struct mem_context *ctx, size_t a, size_t b)
         return mem_zalloc(ctx, sz);
 }
 
-static int
-mem_reserve(struct mem_context *ctx, size_t diff)
-{
-        size_t ov;
-        size_t nv;
-        do {
-                ov = ctx->allocated;
-                assert(ov <= ctx->limit);
-                if (ctx->limit - ov < diff) {
-                        return ENOMEM;
-                }
-                nv = ov + diff;
-        } while (!atomic_compare_exchange_weak(&ctx->allocated, &ov, nv));
-        return 0;
-}
-
-static void
-mem_unreserve(struct mem_context *ctx, size_t diff)
-{
-        assert(ctx->allocated <= ctx->limit);
-        assert(ctx->allocated >= diff);
-        size_t ov = atomic_fetch_sub(&ctx->allocated, diff);
-        assert(ctx->allocated >= ov);
-}
-
 void
 mem_free(struct mem_context *ctx, void *p, size_t sz)
 {
+        if (p == NULL) {
+                return;
+        }
+        assert(sz > 0);
         free(p);
         mem_unreserve(ctx, sz);
 }

@@ -402,7 +402,6 @@ memory_grow_impl(struct exec_context *ctx, struct meminst *mi, uint32_t sz)
         const struct memtype *mt = mi->type;
         const struct limits *lim = &mt->lim;
         const uint32_t page_shift = memtype_page_shift(mt);
-        const uint32_t page_size = 1 << page_shift;
         /*
          * In case of non-shared memory, no serialization is necessary.
          * in that case, memory_lock is no-op.
@@ -469,7 +468,7 @@ retry:
                         if (mi->size_in_pages != orig_size) {
                                 goto retry;
                         }
-                        assert((mi->allocated % page_size) == 0);
+                        assert((mi->allocated % (1 << page_shift)) == 0);
                 }
 #endif /* defined(TOYWASM_ENABLE_WASM_THREADS) */
                 assert(new_size > mi->allocated >> page_shift);

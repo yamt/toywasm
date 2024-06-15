@@ -25,13 +25,13 @@ idalloc_init(struct idalloc *ida, uint32_t minid, uint32_t maxid)
 }
 
 void
-idalloc_destroy(struct idalloc *ida)
+idalloc_destroy(struct idalloc *ida, struct mem_context *mctx)
 {
-        VEC_FREE(ida->mctx, ida->vec);
+        VEC_FREE(mctx, ida->vec);
 }
 
 int
-idalloc_alloc(struct idalloc *ida, uint32_t *idp)
+idalloc_alloc(struct idalloc *ida, uint32_t *idp, struct mem_context *mctx)
 {
         void **it;
         uint32_t id;
@@ -47,7 +47,7 @@ idalloc_alloc(struct idalloc *ida, uint32_t *idp)
         if (ida->maxid < id) {
                 return ERANGE;
         }
-        ret = VEC_RESIZE(ida->mctx, ida->vec, id + 1);
+        ret = VEC_RESIZE(mctx, ida->vec, id + 1);
         if (ret != 0) {
                 return ret;
         }
@@ -57,7 +57,7 @@ idalloc_alloc(struct idalloc *ida, uint32_t *idp)
 }
 
 void
-idalloc_free(struct idalloc *ida, uint32_t id)
+idalloc_free(struct idalloc *ida, uint32_t id, struct mem_context *mctx)
 {
         assert(idalloc_test(ida, id));
         *idalloc_getptr(ida, id) = FREE_SLOT;

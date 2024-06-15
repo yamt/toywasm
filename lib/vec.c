@@ -8,14 +8,16 @@
 VEC(_vec, void);
 
 int
-_vec_resize(void *vec, size_t elem_size, uint32_t new_elem_count)
+_vec_resize(struct mem_context *mctx, void *vec, size_t elem_size,
+            uint32_t new_elem_count)
 {
         struct _vec *v = vec;
         int ret;
         assert(v->lsize <= v->psize);
         assert((v->psize == 0) == (v->p == NULL));
         if (new_elem_count > v->psize) {
-                ret = resize_array((void **)&v->p, elem_size, new_elem_count);
+                ret = resize_array(mctx, (void **)&v->p, elem_size, v->psize,
+                                   new_elem_count);
                 if (ret != 0) {
                         return ret;
                 }
@@ -30,13 +32,15 @@ _vec_resize(void *vec, size_t elem_size, uint32_t new_elem_count)
 }
 
 int
-_vec_prealloc(void *vec, size_t elem_size, uint32_t count)
+_vec_prealloc(struct mem_context *mctx, void *vec, size_t elem_size,
+              uint32_t count)
 {
         struct _vec *v = vec;
         int ret;
         uint32_t need = v->lsize + count;
         if (need > v->psize) {
-                ret = resize_array((void **)&v->p, elem_size, need);
+                ret = resize_array(mctx, (void **)&v->p, elem_size, v->psize,
+                                   need);
                 if (ret != 0) {
                         return ret;
                 }
@@ -46,10 +50,11 @@ _vec_prealloc(void *vec, size_t elem_size, uint32_t count)
 }
 
 void
-_vec_free(void *vec)
+_vec_free(struct mem_context *mctx, void *vec, size_t elem_size)
 {
         struct _vec *v = vec;
-        free(v->p);
+        int ret = resize_array(mctx, (void **)&v->p, elem_size, v->psize, 0);
+        assert(ret == 0);
         v->p = NULL;
         v->lsize = 0;
         v->psize = 0;

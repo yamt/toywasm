@@ -78,7 +78,7 @@ read_vec_u32(struct mem_context *mctx, const uint8_t **pp, const uint8_t *ep,
              uint32_t *countp, uint32_t **resultp)
 {
         return read_vec(mctx, pp, ep, sizeof(uint32_t),
-                        (read_elem_func_t)read_leb_u32, NULL, countp,
+                        (read_elem_func_t)read_leb_u32, countp,
                         (void *)resultp);
 }
 
@@ -93,8 +93,9 @@ _read_vec_with_ctx_impl(struct mem_context *mctx, const uint8_t **pp,
                         const uint8_t *ep, size_t elem_size,
                         int (*read_elem)(const uint8_t **pp, const uint8_t *ep,
                                          uint32_t idx, void *elem, void *),
-                        void (*clear_elem)(void *elem), void *ctx,
-                        uint32_t *countp, void **resultp)
+                        void (*clear_elem)(struct mem_context *mctx,
+                                           void *elem),
+                        void *ctx, uint32_t *countp, void **resultp)
 {
         const uint8_t *p = *pp;
         uint32_t vec_count;
@@ -119,7 +120,7 @@ _read_vec_with_ctx_impl(struct mem_context *mctx, const uint8_t **pp,
                         if (clear_elem != NULL) {
                                 uint32_t j;
                                 for (j = 0; j < i; j++) {
-                                        clear_elem(a + j * elem_size);
+                                        clear_elem(mctx, a + j * elem_size);
                                 }
                         }
                         /* is it worth shrinking the array? */
@@ -141,7 +142,6 @@ fail:
 
 struct read_vec_ctx {
         int (*read_elem)(const uint8_t **pp, const uint8_t *ep, void *elem);
-        void (*clear_elem)(void *elem);
         void *ctx;
 };
 
@@ -157,12 +157,12 @@ int
 read_vec(struct mem_context *mctx, const uint8_t **pp, const uint8_t *ep,
          size_t elem_size,
          int (*read_elem)(const uint8_t **pp, const uint8_t *ep, void *elem),
-         void (*clear_elem)(void *elem), uint32_t *countp, void **resultp)
+         uint32_t *countp, void **resultp)
 {
         struct read_vec_ctx ctx = {
                 .read_elem = read_elem,
         };
         return _read_vec_with_ctx_impl(mctx, pp, ep, elem_size,
-                                       read_elem_wrapper, clear_elem, &ctx,
-                                       countp, resultp);
+                                       read_elem_wrapper, NULL, &ctx, countp,
+                                       resultp);
 }

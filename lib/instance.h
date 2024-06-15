@@ -112,11 +112,13 @@ int instance_execute_handle_restart_once(struct exec_context *ctx,
 /*
  * see the comment in type.h about the concept of import_object.
  */
-int import_object_create_for_exports(struct instance *inst,
+int import_object_create_for_exports(struct mem_context *mctx,
+                                     struct instance *inst,
                                      const struct name *module_name,
                                      struct import_object **resultp);
-void import_object_destroy(struct import_object *im);
-int import_object_alloc(uint32_t nentries, struct import_object **resultp);
+void import_object_destroy(struct mem_context *mctx, struct import_object *im);
+int import_object_alloc(struct mem_context *mctx, uint32_t nentries,
+                        struct import_object **resultp);
 int import_object_find_entry(
         const struct import_object *impobj, const struct import *im,
         int (*check)(const struct import_object_entry *e, const void *arg),

@@ -162,14 +162,16 @@ fail:
 }
 
 int
-wasi_instance_create(struct wasi_instance **instp) NO_THREAD_SAFETY_ANALYSIS
+wasi_instance_create(struct mem_context *mctx,
+                     struct wasi_instance **instp) NO_THREAD_SAFETY_ANALYSIS
 {
         struct wasi_instance *inst;
 
-        inst = zalloc(sizeof(*inst));
+        inst = xzalloc(sizeof(*inst));
         if (inst == NULL) {
                 return ENOMEM;
         }
+        inst->mctx = mctx;
         toywasm_mutex_init(&inst->lock);
         toywasm_cv_init(&inst->cv);
         /* the first three slots are reserved for stdin, stdout, stderr */
@@ -322,9 +324,10 @@ static const struct host_module module_wasi[] = {
 };
 
 int
-import_object_create_for_wasi(struct wasi_instance *wasi,
+import_object_create_for_wasi(struct mem_context *mctx,
+                              struct wasi_instance *wasi,
                               struct import_object **impp)
 {
         return import_object_create_for_host_funcs(
-                module_wasi, ARRAYCOUNT(module_wasi), &wasi->hi, impp);
+                mctx, module_wasi, ARRAYCOUNT(module_wasi), &wasi->hi, impp);
 }

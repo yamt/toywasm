@@ -85,11 +85,6 @@ read_naming(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
         return 0;
 }
 
-void
-clear_naming(struct naming *ft)
-{
-}
-
 /* https://github.com/WebAssembly/design/blob/main/BinaryEncoding.md#name-map
  */
 static int
@@ -102,8 +97,8 @@ parse_namemap(struct nametable *table, struct namemap *map,
         ctx.module = m;
         map->entries = NULL;
         ret = read_vec_with_ctx(&table->mctx, &p, ep, sizeof(struct naming),
-                                read_naming, clear_naming, &ctx,
-                                &map->nentries, &map->entries);
+                                read_naming, NULL, &ctx, &map->nentries,
+                                &map->entries);
         if (ret != 0) {
                 goto fail;
         }

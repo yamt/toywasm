@@ -5,6 +5,7 @@
 struct mem_context {
         _Atomic size_t allocated;
         size_t limit;
+        struct mem_context *parent;
 };
 
 void mem_context_init(struct mem_context *ctx);

@@ -64,6 +64,8 @@ struct validation_context {
 #endif
 };
 
+#define validation_mctx(ctx) (ctx)->mctx
+
 /* validation */
 
 int push_valtype(enum valtype type, struct validation_context *ctx);

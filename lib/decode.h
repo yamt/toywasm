@@ -18,16 +18,17 @@ typedef int (*read_elem_func_t)(const uint8_t **pp, const uint8_t *ep,
                                 void *elem);
 typedef int (*read_elem_with_ctx_func_t)(const uint8_t **pp, const uint8_t *ep,
                                          uint32_t idx, void *elem, void *ctx);
-typedef void (*clear_elem_func_t)(void *elem);
+typedef void (*clear_elem_with_ctx_func_t)(struct mem_context *mctx,
+                                           void *elem);
 
 int read_vec(struct mem_context *mctx, const uint8_t **pp, const uint8_t *ep,
-             size_t elem_size, read_elem_func_t read_elem,
-             clear_elem_func_t clear_elem, uint32_t *countp, void **resultp);
+             size_t elem_size, read_elem_func_t read_elem, uint32_t *countp,
+             void **resultp);
 
 int _read_vec_with_ctx_impl(struct mem_context *mctx, const uint8_t **pp,
                             const uint8_t *ep, size_t elem_size,
                             read_elem_with_ctx_func_t read_elem,
-                            clear_elem_func_t clear_elem, void *ctx,
+                            clear_elem_with_ctx_func_t clear_elem, void *ctx,
                             uint32_t *countp, void **resultp);
 
 /*
@@ -49,20 +50,21 @@ int _read_vec_with_ctx_impl(struct mem_context *mctx, const uint8_t **pp,
         ({                                                                    \
                 int (*_r)(const uint8_t **, const uint8_t *, uint32_t,        \
                           toywasm_typeof(*resultp), void *) = read_elem;      \
-                void (*_c)(toywasm_typeof(*resultp)) = clear_elem;            \
+                void (*_c)(struct mem_context *, toywasm_typeof(*resultp)) =  \
+                        clear_elem;                                           \
                 assert(sizeof(**resultp) == elem_size);                       \
                 _read_vec_with_ctx_impl(mctx, pp, ep, elem_size,              \
                                         (read_elem_with_ctx_func_t)_r,        \
-                                        (clear_elem_func_t)_c, ctx, countp,   \
-                                        (void **)resultp);                    \
+                                        (clear_elem_with_ctx_func_t)_c, ctx,  \
+                                        countp, (void **)resultp);            \
         })
 #else
 #define read_vec_with_ctx(mctx, pp, ep, elem_size, read_elem, clear_elem,     \
                           ctx, countp, resultp)                               \
         _read_vec_with_ctx_impl(mctx, pp, ep, elem_size,                      \
                                 (read_elem_with_ctx_func_t)read_elem,         \
-                                (clear_elem_func_t)clear_elem, ctx, countp,   \
-                                (void **)resultp)
+                                (clear_elem_with_ctx_func_t)clear_elem, ctx,  \
+                                countp, (void **)resultp)
 #endif
 
 struct name;

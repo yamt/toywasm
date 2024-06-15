@@ -21,15 +21,17 @@ int __must_check _vec_resize(struct mem_context *ctx, void *vec,
                              size_t elem_size, uint32_t new_elem_count);
 int __must_check _vec_prealloc(struct mem_context *ctx, void *vec,
                                size_t elem_size, uint32_t count);
-void _vec_free(struct mem_context *ctx, void *vec);
+void _vec_free(struct mem_context *ctx, void *vec, size_t elem_size);
 
 __END_EXTERN_C
 
 #define VEC_INIT(v) memset(&v, 0, sizeof(v))
 /*
- * VEC_RESIZE resizes the size of vector. that is, psize == lsize == sz.
+ * VEC_RESIZE resizes the size of vector. that is, psize >= lsize == sz.
  * when extending the vector, it initializes newly allocated elements
  * with zeros.
+ * the implementation might or might not choose to shrink psize. the api
+ * user should not rely on either behavior.
  */
 #define VEC_RESIZE(ctx, v, sz) _vec_resize(ctx, &v, sizeof(*v.p), sz);
 /*
@@ -39,7 +41,7 @@ __END_EXTERN_C
  */
 #define VEC_PREALLOC(ctx, v, needed)                                          \
         _vec_prealloc(ctx, &v, sizeof(*v.p), needed);
-#define VEC_FREE(ctx, v) _vec_free(ctx, &v)
+#define VEC_FREE(ctx, v) _vec_free(ctx, &v, sizeof(*v.p))
 #define VEC_FOREACH(it, v) ARRAY_FOREACH(it, v.p, v.lsize)
 #define VEC_FOREACH_IDX(i, it, v) for (i = 0, it = v.p; i < v.lsize; i++, it++)
 #define VEC_ELEM(v, idx) (v.p[idx])

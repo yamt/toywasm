@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "mem.h"
 #include "type.h"
 #include "xlog.h"
 
@@ -264,7 +265,8 @@ compare_name(const struct name *a, const struct name *b)
 }
 
 static int
-resulttype_from_string(const char *p, const char *ep, struct resulttype *t)
+resulttype_from_string(struct mem_context *mctx, const char *p, const char *ep,
+                       struct resulttype *t)
 {
         size_t ntypes = ep - p;
         int ret;
@@ -273,7 +275,7 @@ resulttype_from_string(const char *p, const char *ep, struct resulttype *t)
         }
         t->ntypes = ntypes;
         if (ntypes > 0) {
-                t->types = malloc(ntypes * sizeof(*t->types));
+                t->types = mem_alloc(mctx, ntypes * sizeof(*t->types));
                 if (t->types == NULL) {
                         return ENOMEM;
                 }
@@ -303,24 +305,25 @@ resulttype_from_string(const char *p, const char *ep, struct resulttype *t)
         }
         return 0;
 fail:
-        clear_resulttype(t);
+        clear_resulttype(mctx, t);
         t->types = NULL;
         return ret;
 }
 
 void
-functype_free(struct functype *ft)
+functype_free(struct mem_context *mctx, struct functype *ft)
 {
-        clear_functype(ft);
-        free(ft);
+        clear_functype(mctx, ft);
+        mem_free(mctx, ft, sizeof(*ft));
 }
 
 int
-functype_from_string(const char *p, struct functype **resultp)
+functype_from_string(struct mem_context *mctx, const char *p,
+                     struct functype **resultp)
 {
         struct functype *ft;
         int ret;
-        ft = zalloc(sizeof(*ft));
+        ft = mem_zalloc(mctx, sizeof(*ft));
         if (ft == NULL) {
                 return ENOMEM;
         }
@@ -334,21 +337,21 @@ functype_from_string(const char *p, struct functype **resultp)
                 ret = EINVAL;
                 goto fail;
         }
-        ret = resulttype_from_string(p, ep, &ft->parameter);
+        ret = resulttype_from_string(mctx, p, ep, &ft->parameter);
         if (ret != 0) {
                 goto fail;
         }
         p = ep + 1;
         ep = strchr(p, 0);
         assert(ep != NULL);
-        ret = resulttype_from_string(p, ep, &ft->result);
+        ret = resulttype_from_string(mctx, p, ep, &ft->result);
         if (ret != 0) {
                 goto fail;
         }
         *resultp = ft;
         return 0;
 fail:
-        functype_free(ft);
+        functype_free(mctx, ft);
         return ret;
 }
 
@@ -357,18 +360,22 @@ check_functype_with_string(const struct module *m, uint32_t funcidx,
                            const char *sig)
 {
         const struct functype *ft = module_functype(m, funcidx);
+        struct mem_context mctx;
         struct functype *sig_ft;
         int ret;
 
-        ret = functype_from_string(sig, &sig_ft);
+        mem_context_init(&mctx);
+        ret = functype_from_string(&mctx, sig, &sig_ft);
         if (ret != 0) {
-                return ret;
+                goto fail;
         }
         ret = 0;
         if (compare_functype(ft, sig_ft)) {
                 ret = EINVAL;
         }
-        functype_free(sig_ft);
+        functype_free(&mctx, sig_ft);
+fail:
+        mem_context_clear(&mctx);
         return ret;
 }
 

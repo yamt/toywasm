@@ -7,9 +7,10 @@
 #include "validation.h"
 
 void
-load_context_init(struct load_context *ctx)
+load_context_init(struct load_context *ctx, struct mem_context *mctx)
 {
         memset(ctx, 0, sizeof(*ctx));
+        ctx->mctx = mctx;
         report_init(&ctx->report);
         load_options_set_defaults(&ctx->options);
 }
