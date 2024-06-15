@@ -102,7 +102,7 @@ wasi_littlefs_mount_file(const char *path, struct wasi_vfs **vfsp)
         struct wasi_vfs_lfs *vfs_lfs = NULL;
         int ret;
 
-        vfs_lfs = zalloc(sizeof(*vfs_lfs));
+        vfs_lfs = xzalloc(sizeof(*vfs_lfs));
         if (vfs_lfs == NULL) {
                 ret = ENOMEM;
                 goto fail;
