@@ -1915,7 +1915,7 @@ read_dylink_0_section(const uint8_t **pp, const uint8_t *ep,
         const uint8_t *p = *pp;
         struct module *m = ctx->module;
         int ret;
-        m->dylink = mem_zalloc(loader_mctx(ctx), sizeof(*m->dylink));
+        m->dylink = mem_zalloc(load_mctx(ctx), sizeof(*m->dylink));
         if (m->dylink == NULL) {
                 ret = ENOMEM;
                 goto fail;
