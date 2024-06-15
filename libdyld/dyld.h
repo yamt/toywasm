@@ -7,6 +7,7 @@
 #include "vec.h"
 
 struct dyld_object;
+struct mem_context;
 
 struct dyld_options {
         struct import_object *base_import_obj;
@@ -77,17 +78,21 @@ struct dyld {
 #if defined(TOYWASM_ENABLE_DYLD_DLFCN)
         VEC(, struct dyld_dynamic_object) dynobjs;
 #endif
+
+        struct mem_context *mctx;
 };
 
 __BEGIN_EXTERN_C
 
 struct import_object;
+struct mem_context;
 
-void dyld_init(struct dyld *d);
+void dyld_init(struct dyld *d, struct mem_context *mctx);
 void dyld_clear(struct dyld *d);
 int dyld_load(struct dyld *d, const char *filename);
 struct instance *dyld_main_object_instance(struct dyld *d);
 void dyld_options_set_defaults(struct dyld_options *opts);
-int import_object_create_for_dyld(struct dyld *d, struct import_object **impp);
+int import_object_create_for_dyld(struct mem_context *mctx, struct dyld *d,
+                                  struct import_object **impp);
 
 __END_EXTERN_C

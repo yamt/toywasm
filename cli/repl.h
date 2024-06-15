@@ -65,6 +65,7 @@ struct repl_state {
         bool has_timeout;
         struct mem_context *mctx;
         struct mem_context *wasi_mctx;
+        struct mem_context *dyld_mctx;
 };
 
 void toywasm_repl_state_init(struct repl_state *state);

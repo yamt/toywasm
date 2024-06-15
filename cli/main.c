@@ -273,10 +273,9 @@ print_usage(void)
 int
 main(int argc, char *const *argv)
 {
-        struct mem_context mctx0;
-        struct mem_context *mctx = &mctx0;
-        struct mem_context wasi_mctx0;
-        struct mem_context *wasi_mctx = &wasi_mctx0;
+        struct mem_context mctx0, *mctx = &mctx0;
+        struct mem_context wasi_mctx0, *wasi_mctx = &wasi_mctx0;
+        struct mem_context dyld_mctx0, *dyld_mctx = &dyld_mctx0;
 
         struct repl_state *state;
 #if defined(TOYWASM_ENABLE_WASI)
@@ -313,6 +312,7 @@ main(int argc, char *const *argv)
 #endif
         mem_context_init(mctx);
         mem_context_init(wasi_mctx);
+        mem_context_init(dyld_mctx);
 
         state = malloc(sizeof(*state));
         if (state == NULL) {
@@ -321,6 +321,7 @@ main(int argc, char *const *argv)
         toywasm_repl_state_init(state);
         state->mctx = mctx;
         state->wasi_mctx = wasi_mctx;
+        state->dyld_mctx = dyld_mctx;
         struct repl_options *opts = &state->opts;
         while ((ret = getopt_long(argc, argv, "", longopts, &longidx)) != -1) {
                 switch (ret) {
@@ -339,7 +340,7 @@ main(int argc, char *const *argv)
                         break;
 #if defined(TOYWASM_ENABLE_DYLD)
                 case opt_dyld:
-                        if (state->nmodules > 0) {
+                        if (state->modules.lsize > 0) {
                                 ret = EPROTO;
                                 goto fail;
                         }
@@ -554,6 +555,7 @@ fail:
         VEC_FREE(mctx, dyld_paths);
 #endif
         free(state);
+        mem_context_clear(dyld_mctx);
         mem_context_clear(wasi_mctx);
         mem_context_clear(mctx);
         exit(exit_status);
