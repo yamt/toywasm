@@ -1806,7 +1806,7 @@ read_dylink_needs(const uint8_t **pp, const uint8_t *ep,
         int ret;
         needs->count = 0;
         needs->names = NULL;
-        ret = read_vec(&p, ep, sizeof(*needs->names),
+        ret = read_vec(load_mctx(ctx), &p, ep, sizeof(*needs->names),
                        (read_elem_func_t)read_name, &needs->count,
                        (void *)&needs->names);
         if (ret != 0) {
@@ -1851,7 +1851,7 @@ read_dylink_import_info(const uint8_t **pp, const uint8_t *ep,
         const uint8_t *p = *pp;
         struct dylink *dy = ctx->module->dylink;
         int ret;
-        ret = read_vec(&p, ep, sizeof(*dy->import_info),
+        ret = read_vec(load_mctx(ctx), &p, ep, sizeof(*dy->import_info),
                        (read_elem_func_t)read_import_info, &dy->nimport_info,
                        (void *)&dy->import_info);
         if (ret != 0) {
@@ -1888,22 +1888,23 @@ static const struct dylink_subsection {
 };
 
 static void
-clear_dylink_needs(struct dylink_needs *needs)
+clear_dylink_needs(struct mem_context *mctx, struct dylink_needs *needs)
 {
         if (needs->names != NULL) {
                 uint32_t i;
                 for (i = 0; i < needs->count; i++) {
                         clear_name(&needs->names[i]);
                 }
-                free(needs->names);
+                mem_free(mctx, needs->names,
+                         needs->count * sizeof(*needs->names));
         }
 }
 
 static void
-clear_dylink(struct dylink *dy)
+clear_dylink(struct mem_context *mctx, struct dylink *dy)
 {
-        clear_dylink_needs(&dy->needs);
-        free(dy->import_info);
+        clear_dylink_needs(mctx, &dy->needs);
+        mem_free(mctx, dy->import_info, sizeof(*dy->import_info));
 }
 
 /* https://github.com/WebAssembly/tool-conventions/blob/main/DynamicLinking.md
@@ -1915,7 +1916,8 @@ read_dylink_0_section(const uint8_t **pp, const uint8_t *ep,
         const uint8_t *p = *pp;
         struct module *m = ctx->module;
         int ret;
-        m->dylink = mem_zalloc(load_mctx(ctx), sizeof(*m->dylink));
+        struct mem_context *mctx = load_mctx(ctx);
+        m->dylink = mem_zalloc(mctx, sizeof(*m->dylink));
         if (m->dylink == NULL) {
                 ret = ENOMEM;
                 goto fail;
@@ -1956,8 +1958,8 @@ read_dylink_0_section(const uint8_t **pp, const uint8_t *ep,
         *pp = p;
         return 0;
 fail:
-        clear_dylink(m->dylink);
-        free(m->dylink);
+        clear_dylink(mctx, m->dylink);
+        mem_free(mctx, m->dylink, sizeof(*m->dylink));
         m->dylink = NULL;
         return ret;
 }
@@ -2315,7 +2317,7 @@ module_unload(struct mem_context *mctx, struct module *m)
 
 #if defined(TOYWASM_ENABLE_DYLD)
         if (m->dylink != NULL) {
-                clear_dylink(m->dylink);
+                clear_dylink(mctx, m->dylink);
                 mem_free(mctx, m->dylink, sizeof(*m->dylink));
         }
 #endif
