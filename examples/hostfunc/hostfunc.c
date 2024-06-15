@@ -244,9 +244,10 @@ static const struct host_module module_my_host_inst[] = {{
 }};
 
 int
-import_object_create_for_my_host_inst(void *inst, struct import_object **impp)
+import_object_create_for_my_host_inst(struct mem_context *mctx, void *inst,
+                                      struct import_object **impp)
 {
         return import_object_create_for_host_funcs(
-                module_my_host_inst, ARRAYCOUNT(module_my_host_inst), inst,
-                impp);
+                mctx, module_my_host_inst, ARRAYCOUNT(module_my_host_inst),
+                inst, impp);
 }
