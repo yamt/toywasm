@@ -123,7 +123,10 @@ _read_vec_with_ctx_impl(struct mem_context *mctx, const uint8_t **pp,
                                         clear_elem(mctx, a + j * elem_size);
                                 }
                         }
-                        /* is it worth shrinking the array? */
+                        /* revert the array size */
+                        int ret1 = resize_array(mctx, resultp, elem_size,
+                                                total_count, orig_count);
+                        assert(ret1 == 0);
                         goto fail;
                 }
         }
@@ -133,10 +136,6 @@ _read_vec_with_ctx_impl(struct mem_context *mctx, const uint8_t **pp,
         *countp = total_count;
         return 0;
 fail:
-        if (orig_count == 0) {
-                free(*resultp);
-                *resultp = NULL;
-        }
         return ret;
 }
 
