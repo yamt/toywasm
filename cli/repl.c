@@ -378,7 +378,7 @@ toywasm_repl_set_wasi_prestat_littlefs(struct repl_state *state,
                 return EPROTO;
         }
         int ret;
-        ret = VEC_PREALLOC(state->vfses, 1);
+        ret = VEC_PREALLOC(state->mctx, state->vfses, 1);
         if (ret != 0) {
                 return ret;
         }
