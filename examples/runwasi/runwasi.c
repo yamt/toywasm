@@ -11,8 +11,8 @@
 #include "runwasi.h"
 
 int
-runwasi(const char *filename, unsigned int ndirs, char **dirs,
-        unsigned int nenvs, const char *const *envs, int argc,
+runwasi(struct mem_context *mctx, const char *filename, unsigned int ndirs,
+        char **dirs, unsigned int nenvs, const char *const *envs, int argc,
         const char *const *argv, const int stdio_fds[3],
         struct import_object *base_imports, uint32_t *wasi_exit_code_p)
 {
@@ -33,7 +33,7 @@ runwasi(const char *filename, unsigned int ndirs, char **dirs,
                 goto fail;
         }
         struct load_context lctx;
-        load_context_init(&lctx);
+        load_context_init(&lctx, mctx);
         ret = module_create(&m, p, p + sz, &lctx);
         if (ret != 0) {
                 xlog_error("module_load failed with %d: %s", ret,
@@ -64,7 +64,7 @@ runwasi(const char *filename, unsigned int ndirs, char **dirs,
         /*
          * create a wasi instance
          */
-        ret = wasi_instance_create(&wasi);
+        ret = wasi_instance_create(mctx, &wasi);
         if (ret != 0) {
                 xlog_error("wasi_instance_create failed with %d", ret);
                 goto fail;
@@ -92,7 +92,7 @@ runwasi(const char *filename, unsigned int ndirs, char **dirs,
                         goto fail;
                 }
         }
-        ret = import_object_create_for_wasi(wasi, &wasi_import_object);
+        ret = import_object_create_for_wasi(mctx, wasi, &wasi_import_object);
         if (ret != 0) {
                 xlog_error("import_object_create_for_wasi failed with %d",
                            ret);
@@ -105,7 +105,7 @@ runwasi(const char *filename, unsigned int ndirs, char **dirs,
         struct report report;
         report_init(&report);
         wasi_import_object->next = base_imports;
-        ret = instance_create(m, &inst, wasi_import_object, &report);
+        ret = instance_create(mctx, m, &inst, wasi_import_object, &report);
         if (ret != 0) {
                 const char *msg = report_getmessage(&report);
                 xlog_error("instance_create failed with %d: %s", ret, msg);
@@ -118,7 +118,7 @@ runwasi(const char *filename, unsigned int ndirs, char **dirs,
          * execute the module
          */
         struct exec_context ectx;
-        exec_context_init(&ectx, inst);
+        exec_context_init(&ectx, inst, mctx);
         ret = instance_execute_func(&ectx, funcidx, pt, rt);
         ret = instance_execute_handle_restart(&ectx, ret);
         uint32_t wasi_exit_code = 0;
@@ -149,13 +149,13 @@ fail:
                 instance_destroy(inst);
         }
         if (wasi_import_object != NULL) {
-                import_object_destroy(wasi_import_object);
+                import_object_destroy(mctx, wasi_import_object);
         }
         if (wasi != NULL) {
                 wasi_instance_destroy(wasi);
         }
         if (m != NULL) {
-                module_destroy(m);
+                module_destroy(mctx, m);
         }
         if (p != NULL) {
                 unmap_file(p, sz);
