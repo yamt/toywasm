@@ -4,6 +4,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if !defined(NDEBUG) && defined(__APPLE__)
+#include <malloc/malloc.h>
+#endif
+
 #include "mem.h"
 
 static void
@@ -82,6 +86,8 @@ mem_zalloc(struct mem_context *ctx, size_t sz)
 void *
 mem_calloc(struct mem_context *ctx, size_t a, size_t b)
 {
+        assert(a > 0);
+        assert(b > 0);
         size_t sz = a * b;
         if (sz / a != b) {
                 return NULL;
@@ -96,6 +102,10 @@ mem_free(struct mem_context *ctx, void *p, size_t sz)
                 return;
         }
         assert(sz > 0);
+#if !defined(NDEBUG) && defined(__APPLE__)
+        size_t msz = malloc_size(p);
+        assert(msz == sz);
+#endif
         free(p);
         mem_unreserve(ctx, sz);
 }
