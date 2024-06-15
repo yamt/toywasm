@@ -2,6 +2,7 @@
 
 struct wasi_instance;
 struct import_object;
+struct mem_context;
 
 __BEGIN_EXTERN_C
 
@@ -15,7 +16,8 @@ __BEGIN_EXTERN_C
  * object. see wasi_threads.h.
  */
 
-int wasi_instance_create(struct wasi_instance **instp);
+int wasi_instance_create(struct mem_context *mctx,
+                         struct wasi_instance **instp);
 void wasi_instance_set_args(struct wasi_instance *inst, int argc,
                             const char *const *argv);
 void wasi_instance_set_environ(struct wasi_instance *inst, int nenvs,
@@ -61,7 +63,8 @@ uint32_t wasi_instance_exit_code(struct wasi_instance *wasi);
  * from the wasi instance. that is, host functions like
  * "wasi_snapshot_preview1:path_open".
  */
-int import_object_create_for_wasi(struct wasi_instance *wasi,
+int import_object_create_for_wasi(struct mem_context *mctx,
+                                  struct wasi_instance *wasi,
                                   struct import_object **impp);
 
 uint32_t wasi_convert_errno(int host_errno);

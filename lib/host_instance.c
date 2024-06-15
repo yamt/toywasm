@@ -7,11 +7,12 @@
 #include "exec.h"
 #include "host_instance.h"
 #include "instance.h"
+#include "mem.h"
 #include "type.h"
 #include "xlog.h"
 
 static void
-_dtor(struct import_object *im)
+_dtor(struct mem_context *mctx, struct import_object *im)
 {
         struct funcinst *fis = im->dtor_arg;
         if (fis != NULL) {
@@ -20,15 +21,16 @@ _dtor(struct import_object *im)
                 for (i = 0; i < nfuncs; i++) {
                         struct funcinst *fi = &fis[i];
                         if (fi->u.host.type != NULL) {
-                                functype_free(fi->u.host.type);
+                                functype_free(mctx, fi->u.host.type);
                         }
                 }
-                free(fis);
+                mem_free(mctx, fis, im->nentries * sizeof(*fis));
         }
 }
 
 int
-import_object_create_for_host_funcs(const struct host_module *modules,
+import_object_create_for_host_funcs(struct mem_context *mctx,
+                                    const struct host_module *modules,
                                     size_t n, struct host_instance *hi,
                                     struct import_object **impp)
 {
@@ -45,11 +47,11 @@ import_object_create_for_host_funcs(const struct host_module *modules,
         }
 
         assert(nfuncs > 0);
-        ret = import_object_alloc(nfuncs, &im);
+        ret = import_object_alloc(mctx, nfuncs, &im);
         if (ret != 0) {
                 goto fail;
         }
-        fis = xzalloc(nfuncs * sizeof(*fis));
+        fis = mem_zalloc(mctx, nfuncs * sizeof(*fis));
         if (fis == NULL) {
                 ret = ENOMEM;
                 goto fail;
@@ -63,7 +65,7 @@ import_object_create_for_host_funcs(const struct host_module *modules,
                 for (j = 0; j < hm->nfuncs; j++) {
                         const struct host_func *func = &hm->funcs[j];
                         struct functype *ft;
-                        ret = functype_from_string(func->type, &ft);
+                        ret = functype_from_string(mctx, func->type, &ft);
                         if (ret != 0) {
                                 xlog_error("failed to parse functype: %s",
                                            func->type);
@@ -86,7 +88,7 @@ import_object_create_for_host_funcs(const struct host_module *modules,
         *impp = im;
         return 0;
 fail:
-        import_object_destroy(im);
+        import_object_destroy(mctx, im);
         return ret;
 }
 

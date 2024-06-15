@@ -70,7 +70,7 @@ int
 wasi_fdinfo_alloc_prestat(struct wasi_fdinfo **fdinfop)
 {
         struct wasi_fdinfo_prestat *fdinfo_prestat =
-                zalloc(sizeof(*fdinfo_prestat));
+                xzalloc(sizeof(*fdinfo_prestat));
         if (fdinfo_prestat == NULL) {
                 return ENOMEM;
         }

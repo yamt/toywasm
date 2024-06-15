@@ -64,7 +64,7 @@ push_valtype_common(enum valtype type, const struct ctrlframe *cframe,
 int
 push_valtype(enum valtype type, struct validation_context *ctx)
 {
-        int ret = VEC_PREALLOC(ctx->valtypes, 1);
+        int ret = VEC_PREALLOC(validation_mctx(ctx), ctx->valtypes, 1);
         if (ret != 0) {
                 return ret;
         }
@@ -124,7 +124,7 @@ int
 push_valtypes(const struct resulttype *types, struct validation_context *ctx)
 {
         int ret;
-        ret = VEC_PREALLOC(ctx->valtypes, types->ntypes);
+        ret = VEC_PREALLOC(validation_mctx(ctx), ctx->valtypes, types->ntypes);
         if (ret != 0) {
                 return ret;
         }
@@ -181,7 +181,7 @@ push_ctrlframe(uint32_t pc, enum ctrlframe_op op, uint32_t jumpslot,
                         (unsigned int)op,
                         start_types != NULL ? start_types->ntypes : 0,
                         end_types->ntypes, ctx->valtypes.lsize);
-        ret = VEC_PREALLOC(ctx->cframes, 1);
+        ret = VEC_PREALLOC(validation_mctx(ctx), ctx->cframes, 1);
         if (ret != 0) {
                 return ret;
         }
@@ -204,7 +204,8 @@ push_ctrlframe(uint32_t pc, enum ctrlframe_op op, uint32_t jumpslot,
                 nslots = 2;
         }
         if (nslots > 0) {
-                ret = resize_array((void **)&ei->jumps, sizeof(*ei->jumps),
+                ret = resize_array(validation_mctx(ctx), (void **)&ei->jumps,
+                                   sizeof(*ei->jumps), ei->njumps,
                                    ei->njumps + nslots);
                 if (ret != 0) {
                         return ret;
@@ -349,9 +350,10 @@ void
 validation_context_clear(struct validation_context *ctx)
 {
         validation_context_reuse(ctx);
-        VEC_FREE(ctx->cframes);
-        VEC_FREE(ctx->valtypes);
-        VEC_FREE(ctx->locals);
+        struct mem_context *mctx = validation_mctx(ctx);
+        VEC_FREE(mctx, ctx->cframes);
+        VEC_FREE(mctx, ctx->valtypes);
+        VEC_FREE(mctx, ctx->locals);
 }
 
 void
@@ -405,8 +407,8 @@ record_type_annotation(struct validation_context *vctx, const uint8_t *p,
                 }
         }
         int ret;
-        ret = resize_array((void **)&an->types, sizeof(*an->types),
-                           an->ntypes + 1);
+        ret = resize_array(validation_mctx(vctx), (void **)&an->types,
+                           sizeof(*an->types), an->ntypes, an->ntypes + 1);
         if (ret != 0) {
                 return ret;
         }

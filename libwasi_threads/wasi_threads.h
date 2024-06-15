@@ -11,7 +11,8 @@ struct trap_info;
 __BEGIN_EXTERN_C
 
 void wasi_threads_instance_destroy(struct wasi_threads_instance *inst);
-int wasi_threads_instance_create(struct wasi_threads_instance **instp);
+int wasi_threads_instance_create(struct mem_context *mctx,
+                                 struct wasi_threads_instance **instp);
 
 /*
  * wasi_threads_instance_set_thread_spawn_args: set wasi-threads parameters
@@ -41,7 +42,8 @@ wasi_threads_setup_exec_context(struct wasi_threads_instance *wasi_threads,
 void wasi_threads_complete_exec(struct wasi_threads_instance *wasi_threads,
                                 const struct trap_info **trapp);
 
-int import_object_create_for_wasi_threads(struct wasi_threads_instance *wasi,
+int import_object_create_for_wasi_threads(struct mem_context *mctx,
+                                          struct wasi_threads_instance *wasi,
                                           struct import_object **impp);
 
 __END_EXTERN_C

@@ -60,6 +60,8 @@ struct wasi_instance {
         const char *const *envs;
 
         uint32_t exit_code;
+
+        struct mem_context *mctx;
 };
 
 #define WASI_HOST_FUNC(NAME, TYPE) HOST_FUNC_PREFIX(wasi_, NAME, TYPE)

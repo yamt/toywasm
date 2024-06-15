@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "mem.h"
 #include "repl.h"
 #include "toywasm_config.h"
 #if defined(TOYWASM_ENABLE_WASI_THREADS)
@@ -272,6 +273,11 @@ print_usage(void)
 int
 main(int argc, char *const *argv)
 {
+        struct mem_context mctx0;
+        struct mem_context *mctx = &mctx0;
+        struct mem_context wasi_mctx0;
+        struct mem_context *wasi_mctx = &wasi_mctx0;
+
         struct repl_state *state;
 #if defined(TOYWASM_ENABLE_WASI)
         VEC(, const char *) wasi_envs;
@@ -305,12 +311,16 @@ main(int argc, char *const *argv)
         xlog_tracing = 0;
 #endif
 #endif
+        mem_context_init(mctx);
+        mem_context_init(wasi_mctx);
 
         state = malloc(sizeof(*state));
         if (state == NULL) {
                 goto fail;
         }
         toywasm_repl_state_init(state);
+        state->mctx = mctx;
+        state->wasi_mctx = wasi_mctx;
         struct repl_options *opts = &state->opts;
         while ((ret = getopt_long(argc, argv, "", longopts, &longidx)) != -1) {
                 switch (ret) {
@@ -344,7 +354,7 @@ main(int argc, char *const *argv)
                         break;
 #endif
                 case opt_dyld_path:
-                        ret = VEC_PREALLOC(dyld_paths, 1);
+                        ret = VEC_PREALLOC(mctx, dyld_paths, 1);
                         if (ret != 0) {
                                 goto fail;
                         }
@@ -420,7 +430,7 @@ main(int argc, char *const *argv)
                         }
                         break;
                 case opt_wasi_env:
-                        ret = VEC_PREALLOC(wasi_envs, 1);
+                        ret = VEC_PREALLOC(mctx, wasi_envs, 1);
                         if (ret != 0) {
                                 goto fail;
                         }
@@ -485,7 +495,7 @@ main(int argc, char *const *argv)
 #endif
         ) {
                 const struct repl_module_state_u *mod_u =
-                        &state->modules[state->nmodules - 1];
+                        &VEC_LASTELEM(state->modules);
                 const struct repl_module_state *mod = &mod_u->u.repl;
                 ret = wasi_threads_instance_set_thread_spawn_args(
                         state->wasi_threads, mod->module, mod->extra_import);
@@ -538,12 +548,14 @@ main(int argc, char *const *argv)
 fail:
         toywasm_repl_reset(state);
 #if defined(TOYWASM_ENABLE_WASI)
-        VEC_FREE(wasi_envs);
+        VEC_FREE(mctx, wasi_envs);
 #endif
 #if defined(TOYWASM_ENABLE_DYLD)
-        VEC_FREE(dyld_paths);
+        VEC_FREE(mctx, dyld_paths);
 #endif
         free(state);
+        mem_context_clear(wasi_mctx);
+        mem_context_clear(mctx);
         exit(exit_status);
 success:
         exit_status = 0;

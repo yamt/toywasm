@@ -1495,10 +1495,12 @@ exec_const_expr(const struct expr *expr, enum valtype type, struct val *result,
 }
 
 void
-exec_context_init(struct exec_context *ctx, struct instance *inst)
+exec_context_init(struct exec_context *ctx, struct instance *inst,
+                  struct mem_context *mctx)
 {
         memset(ctx, 0, sizeof(*ctx));
         ctx->instance = inst;
+        ctx->mctx = mctx;
         report_init(&ctx->report0);
         ctx->report = &ctx->report0;
         ctx->check_interval = CHECK_INTERVAL_DEFAULT;
@@ -1508,17 +1510,18 @@ exec_context_init(struct exec_context *ctx, struct instance *inst)
 void
 exec_context_clear(struct exec_context *ctx)
 {
+        struct mem_context *mctx = exec_mctx(ctx);
         struct funcframe *frame;
         VEC_FOREACH(frame, ctx->frames) {
                 frame_clear(frame);
         }
-        VEC_FREE(exec_mctx(ctx), ctx->frames);
-        VEC_FREE(exec_mctx(ctx), ctx->stack);
-        VEC_FREE(exec_mctx(ctx), ctx->labels);
+        VEC_FREE(mctx, ctx->frames);
+        VEC_FREE(mctx, ctx->stack);
+        VEC_FREE(mctx, ctx->labels);
 #if defined(TOYWASM_USE_SEPARATE_LOCALS)
-        VEC_FREE(exec_mctx(ctx), ctx->locals);
+        VEC_FREE(mctx, ctx->locals);
 #endif
-        VEC_FREE(exec_mctx(ctx), ctx->restarts);
+        VEC_FREE(mctx, ctx->restarts);
         report_clear(&ctx->report0);
         ctx->report = NULL;
 }

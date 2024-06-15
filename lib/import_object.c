@@ -3,24 +3,27 @@
 #include <stdlib.h>
 
 #include "instance.h"
+#include "mem.h"
 #include "report.h"
 #include "type.h"
 #include "xlog.h"
 
 int
-import_object_alloc(uint32_t nentries, struct import_object **resultp)
+import_object_alloc(struct mem_context *mctx, uint32_t nentries,
+                    struct import_object **resultp)
 {
         struct import_object *im;
 
-        im = xzalloc(sizeof(*im));
+        im = mem_zalloc(mctx, sizeof(*im));
         if (im == NULL) {
                 return ENOMEM;
         }
         im->nentries = nentries;
         if (nentries > 0) {
-                im->entries = xzalloc(nentries * sizeof(*im->entries));
+                im->entries =
+                        mem_zalloc(mctx, nentries * sizeof(*im->entries));
                 if (im->entries == NULL) {
-                        free(im);
+                        mem_free(mctx, im, sizeof(*im));
                         return ENOMEM;
                 }
         } else {
@@ -35,7 +38,8 @@ import_object_alloc(uint32_t nentries, struct import_object **resultp)
  * immutable because memory and table instances can grow.
  */
 int
-import_object_create_for_exports(struct instance *inst,
+import_object_create_for_exports(struct mem_context *mctx,
+                                 struct instance *inst,
                                  const struct name *module_name,
                                  struct import_object **resultp)
 {
@@ -43,7 +47,7 @@ import_object_create_for_exports(struct instance *inst,
         struct import_object *im;
         int ret;
 
-        ret = import_object_alloc(m->nexports, &im);
+        ret = import_object_alloc(mctx, m->nexports, &im);
         if (ret != 0) {
                 return ret;
         }
@@ -83,13 +87,13 @@ import_object_create_for_exports(struct instance *inst,
 }
 
 void
-import_object_destroy(struct import_object *im)
+import_object_destroy(struct mem_context *mctx, struct import_object *im)
 {
         if (im->dtor != NULL) {
-                im->dtor(im);
+                im->dtor(mctx, im);
         }
-        free(im->entries);
-        free(im);
+        mem_free(mctx, im->entries, im->nentries * sizeof(*im->entries));
+        mem_free(mctx, im, sizeof(*im));
 }
 
 int

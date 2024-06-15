@@ -7,24 +7,26 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "mem.h"
 #include "util.h"
 
 int
-resize_array(void **p, size_t elem_size, uint32_t new_elem_count)
+resize_array(struct mem_context *mctx, void **p, size_t elem_size,
+             uint32_t old_elem_count, uint32_t new_elem_count)
 {
+        const size_t old_bytesize = elem_size * old_elem_count;
+        const size_t bytesize = elem_size * new_elem_count;
         void *np;
-        size_t bytesize;
 
         assert(elem_size > 0);
-        bytesize = elem_size * new_elem_count;
         if (bytesize / elem_size != new_elem_count) {
                 return EOVERFLOW;
         }
         if (bytesize == 0) {
-                free(*p);
+                mem_free(mctx, *p, old_bytesize);
                 np = NULL;
         } else {
-                np = realloc(*p, bytesize);
+                np = mem_resize(mctx, *p, old_bytesize, bytesize);
                 if (np == NULL) {
                         return ENOMEM;
                 }

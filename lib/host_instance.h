@@ -63,7 +63,7 @@ struct host_func {
 #endif
 
 struct host_instance {
-        int dummy;
+        struct mem_context *mctx;
 };
 
 struct host_module {
@@ -75,7 +75,9 @@ struct host_module {
 __BEGIN_EXTERN_C
 
 struct import_object;
-int import_object_create_for_host_funcs(const struct host_module *modules,
+struct mem_context;
+int import_object_create_for_host_funcs(struct mem_context *mctx,
+                                        const struct host_module *modules,
                                         size_t n, struct host_instance *hi,
                                         struct import_object **impp);
 

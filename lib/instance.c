@@ -183,7 +183,7 @@ memory_instance_create(struct mem_context *mctx, struct meminst **mip,
                         goto fail;
                 }
                 if (need_in_bytes > 0) {
-                        mp->data = mem_zalloc(mctx->need_in_bytes);
+                        mp->data = mem_zalloc(mctx, need_in_bytes);
                         if (mp->data == NULL) {
                                 mem_free(mctx, mp->shared,
                                          sizeof(*mp->shared));
@@ -209,18 +209,18 @@ fail:
 void
 memory_instance_destroy(struct mem_context *mctx, struct meminst *mi)
 {
-        if (mi != NULL) {
-                assert(mctx == mi->mctx);
-#if defined(TOYWASM_ENABLE_WASM_THREADS)
-                struct shared_meminst *shared = mi->shared;
-                if (shared != NULL) {
-                        toywasm_mutex_destroy(&shared->lock);
-                        free(shared);
-                        mem_free(mctx, mp->shared, sizeof(*mp->shared));
-                }
-#endif
-                mem_free(mctx, mi->data, mi->allocated);
+        if (mi == NULL) {
+                return;
         }
+        assert(mctx == mi->mctx);
+#if defined(TOYWASM_ENABLE_WASM_THREADS)
+        struct shared_meminst *shared = mi->shared;
+        if (shared != NULL) {
+                toywasm_mutex_destroy(&shared->lock);
+                mem_free(mctx, shared, sizeof(*shared));
+        }
+#endif
+        mem_free(mctx, mi->data, mi->allocated);
         mem_free(mctx, mi, sizeof(*mi));
 }
 
@@ -271,7 +271,7 @@ fail:
 void
 tag_instance_destroy(struct mem_context *mctx, struct taginst *ti)
 {
-        mem_free(mctx, ti);
+        mem_free(mctx, ti, sizeof(*ti));
 }
 #endif
 
@@ -287,6 +287,7 @@ table_instance_create(struct mem_context *mctx, struct tableinst **tip,
                 goto fail;
         }
         tinst->type = tt;
+        tinst->mctx = mctx;
         tinst->size = tinst->type->lim.min;
         uint32_t csz = valtype_cellsize(tt->et);
         size_t ncells = (size_t)tinst->size * csz;
@@ -304,7 +305,6 @@ table_instance_create(struct mem_context *mctx, struct tableinst **tip,
                 goto fail;
         }
         memset(tinst->cells, 0, ncells * sizeof(*tinst->cells));
-        tinst->mctx = mctx;
         *tip = tinst;
         return 0;
 fail:
@@ -315,12 +315,13 @@ fail:
 void
 table_instance_destroy(struct mem_context *mctx, struct tableinst *ti)
 {
-        assert(mctx == ti->mctx);
-        if (ti != NULL) {
-                uint32_t csz = valtype_cellsize(ti->type->et);
-                size_t ncells = (size_t)ti->size * csz;
-                mem_free(mctx, ti->cells, ncells);
+        if (ti == NULL) {
+                return;
         }
+        assert(mctx == ti->mctx);
+        uint32_t csz = valtype_cellsize(ti->type->et);
+        size_t ncells = (size_t)ti->size * csz;
+        mem_free(mctx, ti->cells, ncells * sizeof(*ti->cells));
         mem_free(mctx, ti, sizeof(*ti));
 }
 
@@ -343,7 +344,7 @@ instance_create(struct mem_context *mctx, const struct module *m,
         struct exec_context ctx0;
         struct exec_context *ctx = NULL;
         ctx = &ctx0;
-        exec_context_init(ctx, inst);
+        exec_context_init(ctx, inst, mctx);
         ctx->report = report;
         ret = instance_execute_init(ctx);
         ret = instance_execute_handle_restart(ctx, ret);

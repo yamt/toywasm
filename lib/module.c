@@ -147,7 +147,7 @@ read_resulttype(const uint8_t **pp, const uint8_t *ep, struct resulttype *rt,
         rt->cellidx.cellidxes = NULL;
 #endif
         ret = read_vec(load_mctx(ctx), &p, ep, sizeof(*rt->types),
-                       (read_elem_func_t)read_valtype, NULL, &rt->ntypes,
+                       (read_elem_func_t)read_valtype, &rt->ntypes,
                        (void *)&rt->types);
         if (ret != 0) {
                 goto fail;
@@ -172,9 +172,11 @@ fail:
 }
 
 void
-clear_resulttype(struct resulttype *rt)
+clear_resulttype(struct mem_context *mctx, struct resulttype *rt)
 {
-        free(rt->types);
+        if (rt->types != NULL) {
+                mem_free(mctx, rt->types, rt->ntypes * sizeof(*rt->types));
+        }
 #if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
         free(rt->cellidx.cellidxes);
 #endif
@@ -210,7 +212,7 @@ read_functype(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
          */
         ret = read_resulttype(&p, ep, &ft->result, ctx, false);
         if (ret != 0) {
-                clear_resulttype(&ft->parameter);
+                clear_resulttype(load_mctx(ctx), &ft->parameter);
                 goto fail;
         }
 
@@ -220,10 +222,10 @@ fail:
 }
 
 void
-clear_functype(struct functype *ft)
+clear_functype(struct mem_context *mctx, struct functype *ft)
 {
-        clear_resulttype(&ft->parameter);
-        clear_resulttype(&ft->result);
+        clear_resulttype(mctx, &ft->parameter);
+        clear_resulttype(mctx, &ft->result);
 }
 
 #if 0
@@ -762,7 +764,7 @@ fail:
 }
 
 static void
-clear_import(struct import *im)
+clear_import(struct mem_context *mctx, struct import *im)
 {
         clear_name(&im->module_name);
         clear_name(&im->name);
@@ -793,7 +795,7 @@ fail:
 }
 
 static void
-clear_export(struct wasm_export *ex)
+clear_export(struct mem_context *mctx, struct wasm_export *ex)
 {
         clear_name(&ex->name);
 }
@@ -870,29 +872,30 @@ fail:
 }
 
 static void
-clear_expr_exec_info(struct expr_exec_info *ei)
+clear_expr_exec_info(struct mem_context *mctx, struct expr_exec_info *ei)
 {
-        free(ei->jumps);
+        mem_free(mctx, ei->jumps, ei->njumps * sizeof(*ei->jumps));
 #if defined(TOYWASM_USE_SMALL_CELLS)
-        free(ei->type_annotations.types);
+        struct type_annotations *an = &ei->type_annotations;
+        mem_free(mctx, an->types, an->ntypes * sizeof(*an->types));
 #endif
 }
 
 static void
-clear_expr(struct expr *expr)
+clear_expr(struct mem_context *mctx, struct expr *expr)
 {
-        clear_expr_exec_info(&expr->ei);
+        clear_expr_exec_info(mctx, &expr->ei);
 }
 
 static void
-clear_func(struct func *func)
+clear_func(struct mem_context *mctx, struct func *func)
 {
         struct localtype *lt = &func->localtype;
         free(lt->localchunks);
 #if defined(TOYWASM_USE_LOCALTYPE_CELLIDX)
         free(lt->cellidx.cellidxes);
 #endif
-        clear_expr(&func->e);
+        clear_expr(mctx, &func->e);
 }
 
 #if defined(TOYWASM_USE_LOCALTYPE_CELLIDX)
@@ -1070,7 +1073,7 @@ read_func(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
         *pp = p;
         return 0;
 fail:
-        clear_func(func);
+        clear_func(load_mctx(ctx), func);
         return ret;
 }
 
@@ -1126,7 +1129,7 @@ read_table_section(const uint8_t **pp, const uint8_t *ep,
         int ret;
 
         ret = read_vec(load_mctx(ctx), &p, ep, sizeof(*m->tables),
-                       (read_elem_func_t)read_tabletype, NULL, &m->ntables,
+                       (read_elem_func_t)read_tabletype, &m->ntables,
                        (void *)&m->tables);
         if (ret != 0) {
                 goto fail;
@@ -1196,9 +1199,9 @@ fail:
 }
 
 static void
-clear_global(struct global *g)
+clear_global(struct mem_context *mctx, struct global *g)
 {
-        clear_expr(&g->init);
+        clear_expr(mctx, &g->init);
 }
 
 static int
@@ -1305,17 +1308,20 @@ read_element_init_expr(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
 }
 
 static void
-clear_element(struct element *elem)
+clear_element(struct mem_context *mctx, struct element *elem)
 {
         if (elem->init_exprs != NULL) {
                 uint32_t i;
                 for (i = 0; i < elem->init_size; i++) {
-                        clear_expr(&elem->init_exprs[i]);
+                        clear_expr(mctx, &elem->init_exprs[i]);
                 }
-                free(elem->init_exprs);
+                mem_free(mctx, elem->init_exprs,
+                         elem->init_size * sizeof(*elem->init_exprs));
+        } else {
+                mem_free(mctx, elem->funcs,
+                         elem->init_size * sizeof(*elem->funcs));
         }
-        free(elem->funcs);
-        clear_expr(&elem->offset);
+        clear_expr(mctx, &elem->offset);
 }
 
 /*
@@ -1486,7 +1492,7 @@ read_element(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
         *pp = p;
         return 0;
 fail:
-        clear_element(elem);
+        clear_element(load_mctx(ctx), elem);
         return ret;
 }
 
@@ -1557,7 +1563,7 @@ read_code_section(const uint8_t **pp, const uint8_t *ep,
 fail:
         xlog_trace("read_code_section failed");
         /* avoid accessing uninitializing data in module_unload */
-        free(m->funcs);
+        mem_free(load_mctx(ctx), m->funcs, nfuncs_in_code * sizeof(*m->funcs));
         m->funcs = NULL;
         return ret;
 }
@@ -1625,9 +1631,9 @@ fail:
 }
 
 static void
-clear_data(struct data *data)
+clear_data(struct mem_context *mctx, struct data *data)
 {
-        clear_expr(&data->offset);
+        clear_expr(mctx, &data->offset);
 }
 
 static void
@@ -1684,7 +1690,7 @@ fail:
 
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
 static void
-clear_tagtype(struct tagtype *tag)
+clear_tagtype(struct mem_context *mctx, struct tagtype *tag)
 {
 }
 
@@ -1696,8 +1702,9 @@ read_tag_section(const uint8_t **pp, const uint8_t *ep,
         const uint8_t *p = *pp;
         int ret;
 
-        ret = read_vec_with_ctx(&p, ep, sizeof(*m->tags), read_tagtype,
-                                clear_tagtype, ctx, &m->ntags, &m->tags);
+        ret = read_vec_with_ctx(load_mctx(ctx), &p, ep, sizeof(*m->tags),
+                                read_tagtype, clear_tagtype, ctx, &m->ntags,
+                                &m->tags);
         if (ret != 0) {
                 goto fail;
         }
@@ -1800,8 +1807,7 @@ read_dylink_needs(const uint8_t **pp, const uint8_t *ep,
         needs->count = 0;
         needs->names = NULL;
         ret = read_vec(&p, ep, sizeof(*needs->names),
-                       (read_elem_func_t)read_name,
-                       (clear_elem_func_t)clear_name, &needs->count,
+                       (read_elem_func_t)read_name, &needs->count,
                        (void *)&needs->names);
         if (ret != 0) {
                 goto fail;
@@ -1846,8 +1852,8 @@ read_dylink_import_info(const uint8_t **pp, const uint8_t *ep,
         struct dylink *dy = ctx->module->dylink;
         int ret;
         ret = read_vec(&p, ep, sizeof(*dy->import_info),
-                       (read_elem_func_t)read_import_info, NULL,
-                       &dy->nimport_info, (void *)&dy->import_info);
+                       (read_elem_func_t)read_import_info, &dy->nimport_info,
+                       (void *)&dy->import_info);
         if (ret != 0) {
                 goto fail;
         }
@@ -1909,7 +1915,7 @@ read_dylink_0_section(const uint8_t **pp, const uint8_t *ep,
         const uint8_t *p = *pp;
         struct module *m = ctx->module;
         int ret;
-        m->dylink = zalloc(sizeof(*m->dylink));
+        m->dylink = mem_zalloc(loader_mctx(ctx), sizeof(*m->dylink));
         if (m->dylink == NULL) {
                 ret = ENOMEM;
                 goto fail;
@@ -2235,9 +2241,10 @@ module_create0(struct mem_context *mctx, struct module **mp)
 }
 
 int
-module_create(struct mem_context *mctx, struct module **mp, const uint8_t *p,
-              const uint8_t *ep, struct load_context *ctx)
+module_create(struct module **mp, const uint8_t *p, const uint8_t *ep,
+              struct load_context *ctx)
 {
+        struct mem_context *mctx = ctx->mctx;
         struct module *m;
         int ret = module_create0(mctx, &m);
         if (ret != 0) {
@@ -2258,13 +2265,13 @@ module_unload(struct mem_context *mctx, struct module *m)
         uint32_t i;
 
         for (i = 0; i < m->ntypes; i++) {
-                clear_functype(&m->types[i]);
+                clear_functype(mctx, &m->types[i]);
         }
         mem_free(mctx, m->types, m->ntypes * sizeof(*m->types));
 
         if (m->funcs != NULL) {
                 for (i = 0; i < m->nfuncs; i++) {
-                        clear_func(&m->funcs[i]);
+                        clear_func(mctx, &m->funcs[i]);
                 }
                 mem_free(mctx, m->funcs, m->nfuncs * sizeof(*m->funcs));
         }
@@ -2275,34 +2282,34 @@ module_unload(struct mem_context *mctx, struct module *m)
         mem_free(mctx, m->mems, m->nmems * sizeof(*m->mems));
 
         for (i = 0; i < m->nglobals; i++) {
-                clear_global(&m->globals[i]);
+                clear_global(mctx, &m->globals[i]);
         }
         mem_free(mctx, m->globals, m->nglobals * sizeof(*m->globals));
 
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
         for (i = 0; i < m->ntags; i++) {
-                clear_tagtype(&m->tags[i]);
+                clear_tagtype(mctx, &m->tags[i]);
         }
         mem_free(mctx, m->tags, m->ntags * sizeof(*m->tags));
 #endif
 
         for (i = 0; i < m->nelems; i++) {
-                clear_element(&m->elems[i]);
+                clear_element(mctx, &m->elems[i]);
         }
         mem_free(mctx, m->elems, m->nelems * sizeof(*m->elems));
 
         for (i = 0; i < m->ndatas; i++) {
-                clear_data(&m->datas[i]);
+                clear_data(mctx, &m->datas[i]);
         }
         mem_free(mctx, m->datas, m->ndatas * sizeof(*m->datas));
 
         for (i = 0; i < m->nimports; i++) {
-                clear_import(&m->imports[i]);
+                clear_import(mctx, &m->imports[i]);
         }
         mem_free(mctx, m->imports, m->nimports * sizeof(*m->imports));
 
         for (i = 0; i < m->nexports; i++) {
-                clear_export(&m->exports[i]);
+                clear_export(mctx, &m->exports[i]);
         }
         mem_free(mctx, m->exports, m->nexports * sizeof(*m->exports));
 
