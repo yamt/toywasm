@@ -207,6 +207,9 @@ toywasm_repl_reset(struct repl_state *state)
                 nbio_printf("wasi memory consumption immediately "
                             "before a reset: %zu\n",
                             state->wasi_mctx->allocated);
+                nbio_printf("dyld memory consumption immediately "
+                            "before a reset: %zu\n",
+                            state->dyld_mctx->allocated);
         }
         uint32_t n = 0;
         while (state->imports != NULL) {
@@ -265,6 +268,9 @@ toywasm_repl_reset(struct repl_state *state)
                 nbio_printf("wasi memory consumption immediately "
                             "after a reset: %zu\n",
                             state->wasi_mctx->allocated);
+                nbio_printf("dyld memory consumption immediately "
+                            "after a reset: %zu\n",
+                            state->dyld_mctx->allocated);
         }
 }
 
@@ -683,7 +689,7 @@ toywasm_repl_load(struct repl_state *state, const char *modname,
                         return ENOTSUP; /* not implemented */
                 }
                 struct dyld *d = &mod_u->u.dyld;
-                dyld_init(d);
+                dyld_init(d, state->dyld_mctx);
                 d->opts = state->opts.dyld_options;
                 d->opts.base_import_obj = state->imports;
                 ret = dyld_load(d, filename);
@@ -1136,6 +1142,7 @@ toywasm_repl_invoke(struct repl_state *state, const char *modname,
         if (state->opts.enable_dyld) {
                 struct dyld *d = &mod_u->u.dyld;
                 inst = dyld_main_object_instance(d);
+                mctx = state->mctx;
         } else
 #endif
         {

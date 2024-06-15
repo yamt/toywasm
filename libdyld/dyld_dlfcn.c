@@ -18,6 +18,7 @@
 #include "endian.h"
 #include "exec.h"
 #include "host_instance.h"
+#include "mem.h"
 #include "xlog.h"
 
 static int
@@ -81,7 +82,7 @@ dyld_dlfcn_load_object(struct exec_context *ctx, struct host_instance *hi,
         }
 
         uint32_t idx = d->dynobjs.lsize;
-        ret = VEC_PREALLOC(d->dynobjs, 1);
+        ret = VEC_PREALLOC(d->mctx, d->dynobjs, 1);
         if (ret != 0) {
                 xlog_error("%s: dynobjs prealloc failed", __func__);
                 user_ret = 1;
@@ -90,7 +91,7 @@ dyld_dlfcn_load_object(struct exec_context *ctx, struct host_instance *hi,
         struct dyld_dynamic_object *dobj = &VEC_ELEM(d->dynobjs, idx);
         memset(dobj, 0, sizeof(*dobj));
 
-        char *name_data = malloc(namelen + 1);
+        char *name_data = mem_alloc(d->mctx, namelen + 1);
         if (name_data == NULL) {
                 xlog_error("%s: malloc failed", __func__);
                 user_ret = 1;
@@ -106,7 +107,7 @@ dyld_dlfcn_load_object(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 xlog_error("%s: dyld_dynamic_load_object_by_name failed",
                            __func__);
-                free(name_data);
+                mem_free(d->mctx, name_data, namelen + 1);
                 user_ret = 1;
                 goto fail;
         }
@@ -223,8 +224,9 @@ static const struct host_module module_dyld[] = {
 };
 
 int
-import_object_create_for_dyld(struct dyld *d, struct import_object **impp)
+import_object_create_for_dyld(struct mem_context *mctx, struct dyld *d,
+                              struct import_object **impp)
 {
         return import_object_create_for_host_funcs(
-                module_dyld, ARRAYCOUNT(module_dyld), (void *)d, impp);
+                mctx, module_dyld, ARRAYCOUNT(module_dyld), (void *)d, impp);
 }

@@ -28,6 +28,7 @@
 #include "instance.h"
 #include "list.h"
 #include "load_context.h"
+#include "mem.h"
 #include "module.h"
 #include "type.h"
 #include "util.h"
@@ -264,13 +265,14 @@ dyld_options_set_defaults(struct dyld_options *opts)
 }
 
 void
-dyld_init(struct dyld *d)
+dyld_init(struct dyld *d, struct mem_context *mctx)
 {
         memset(d, 0, sizeof(*d));
         LIST_HEAD_INIT(&d->objs);
         d->table_base = 0;
         d->memory_base = 0;
         dyld_options_set_defaults(&d->opts);
+        d->mctx = mctx;
 }
 
 static struct dyld_object *
@@ -361,7 +363,7 @@ dyld_allocate_local_import_object(struct dyld *d, struct dyld_object *obj)
         nent += 2; /* env.__table_base, env.__memory_base */
         nent += obj->ngots;
         nent += obj->nplts;
-        ret = import_object_alloc(nent, &obj->local_import_obj);
+        ret = import_object_alloc(d->mctx, nent, &obj->local_import_obj);
         if (ret != 0) {
                 goto fail;
         }
@@ -396,10 +398,18 @@ dyld_create_got(struct dyld *d, struct dyld_object *obj)
         if (ret != 0) {
                 goto fail;
         }
-        obj->plts = calloc(nplts, sizeof(*obj->plts));
-        obj->gots = calloc(ngots, sizeof(*obj->gots));
-        if (obj->plts == NULL || obj->gots == NULL) {
-                return ENOMEM;
+        struct mem_context *mctx = d->mctx;
+        if (nplts > 0) {
+                obj->plts = mem_calloc(mctx, nplts, sizeof(*obj->plts));
+                if (obj->plts == NULL) {
+                        return ENOMEM;
+                }
+        }
+        if (ngots > 0) {
+                obj->gots = mem_calloc(mctx, ngots, sizeof(*obj->gots));
+                if (obj->gots == NULL) {
+                        return ENOMEM;
+                }
         }
 
         struct import_object_entry *e = obj->local_import_obj->entries;
@@ -632,21 +642,23 @@ dyld_object_destroy(struct dyld_object *obj)
          */
         xlog_trace("dyld: destroying %.*s", CSTR(obj->name));
 #endif
+        struct dyld *d = obj->dyld;
+        struct mem_context *mctx = d->mctx;
         if (obj->local_import_obj != NULL) {
-                import_object_destroy(obj->local_import_obj);
+                import_object_destroy(mctx, obj->local_import_obj);
         }
-        free(obj->gots);
-        free(obj->plts);
+        mem_free(mctx, obj->gots, obj->ngots * sizeof(*obj->gots));
+        mem_free(mctx, obj->plts, obj->nplts * sizeof(*obj->plts));
         if (obj->instance != NULL) {
                 instance_destroy(obj->instance);
         }
         if (obj->module != NULL) {
-                module_destroy(obj->module);
+                module_destroy(mctx, obj->module);
         }
         if (obj->bin != NULL) {
                 unmap_file((void *)obj->bin, obj->binsz);
         }
-        free(obj);
+        mem_free(mctx, obj, sizeof(*obj));
 }
 
 static int
@@ -666,7 +678,8 @@ dyld_execute_init_func(struct dyld_object *obj, const struct name *name)
                 return EINVAL;
         }
         struct exec_context ectx;
-        exec_context_init(&ectx, obj->instance);
+        struct dyld *dyld = obj->dyld;
+        exec_context_init(&ectx, obj->instance, dyld->mctx);
         ret = instance_execute_func(&ectx, funcidx, pt, rt);
         ret = instance_execute_handle_restart(&ectx, ret);
         exec_context_clear(&ectx);
@@ -760,18 +773,19 @@ dyld_load_object_from_file(struct dyld *d, const struct name *name,
 {
         struct dyld_object *obj;
         int ret;
-        obj = zalloc(sizeof(*obj));
+        obj = mem_zalloc(d->mctx, sizeof(*obj));
         if (obj == NULL) {
                 ret = ENOMEM;
                 goto fail;
         }
+        obj->dyld = d;
         obj->name = name;
         ret = map_file(filename, (void *)&obj->bin, &obj->binsz);
         if (ret != 0) {
                 goto fail;
         }
         struct load_context lctx;
-        load_context_init(&lctx);
+        load_context_init(&lctx, d->mctx);
         ret = module_create(&obj->module, obj->bin, obj->bin + obj->binsz,
                             &lctx);
         if (ret != 0) {
@@ -836,7 +850,7 @@ dyld_load_object_from_file(struct dyld *d, const struct name *name,
         obj->local_import_obj->next = d->shared_import_obj;
         struct report report;
         report_init(&report);
-        ret = instance_create(obj->module, &obj->instance,
+        ret = instance_create(d->mctx, obj->module, &obj->instance,
                               obj->local_import_obj, &report);
         if (ret != 0) {
                 xlog_error("instance_create failed with %d: %s", ret,
@@ -864,7 +878,6 @@ dyld_load_object_from_file(struct dyld *d, const struct name *name,
                 goto fail;
         }
         LIST_INSERT_TAIL(&d->objs, obj, q);
-        obj->dyld = d;
         xlog_trace("dyld: %.*s loaded", CSTR(name));
         if (objp != NULL) {
                 *objp = obj;
@@ -889,7 +902,7 @@ dyld_create_shared_resources(struct dyld *d)
                 tt->et = TYPE_FUNCREF;
                 tt->lim.min = d->table_base;
                 tt->lim.max = UINT32_MAX;
-                ret = table_instance_create(&d->tableinst, tt);
+                ret = table_instance_create(d->mctx, &d->tableinst, tt);
                 if (ret != 0) {
                         goto fail;
                 }
@@ -904,7 +917,7 @@ dyld_create_shared_resources(struct dyld *d)
 #if defined(TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES)
                 mt->page_shift = page_shift;
 #endif
-                ret = memory_instance_create(&d->meminst, mt);
+                ret = memory_instance_create(d->mctx, &d->meminst, mt);
                 if (ret != 0) {
                         goto fail;
                 }
@@ -917,7 +930,7 @@ dyld_create_shared_resources(struct dyld *d)
         d->heap_end.type = &globaltype_i32_mut;
 
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
-        ret = functype_from_string("(i)", &d->c_longjmp_ft);
+        ret = functype_from_string(d->mctx, "(i)", &d->c_longjmp_ft);
         if (ret != 0) {
                 goto fail;
         }
@@ -926,7 +939,7 @@ dyld_create_shared_resources(struct dyld *d)
 #endif
 
         struct import_object *imp;
-        ret = import_object_alloc(num_shared_entries, &imp);
+        ret = import_object_alloc(d->mctx, num_shared_entries, &imp);
         if (ret != 0) {
                 goto fail;
         }
@@ -983,7 +996,7 @@ dyld_create_shared_resources(struct dyld *d)
 
 #if defined(TOYWASM_ENABLE_DYLD_DLFCN)
         if (d->opts.enable_dlfcn) {
-                ret = import_object_create_for_dyld(d, &imp);
+                ret = import_object_create_for_dyld(d->mctx, d, &imp);
                 if (ret != 0) {
                         goto fail;
                 }
@@ -1239,11 +1252,12 @@ dyld_resolve_all_got_symbols(struct dyld *d, struct dyld_object *start)
 static int
 dyld_resolve_plt_symbols(struct dyld_object *refobj)
 {
+        struct mem_context *mctx = refobj->dyld->mctx;
         uint32_t i;
         for (i = 0; i < refobj->nplts; i++) {
                 struct dyld_plt *plt = &refobj->plts[i];
                 struct exec_context ectx;
-                exec_context_init(&ectx, refobj->instance);
+                exec_context_init(&ectx, refobj->instance, mctx);
                 int ret = dyld_resolve_plt(&ectx, plt);
                 exec_context_clear(&ectx);
                 if (ret != 0) {
@@ -1355,6 +1369,7 @@ fail:
 void
 dyld_clear(struct dyld *d)
 {
+        struct mem_context *mctx = d->mctx;
         struct dyld_object *obj;
         while ((obj = LIST_FIRST(&d->objs)) != NULL) {
                 LIST_REMOVE(&d->objs, obj, q);
@@ -1362,27 +1377,28 @@ dyld_clear(struct dyld *d)
         }
         if (d->pie) {
                 if (d->meminst != NULL) {
-                        memory_instance_destroy(d->meminst);
+                        memory_instance_destroy(mctx, d->meminst);
                 }
                 if (d->tableinst != NULL) {
-                        table_instance_destroy(d->tableinst);
+                        table_instance_destroy(mctx, d->tableinst);
                 }
         }
         struct import_object *imp;
         while ((imp = d->shared_import_obj) != d->opts.base_import_obj) {
                 d->shared_import_obj = imp->next;
-                import_object_destroy(imp);
+                import_object_destroy(mctx, imp);
         }
 #if defined(TOYWASM_ENABLE_DYLD_DLFCN)
         struct dyld_dynamic_object *it;
         VEC_FOREACH(it, d->dynobjs) {
-                free((void *)it->name.data); /* discard const */
+                size_t sz = strlen(it->name.data) + 1;
+                mem_free(mctx, (void *)it->name.data, sz); /* discard const */
         }
-        VEC_FREE(d->dynobjs);
+        VEC_FREE(mctx, d->dynobjs);
 #endif
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
         if (d->c_longjmp_ft != NULL) {
-                functype_free(d->c_longjmp_ft);
+                functype_free(mctx, d->c_longjmp_ft);
         }
 #endif
         memset(d, 0, sizeof(*d));
