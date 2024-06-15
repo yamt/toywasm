@@ -47,9 +47,10 @@ static const struct host_module module_log_execution[] = {{
 }};
 
 int
-import_object_create_for_log_execution(void *inst, struct import_object **impp)
+import_object_create_for_log_execution(struct mem_context *mctx, void *inst,
+                                       struct import_object **impp)
 {
         return import_object_create_for_host_funcs(
-                module_log_execution, ARRAYCOUNT(module_log_execution), inst,
-                impp);
+                mctx, module_log_execution, ARRAYCOUNT(module_log_execution),
+                inst, impp);
 }
