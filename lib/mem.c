@@ -12,19 +12,16 @@
 #include "mem.h"
 
 static void
-mem_unreserve(struct mem_context *ctx, size_t diff)
+mem_unreserve_one(struct mem_context *ctx, size_t diff)
 {
         assert(ctx->allocated <= ctx->limit);
         assert(ctx->allocated >= diff);
         size_t ov = atomic_fetch_sub(&ctx->allocated, diff);
         assert(ov >= diff);
-        if (ctx->parent != NULL) {
-                mem_unreserve(ctx->parent, diff);
-        }
 }
 
 static int
-mem_reserve(struct mem_context *ctx, size_t diff)
+mem_reserve_one(struct mem_context *ctx, size_t diff)
 {
         size_t ov;
         size_t nv;
@@ -36,10 +33,30 @@ mem_reserve(struct mem_context *ctx, size_t diff)
                 }
                 nv = ov + diff;
         } while (!atomic_compare_exchange_weak(&ctx->allocated, &ov, nv));
+        return 0;
+}
+
+static void
+mem_unreserve(struct mem_context *ctx, size_t diff)
+{
+        mem_unreserve_one(ctx, diff);
         if (ctx->parent != NULL) {
-                int ret = mem_reserve(ctx->parent, diff);
+                mem_unreserve(ctx->parent, diff);
+        }
+}
+
+static int
+mem_reserve(struct mem_context *ctx, size_t diff)
+{
+        int ret;
+        ret = mem_reserve_one(ctx, diff);
+        if (ret != 0) {
+                return ret;
+        }
+        if (ctx->parent != NULL) {
+                ret = mem_reserve(ctx->parent, diff);
                 if (ret != 0) {
-                        mem_unreserve(ctx, diff);
+                        mem_unreserve_one(ctx, diff); /* undo */
                         return ret;
                 }
         }
