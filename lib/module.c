@@ -1528,6 +1528,21 @@ fail:
         return ret;
 }
 
+static void
+module_funcs_clear(struct mem_context *mctx, struct module *m, uint32_t nfuncs)
+{
+        assert((m->funcs == NULL) == (nfuncs == 0));
+        if (m->funcs == NULL) {
+                return;
+        }
+        uint32_t i;
+        for (i = 0; i < nfuncs; i++) {
+                clear_func(mctx, &m->funcs[i]);
+        }
+        mem_free(mctx, m->funcs, nfuncs * sizeof(*m->funcs));
+        m->funcs = NULL;
+}
+
 static int
 read_code_section(const uint8_t **pp, const uint8_t *ep,
                   struct load_context *ctx)
@@ -1548,7 +1563,6 @@ read_code_section(const uint8_t **pp, const uint8_t *ep,
         if (nfuncs_in_code != m->nfuncs) {
                 xlog_trace("nfunc mismatch %" PRIu32 " != %" PRIu32,
                            nfuncs_in_code, m->nfuncs);
-                m->nfuncs = nfuncs_in_code; /* for unload */
                 ret = EINVAL;
                 goto fail;
         }
@@ -1562,9 +1576,14 @@ read_code_section(const uint8_t **pp, const uint8_t *ep,
         return 0;
 fail:
         xlog_trace("read_code_section failed");
-        /* avoid accessing uninitializing data in module_unload */
-        mem_free(load_mctx(ctx), m->funcs, nfuncs_in_code * sizeof(*m->funcs));
-        m->funcs = NULL;
+        /*
+         * clear m->funcs eagerly. we can't leave it to
+         * module_unload because struct module doesn't have
+         * a field to save nfuncs_in_code, which might be
+         * different from m->nfuncs in case of validation
+         * failure.
+         */
+        module_funcs_clear(load_mctx(ctx), m, nfuncs_in_code);
         return ret;
 }
 
@@ -2272,12 +2291,7 @@ module_unload(struct mem_context *mctx, struct module *m)
         }
         mem_free(mctx, m->types, m->ntypes * sizeof(*m->types));
 
-        if (m->funcs != NULL) {
-                for (i = 0; i < m->nfuncs; i++) {
-                        clear_func(mctx, &m->funcs[i]);
-                }
-                mem_free(mctx, m->funcs, m->nfuncs * sizeof(*m->funcs));
-        }
+        module_funcs_clear(mctx, m, m->nfuncs);
         mem_free(mctx, m->functypeidxes,
                  m->nfuncs * sizeof(*m->functypeidxes));
 
