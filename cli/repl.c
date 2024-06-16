@@ -312,7 +312,7 @@ undo_wasi_create:
         wasi_instance_destroy(state->wasi);
         state->wasi = NULL;
 fail:
-        xlog_error("failed to load wasi");
+        xlog_error("failed to load wasi with error %u", ret);
         return ret;
 #endif
 }
