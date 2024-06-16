@@ -409,7 +409,9 @@ INSN_IMPL(br_table)
         SAVE_PC;
         INSN_SUCCESS;
 fail:
-        mem_free(mctx, table, vec_count * sizeof(uint32_t));
+        if (table != NULL) {
+                mem_free(mctx, table, vec_count * sizeof(uint32_t));
+        }
         INSN_FAIL;
 }
 
