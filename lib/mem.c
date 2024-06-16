@@ -86,6 +86,16 @@ mem_context_clear(struct mem_context *ctx)
         assert(ctx->allocated == 0);
 }
 
+int
+mem_context_setlimit(struct mem_context *ctx, size_t limit)
+{
+        if (limit < ctx->allocated) {
+                return ENOMEM;
+        }
+        ctx->limit = limit;
+        return 0;
+}
+
 void *
 mem_alloc(struct mem_context *ctx, size_t sz)
 {

@@ -15,6 +15,7 @@ __BEGIN_EXTERN_C
 
 void mem_context_init(struct mem_context *ctx);
 void mem_context_clear(struct mem_context *ctx);
+int __must_check mem_context_setlimit(struct mem_context *ctx, size_t limit);
 void *__must_check mem_alloc(struct mem_context *ctx, size_t sz) __malloc_like
         __alloc_size(2);
 void *__must_check mem_zalloc(struct mem_context *ctx, size_t sz) __malloc_like
