@@ -890,17 +890,19 @@ read_import_section(const uint8_t **pp, const uint8_t *ep,
                     struct load_context *ctx)
 {
         struct module *m = ctx->module;
+        struct mem_context *mctx = load_mctx(ctx);
         const uint8_t *p = *pp;
         int ret;
 
-        ret = read_vec_with_ctx(load_mctx(ctx), &p, ep, sizeof(struct import),
+        ret = read_vec_with_ctx(mctx, &p, ep, sizeof(struct import),
                                 read_import, clear_import, ctx, &m->nimports,
                                 &m->imports);
         if (ret != 0) {
                 goto fail;
         }
         if (m->nimportedfuncs > 0) {
-                ret = bitmap_alloc(&ctx->refs, m->nimportedfuncs);
+                ctx->refs_size = m->nimportedfuncs;
+                ret = bitmap_alloc(mctx, &ctx->refs, ctx->refs_size);
                 if (ret != 0) {
                         goto fail;
                 }
@@ -1132,11 +1134,11 @@ read_function_section(const uint8_t **pp, const uint8_t *ep,
                       struct load_context *ctx)
 {
         struct module *m = ctx->module;
+        struct mem_context *mctx = load_mctx(ctx);
         const uint8_t *p = *pp;
         int ret;
 
-        ret = read_vec_u32(load_mctx(ctx), &p, ep, &m->nfuncs,
-                           &m->functypeidxes);
+        ret = read_vec_u32(mctx, &p, ep, &m->nfuncs, &m->functypeidxes);
         if (ret != 0) {
                 goto fail;
         }
@@ -1154,11 +1156,13 @@ read_function_section(const uint8_t **pp, const uint8_t *ep,
          * Note: if nimportedfuncs > 0,
          * ctx->refs is already allocated by read_import_section.
          */
+        assert(m->nimportedfuncs == ctx->refs_size);
         if (m->nfuncs > 0) {
-                if (m->nimportedfuncs > 0) {
-                        bitmap_free(&ctx->refs);
+                if (ctx->refs_size > 0) {
+                        bitmap_free(mctx, &ctx->refs, ctx->refs_size);
                 }
-                ret = bitmap_alloc(&ctx->refs, m->nimportedfuncs + m->nfuncs);
+                ctx->refs_size = m->nimportedfuncs + m->nfuncs;
+                ret = bitmap_alloc(mctx, &ctx->refs, ctx->refs_size);
                 if (ret != 0) {
                         goto fail;
                 }

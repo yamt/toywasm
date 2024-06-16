@@ -558,11 +558,11 @@ instance_create_no_init(struct mem_context *mctx, const struct module *m,
                 VEC_ELEM(inst->tags, i) = tinst;
         }
 #endif /* defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING) */
-        ret = bitmap_alloc(&inst->data_dropped, m->ndatas);
+        ret = bitmap_alloc(mctx, &inst->data_dropped, m->ndatas);
         if (ret != 0) {
                 goto fail;
         }
-        ret = bitmap_alloc(&inst->elem_dropped, m->nelems);
+        ret = bitmap_alloc(mctx, &inst->elem_dropped, m->nelems);
         if (ret != 0) {
                 goto fail;
         }
@@ -689,8 +689,8 @@ instance_destroy(struct instance *inst)
         }
         VEC_FREE(mctx, inst->tags);
 #endif
-        bitmap_free(&inst->data_dropped);
-        bitmap_free(&inst->elem_dropped);
+        bitmap_free(mctx, &inst->data_dropped, m->ndatas);
+        bitmap_free(mctx, &inst->elem_dropped, m->nelems);
         mem_free(mctx, inst, sizeof(*inst));
 }
 

@@ -16,8 +16,9 @@ __BEGIN_EXTERN_C
  * Note: a bitmap initalized by bitmap_alloc has all bits cleared.
  */
 
-int bitmap_alloc(struct bitmap *b, uint32_t n);
-void bitmap_free(struct bitmap *b);
+struct mem_context;
+int bitmap_alloc(struct mem_context *mctx, struct bitmap *b, uint32_t n);
+void bitmap_free(struct mem_context *mctx, struct bitmap *b, uint32_t n);
 void bitmap_set(struct bitmap *b, uint32_t idx);
 bool bitmap_test(const struct bitmap *b, uint32_t idx);
 
