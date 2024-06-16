@@ -23,6 +23,7 @@
 INSN_IMPL(try_table)
 {
         int ret;
+        struct mem_context *mctx = NULL;
         struct resulttype *rt_parameter = NULL;
         struct resulttype *rt_result = NULL;
 #if defined(__GNUC__) && !defined(__clang__)
@@ -35,8 +36,9 @@ INSN_IMPL(try_table)
         if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
                 struct module *m = vctx->module;
-                ret = get_functype_for_blocktype(m, blocktype, &rt_parameter,
-                                                 &rt_result);
+                mctx = validation_mctx(vctx);
+                ret = get_functype_for_blocktype(mctx, m, blocktype,
+                                                 &rt_parameter, &rt_result);
                 if (ret != 0) {
                         goto fail;
                 }
@@ -151,8 +153,10 @@ INSN_IMPL(try_table)
         SAVE_PC;
         INSN_SUCCESS;
 fail:
-        resulttype_free(rt_parameter);
-        resulttype_free(rt_result);
+        if (mctx != NULL) {
+                resulttype_free(mctx, rt_parameter);
+                resulttype_free(mctx, rt_result);
+        }
         INSN_FAIL;
 }
 

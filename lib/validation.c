@@ -334,9 +334,10 @@ validation_context_init(struct validation_context *ctx)
 void
 validation_context_reuse(struct validation_context *ctx)
 {
+        struct mem_context *mctx = validation_mctx(ctx);
         struct ctrlframe *cframe;
         VEC_FOREACH(cframe, ctx->cframes) {
-                ctrlframe_clear(cframe);
+                ctrlframe_clear(mctx, cframe);
         }
         ctx->cframes.lsize = 0;
         ctx->valtypes.lsize = 0;
@@ -357,10 +358,10 @@ validation_context_clear(struct validation_context *ctx)
 }
 
 void
-ctrlframe_clear(struct ctrlframe *cframe)
+ctrlframe_clear(struct mem_context *mctx, struct ctrlframe *cframe)
 {
-        resulttype_free(cframe->end_types);
-        resulttype_free(cframe->start_types);
+        resulttype_free(mctx, cframe->end_types);
+        resulttype_free(mctx, cframe->start_types);
 }
 
 int

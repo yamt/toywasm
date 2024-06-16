@@ -300,8 +300,8 @@ get_functype(struct module *m, uint32_t typeidx, struct functype **ftp)
 #define BYTE_AS_S33(b) ((int)(signed char)((b) + 0x80))
 
 int
-get_functype_for_blocktype(struct module *m, int64_t blocktype,
-                           struct resulttype **parameter,
+get_functype_for_blocktype(struct mem_context *mctx, struct module *m,
+                           int64_t blocktype, struct resulttype **parameter,
                            struct resulttype **result)
 {
         int ret;
@@ -321,7 +321,7 @@ get_functype_for_blocktype(struct module *m, int64_t blocktype,
                         struct resulttype *rt;
                         enum valtype t = u8;
 
-                        ret = resulttype_alloc(1, &t, &rt);
+                        ret = resulttype_alloc(mctx, 1, &t, &rt);
                         if (ret != 0) {
                                 return ret;
                         }
