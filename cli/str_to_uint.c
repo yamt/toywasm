@@ -22,3 +22,18 @@ str_to_uint(const char *s, int base, uintmax_t *resultp)
         *resultp = v;
         return 0;
 }
+
+int
+str_to_u32(const char *s, int base, uint32_t *resultp)
+{
+        uintmax_t u;
+        int ret = str_to_uint(s, base, &u);
+        if (ret != 0) {
+                return ret;
+        }
+        if (u > UINT32_MAX) {
+                return EOVERFLOW;
+        }
+        *resultp = u;
+        return 0;
+}
