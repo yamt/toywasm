@@ -148,7 +148,7 @@ repl_unload(struct repl_state *state, struct repl_module_state *mod)
         }
 #if defined(TOYWASM_ENABLE_WASI_THREADS)
         if (mod->extra_import != NULL) {
-                import_object_destroy(state->mctx, mod->extra_import);
+                import_object_destroy(state->impobj_mctx, mod->extra_import);
                 mod->extra_import = NULL;
         }
 #endif
@@ -191,12 +191,15 @@ toywasm_repl_reset(struct repl_state *state)
                 nbio_printf("dyld memory consumption immediately "
                             "before a reset: %zu\n",
                             state->dyld_mctx->allocated);
+                nbio_printf("impobj memory consumption immediately "
+                            "before a reset: %zu\n",
+                            state->impobj_mctx->allocated);
         }
         uint32_t n = 0;
         while (state->imports != NULL) {
                 struct import_object *im = state->imports;
                 state->imports = im->next;
-                import_object_destroy(state->mctx, im);
+                import_object_destroy(state->impobj_mctx, im);
                 n++;
         }
         while (state->nregister > 0) {
@@ -252,6 +255,9 @@ toywasm_repl_reset(struct repl_state *state)
                 nbio_printf("dyld memory consumption immediately "
                             "after a reset: %zu\n",
                             state->dyld_mctx->allocated);
+                nbio_printf("impobj memory consumption immediately "
+                            "after a reset: %zu\n",
+                            state->impobj_mctx->allocated);
         }
 }
 
@@ -273,7 +279,8 @@ toywasm_repl_load_wasi(struct repl_state *state)
                 goto undo_wasi_create;
         }
         struct import_object *im;
-        ret = import_object_create_for_wasi(state->mctx, state->wasi, &im);
+        ret = import_object_create_for_wasi(state->impobj_mctx, state->wasi,
+                                            &im);
         if (ret != 0) {
                 goto undo_wasi_create;
         }
@@ -287,7 +294,7 @@ toywasm_repl_load_wasi(struct repl_state *state)
         if (ret != 0) {
                 goto undo_wasi;
         }
-        ret = import_object_create_for_wasi_threads(state->mctx,
+        ret = import_object_create_for_wasi_threads(state->impobj_mctx,
                                                     state->wasi_threads, &im);
         if (ret != 0) {
                 goto undo_wasi_threads_create;
@@ -305,7 +312,7 @@ undo_wasi:
         assert(state->wasi != NULL);
         im = state->imports;
         state->imports = im->next;
-        import_object_destroy(state->mctx, im);
+        import_object_destroy(state->impobj_mctx, im);
 #endif
 #if defined(TOYWASM_ENABLE_WASI)
 undo_wasi_create:
@@ -617,10 +624,11 @@ repl_load_from_buf(struct repl_state *state, const char *modname,
                 /* create matching shared memory automatically */
                 struct import_object *imo;
                 /*
-                 * REVISIT: it's a bit awkward to use state->mctx mctx here
-                 * especially when it includes shared linear memories.
+                 * REVISIT: it's a bit awkward to use state->impobj_mctx
+                 * mctx here especially when it includes shared linear
+                 * memories.
                  */
-                ret = create_satisfying_shared_memories(state->mctx,
+                ret = create_satisfying_shared_memories(state->impobj_mctx,
                                                         mod->module, &imo);
                 if (ret != 0) {
                         goto fail;
@@ -806,7 +814,8 @@ toywasm_repl_register(struct repl_state *state, const char *modname,
         }
         struct name *name = &rname->name;
         set_name_cstr(name, register_modname1);
-        ret = import_object_create_for_exports(state->mctx, inst, name, &im);
+        ret = import_object_create_for_exports(state->impobj_mctx, inst, name,
+                                               &im);
         if (ret != 0) {
                 free(rname);
                 free(register_modname1);
