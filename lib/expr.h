@@ -6,9 +6,11 @@ struct expr;
 struct resulttype;
 struct localchunk;
 struct load_context;
+struct mem_context;
 struct module;
 
-int get_functype_for_blocktype(struct module *m, int64_t blocktype,
+int get_functype_for_blocktype(struct mem_context *mctx, struct module *m,
+                               int64_t blocktype,
                                struct resulttype **parameter,
                                struct resulttype **result);
 

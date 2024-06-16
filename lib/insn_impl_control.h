@@ -19,6 +19,7 @@ INSN_IMPL(nop) { INSN_SUCCESS; }
 INSN_IMPL(block)
 {
         int ret;
+        struct mem_context *mctx = NULL;
         struct resulttype *rt_parameter = NULL;
         struct resulttype *rt_result = NULL;
 
@@ -29,8 +30,9 @@ INSN_IMPL(block)
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
                 struct module *m = vctx->module;
-                ret = get_functype_for_blocktype(m, blocktype, &rt_parameter,
-                                                 &rt_result);
+                mctx = validation_mctx(vctx);
+                ret = get_functype_for_blocktype(mctx, m, blocktype,
+                                                 &rt_parameter, &rt_result);
                 if (ret != 0) {
                         goto fail;
                 }
@@ -50,13 +52,16 @@ INSN_IMPL(block)
         SAVE_PC;
         INSN_SUCCESS;
 fail:
-        resulttype_free(rt_parameter);
-        resulttype_free(rt_result);
+        if (mctx != NULL) {
+                resulttype_free(mctx, rt_parameter);
+                resulttype_free(mctx, rt_result);
+        }
         INSN_FAIL;
 }
 
 INSN_IMPL(loop)
 {
+        struct mem_context *mctx = NULL;
         struct resulttype *rt_parameter = NULL;
         struct resulttype *rt_result = NULL;
         int ret;
@@ -68,8 +73,9 @@ INSN_IMPL(loop)
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
                 struct module *m = vctx->module;
-                ret = get_functype_for_blocktype(m, blocktype, &rt_parameter,
-                                                 &rt_result);
+                mctx = validation_mctx(vctx);
+                ret = get_functype_for_blocktype(mctx, m, blocktype,
+                                                 &rt_parameter, &rt_result);
                 if (ret != 0) {
                         goto fail;
                 }
@@ -89,13 +95,16 @@ INSN_IMPL(loop)
         SAVE_PC;
         INSN_SUCCESS;
 fail:
-        resulttype_free(rt_parameter);
-        resulttype_free(rt_result);
+        if (mctx != NULL) {
+                resulttype_free(mctx, rt_parameter);
+                resulttype_free(mctx, rt_result);
+        }
         INSN_FAIL;
 }
 
 INSN_IMPL(if)
 {
+        struct mem_context *mctx = NULL;
         struct resulttype *rt_parameter = NULL;
         struct resulttype *rt_result = NULL;
         int ret;
@@ -117,8 +126,9 @@ INSN_IMPL(if)
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
                 struct module *m = vctx->module;
-                ret = get_functype_for_blocktype(m, blocktype, &rt_parameter,
-                                                 &rt_result);
+                mctx = validation_mctx(vctx);
+                ret = get_functype_for_blocktype(mctx, m, blocktype,
+                                                 &rt_parameter, &rt_result);
                 if (ret != 0) {
                         goto fail;
                 }
@@ -138,8 +148,10 @@ INSN_IMPL(if)
         SAVE_PC;
         INSN_SUCCESS;
 fail:
-        resulttype_free(rt_parameter);
-        resulttype_free(rt_result);
+        if (mctx != NULL) {
+                resulttype_free(mctx, rt_parameter);
+                resulttype_free(mctx, rt_result);
+        }
         INSN_FAIL;
 }
 
@@ -165,7 +177,7 @@ INSN_IMPL(else)
                                      vctx);
                 cframe.start_types = NULL;
                 cframe.end_types = NULL;
-                ctrlframe_clear(&cframe);
+                ctrlframe_clear(validation_mctx(vctx), &cframe);
                 if (ret != 0) {
                         return ret;
                 }
@@ -208,7 +220,7 @@ INSN_IMPL(end)
                                 cframe.start_types = NULL;
                                 cframe.end_types = NULL;
                         }
-                        ctrlframe_clear(&cframe);
+                        ctrlframe_clear(validation_mctx(vctx), &cframe);
                         if (ret != 0) {
                                 return ret;
                         }
@@ -219,11 +231,12 @@ INSN_IMPL(end)
                 }
                 assert((cframe.op == FRAME_OP_INVOKE) ==
                        (vctx->cframes.lsize == 0));
+                struct mem_context *mctx = validation_mctx(vctx);
                 if (cframe.op == FRAME_OP_INVOKE) {
-                        ctrlframe_clear(&cframe);
+                        ctrlframe_clear(mctx, &cframe);
                 } else {
                         ret = push_valtypes(cframe.end_types, vctx);
-                        ctrlframe_clear(&cframe);
+                        ctrlframe_clear(mctx, &cframe);
                         if (ret != 0) {
                                 return ret;
                         }

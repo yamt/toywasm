@@ -7,6 +7,7 @@
 #include "platform.h"
 
 struct localtype;
+struct mem_context;
 struct module;
 
 /*
@@ -63,8 +64,8 @@ __BEGIN_EXTERN_C
 uint32_t ptr2pc(const struct module *m, const uint8_t *p) __purefunc;
 const uint8_t *pc2ptr(const struct module *m, uint32_t pc) __purefunc;
 
-int resulttype_alloc(uint32_t ntypes, const enum valtype *types,
-                     struct resulttype **resultp);
-void resulttype_free(struct resulttype *p);
+int resulttype_alloc(struct mem_context *mctx, uint32_t ntypes,
+                     const enum valtype *types, struct resulttype **resultp);
+void resulttype_free(struct mem_context *mctx, struct resulttype *p);
 
 __END_EXTERN_C

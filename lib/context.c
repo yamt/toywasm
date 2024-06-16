@@ -4,10 +4,11 @@
 #include <string.h>
 
 #include "context.h"
+#include "mem.h"
 #include "type.h"
 
 static int
-resulttype_alloc0(uint32_t ntypes, struct resulttype **resultp)
+resulttype_bytesize(uint32_t ntypes, size_t *resultp)
 {
         struct resulttype *p;
         size_t bytesize1;
@@ -21,7 +22,21 @@ resulttype_alloc0(uint32_t ntypes, struct resulttype **resultp)
         if (bytesize <= bytesize1) {
                 return EOVERFLOW;
         }
-        p = malloc(bytesize);
+        *resultp = bytesize;
+        return 0;
+}
+
+static int
+resulttype_alloc0(struct mem_context *mctx, uint32_t ntypes,
+                  struct resulttype **resultp)
+{
+        size_t bytesize;
+        int ret = resulttype_bytesize(ntypes, &bytesize);
+        if (ret != 0) {
+                return ret;
+        }
+        struct resulttype *p;
+        p = mem_alloc(mctx, bytesize);
         if (p == NULL) {
                 return ENOMEM;
         }
@@ -50,8 +65,8 @@ resulttype_alloc0(uint32_t ntypes, struct resulttype **resultp)
  * differently from module.c.
  */
 int
-resulttype_alloc(uint32_t ntypes, const enum valtype *types,
-                 struct resulttype **resultp)
+resulttype_alloc(struct mem_context *mctx, uint32_t ntypes,
+                 const enum valtype *types, struct resulttype **resultp)
 {
         if (ntypes == 1) {
                 /* fast path for common cases */
@@ -84,7 +99,7 @@ resulttype_alloc(uint32_t ntypes, const enum valtype *types,
         }
         struct resulttype *p;
         uint32_t i;
-        int ret = resulttype_alloc0(ntypes, &p);
+        int ret = resulttype_alloc0(mctx, ntypes, &p);
         if (ret != 0) {
                 return ret;
         }
@@ -96,7 +111,7 @@ resulttype_alloc(uint32_t ntypes, const enum valtype *types,
 }
 
 void
-resulttype_free(struct resulttype *p)
+resulttype_free(struct mem_context *mctx, struct resulttype *p)
 {
         if (p == NULL) {
                 return;
@@ -107,7 +122,10 @@ resulttype_free(struct resulttype *p)
 #if defined(TOYWASM_USE_RESULTTYPE_CELLIDX)
         assert(p->cellidx.cellidxes == NULL);
 #endif
-        free(p);
+        size_t bytesize;
+        int ret = resulttype_bytesize(p->ntypes, &bytesize);
+        assert(ret == 0);
+        mem_free(mctx, p, bytesize);
 }
 
 uint32_t
