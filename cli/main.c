@@ -36,6 +36,7 @@ enum longopt {
         opt_invoke,
         opt_load,
         opt_max_frames,
+        opt_max_memory,
         opt_max_stack_cells,
         opt_register,
         opt_repl,
@@ -126,6 +127,12 @@ static const struct option longopts[] = {
                 required_argument,
                 NULL,
                 opt_max_frames,
+        },
+        {
+                "max-memory",
+                required_argument,
+                NULL,
+                opt_max_memory,
         },
         {
                 "max-stack-cells",
@@ -228,6 +235,7 @@ static const char *opt_metavars[] = {
         [opt_repl_prompt] = "STRING",
         [opt_max_frames] = "NUMBER_OF_FRAMES",
         [opt_max_stack_cells] = "NUMBER_OF_CELLS",
+        [opt_max_memory] = "MEMORY_LIMIT_IN_BYTES",
 };
 
 static void
@@ -389,6 +397,12 @@ main(int argc, char *const *argv)
                 case opt_max_frames:
                         ret = str_to_u32(optarg, 0,
                                          &opts->exec_options.max_frames);
+                        if (ret != 0) {
+                                goto fail;
+                        }
+                        break;
+                case opt_max_memory:
+                        ret = str_to_size(optarg, 0, &mctx->limit);
                         if (ret != 0) {
                                 goto fail;
                         }
