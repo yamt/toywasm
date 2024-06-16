@@ -34,7 +34,7 @@ import_object_create_for_host_funcs(struct mem_context *mctx,
                                     size_t n, struct host_instance *hi,
                                     struct import_object **impp)
 {
-        struct import_object *im;
+        struct import_object *im = NULL;
         struct funcinst *fis = NULL;
         size_t nfuncs;
         size_t i;
@@ -89,7 +89,9 @@ import_object_create_for_host_funcs(struct mem_context *mctx,
         *impp = im;
         return 0;
 fail:
-        import_object_destroy(mctx, im);
+        if (im != NULL) {
+                import_object_destroy(mctx, im);
+        }
         return ret;
 }
 
