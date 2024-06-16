@@ -178,22 +178,22 @@ repl_unload_u(struct repl_state *state, struct repl_module_state_u *mod_u)
         repl_unload(state, mod);
 }
 
+static void
+print_memory_usage(const struct mem_context *mctx, const char *label)
+{
+        nbio_printf("%23s %12zu\n", label, mctx->allocated);
+}
+
 void
 toywasm_repl_reset(struct repl_state *state)
 {
         if (state->opts.print_stats) {
-                nbio_printf("repl memory consumption immediately "
-                            "before a reset: %zu\n",
-                            state->mctx->allocated);
-                nbio_printf("wasi memory consumption immediately "
-                            "before a reset: %zu\n",
-                            state->wasi_mctx->allocated);
-                nbio_printf("dyld memory consumption immediately "
-                            "before a reset: %zu\n",
-                            state->dyld_mctx->allocated);
-                nbio_printf("impobj memory consumption immediately "
-                            "before a reset: %zu\n",
-                            state->impobj_mctx->allocated);
+                nbio_printf("=== memory consumption immediately before a repl "
+                            "reset ===\n");
+                print_memory_usage(state->mctx, "total");
+                print_memory_usage(state->wasi_mctx, "wasi");
+                print_memory_usage(state->dyld_mctx, "dyld");
+                print_memory_usage(state->impobj_mctx, "impobj");
         }
         uint32_t n = 0;
         while (state->imports != NULL) {
@@ -245,20 +245,6 @@ toywasm_repl_reset(struct repl_state *state)
         VEC_FREE(state->mctx, state->vfses);
 #endif
         assert(n == 0);
-        if (state->opts.print_stats) {
-                nbio_printf("repl memory consumption immediately "
-                            "after a reset: %zu\n",
-                            state->mctx->allocated);
-                nbio_printf("wasi memory consumption immediately "
-                            "after a reset: %zu\n",
-                            state->wasi_mctx->allocated);
-                nbio_printf("dyld memory consumption immediately "
-                            "after a reset: %zu\n",
-                            state->dyld_mctx->allocated);
-                nbio_printf("impobj memory consumption immediately "
-                            "after a reset: %zu\n",
-                            state->impobj_mctx->allocated);
-        }
 }
 
 int
