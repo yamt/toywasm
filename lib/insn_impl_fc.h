@@ -134,7 +134,7 @@ INSN_IMPL(table_init)
         const struct module *m = MODULE;
         CHECK(elemidx < m->nelems);
         CHECK(tableidx < m->nimportedtables + m->ntables);
-        CHECK(m->tables[tableidx].et == m->elems[elemidx].type);
+        CHECK(module_tabletype(m, tableidx)->et == m->elems[elemidx].type);
         POP_VAL(TYPE_i32, n);
         POP_VAL(TYPE_i32, s);
         POP_VAL(TYPE_i32, d);
@@ -180,7 +180,8 @@ INSN_IMPL(table_copy)
         const struct module *m = MODULE;
         CHECK(tableidx_dst < m->nimportedtables + m->ntables);
         CHECK(tableidx_src < m->nimportedtables + m->ntables);
-        CHECK(m->tables[tableidx_dst].et == m->tables[tableidx_src].et);
+        CHECK(module_tabletype(m, tableidx_dst)->et ==
+              module_tabletype(m, tableidx_src)->et);
         POP_VAL(TYPE_i32, n);
         POP_VAL(TYPE_i32, s);
         POP_VAL(TYPE_i32, d);
