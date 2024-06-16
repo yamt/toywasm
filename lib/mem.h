@@ -9,6 +9,9 @@
 struct mem_context {
 #if defined(TOYWASM_ENABLE_HEAP_TRACKING)
         _Atomic size_t allocated;
+#if defined(TOYWASM_ENABLE_HEAP_TRACKING_PEAK)
+        _Atomic size_t peak;
+#endif
         size_t limit;
 #endif
         struct mem_context *parent;
