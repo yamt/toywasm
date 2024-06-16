@@ -54,6 +54,7 @@ list(APPEND TEST_ENV "TEST_RUNTIME_EXE=${TOYWASM_CLI}")
 set(cli_sources
 	"cli/main.c"
 	"cli/repl.c"
+	"cli/str_to_uint.c"
 )
 
 add_executable(toywasm-cli ${cli_sources})
