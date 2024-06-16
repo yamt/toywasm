@@ -163,17 +163,16 @@ read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
                 vctx->module = lctx->module;
                 vctx->report = &lctx->report;
                 vctx->refs = &lctx->refs;
-                vctx->has_datacount = lctx->has_datacount;
-                vctx->ndatas_in_datacount = lctx->ndatas_in_datacount;
                 vctx->options = &lctx->options;
         } else {
                 assert(vctx->module == lctx->module);
                 assert(vctx->report == &lctx->report);
                 assert(vctx->refs == &lctx->refs);
-                assert(vctx->has_datacount == lctx->has_datacount);
-                assert(vctx->ndatas_in_datacount == lctx->ndatas_in_datacount);
                 assert(vctx->options == &lctx->options);
         }
+        /* note: const exprs can come before the datacount section */
+        vctx->has_datacount = lctx->has_datacount;
+        vctx->ndatas_in_datacount = lctx->ndatas_in_datacount;
         vctx->const_expr = const_expr;
         struct expr_exec_info *ei;
         vctx->ei = ei = &expr->ei;
