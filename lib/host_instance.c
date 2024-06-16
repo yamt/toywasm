@@ -67,8 +67,9 @@ import_object_create_for_host_funcs(struct mem_context *mctx,
                         struct functype *ft;
                         ret = functype_from_string(mctx, func->type, &ft);
                         if (ret != 0) {
-                                xlog_error("failed to parse functype: %s",
-                                           func->type);
+                                xlog_error("failed to parse functype %s with "
+                                           "error %d",
+                                           func->type, ret);
                                 goto fail;
                         }
                         struct funcinst *fi = &fis[idx];
