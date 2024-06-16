@@ -94,10 +94,11 @@ Options:
 	--dyld-bindnow
 	--dyld-dlfcn
 	--dyld-path LIBRARY_DIR
-	--dyld-stack-size C_STACK_SIZE_IN_BYTES
+	--dyld-stack-size C_STACK_SIZE_FOR_PIE_IN_BYTES
 	--invoke FUNCTION[ FUNCTION_ARGS...]
 	--load MODULE_PATH
 	--max-frames NUMBER_OF_FRAMES
+	--max-memory MEMORY_LIMIT_IN_BYTES
 	--max-stack-cells NUMBER_OF_CELLS
 	--repl
 	--repl-prompt STRING
