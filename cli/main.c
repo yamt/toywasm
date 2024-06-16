@@ -9,6 +9,7 @@
 
 #include "mem.h"
 #include "repl.h"
+#include "str_to_uint.h"
 #include "toywasm_config.h"
 #if defined(TOYWASM_ENABLE_WASI_THREADS)
 #include "wasi_threads.h"
@@ -364,7 +365,11 @@ main(int argc, char *const *argv)
                         opts->dyld_options.paths = dyld_paths.p;
                         break;
                 case opt_dyld_stack_size:
-                        opts->dyld_options.stack_size = atoi(optarg);
+                        ret = str_to_u32(optarg, 0,
+                                         &opts->dyld_options.stack_size);
+                        if (ret != 0) {
+                                goto fail;
+                        }
                         break;
 #endif
                 case opt_invoke:
@@ -382,10 +387,18 @@ main(int argc, char *const *argv)
                         might_need_help = false;
                         break;
                 case opt_max_frames:
-                        opts->exec_options.max_frames = atoi(optarg);
+                        ret = str_to_u32(optarg, 0,
+                                         &opts->exec_options.max_frames);
+                        if (ret != 0) {
+                                goto fail;
+                        }
                         break;
                 case opt_max_stack_cells:
-                        opts->exec_options.max_stackcells = atoi(optarg);
+                        ret = str_to_u32(optarg, 0,
+                                         &opts->exec_options.max_stackcells);
+                        if (ret != 0) {
+                                goto fail;
+                        }
                         break;
                 case opt_register:
                         ret = toywasm_repl_register(state, NULL, optarg);
