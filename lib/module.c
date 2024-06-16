@@ -1004,6 +1004,9 @@ read_locals(const uint8_t **pp, const uint8_t *ep, struct func *func,
         if (vec_count > 0) {
                 chunks =
                         mem_calloc(load_mctx(ctx), vec_count, sizeof(*chunks));
+                if (chunks == NULL) {
+                        return ENOMEM;
+                }
         }
 
         uint32_t i;
