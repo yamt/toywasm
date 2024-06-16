@@ -184,7 +184,12 @@ static void
 print_memory_usage(const struct mem_context *mctx, const char *label)
 {
 #if defined(TOYWASM_ENABLE_HEAP_TRACKING)
+#if defined(TOYWASM_ENABLE_HEAP_TRACKING_PEAK)
+        nbio_printf("%23s %12zu (peak %12zu)\n", label, mctx->allocated,
+                    mctx->peak);
+#else
         nbio_printf("%23s %12zu\n", label, mctx->allocated);
+#endif
 #endif
 }
 

@@ -34,6 +34,17 @@ mem_reserve_one(struct mem_context *ctx, size_t diff)
                 }
                 nv = ov + diff;
         } while (!atomic_compare_exchange_weak(&ctx->allocated, &ov, nv));
+#if defined(TOYWASM_ENABLE_HEAP_TRACKING_PEAK)
+        size_t opeak;
+        size_t npeak;
+        do {
+                opeak = ctx->peak;
+                if (opeak >= nv) {
+                        break;
+                }
+                npeak = nv;
+        } while (!atomic_compare_exchange_weak(&ctx->peak, &opeak, npeak));
+#endif
         return 0;
 }
 #endif
@@ -84,6 +95,9 @@ mem_context_init(struct mem_context *ctx)
 #if defined(TOYWASM_ENABLE_HEAP_TRACKING)
         ctx->allocated = 0;
         ctx->limit = SIZE_MAX;
+#if defined(TOYWASM_ENABLE_HEAP_TRACKING_PEAK)
+        ctx->peak = 0;
+#endif
 #endif
         ctx->parent = NULL;
 }
