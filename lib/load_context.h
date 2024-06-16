@@ -10,6 +10,7 @@ struct load_context {
         struct module *module;
         struct report report;
         struct bitmap refs; /* C.refs */
+        uint32_t refs_size;
         bool has_datacount;
         uint32_t ndatas_in_datacount;
         struct load_options options;

@@ -2,14 +2,15 @@
 #include <stdlib.h>
 
 #include "bitmap.h"
+#include "mem.h"
 #include "util.h"
 
 int
-bitmap_alloc(struct bitmap *b, uint32_t n)
+bitmap_alloc(struct mem_context *mctx, struct bitmap *b, uint32_t n)
 {
         void *p = NULL;
         if (n > 0) {
-                p = calloc(HOWMANY(n, 32), sizeof(uint32_t));
+                p = mem_calloc(mctx, HOWMANY(n, 32), sizeof(uint32_t));
                 if (p == NULL) {
                         return ENOMEM;
                 }
@@ -19,9 +20,9 @@ bitmap_alloc(struct bitmap *b, uint32_t n)
 }
 
 void
-bitmap_free(struct bitmap *b)
+bitmap_free(struct mem_context *mctx, struct bitmap *b, uint32_t n)
 {
-        free(b->data);
+        mem_free(mctx, b->data, HOWMANY(n, 32) * sizeof(uint32_t));
 }
 
 void
