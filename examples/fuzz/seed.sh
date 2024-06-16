@@ -11,5 +11,19 @@ for x in $(seq 10000); do
     --allow-invalid-funcs=true \
     --reference-types-enabled=true \
     --simd-enabled=true \
+    --threads-enabled=true \
+    --tail-call-enabled=true \
+    --bulk-memory-enabled=true \
+    --exceptions-enabled=true \
+    --gc-enabled=true \
+    --custom-page-sizes-enabled=true \
+    --generate-custom-sections=true \
+    --max-memories=10 \
+    --max-tables=8 \
+    --memory64-enabled=true \
+    --multi-value-enabled=true \
+    --disallow-traps=false \
+    --relaxed-simd-enabled=true \
+    --sign-extension-ops-enabled=true \
     -o ${SEED_DIR}/$x
 done
