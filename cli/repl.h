@@ -66,6 +66,7 @@ struct repl_state {
         struct mem_context *mctx;
         struct mem_context *wasi_mctx;
         struct mem_context *dyld_mctx;
+        struct mem_context *impobj_mctx;
 };
 
 void toywasm_repl_state_init(struct repl_state *state);

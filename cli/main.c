@@ -285,6 +285,7 @@ main(int argc, char *const *argv)
         struct mem_context mctx0, *mctx = &mctx0;
         struct mem_context wasi_mctx0, *wasi_mctx = &wasi_mctx0;
         struct mem_context dyld_mctx0, *dyld_mctx = &dyld_mctx0;
+        struct mem_context impobj_mctx0, *impobj_mctx = &impobj_mctx0;
 
         struct repl_state *state;
 #if defined(TOYWASM_ENABLE_WASI)
@@ -322,6 +323,10 @@ main(int argc, char *const *argv)
         mem_context_init(mctx);
         mem_context_init(wasi_mctx);
         mem_context_init(dyld_mctx);
+        mem_context_init(impobj_mctx);
+        wasi_mctx->parent = mctx;
+        dyld_mctx->parent = mctx;
+        impobj_mctx->parent = mctx;
 
         state = malloc(sizeof(*state));
         if (state == NULL) {
@@ -331,6 +336,7 @@ main(int argc, char *const *argv)
         state->mctx = mctx;
         state->wasi_mctx = wasi_mctx;
         state->dyld_mctx = dyld_mctx;
+        state->impobj_mctx = impobj_mctx;
         struct repl_options *opts = &state->opts;
         size_t limit;
         while ((ret = getopt_long(argc, argv, "", longopts, &longidx)) != -1) {
