@@ -332,6 +332,7 @@ main(int argc, char *const *argv)
         state->wasi_mctx = wasi_mctx;
         state->dyld_mctx = dyld_mctx;
         struct repl_options *opts = &state->opts;
+        size_t limit;
         while ((ret = getopt_long(argc, argv, "", longopts, &longidx)) != -1) {
                 switch (ret) {
                 case opt_disable_jump_table:
@@ -402,8 +403,15 @@ main(int argc, char *const *argv)
                         }
                         break;
                 case opt_max_memory:
-                        ret = str_to_size(optarg, 0, &mctx->limit);
+                        ret = str_to_size(optarg, 0, &limit);
                         if (ret != 0) {
+                                goto fail;
+                        }
+                        ret = mem_context_setlimit(mctx, limit);
+                        if (ret != 0) {
+                                xlog_error("failed to set limit %zu (current "
+                                           "allocation: %zu)",
+                                           limit, mctx->allocated);
                                 goto fail;
                         }
                         break;
