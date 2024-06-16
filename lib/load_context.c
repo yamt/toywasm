@@ -1,9 +1,9 @@
 #include <errno.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "context.h"
 #include "load_context.h"
+#include "mem.h"
 #include "validation.h"
 
 void
@@ -23,6 +23,6 @@ load_context_clear(struct load_context *ctx)
         bitmap_free(mctx, &ctx->refs, ctx->refs_size);
         if (ctx->vctx != NULL) {
                 validation_context_clear(ctx->vctx);
-                free(ctx->vctx);
+                mem_free(mctx, ctx->vctx, sizeof(*ctx->vctx));
         }
 }

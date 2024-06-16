@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include "context.h"
+#include "mem.h"
 #include "options.h"
 #include "report.h"
 #include "type.h"
