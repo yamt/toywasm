@@ -12,6 +12,7 @@
 #include "insn.h"
 #include "leb128.h"
 #include "load_context.h"
+#include "mem.h"
 #include "type.h"
 #include "util.h"
 #include "validation.h"
@@ -147,27 +148,35 @@ read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
         const uint8_t *p = *pp;
         int ret;
 
+        assert(lctx->module != NULL);
+        struct mem_context *mctx = load_mctx(lctx);
         struct validation_context *vctx = lctx->vctx;
         if (vctx == NULL) {
-                vctx = malloc(sizeof(*vctx));
+                vctx = mem_alloc(mctx, sizeof(*vctx));
                 if (vctx == NULL) {
                         return ENOMEM;
                 }
                 validation_context_init(vctx);
                 lctx->vctx = vctx;
-        }
+                vctx->mctx = mctx;
 
-        assert(lctx->module != NULL);
-        vctx->report = &lctx->report;
-        vctx->refs = &lctx->refs;
+                vctx->module = lctx->module;
+                vctx->report = &lctx->report;
+                vctx->refs = &lctx->refs;
+                vctx->has_datacount = lctx->has_datacount;
+                vctx->ndatas_in_datacount = lctx->ndatas_in_datacount;
+                vctx->options = &lctx->options;
+        } else {
+                assert(vctx->module == lctx->module);
+                assert(vctx->report == &lctx->report);
+                assert(vctx->refs == &lctx->refs);
+                assert(vctx->has_datacount == lctx->has_datacount);
+                assert(vctx->ndatas_in_datacount == lctx->ndatas_in_datacount);
+                assert(vctx->options == &lctx->options);
+        }
         vctx->const_expr = const_expr;
-        vctx->module = lctx->module;
-        vctx->has_datacount = lctx->has_datacount;
-        vctx->ndatas_in_datacount = lctx->ndatas_in_datacount;
-        vctx->options = &lctx->options;
         struct expr_exec_info *ei;
         vctx->ei = ei = &expr->ei;
-        vctx->mctx = lctx->mctx;
         memset(ei, 0, sizeof(*ei));
 
         uint32_t lsize = parameter_types->ntypes + nlocals;
