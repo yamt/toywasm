@@ -1181,6 +1181,17 @@ check_interrupt_interval_ms(struct exec_context *ctx)
 #define CHECK_INTERVAL_DEFAULT 1000
 #define CHECK_INTERVAL_MIN 1
 
+/*
+ * the interpreter main loop calls check_interrupt() after
+ * ctx->check_interval iteretations. however, how long an iteration
+ * takes is not so deterministic. it depends on the several factors,
+ * including the wasm bytecode and host resources.
+ *
+ * adjust_check_interval() tries to adjust ctx->check_interval so that
+ * check_interrupt is called periodically-ish at least when the workload
+ * is stable.
+ * the target interval is given by check_interrupt_interval_ms().
+ */
 static void
 adjust_check_interval(struct exec_context *ctx, const struct timespec *now,
                       const struct timespec *last)
