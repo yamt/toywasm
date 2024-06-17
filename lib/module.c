@@ -919,6 +919,15 @@ fail:
 }
 
 static void
+init_expr_exec_info(struct expr_exec_info *ei)
+{
+        ei->jumps = NULL;
+#if defined(TOYWASM_USE_SMALL_CELLS)
+        ei->type_annotations.types = NULL;
+#endif
+}
+
+static void
 clear_expr_exec_info(struct mem_context *mctx, struct expr_exec_info *ei)
 {
         mem_free(mctx, ei->jumps, ei->njumps * sizeof(*ei->jumps));
@@ -1076,10 +1085,7 @@ read_func(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
         uint32_t size;
         int ret;
 
-        func->e.ei.jumps = NULL;
-#if defined(TOYWASM_USE_SMALL_CELLS)
-        func->e.ei.type_annotations.types = NULL;
-#endif
+        init_expr_exec_info(&func->e.ei);
         lt->localchunks = NULL;
 #if defined(TOYWASM_USE_LOCALTYPE_CELLIDX)
         lt->cellidx.cellidxes = NULL;
@@ -1236,6 +1242,8 @@ read_global(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
         struct load_context *ctx = vctx;
         const uint8_t *p = *pp;
         int ret;
+
+        init_expr_exec_info(&g->init.ei);
 
         ret = read_globaltype(&p, ep, &g->type);
         if (ret != 0) {
