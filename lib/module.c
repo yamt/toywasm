@@ -1991,11 +1991,17 @@ read_dylink_0_section(const uint8_t **pp, const uint8_t *ep,
         struct module *m = ctx->module;
         int ret;
         struct mem_context *mctx = load_mctx(ctx);
+        if (m->dylink != NULL) {
+                /* duplicated section */
+                ret = EINVAL;
+                goto fail;
+        }
         m->dylink = mem_zalloc(mctx, sizeof(*m->dylink));
         if (m->dylink == NULL) {
                 ret = ENOMEM;
                 goto fail;
         }
+        uint32_t subsections = 0;
         do {
                 uint8_t type;
                 uint32_t payload_len;
@@ -2018,6 +2024,13 @@ read_dylink_0_section(const uint8_t **pp, const uint8_t *ep,
                         const struct dylink_subsection *ss =
                                 &dylink_subsections[i];
                         if (ss->type == type) {
+                                uint32_t mask = (uint32_t)1 << type;
+                                if ((subsections & mask) != 0) {
+                                        /* duplicated subsection */
+                                        ret = EINVAL;
+                                        goto fail;
+                                }
+                                subsections |= mask;
                                 ret = read_section(&p, sep, ss->name, ss->read,
                                                    ctx);
                                 if (ret != 0) {
