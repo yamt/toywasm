@@ -167,7 +167,14 @@ cmake_dependent_option(TOYWASM_ENABLE_DYLD_DLFCN
     "TOYWASM_ENABLE_DYLD"
     OFF)
 
+option(TOYWASM_ENABLE_FUZZER "Enable fuzzer" OFF)
+
 option(TOYWASM_BUILD_UNITTEST "Build toywasm-test" ON)
+
+if(TOYWASM_ENABLE_FUZZER)
+add_compile_options(-fsanitize=fuzzer-no-link)
+add_compile_definitions(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION)
+endif()
 
 if(NOT DEFINED USE_LSAN)
 if(CMAKE_BUILD_TYPE MATCHES "Debug")
