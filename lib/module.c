@@ -2007,7 +2007,12 @@ read_dylink_0_section(const uint8_t **pp, const uint8_t *ep,
                 if (ret != 0) {
                         goto fail;
                 }
+                if (ep - p < payload_len) {
+                        ret = E2BIG;
+                        goto fail;
+                }
                 const uint8_t *sep = p + payload_len;
+                assert(sep <= ep);
                 unsigned int i;
                 for (i = 0; i < ARRAYCOUNT(dylink_subsections); i++) {
                         const struct dylink_subsection *ss =
