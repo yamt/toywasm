@@ -173,6 +173,7 @@ option(TOYWASM_BUILD_UNITTEST "Build toywasm-test" ON)
 
 if(TOYWASM_ENABLE_FUZZER)
 add_compile_options(-fsanitize=fuzzer-no-link)
+# https://llvm.org/docs/LibFuzzer.html#fuzzer-friendly-build-mode
 add_compile_definitions(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION)
 endif()
 
