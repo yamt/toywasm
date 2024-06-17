@@ -6,6 +6,8 @@ WASM_TOOLS=${WASM_TOOLS:-wasm-tools}
 SEED_DIR=seed
 mkdir -p ${SEED_DIR}
 for x in $(seq 10000); do
+    # ignore errors for
+    # https://github.com/bytecodealliance/wasm-tools/issues/1612
     dd if=/dev/urandom bs=10240 count=100 2> /dev/null | ${WASM_TOOLS} smith \
     --max-imports=8 \
     --allow-invalid-funcs=true \
@@ -25,5 +27,5 @@ for x in $(seq 10000); do
     --disallow-traps=false \
     --relaxed-simd-enabled=false \
     --sign-extension-ops-enabled=true \
-    -o ${SEED_DIR}/$x
+    -o ${SEED_DIR}/$x || :
 done
