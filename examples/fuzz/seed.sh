@@ -15,15 +15,15 @@ for x in $(seq 10000); do
     --tail-call-enabled=true \
     --bulk-memory-enabled=true \
     --exceptions-enabled=true \
-    --gc-enabled=true \
+    --gc-enabled=false \
     --custom-page-sizes-enabled=true \
     --generate-custom-sections=true \
     --max-memories=10 \
     --max-tables=8 \
-    --memory64-enabled=true \
+    --memory64-enabled=false \
     --multi-value-enabled=true \
     --disallow-traps=false \
-    --relaxed-simd-enabled=true \
+    --relaxed-simd-enabled=false \
     --sign-extension-ops-enabled=true \
     -o ${SEED_DIR}/$x
 done
