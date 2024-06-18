@@ -115,6 +115,11 @@ endif() # Clang
 endif() # Linux
 endif() # USE_IPO
 
+if(TOYWASM_ENABLE_COVERAGE)
+target_compile_options(toywasm-lib-core INTERFACE -fprofile-instr-generate -fcoverage-mapping)
+target_link_options(toywasm-lib-core INTERFACE -fprofile-instr-generate)
+endif()
+
 foreach(F IN LISTS SANITIZER_FLAGS)
     target_link_options(toywasm-lib-core INTERFACE ${F})
 endforeach()
