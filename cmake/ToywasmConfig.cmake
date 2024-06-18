@@ -168,6 +168,7 @@ cmake_dependent_option(TOYWASM_ENABLE_DYLD_DLFCN
     OFF)
 
 option(TOYWASM_ENABLE_FUZZER "Enable fuzzer" OFF)
+option(TOYWASM_ENABLE_COVERAGE "Enable coverage" OFF)
 
 option(TOYWASM_BUILD_UNITTEST "Build toywasm-test" ON)
 
