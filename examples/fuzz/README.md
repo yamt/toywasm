@@ -28,8 +28,8 @@ cargo install wasm-tools
 
 # Corpus
 
-Maybe it's a good idea to seed your corpus from ones for
-other fuzzer targets which take raw wasm binaries.
+Maybe it's a good idea to seed your corpus from pre-populated corpora
+for the existing fuzzer targets which take raw wasm binaries.
 
 For examples,
 
