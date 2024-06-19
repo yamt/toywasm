@@ -343,7 +343,8 @@ table_grow(struct tableinst *t, const struct val *val, uint32_t n)
         uint32_t csz = valtype_cellsize(t->type->et);
         size_t newncells = (size_t)newsize * csz;
         int ret;
-        if (newncells / csz != newsize) {
+        if (newncells / csz != newsize || newncells > UINT32_MAX) {
+                /* implementation limit */
                 ret = EOVERFLOW;
         } else {
                 size_t oldncells = t->size * csz;
