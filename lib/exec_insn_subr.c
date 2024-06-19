@@ -606,7 +606,9 @@ memory_wait(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
                 return ret;
         }
         assert((lock == NULL) == (shared == NULL));
+#if !defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION)
 retry:;
+#endif
         uint64_t prev;
         if (is64) {
                 prev = *(_Atomic uint64_t *)p;
@@ -619,6 +621,14 @@ retry:;
         if (prev != expected) {
                 *resultp = 1; /* not equal */
         } else {
+#if defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION)
+                *resultp = 2;
+#else
+                /*
+                 * emulate the user-specified long (or even infinite) block
+                 * by looping with a short interval because we should call
+                 * check_interrupt frequently enough.
+                 */
                 ret = check_interrupt(ctx);
                 if (ret != 0) {
                         goto fail;
@@ -652,6 +662,7 @@ retry:;
                 } else {
                         goto fail;
                 }
+#endif
         }
         ret = 0;
 fail:
