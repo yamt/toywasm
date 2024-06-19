@@ -235,6 +235,10 @@ timespec_to_ms(const struct timespec *tv)
         return ms1 + ms2;
 }
 
+/*
+ * this should be similar to pthread_cond_timedwait with
+ * a condvar which is never signalled.
+ */
 int
 timespec_sleep(clockid_t id, const struct timespec *absto)
 {
