@@ -6,6 +6,20 @@
 #include <toywasm/mem.h>
 #include <toywasm/module.h>
 #include <toywasm/report.h>
+#include <toywasm/type.h>
+
+static void
+setup_exec_context(struct exec_context *ectx)
+{
+        /* avoid infinite loops */
+        const static atomic_uint one = 1;
+        ectx->intrp = &one;
+        ectx->user_intr_delay = 100;
+
+        /* use moderate limits to avoid long execution */
+        ectx->options.max_frames = 100;
+        ectx->options.max_stackcells = 1000;
+}
 
 extern "C" int
 LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
@@ -32,12 +46,52 @@ LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
         }
         struct exec_context ectx;
         exec_context_init(&ectx, inst, &mctx);
-        /* avoid infinite loops in the start function */
-        const static atomic_uint one = 1;
-        ectx.intrp = &one;
-        ectx.user_intr_delay = 25;
+        setup_exec_context(&ectx);
         ret = instance_execute_init(&ectx);
+        if (ret == ETOYWASMRESTART) {
+                ret = instance_execute_handle_restart_once(&ectx, ret);
+        }
         exec_context_clear(&ectx);
+        if (ret != 0) {
+                goto fail_exec_init;
+        }
+        /* try to execute all exported functions */
+        uint32_t i;
+        for (i = 0; i < m->nexports; i++) {
+                const struct wasm_export *ex = &m->exports[i];
+                if (ex->desc.type != EXTERNTYPE_FUNC) {
+                        continue;
+                }
+                uint32_t funcidx = ex->desc.idx;
+                const struct functype *ft = module_functype(m, funcidx);
+                const struct resulttype *param = &ft->parameter;
+                const struct resulttype *result = &ft->result;
+                uint32_t nvals = param->ntypes;
+                struct val *vals = NULL;
+                if (nvals > 0) {
+                        vals = (struct val *)mem_calloc(&mctx, sizeof(*vals),
+                                                        nvals);
+                        if (vals == NULL) {
+                                goto fail_exec_func;
+                        }
+                }
+                exec_context_init(&ectx, inst, &mctx);
+                setup_exec_context(&ectx);
+                ret = exec_push_vals(&ectx, param, vals);
+                if (vals != NULL) {
+                        mem_free(&mctx, vals, sizeof(*vals) * nvals);
+                }
+                if (ret != 0) {
+                        goto fail_exec_func;
+                }
+                ret = instance_execute_func(&ectx, funcidx, param, result);
+                if (ret == ETOYWASMRESTART) {
+                        ret = instance_execute_handle_restart_once(&ectx, ret);
+                }
+fail_exec_func:
+                exec_context_clear(&ectx);
+        }
+fail_exec_init:
         instance_destroy(inst);
 fail_instantiate:
         module_destroy(&mctx, m);
