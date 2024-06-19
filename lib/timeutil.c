@@ -257,6 +257,9 @@ timespec_sleep(clockid_t id, const struct timespec *absto)
                 timespec_sub(absto, &now, &diff);
                 ret = nanosleep(&diff, NULL);
                 if (ret != 0) {
+                        if (errno == EINTR) {
+                                continue;
+                        }
                         return errno;
                 }
         }
