@@ -891,6 +891,9 @@ arg_conv(enum valtype type, const char *s, struct val *result)
                 }
                 result->u.externref = (void *)(uintptr_t)u;
                 break;
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+                /* REVISIT: what to do for TYPE_EXNREF? */
+#endif
         default:
                 xlog_printf("arg_conv: unimplementd type %02x\n", type);
                 ret = ENOTSUP;
@@ -951,6 +954,16 @@ repl_print_result(const struct resulttype *rt, const struct val *vals)
                                             (uintptr_t)val->u.externref);
                         }
                         break;
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+                case TYPE_EXNREF:
+                        if (val->u.exnref.tag == NULL) {
+                                nbio_printf("%snull:exnref", sep);
+                        } else {
+                                nbio_printf("%s%" PRIuPTR ":exnref", sep,
+                                            (uintptr_t)val->u.exnref.tag);
+                        }
+                        break;
+#endif
                 default:
                         xlog_printf("print_result: unimplementd type %02x\n",
                                     type);
