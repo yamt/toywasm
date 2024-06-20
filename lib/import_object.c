@@ -69,6 +69,11 @@ import_object_create_for_exports(struct mem_context *mctx,
                 case EXTERNTYPE_GLOBAL:
                         e->u.global = VEC_ELEM(inst->globals, d->idx);
                         break;
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+                case EXTERNTYPE_TAG:
+                        e->u.tag = VEC_ELEM(inst->tags, d->idx);
+                        break;
+#endif
                 default:
                         assert(false);
                 }
