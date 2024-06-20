@@ -459,6 +459,9 @@ print_trap(const struct exec_context *ctx, const struct trap_info *trap)
         case TRAP_UNALIGNED_ATOMIC_OPERATION:
                 msg = "unaligned atomic";
                 break;
+        case TRAP_UNCAUGHT_EXCEPTION:
+                msg = "uncaught exception";
+                break;
         default:
                 break;
         }
