@@ -110,6 +110,7 @@ fail:
 static int
 cellidx_bytesize(uint32_t n, size_t *resultp)
 {
+        assert(n > 0);
         if (n >= UINT32_MAX) {
                 return EOVERFLOW;
         }
@@ -143,6 +144,9 @@ cellidx_alloc(struct mem_context *mctx, uint32_t n, uint16_t **resultp)
 static void
 cellidx_free(struct mem_context *mctx, uint32_t n, uint16_t *p)
 {
+        if (p == NULL) {
+                return;
+        }
         size_t sz;
         int ret = cellidx_bytesize(n, &sz);
         assert(ret == 0);
@@ -1088,6 +1092,7 @@ read_func(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
         init_expr_exec_info(&func->e.ei);
         lt->localchunks = NULL;
 #if defined(TOYWASM_USE_LOCALTYPE_CELLIDX)
+        lt->nlocals = 0;
         lt->cellidx.cellidxes = NULL;
 #endif
         uint32_t funcidx = m->nimportedfuncs + idx;
