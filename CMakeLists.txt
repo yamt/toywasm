@@ -126,13 +126,18 @@ set_tests_properties(toywasm-cli-wasm3-spec-test-extended-const PROPERTIES ENVIR
 set_tests_properties(toywasm-cli-wasm3-spec-test-extended-const PROPERTIES LABELS "spec")
 endif()
 
+# Note: some of EH tests require tail-call.
+# the spec interpreter in the EH proposal repo has
+# cherry-picked tail-call support for it.
 if(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+if(TOYWASM_ENABLE_WASM_TAILCALL)
 add_test(NAME toywasm-cli-wasm3-spec-test-exception-handling
 	COMMAND ./test/run-wasm3-spec-test-exception-handling.sh --exec "${TOYWASM_CLI} --repl --repl-prompt=wasm3" --timeout 60 --spectest ${CMAKE_BINARY_DIR}/spectest.wasm
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 set_tests_properties(toywasm-cli-wasm3-spec-test-exception-handling PROPERTIES ENVIRONMENT "${TEST_ENV}")
 set_tests_properties(toywasm-cli-wasm3-spec-test-exception-handling PROPERTIES LABELS "spec")
+endif()
 endif()
 
 if(TOYWASM_ENABLE_WASM_MULTI_MEMORY)
