@@ -104,7 +104,7 @@ do_trap:
 #endif
                 size_t need = (size_t)last_byte + 1;
                 assert(need > meminst->allocated);
-                void *np = mem_resize(meminst->mctx, meminst->data,
+                void *np = mem_extend(meminst->mctx, meminst->data,
                                       meminst->allocated, need);
                 if (np == NULL) {
                         return ENOMEM;
@@ -348,7 +348,7 @@ table_grow(struct tableinst *t, const struct val *val, uint32_t n)
                 ret = EOVERFLOW;
         } else {
                 size_t oldncells = t->size * csz;
-                ret = ARRAY_RESIZE(t->mctx, t->cells, oldncells, newncells);
+                ret = ARRAY_EXTEND(t->mctx, t->cells, oldncells, newncells);
         }
         if (ret != 0) {
                 return (uint32_t)-1;
@@ -479,7 +479,7 @@ retry:
                         ret = EOVERFLOW;
                 } else {
                         void *np =
-                                mem_resize(mi->mctx, mi->data, mi->allocated,
+                                mem_extend(mi->mctx, mi->data, mi->allocated,
                                            new_size_in_bytes);
                         if (np == NULL) {
                                 ret = ENOMEM;

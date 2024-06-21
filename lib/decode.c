@@ -108,7 +108,7 @@ _read_vec_with_ctx_impl(struct mem_context *mctx, const uint8_t **pp,
                 goto fail;
         }
         uint32_t total_count = orig_count + vec_count;
-        ret = resize_array(mctx, resultp, elem_size, orig_count, total_count);
+        ret = array_extend(mctx, resultp, elem_size, orig_count, total_count);
         if (ret != 0) {
                 goto fail;
         }
@@ -124,7 +124,7 @@ _read_vec_with_ctx_impl(struct mem_context *mctx, const uint8_t **pp,
                                 }
                         }
                         /* revert the array size */
-                        int ret1 = resize_array(mctx, resultp, elem_size,
+                        int ret1 = array_shrink(mctx, resultp, elem_size,
                                                 total_count, orig_count);
                         assert(ret1 == 0);
                         goto fail;

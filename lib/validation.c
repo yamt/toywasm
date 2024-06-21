@@ -205,7 +205,7 @@ push_ctrlframe(uint32_t pc, enum ctrlframe_op op, uint32_t jumpslot,
                 nslots = 2;
         }
         if (nslots > 0) {
-                ret = resize_array(validation_mctx(ctx), (void **)&ei->jumps,
+                ret = array_extend(validation_mctx(ctx), (void **)&ei->jumps,
                                    sizeof(*ei->jumps), ei->njumps,
                                    ei->njumps + nslots);
                 if (ret != 0) {
@@ -409,7 +409,7 @@ record_type_annotation(struct validation_context *vctx, const uint8_t *p,
                 }
         }
         int ret;
-        ret = resize_array(validation_mctx(vctx), (void **)&an->types,
+        ret = array_extend(validation_mctx(vctx), (void **)&an->types,
                            sizeof(*an->types), an->ntypes, an->ntypes + 1);
         if (ret != 0) {
                 return ret;

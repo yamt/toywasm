@@ -300,7 +300,7 @@ table_instance_create(struct mem_context *mctx, struct tableinst **tip,
                 ret = EOVERFLOW;
                 goto fail;
         }
-        ret = ARRAY_RESIZE(mctx, tinst->cells, 0, ncells);
+        ret = ARRAY_EXTEND(mctx, tinst->cells, 0, ncells);
         if (ret != 0) {
                 goto fail;
         }
