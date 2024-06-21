@@ -11,24 +11,50 @@
 #include "util.h"
 
 int
-resize_array(struct mem_context *mctx, void **p, size_t elem_size,
+array_extend(struct mem_context *mctx, void **p, size_t elem_size,
              uint32_t old_elem_count, uint32_t new_elem_count)
 {
-        const size_t old_bytesize = elem_size * old_elem_count;
-        const size_t bytesize = elem_size * new_elem_count;
         void *np;
 
         assert(elem_size > 0);
+        assert(old_elem_count <= new_elem_count);
+        if (old_elem_count == new_elem_count) {
+                return 0;
+        }
+        const size_t old_bytesize = elem_size * old_elem_count;
+        const size_t bytesize = elem_size * new_elem_count;
         if (bytesize / elem_size != new_elem_count) {
                 return EOVERFLOW;
         }
-        if (bytesize == 0) {
+        np = mem_extend(mctx, *p, old_bytesize, bytesize);
+        if (np == NULL) {
+                return ENOMEM;
+        }
+        *p = np;
+        return 0;
+}
+
+int
+array_shrink(struct mem_context *mctx, void **p, size_t elem_size,
+             uint32_t old_elem_count, uint32_t new_elem_count)
+{
+        void *np;
+
+        assert(elem_size > 0);
+        assert(old_elem_count >= new_elem_count);
+        if (old_elem_count == new_elem_count) {
+                return 0;
+        }
+        const size_t old_bytesize = elem_size * old_elem_count;
+        if (new_elem_count == 0) {
                 mem_free(mctx, *p, old_bytesize);
                 np = NULL;
         } else {
-                np = mem_resize(mctx, *p, old_bytesize, bytesize);
+                const size_t bytesize = elem_size * new_elem_count;
+                assert(bytesize / elem_size == new_elem_count);
+                np = mem_shrink(mctx, *p, old_bytesize, bytesize);
                 if (np == NULL) {
-                        return ENOMEM;
+                        return ENOMEM; /* XXX can this happen? */
                 }
         }
         *p = np;

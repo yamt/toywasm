@@ -155,7 +155,7 @@ mem_free(struct mem_context *ctx, void *p, size_t sz)
 }
 
 void *
-mem_resize(struct mem_context *ctx, void *p, size_t oldsz, size_t newsz)
+mem_extend(struct mem_context *ctx, void *p, size_t oldsz, size_t newsz)
 {
         if (p != NULL) {
                 assert(oldsz > 0);
@@ -163,15 +163,26 @@ mem_resize(struct mem_context *ctx, void *p, size_t oldsz, size_t newsz)
         } else {
                 assert(oldsz == 0);
         }
-        if (oldsz < newsz) {
-                size_t diff = newsz - oldsz;
-                if (mem_reserve(ctx, diff)) {
-                        return NULL;
-                }
-        } else {
-                size_t diff = oldsz - newsz;
-                mem_unreserve(ctx, diff);
+        assert(oldsz < newsz);
+        size_t diff = newsz - oldsz;
+        if (mem_reserve(ctx, diff)) {
+                return NULL;
         }
+        void *np = realloc(p, newsz);
+        if (np == NULL) {
+                return NULL;
+        }
+        return np;
+}
+
+void *
+mem_shrink(struct mem_context *ctx, void *p, size_t oldsz, size_t newsz)
+{
+        assert(p != NULL);
+        assert(oldsz > newsz);
+        assert_malloc_size(p, oldsz);
+        size_t diff = oldsz - newsz;
+        mem_unreserve(ctx, diff);
         void *np = realloc(p, newsz);
         if (np == NULL) {
                 return NULL;
