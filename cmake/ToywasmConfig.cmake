@@ -39,6 +39,8 @@ option(TOYWASM_USE_SHORT_ENUMS "Use -fshort-enum" ON)
 # TOYWASM_USE_USER_SCHED=ON uses a simple userland scheduler instead of pthread.
 option(TOYWASM_USE_USER_SCHED "Use userland scheduler" OFF)
 
+option(TOYWASM_ENABLE_HEAP_TRACKING "Enable heap usage tracking" ON)
+
 # options to enable/disable "toywasm --trace" stuff
 option(TOYWASM_ENABLE_TRACING "Enable xlog_trace" OFF)
 cmake_dependent_option(TOYWASM_ENABLE_TRACING_INSN
