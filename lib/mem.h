@@ -4,10 +4,13 @@
 #include <stddef.h>
 
 #include "platform.h"
+#include "toywasm_config.h"
 
 struct mem_context {
+#if defined(TOYWASM_ENABLE_HEAP_TRACKING)
         _Atomic size_t allocated;
         size_t limit;
+#endif
         struct mem_context *parent;
 };
 

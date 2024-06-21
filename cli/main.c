@@ -36,7 +36,9 @@ enum longopt {
         opt_invoke,
         opt_load,
         opt_max_frames,
+#if defined(TOYWASM_ENABLE_HEAP_TRACKING)
         opt_max_memory,
+#endif
         opt_max_stack_cells,
         opt_register,
         opt_repl,
@@ -128,12 +130,14 @@ static const struct option longopts[] = {
                 NULL,
                 opt_max_frames,
         },
+#if defined(TOYWASM_ENABLE_HEAP_TRACKING)
         {
                 "max-memory",
                 required_argument,
                 NULL,
                 opt_max_memory,
         },
+#endif
         {
                 "max-stack-cells",
                 required_argument,
@@ -235,7 +239,9 @@ static const char *opt_metavars[] = {
         [opt_repl_prompt] = "STRING",
         [opt_max_frames] = "NUMBER_OF_FRAMES",
         [opt_max_stack_cells] = "NUMBER_OF_CELLS",
+#if defined(TOYWASM_ENABLE_HEAP_TRACKING)
         [opt_max_memory] = "MEMORY_LIMIT_IN_BYTES",
+#endif
 };
 
 static void
@@ -408,6 +414,7 @@ main(int argc, char *const *argv)
                                 goto fail;
                         }
                         break;
+#if defined(TOYWASM_ENABLE_HEAP_TRACKING)
                 case opt_max_memory:
                         ret = str_to_size(optarg, 0, &limit);
                         if (ret != 0) {
@@ -421,6 +428,7 @@ main(int argc, char *const *argv)
                                 goto fail;
                         }
                         break;
+#endif
                 case opt_max_stack_cells:
                         ret = str_to_u32(optarg, 0,
                                          &opts->exec_options.max_stackcells);
