@@ -449,8 +449,10 @@ test_functype(void **state)
         ret = functype_from_string(mctx, "i", &ft);
         assert_int_equal(ret, EINVAL);
 
+#if defined(TOYWASM_ENABLE_HEAP_TRACKING)
         assert_int_equal(mctx->allocated, 0);
         mem_context_clear(mctx);
+#endif
 }
 
 void

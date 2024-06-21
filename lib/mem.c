@@ -11,6 +11,7 @@
 
 #include "mem.h"
 
+#if defined(TOYWASM_ENABLE_HEAP_TRACKING)
 static void
 mem_unreserve_one(struct mem_context *ctx, size_t diff)
 {
@@ -35,19 +36,23 @@ mem_reserve_one(struct mem_context *ctx, size_t diff)
         } while (!atomic_compare_exchange_weak(&ctx->allocated, &ov, nv));
         return 0;
 }
+#endif
 
 static void
 mem_unreserve(struct mem_context *ctx, size_t diff)
 {
+#if defined(TOYWASM_ENABLE_HEAP_TRACKING)
         mem_unreserve_one(ctx, diff);
         if (ctx->parent != NULL) {
                 mem_unreserve(ctx->parent, diff);
         }
+#endif
 }
 
 static int
 mem_reserve(struct mem_context *ctx, size_t diff)
 {
+#if defined(TOYWASM_ENABLE_HEAP_TRACKING)
         int ret;
         ret = mem_reserve_one(ctx, diff);
         if (ret != 0) {
@@ -60,6 +65,7 @@ mem_reserve(struct mem_context *ctx, size_t diff)
                         return ret;
                 }
         }
+#endif
         return 0;
 }
 
@@ -75,8 +81,10 @@ assert_malloc_size(void *p, size_t sz)
 void
 mem_context_init(struct mem_context *ctx)
 {
+#if defined(TOYWASM_ENABLE_HEAP_TRACKING)
         ctx->allocated = 0;
         ctx->limit = SIZE_MAX;
+#endif
         ctx->parent = NULL;
 }
 
@@ -89,10 +97,12 @@ mem_context_clear(struct mem_context *ctx)
 int
 mem_context_setlimit(struct mem_context *ctx, size_t limit)
 {
+#if defined(TOYWASM_ENABLE_HEAP_TRACKING)
         if (limit < ctx->allocated) {
                 return ENOMEM;
         }
         ctx->limit = limit;
+#endif
         return 0;
 }
 

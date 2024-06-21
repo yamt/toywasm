@@ -122,11 +122,13 @@ static void
 repl_unload(struct repl_state *state, struct repl_module_state *mod)
 {
         if (mod->inst != NULL) {
+#if defined(TOYWASM_ENABLE_HEAP_TRACKING)
                 if (state->opts.print_stats) {
                         nbio_printf("instance memory consumption immediately "
                                     "before destroy: %zu\n",
                                     mod->instance_mctx->allocated);
                 }
+#endif
                 instance_destroy(mod->inst);
                 mod->inst = NULL;
         }
@@ -181,7 +183,9 @@ repl_unload_u(struct repl_state *state, struct repl_module_state_u *mod_u)
 static void
 print_memory_usage(const struct mem_context *mctx, const char *label)
 {
+#if defined(TOYWASM_ENABLE_HEAP_STATISTICS)
         nbio_printf("%23s %12zu\n", label, mctx->allocated);
+#endif
 }
 
 void
@@ -601,10 +605,12 @@ repl_load_from_buf(struct repl_state *state, const char *modname,
                 xlog_printf("module_load failed\n");
                 goto fail;
         }
+#if defined(TOYWASM_ENABLE_HEAP_TRACKING)
         if (state->opts.print_stats) {
                 nbio_printf("module memory overhead: %zu\n",
                             mod->module_mctx->allocated);
         }
+#endif
 
         struct import_object *imports = state->imports;
 #if defined(TOYWASM_ENABLE_WASI_THREADS)
@@ -645,11 +651,13 @@ repl_load_from_buf(struct repl_state *state, const char *modname,
                 xlog_printf("repl_exec_init failed\n");
                 goto fail;
         }
+#if defined(TOYWASM_ENABLE_HEAP_TRACKING)
         if (state->opts.print_stats) {
                 nbio_printf("instance memory consumption immediately after "
                             "instantiation: %zu\n",
                             mod->instance_mctx->allocated);
         }
+#endif
         if (modname != NULL) {
                 mod->name = strdup(modname);
                 if (mod->name == NULL) {
