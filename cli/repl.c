@@ -183,7 +183,7 @@ repl_unload_u(struct repl_state *state, struct repl_module_state_u *mod_u)
 static void
 print_memory_usage(const struct mem_context *mctx, const char *label)
 {
-#if defined(TOYWASM_ENABLE_HEAP_STATISTICS)
+#if defined(TOYWASM_ENABLE_HEAP_TRACKING)
         nbio_printf("%23s %12zu\n", label, mctx->allocated);
 #endif
 }
