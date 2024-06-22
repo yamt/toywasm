@@ -681,6 +681,11 @@ dyld_execute_init_func(struct dyld_object *obj, const struct name *name)
         struct dyld *dyld = obj->dyld;
         exec_context_init(&ectx, obj->instance, dyld->mctx);
         ret = instance_execute_func(&ectx, funcidx, pt, rt);
+        /*
+         * XXX restart handilng should be left to the user.
+         * maybe we can split dyld_load to _no_init and
+         * _execute_init, similarly to instance_create.
+         */
         ret = instance_execute_handle_restart(&ectx, ret);
         exec_context_clear(&ectx);
         return ret;
