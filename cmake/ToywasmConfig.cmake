@@ -41,6 +41,11 @@ option(TOYWASM_USE_USER_SCHED "Use userland scheduler" OFF)
 
 # track and limit heap usage.
 option(TOYWASM_ENABLE_HEAP_TRACKING "Enable heap usage tracking" ON)
+cmake_dependent_option(TOYWASM_ENABLE_HEAP_TRACKING_PEAK
+    "Record peak heap usage"
+    ON
+    "TOYWASM_ENABLE_HEAP_TRACKING"
+    OFF)
 
 # options to enable/disable "toywasm --trace" stuff
 option(TOYWASM_ENABLE_TRACING "Enable xlog_trace" OFF)
