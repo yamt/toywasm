@@ -11,10 +11,17 @@
 static void
 setup_exec_context(struct exec_context *ectx)
 {
-        /* avoid infinite loops */
+        /*
+         * avoid infinite loops
+         *
+         * note: this raises ETOYWASMUSERINTERRUPT
+         * after executing about
+         * (user_intr_delay + 1) * CHECK_INTERVAL_DEFAULT
+         * call/branch instructions.
+         */
         const static atomic_uint one = 1;
         ectx->intrp = &one;
-        ectx->user_intr_delay = 100;
+        ectx->user_intr_delay = 0;
 
         /* use moderate limits to avoid long execution */
         ectx->options.max_frames = 100;
