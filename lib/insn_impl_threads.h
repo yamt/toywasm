@@ -88,7 +88,7 @@ fail:                                                                         \
                         }                                                     \
                         uint##STACK##_t v = CAST val_v.u.i##STACK;            \
                         _Atomic uint##MEM##_t *ap = vp;                       \
-                        *ap = host_to_le##MEM(v);                             \
+                        *ap = host_to_le##MEM((uint##MEM##_t)v);              \
                 }                                                             \
                 SAVE_PC;                                                      \
                 INSN_SUCCESS;                                                 \
