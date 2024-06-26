@@ -154,6 +154,11 @@ repl_unload(struct repl_state *state, struct repl_module_state *mod)
                 mod->extra_import = NULL;
         }
 #endif
+        if (mod->unresolved_functions_import != NULL) {
+                import_object_destroy(state->impobj_mctx,
+                                      mod->unresolved_functions_import);
+                mod->unresolved_functions_import = NULL;
+        }
         assert((mod->instance_mctx == NULL) == (mod->module_mctx == NULL));
         if (mod->module_mctx != NULL) {
                 assert(mod->module_mctx + 1 == mod->instance_mctx);
@@ -638,11 +643,30 @@ repl_load_from_buf(struct repl_state *state, const char *modname,
                 imports = imo;
         }
 #endif
+        struct import_object **tailp = NULL;
+        if (state->opts.allow_unresolved_functions) {
+                struct import_object *imo;
+                ret = create_satisfying_functions(state->impobj_mctx,
+                                                  mod->module, &imo);
+                if (ret != 0) {
+                        goto fail;
+                }
+                mod->unresolved_functions_import = imo;
+                /* put this at the end of the list */
+                tailp = &imports;
+                while (*tailp != NULL) {
+                        tailp = &(*tailp)->next;
+                }
+                *tailp = imo;
+        }
 
         struct report report;
         report_init(&report);
         ret = instance_create_no_init(mod->instance_mctx, mod->module,
                                       &mod->inst, imports, &report);
+        if (tailp != NULL) {
+                *tailp = NULL;
+        }
         if (ret != 0) {
                 const char *msg = report_getmessage(&report);
                 xlog_error("instance_create_no_init failed with %d: %s", ret,
