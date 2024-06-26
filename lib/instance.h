@@ -156,6 +156,10 @@ int create_satisfying_shared_memories(struct mem_context *mctx,
                                       const struct module *module,
                                       struct import_object **imop);
 
+int create_satisfying_functions(struct mem_context *mctx,
+                                const struct module *module,
+                                struct import_object **imop);
+
 void instance_print_stats(const struct instance *inst);
 
 __END_EXTERN_C

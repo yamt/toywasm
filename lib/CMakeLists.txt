@@ -6,6 +6,7 @@ set(lib_core_sources
 	"cell.c"
 	"context.c"
 	"decode.c"
+	"dummy_host_func.c"
 	"endian.c"
 	"exec.c"
 	"exec_debug.c"
