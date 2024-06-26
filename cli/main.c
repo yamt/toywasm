@@ -21,6 +21,7 @@
 #include "xlog.h"
 
 enum longopt {
+        opt_allow_unresolved_functions,
         opt_disable_jump_table = 0x100,
         opt_disable_localtype_cellidx,
         opt_disable_resulttype_cellidx,
@@ -60,6 +61,12 @@ enum longopt {
 };
 
 static const struct option longopts[] = {
+        {
+                "allow-unresolved-functions",
+                no_argument,
+                NULL,
+                opt_allow_unresolved_functions,
+        },
         {
                 "disable-jump-table",
                 no_argument,
@@ -347,6 +354,9 @@ main(int argc, char *const *argv)
         size_t limit;
         while ((ret = getopt_long(argc, argv, "", longopts, &longidx)) != -1) {
                 switch (ret) {
+                case opt_allow_unresolved_functions:
+                        opts->allow_unresolved_functions = true;
+                        break;
                 case opt_disable_jump_table:
                         opts->load_options.generate_jump_table = false;
                         break;

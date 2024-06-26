@@ -11,6 +11,7 @@ struct repl_options {
         const char *prompt;
         struct repl_state *state;
         bool print_stats;
+        bool allow_unresolved_functions;
 #if defined(TOYWASM_ENABLE_DYLD)
         bool enable_dyld;
         struct dyld_options dyld_options;
@@ -29,6 +30,7 @@ struct repl_module_state {
 #if defined(TOYWASM_ENABLE_WASI_THREADS)
         struct import_object *extra_import;
 #endif
+        struct import_object *unresolved_functions_import;
         struct mem_context *module_mctx;
         struct mem_context *instance_mctx;
 };
