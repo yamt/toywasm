@@ -21,7 +21,8 @@ _dtor(struct mem_context *mctx, struct import_object *im)
                 for (i = 0; i < nfuncs; i++) {
                         struct funcinst *fi = &fis[i];
                         if (fi->u.host.type != NULL) {
-                                functype_free(mctx, fi->u.host.type);
+                                /* discard const */
+                                functype_free(mctx, (void *)fi->u.host.type);
                         }
                 }
                 mem_free(mctx, fis, im->nentries * sizeof(*fis));

@@ -550,7 +550,7 @@ struct funcinst {
                 } wasm;
                 struct {
                         struct host_instance *instance;
-                        struct functype *type;
+                        const struct functype *type;
                         host_func_t func;
                 } host;
         } u;
