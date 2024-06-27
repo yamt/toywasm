@@ -168,9 +168,12 @@ INSN_IMPL(throw)
         READ_LEB_U32(tagidx);
         const struct module *m = MODULE;
         CHECK(tagidx < m->nimportedtags + m->ntags);
-        const struct tagtype *tt = module_tagtype(m, tagidx);
-        const struct functype *ft = module_tagtype_functype(m, tt);
-        const struct resulttype *rt = &ft->parameter;
+        const struct resulttype *rt;
+        if (EXECUTING || VALIDATING) {
+                const struct tagtype *tt = module_tagtype(m, tagidx);
+                const struct functype *ft = module_tagtype_functype(m, tt);
+                rt = &ft->parameter;
+        }
         if (EXECUTING) {
                 struct exec_context *ectx = ECTX;
                 /*
