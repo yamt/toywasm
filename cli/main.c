@@ -21,8 +21,8 @@
 #include "xlog.h"
 
 enum longopt {
-        opt_allow_unresolved_functions,
-        opt_disable_jump_table = 0x100,
+        opt_allow_unresolved_functions = 0x100,
+        opt_disable_jump_table,
         opt_disable_localtype_cellidx,
         opt_disable_resulttype_cellidx,
 #if defined(TOYWASM_ENABLE_DYLD)
