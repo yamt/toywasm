@@ -166,39 +166,40 @@ INSN_IMPL(throw)
 
         LOAD_PC;
         READ_LEB_U32(tagidx);
-        const struct module *m = MODULE;
-        CHECK(tagidx < m->nimportedtags + m->ntags);
-        const struct resulttype *rt;
         if (EXECUTING || VALIDATING) {
+                const struct module *m = MODULE;
+                CHECK(tagidx < m->nimportedtags + m->ntags);
                 const struct tagtype *tt = module_tagtype(m, tagidx);
                 const struct functype *ft = module_tagtype_functype(m, tt);
-                rt = &ft->parameter;
-        }
-        if (EXECUTING) {
-                struct exec_context *ectx = ECTX;
-                /*
-                 * pop the exception parameters, create an exception,
-                 * and push exnref.
-                 */
-                SAVE_STACK_PTR;
-                push_exception(ectx, tagidx, rt);
-                LOAD_STACK_PTR;
-                /*
-                 * now it's same as throw_ref.
-                 */
-                schedule_exception(ectx);
-        } else if (VALIDATING) {
-                struct validation_context *vctx = VCTX;
-                ret = pop_valtypes(rt, vctx);
-                if (ret != 0) {
-                        goto fail;
+                const struct resulttype *rt = &ft->parameter;
+                if (EXECUTING) {
+                        struct exec_context *ectx = ECTX;
+                        /*
+                         * pop the exception parameters, create an exception,
+                         * and push exnref.
+                         */
+                        SAVE_STACK_PTR;
+                        push_exception(ectx, tagidx, rt);
+                        LOAD_STACK_PTR;
+                        /*
+                         * now it's same as throw_ref.
+                         */
+                        schedule_exception(ectx);
+                } else {
+                        struct validation_context *vctx = VCTX;
+                        ret = pop_valtypes(rt, vctx);
+                        if (ret != 0) {
+                                goto fail;
+                        }
+                        /*
+                         * ensure to allocate enough stack for push_exception
+                         */
+                        ret = push_valtype(TYPE_EXNREF, vctx);
+                        if (ret != 0) {
+                                goto fail;
+                        }
+                        mark_unreachable(vctx);
                 }
-                /* ensure to allocate enough stack for push_exception */
-                ret = push_valtype(TYPE_EXNREF, vctx);
-                if (ret != 0) {
-                        goto fail;
-                }
-                mark_unreachable(vctx);
         }
         SAVE_PC;
         INSN_SUCCESS_RETURN;
