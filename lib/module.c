@@ -2467,9 +2467,7 @@ module_print_stats(const struct module *m)
                 if (ei->jumps != NULL) {
                         jump_table_size += ei->njumps * sizeof(*ei->jumps);
                 }
-#if defined(TOYWASM_ENABLE_WRITER)
-                code_size += e->end - e->start;
-#endif
+                code_size += expr_end(e) - e->start;
 #if defined(TOYWASM_USE_SMALL_CELLS)
                 const struct type_annotations *a = &ei->type_annotations;
                 type_annotation_size += sizeof(*a);
@@ -2491,10 +2489,8 @@ module_print_stats(const struct module *m)
                 resulttype_cellidx_size += resulttype_overhead(&ft->result);
         }
 #endif
-#if defined(TOYWASM_ENABLE_WRITER)
         nbio_printf("%30s %12zu bytes\n", "wasm instructions to annotate",
                     code_size);
-#endif
         nbio_printf("%30s %12zu bytes\n", "jump table overhead",
                     jump_table_size);
         nbio_printf("%30s %12zu bytes\n", "type annotation overhead",
