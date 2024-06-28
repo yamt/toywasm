@@ -130,6 +130,7 @@ cmake_dependent_option(TOYWASM_PREALLOC_SHARED_MEMORY
 # enable logic to write a module to a file.
 # currently it's only used by repl ":save" command.
 option(TOYWASM_ENABLE_WRITER "Enable module writer" ON)
+option(TOYWASM_MAINTAIN_EXPR_END "Maintain the end pointer of expr" OFF)
 
 # enable SIMD. we made this an option because it's large.
 option(TOYWASM_ENABLE_WASM_SIMD "Enable SIMD" ON)
