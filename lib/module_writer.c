@@ -233,7 +233,7 @@ write_import(struct writer *w, const struct import *im)
 static void
 write_expr(struct writer *w, const struct expr *e)
 {
-        WRITE_BYTES(e->start, e->end - e->start);
+        WRITE_BYTES(e->start, expr_end(e) - e->start);
 }
 
 static void
