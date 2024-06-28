@@ -240,7 +240,7 @@ read_expr_common(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
         }
 #endif
         *pp = p;
-#if defined(TOYWASM_ENABLE_WRITER)
+#if defined(TOYWASM_MAINTAIN_EXPR_END)
         expr->end = p;
 #endif
         xlog_trace("code size %zu, jump table size %zu, max labels %" PRIu32
@@ -285,7 +285,7 @@ read_const_expr(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
 const uint8_t *
 expr_end(const struct expr *expr)
 {
-#if defined(TOYWASM_ENABLE_WRITER)
+#if defined(TOYWASM_MAINTAIN_EXPR_END)
         return expr->end;
 #else
         struct parse_expr_context pctx;
