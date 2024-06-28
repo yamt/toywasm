@@ -733,6 +733,8 @@ void clear_name(struct name *name);
 
 uint32_t memtype_page_shift(const struct memtype *type);
 
+const uint8_t *expr_end(const struct expr *expr);
+
 __END_EXTERN_C
 
 #endif /* defined(_TOYWASM_TYPE_H) */
