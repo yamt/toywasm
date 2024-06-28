@@ -9,6 +9,7 @@
 #include "endian.h"
 #include "exec.h"
 #include "expr.h"
+#include "expr_parser.h"
 #include "insn.h"
 #include "leb128.h"
 #include "load_context.h"
@@ -279,4 +280,24 @@ read_const_expr(const uint8_t **pp, const uint8_t *ep, struct expr *expr,
         assert(expr->ei.type_annotations.types == NULL);
 #endif
         return ret;
+}
+
+const uint8_t *
+expr_end(const struct expr *expr)
+{
+#if defined(TOYWASM_ENABLE_WRITER)
+        return expr->end;
+#else
+        struct parse_expr_context pctx;
+        parse_expr_context_init(&pctx);
+        const uint8_t *p = expr->start;
+        const uint8_t *p1;
+        do {
+                p1 = p;
+                parse_expr(&p, &pctx);
+        } while (p != NULL);
+        parse_expr_context_clear(&pctx);
+        assert(*p1 == FRAME_OP_END);
+        return p1 + 1; /* +1 for the end instruction */
+#endif
 }
