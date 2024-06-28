@@ -36,7 +36,7 @@ The fixed-size here is the size of the largest value enabled by the
 build-time configuratons. That is, 128-bit for the `v128` type if
 toywasm is built with SIMD enabled. (`-D TOYWASM_ENABLE_WASM_SIMD=ON`,
 which is the default) Othewise, it's 64-bit.
-While fixed-sized values incurs up to 4x memory overhead (eg. by using
+Fixed-sized values incurs up to 4x memory overhead (eg. by using
 128 bits to store an i32 value) for wasm operand stack, wasm locals,
 and wasm tables. While it might sound very inefficient, it's likely
 more cpu-efficient for typical workloads, especially on a 64-bit host.
