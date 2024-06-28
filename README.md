@@ -88,6 +88,7 @@ See toywasm command help message.
 Usage:
 	toywasm [OPTIONS] [--] <MODULE> [WASI-ARGS...]
 Options:
+	--allow-unresolved-functions
 	--disable-jump-table
 	--disable-localtype-cellidx
 	--disable-resulttype-cellidx
