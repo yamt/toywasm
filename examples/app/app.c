@@ -57,10 +57,8 @@ main(int argc, char **argv)
         uint32_t funcidx_with_largest_type_annotations = UINT32_MAX;
         uint32_t largest_type_annotations = 0;
 #endif
-#if defined(TOYWASM_ENABLE_WRITER)
         uint32_t funcidx_with_max_code_size = UINT32_MAX;
         uint32_t max_code_size = 0;
-#endif
         for (i = 0; i < m->nfuncs; i++) {
                 const struct func *func = &m->funcs[i];
                 const struct localtype *lt = &func->localtype;
@@ -93,14 +91,12 @@ main(int argc, char **argv)
                         largest_type_annotations = ei->type_annotations.ntypes;
                 }
 #endif
-#if defined(TOYWASM_ENABLE_WRITER)
-                uint32_t code_size = func->e.end - func->e.start;
+                uint32_t code_size = expr_end(&func->e) - func->e.start;
                 if (funcidx_with_max_code_size == UINT32_MAX ||
                     code_size > max_code_size) {
                         funcidx_with_max_code_size = i;
                         max_code_size = code_size;
                 }
-#endif
         }
 
         struct nametable table;
@@ -155,7 +151,6 @@ main(int argc, char **argv)
                        funcidx, CSTR(&func_name), largest_type_annotations);
         }
 #endif
-#if defined(TOYWASM_ENABLE_WRITER)
         if (funcidx_with_max_code_size != UINT32_MAX) {
                 uint32_t funcidx =
                         m->nimportedfuncs + funcidx_with_max_code_size;
@@ -165,7 +160,6 @@ main(int argc, char **argv)
                        " bytes) in this module.\n",
                        funcidx, CSTR(&func_name), max_code_size);
         }
-#endif
         nametable_clear(&table);
         module_destroy(&mctx, m);
         mem_context_clear(&mctx);
