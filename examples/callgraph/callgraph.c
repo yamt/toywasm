@@ -111,13 +111,12 @@ callgraph(const struct module *m)
                 json_t *expr_size = NULL;
                 if (!imported) {
                         calls = dump_calls(m, i - m->nimportedfuncs, &table);
-#if defined(TOYWASM_ENABLE_WRITER)
                         struct func *func = &m->funcs[i - m->nimportedfuncs];
-                        expr_size = json_integer(func->e.end - func->e.start);
+                        expr_size = json_integer(expr_end(&func->e) -
+                                                 func->e.start);
                         if (expr_size == NULL) {
                                 jsonutil_fatal();
                         }
-#endif
                 }
                 jsonutil_pack_and_append(a, "{ss#sisssbso*so*}", "name",
                                          func_name.data, (int)func_name.nbytes,
