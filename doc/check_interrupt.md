@@ -4,7 +4,9 @@
 
 We have a few features which potentially block for long period.
 (possibly forever.)
-They include `wasm-threads` and `WASI`.
+They include WASM [threads proposal] and `WASI`.
+
+[threads proposal]: https://github.com/WebAssembly/threads
 
 To make it possible to handle asynchronous requests like thread termination
 while executing these long-blocking operations, they actually wake up
@@ -85,11 +87,11 @@ This mechanism is used to implement:
 
 * Inefficient. Especially when you have many threads.
 
-* Restrictions on host functions. Restarting a complex host function
+* Difficulties on host functions. Restarting a complex host function
   might be difficult to implement properly.
   For example, a host function calling back to the wasm module, which
   might even call another host function.
-  You can find such host functions in the [hostfunc example app].
+  You can find an example of such host functions in the [hostfunc example app].
 
 * Non-blocking I/O on unix is a bit awkward to handle.
 
