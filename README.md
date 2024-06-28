@@ -9,6 +9,7 @@ A WebAssembly interpreter written in C.
 * Correctness
 * Clean code
 * Small footprint
+* Reasonable performance
 * Portability
   * Core wasm: C11
   * WASI: POSIX-like
@@ -17,7 +18,7 @@ A WebAssembly interpreter written in C.
 
 ## Non-goals
 
-* Performance
+* Top-notch performance
 * Stable API/ABI
 
 ## What are implemented?
