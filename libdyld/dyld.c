@@ -294,8 +294,15 @@ int
 dyld_search_and_load_object_from_file(struct dyld *d, const struct name *name,
                                       struct dyld_object **objp)
 {
-        /* simple security check */
-        if (xstrnstr(name->data, "/", name->nbytes) ||
+        /*
+         * perform simple security check.
+         *
+         * the "name" here can come from untrusted sources:
+         * - WASM_DYLINK_NEEDED subsection
+         * - dyld:load_object host function
+         */
+        if (memchr(name->data, 0, name->nbytes) ||
+            xstrnstr(name->data, "/", name->nbytes) ||
             xstrnstr(name->data, "..", name->nbytes)) {
                 return EPERM;
         }
