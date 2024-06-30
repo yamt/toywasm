@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <errno.h>
 
+#include "escape.h"
 #include "exec.h"
 #include "host_instance.h"
 #include "instance.h"
@@ -13,9 +14,17 @@ dummy_func(struct exec_context *ectx, struct host_instance *hi,
            struct cell *results)
 {
         const struct import *im = (void *)hi;
-        return trap_with_id(ectx, TRAP_UNRESOLVED_IMPORTED_FUNC,
-                            "unresolved imported function %.*s:%.*s is called",
-                            CSTR(&im->module_name), CSTR(&im->name));
+        struct escaped_string module_name;
+        struct escaped_string name;
+        escape_name(&module_name, &im->module_name);
+        escape_name(&name, &im->name);
+        int ret = trap_with_id(
+                ectx, TRAP_UNRESOLVED_IMPORTED_FUNC,
+                "unresolved imported function %.*s:%.*s is called",
+                ECSTR(&module_name), ECSTR(&name));
+        escaped_string_clear(&module_name);
+        escaped_string_clear(&name);
+        return ret;
 }
 
 static void
