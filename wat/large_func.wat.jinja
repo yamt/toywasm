@@ -3,15 +3,11 @@
 {% set NUM = NUM | default(5000) | int %}
 
 (module
-  (func $imported (import "foo" "bar"))
-  (func $f (param i32)
-    (i32.store (local.get 0) (i32.const 0))
-    call $imported
-  )
-  (func (export "large-func") (param i32)
+  (func $g (param i32))
+  (func $large-func (export "large-func") (param i32)
     loop
 {%- for x in range(NUM) %}
-      (call $f (i32.const 0) (i32.load))
+      (call $g (i32.const 0) (i32.load))
 {% endfor -%}
       local.get 0
       i32.const 1
@@ -21,6 +17,17 @@
         br 0
       end
     end
+  )
+  (func (export "test") (param i32)
+    i32.const 1
+    memory.grow
+    i32.const 0xffffffff
+    i32.eq
+    if
+      unreachable
+    end
+    local.get 0
+    call $large-func
   )
   (memory (export "memory") 0)
 )
