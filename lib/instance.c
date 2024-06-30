@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "bitmap.h"
+#include "escape.h"
 #include "exec.h"
 #include "instance.h"
 #include "mem.h"
@@ -38,13 +39,19 @@ find_entry_for_import(
                 }
                 impobj = impobj->next;
         }
+        struct escaped_string module_name;
+        struct escaped_string name;
+        escape_name(&module_name, &im->module_name);
+        escape_name(&name, &im->name);
         if (mismatch) {
                 report_error(report, "No matching entry for import %.*s:%.*s",
-                             CSTR(&im->module_name), CSTR(&im->name));
+                             ECSTR(&module_name), ECSTR(&name));
         } else {
                 report_error(report, "No entry for import %.*s:%.*s",
-                             CSTR(&im->module_name), CSTR(&im->name));
+                             ECSTR(&module_name), ECSTR(&name));
         }
+        escaped_string_clear(&module_name);
+        escaped_string_clear(&name);
         return ENOENT;
 }
 
