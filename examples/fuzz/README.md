@@ -1,8 +1,8 @@
 # What's this
 
-A [Libfuzzer] target, which instantiates a wasm module with toywasm.
+A [libFuzzer] target, which instantiates a wasm module with toywasm.
 
-[Libfuzzer]: https://llvm.org/docs/LibFuzzer.html
+[libFuzzer]: https://llvm.org/docs/LibFuzzer.html
 
 # How to
 
