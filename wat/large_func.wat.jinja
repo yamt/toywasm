@@ -1,0 +1,26 @@
+;; jinja2 large_func.wat.jinja | wat2wasm -o large_func.wasm -
+
+{% set NUM = NUM | default(5000) | int %}
+
+(module
+  (func $imported (import "foo" "bar"))
+  (func $f (param i32)
+    (i32.store (local.get 0) (i32.const 0))
+    call $imported
+  )
+  (func (export "large-func") (param i32)
+    loop
+{%- for x in range(NUM) %}
+      (call $f (i32.const 0) (i32.load))
+{% endfor -%}
+      local.get 0
+      i32.const 1
+      i32.sub
+      local.tee 0
+      if
+        br 0
+      end
+    end
+  )
+  (memory (export "memory") 0)
+)
