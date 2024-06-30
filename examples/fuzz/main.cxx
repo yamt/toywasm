@@ -33,6 +33,10 @@ LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 {
         struct mem_context mctx;
         mem_context_init(&mctx);
+        /*
+         * limit the heap usage to a moderate amount.
+         * otherwise, it can easily reach libFuzzer's RSS/malloc limit.
+         */
         mctx.limit = 1 * 1024 * 1024;
         struct module *m;
         int ret;
