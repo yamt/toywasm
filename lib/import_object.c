@@ -2,6 +2,7 @@
 #include <errno.h>
 #include <stdlib.h>
 
+#include "escape.h"
 #include "instance.h"
 #include "mem.h"
 #include "report.h"
@@ -168,15 +169,20 @@ import_object_find_entry(
                     !compare_name(e->name, &im->name)) {
                         if (e->type != im->desc.type) {
 #if defined(TOYWASM_SORT_EXPORTS)
-type_mismatch:
+type_mismatch:;
 #endif
+                                struct escaped_string module_name;
+                                struct escaped_string name;
+                                escape_name(&module_name, &im->module_name);
+                                escape_name(&name, &im->name);
                                 report_error(report,
                                              "Type mismatch for import "
                                              "%.*s:%.*s (%u != %u)",
-                                             CSTR(&im->module_name),
-                                             CSTR(&im->name),
+                                             ECSTR(&module_name), ECSTR(&name),
                                              (unsigned int)e->type,
                                              (unsigned int)im->desc.type);
+                                escaped_string_clear(&module_name);
+                                escaped_string_clear(&name);
                                 return EINVAL;
                         }
                         int ret = check(e, checkarg);
