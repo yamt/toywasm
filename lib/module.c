@@ -2299,6 +2299,8 @@ module_load_into(struct module *m, const uint8_t *p, const uint8_t *ep,
          *
          * in-place sort should be ok because the order of exports
          * in a module doesn't have any meanings.
+         * (while some APIs like wasm-c-api expose the order to users,
+         * toywasm doesn't provide such APIs.)
          *
          * Note: Naive implementions of qsort can be attacked with
          * a crafted input.
