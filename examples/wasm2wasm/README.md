@@ -12,3 +12,6 @@ a semantically same wasm module.
 Note: it doesn't necessarily produce the identical file like cp(1).
 
 Note: it doesn't preserve custom sections.
+
+Note: if TOYWASM_SORT_EXPORTS=ON, it doesn't preserve the order of
+exports in the module.
