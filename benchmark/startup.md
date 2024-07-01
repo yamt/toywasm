@@ -19,7 +19,7 @@ print the `-version` message)
   2.2 GHz 6-Core Intel Core i7
   ```
 
-* [Raw values](./startup.txt)
+* [Raw values](./startup.csv)
 
 * Plotted with [plot.py](./plot.py).
 
