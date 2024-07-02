@@ -180,6 +180,7 @@ option(TOYWASM_ENABLE_FUZZER "Enable fuzzer" OFF)
 option(TOYWASM_ENABLE_COVERAGE "Enable coverage" OFF)
 
 option(TOYWASM_BUILD_UNITTEST "Build toywasm-test" ON)
+option(TOYWASM_BUILD_CLI "Build toywasm command" ON)
 
 if(TOYWASM_ENABLE_FUZZER)
 add_compile_options(-fsanitize=fuzzer-no-link)
