@@ -51,6 +51,7 @@ list(APPEND TEST_ENV "TEST_RUNTIME_EXE=${TOYWASM_CLI}")
 
 # cli
 
+if(TOYWASM_BUILD_CLI)
 set(cli_sources
 	"cli/main.c"
 	"cli/repl.c"
@@ -274,6 +275,8 @@ set_tests_properties(toywasm-cli-dyld-test PROPERTIES ENVIRONMENT "${TEST_ENV}")
 set_tests_properties(toywasm-cli-dyld-test PROPERTIES LABELS "wasi;dyld")
 endif()
 
+endif() # if(TOYWASM_BUILD_CLI)
+
 # sample wasm files
 
 if(BUILD_TESTING)
@@ -339,6 +342,8 @@ add_custom_target(tar
         ${CMAKE_INSTALL_PREFIX}/*
 )
 
+if(TOYWASM_BUILD_CLI)
 install(TARGETS toywasm-cli DESTINATION bin)
+endif()
 install(FILES LICENSE README.md DESTINATION share/doc/toywasm)
 install(FILES doc/annotations.md doc/check_interrupt.md DESTINATION share/doc/toywasm/doc)
