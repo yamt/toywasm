@@ -62,6 +62,10 @@ jobs:
           # exclude some more combinations to reduce the matrix
           - TOYWASM_USE_SMALL_CELLS: ON
             TOYWASM_USE_SEPARATE_LOCALS: ON
+          - MISC_FEATURES: OFF
+            TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: ON
+          - MISC_FEATURES: OFF
+            TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: ON
           - os: ubuntu-latest
             compiler: clang
           - BUILD_TYPE: Release
