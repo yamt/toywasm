@@ -205,6 +205,8 @@ toywasm_repl_reset(struct repl_state *state)
                 nbio_printf("=== memory consumption immediately before a repl "
                             "reset ===\n");
                 print_memory_usage(state->mctx, "total");
+                print_memory_usage(state->modules_mctx, "modules");
+                print_memory_usage(state->instances_mctx, "instances");
                 print_memory_usage(state->wasi_mctx, "wasi");
                 print_memory_usage(state->dyld_mctx, "dyld");
                 print_memory_usage(state->impobj_mctx, "impobj");
@@ -598,8 +600,8 @@ repl_load_from_buf(struct repl_state *state, const char *modname,
         mod->instance_mctx = mctx2 + 1;
         mem_context_init(mod->module_mctx);
         mem_context_init(mod->instance_mctx);
-        mod->module_mctx->parent = state->mctx;
-        mod->instance_mctx->parent = state->mctx;
+        mod->module_mctx->parent = state->modules_mctx;
+        mod->instance_mctx->parent = state->instances_mctx;
         struct load_context ctx;
         load_context_init(&ctx, mod->module_mctx);
         ctx.options = state->opts.load_options;

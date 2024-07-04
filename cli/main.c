@@ -296,6 +296,8 @@ int
 main(int argc, char *const *argv)
 {
         struct mem_context mctx0, *mctx = &mctx0;
+        struct mem_context modules_mctx0, *modules_mctx = &modules_mctx0;
+        struct mem_context instances_mctx0, *instances_mctx = &instances_mctx0;
         struct mem_context wasi_mctx0, *wasi_mctx = &wasi_mctx0;
         struct mem_context dyld_mctx0, *dyld_mctx = &dyld_mctx0;
         struct mem_context impobj_mctx0, *impobj_mctx = &impobj_mctx0;
@@ -334,9 +336,13 @@ main(int argc, char *const *argv)
 #endif
 #endif
         mem_context_init(mctx);
+        mem_context_init(modules_mctx);
+        mem_context_init(instances_mctx);
         mem_context_init(wasi_mctx);
         mem_context_init(dyld_mctx);
         mem_context_init(impobj_mctx);
+        modules_mctx->parent = mctx;
+        modules_mctx->parent = mctx;
         wasi_mctx->parent = mctx;
         dyld_mctx->parent = mctx;
         impobj_mctx->parent = mctx;
@@ -347,6 +353,8 @@ main(int argc, char *const *argv)
         }
         toywasm_repl_state_init(state);
         state->mctx = mctx;
+        state->modules_mctx = modules_mctx;
+        state->instances_mctx = instances_mctx;
         state->wasi_mctx = wasi_mctx;
         state->dyld_mctx = dyld_mctx;
         state->impobj_mctx = impobj_mctx;
@@ -616,6 +624,8 @@ fail:
         free(state);
         mem_context_clear(dyld_mctx);
         mem_context_clear(wasi_mctx);
+        mem_context_clear(instances_mctx);
+        mem_context_clear(modules_mctx);
         mem_context_clear(mctx);
         exit(exit_status);
 success:

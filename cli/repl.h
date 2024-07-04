@@ -66,6 +66,8 @@ struct repl_state {
         struct timespec abstimeout;
         bool has_timeout;
         struct mem_context *mctx;
+        struct mem_context *modules_mctx;
+        struct mem_context *instances_mctx;
         struct mem_context *wasi_mctx;
         struct mem_context *dyld_mctx;
         struct mem_context *impobj_mctx;
