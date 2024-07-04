@@ -168,7 +168,9 @@ wasi_table_clear(struct wasi_instance *wasi,
                                    " with errno %d",
                                    i, ret);
                 }
-                free(fdinfo);
+                fdinfo->refcount--;
+                assert(fdinfo->refcount == 0);
+                wasi_fdinfo_free(fdinfo);
         }
         VEC_FREE(wasi->mctx, table->table);
 }
