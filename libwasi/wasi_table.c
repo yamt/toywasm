@@ -19,7 +19,6 @@ wasi_table_affix(struct wasi_instance *wasi, enum wasi_table_idx idx,
         assert(fdinfo->refcount < UINT32_MAX);
         fdinfo->refcount++;
         *slot = fdinfo;
-        free(ofdinfo);
 }
 
 int
