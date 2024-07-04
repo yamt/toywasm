@@ -153,6 +153,7 @@ void table_instance_destroy(struct mem_context *mctx, struct tableinst *ti);
  * provide the linear memory.
  */
 int create_satisfying_shared_memories(struct mem_context *mctx,
+                                      struct mem_context *instance_mctx,
                                       const struct module *module,
                                       struct import_object **imop);
 

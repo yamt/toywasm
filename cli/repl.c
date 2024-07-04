@@ -628,12 +628,8 @@ repl_load_from_buf(struct repl_state *state, const char *modname,
                 assert(mod->extra_import == NULL);
                 /* create matching shared memory automatically */
                 struct import_object *imo;
-                /*
-                 * REVISIT: it's a bit awkward to use state->impobj_mctx
-                 * mctx here especially when it includes shared linear
-                 * memories.
-                 */
                 ret = create_satisfying_shared_memories(state->impobj_mctx,
+                                                        mod->instance_mctx,
                                                         mod->module, &imo);
                 if (ret != 0) {
                         goto fail;
