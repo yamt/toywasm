@@ -5,6 +5,9 @@
  * note that the stdout encoding depends on the C locale. it isn't
  * necessarily utf-8.
  *
+ * besides that, this is also used for user-provided strings, which
+ * is not necessarily in utf-8.
+ *
  * we use the printf(1) style escape.
  * eg. \123
  */
