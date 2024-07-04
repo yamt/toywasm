@@ -91,7 +91,8 @@ pop_valtype_common(enum valtype expected_type, enum valtype *typep,
                         *typep = TYPE_UNKNOWN;
                         return 0;
                 }
-                return EINVAL;
+                return validation_failure(ctx, "expected %x actual none",
+                                          expected_type);
         }
         enum valtype t = *VEC_POP(ctx->valtypes);
         assert(t != TYPE_ANYREF);
