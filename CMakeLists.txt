@@ -266,6 +266,7 @@ set_tests_properties(toywasm-cli-littlefs-test PROPERTIES ENVIRONMENT "${TEST_EN
 set_tests_properties(toywasm-cli-littlefs-test PROPERTIES LABELS "wasi;littlefs")
 endif()
 
+if(TOYWASM_ENABLE_WASI)
 if(TOYWASM_ENABLE_DYLD_DLFCN)
 add_test(NAME toywasm-cli-dyld-test
 	COMMAND ./fetch-and-run-test.sh
@@ -273,6 +274,7 @@ add_test(NAME toywasm-cli-dyld-test
 )
 set_tests_properties(toywasm-cli-dyld-test PROPERTIES ENVIRONMENT "${TEST_ENV}")
 set_tests_properties(toywasm-cli-dyld-test PROPERTIES LABELS "wasi;dyld")
+endif()
 endif()
 
 endif() # if(TOYWASM_BUILD_CLI)
