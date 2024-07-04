@@ -11,13 +11,14 @@ _dtor(struct mem_context *mctx, struct import_object *imo)
                 struct import_object_entry *e = &imo->entries[i];
                 struct meminst *mi = e->u.mem;
                 if (mi != NULL) {
-                        memory_instance_destroy(mctx, mi);
+                        memory_instance_destroy(mi->mctx, mi);
                 }
         }
 }
 
 int
 create_satisfying_shared_memories(struct mem_context *mctx,
+                                  struct mem_context *instance_mctx,
                                   const struct module *m,
                                   struct import_object **imop)
 {
@@ -56,7 +57,7 @@ create_satisfying_shared_memories(struct mem_context *mctx,
                 if ((mt->flags & MEMTYPE_FLAG_SHARED) == 0) {
                         continue;
                 }
-                ret = memory_instance_create(mctx, &mi, mt);
+                ret = memory_instance_create(instance_mctx, &mi, mt);
                 if (ret != 0) {
                         goto fail;
                 }
@@ -75,7 +76,7 @@ fail:
                 import_object_destroy(mctx, imo);
         }
         if (mi != NULL) {
-                memory_instance_destroy(mctx, mi);
+                memory_instance_destroy(instance_mctx, mi);
         }
         return ret;
 }
