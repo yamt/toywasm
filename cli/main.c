@@ -604,6 +604,8 @@ main(int argc, char *const *argv)
         }
 #if defined(TOYWASM_ENABLE_WASI)
         exit_status = wasi_exit_code;
+#else
+        exit_status = 0;
 #endif
 fail:
         toywasm_repl_reset(state);
