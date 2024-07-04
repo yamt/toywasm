@@ -63,8 +63,8 @@ installed with homebrew.
 ### wasmi
 
 ```
-git checkout v0.32.0-beta.7
-cargo build --profile bench
+git checkout v0.33.1
+cargo build --package wasmi_cli --profile bench
 cp target/release/wasmi_cli ~/bin
 ```
 
