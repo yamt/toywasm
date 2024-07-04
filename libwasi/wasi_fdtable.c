@@ -71,8 +71,11 @@ wasi_hostfd_add(struct wasi_instance *wasi, int hostfd, char *path,
         fdinfo_host->hostfd = hostfd;
         ret = wasi_table_fdinfo_add(wasi, WASI_TABLE_FILES, fdinfo, &wasifd);
         if (ret != 0) {
-                free(path);
-                free(fdinfo);
+                assert(fdinfo->refcount == 0);
+                fdinfo_host->hostfd = -1; /* don't close hostfd */
+                wasi_fdinfo_close(fdinfo);
+                wasi_fdinfo_free(fdinfo);
+                return ret;
         }
         *wasifdp = wasifd;
         return 0;
