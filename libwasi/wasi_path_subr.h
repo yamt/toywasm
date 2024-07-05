@@ -2,14 +2,12 @@ struct wasi_fdinfo;
 
 struct path_info {
         char *hostpath;
-
         struct wasi_fdinfo *dirfdinfo;
-        char *wasmpath;
 };
 
 #define PATH_INITIALIZER                                                      \
         {                                                                     \
-                NULL, NULL, NULL,                                             \
+                NULL, NULL,                                                   \
         }
 
 struct exec_context;

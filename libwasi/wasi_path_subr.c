@@ -17,7 +17,6 @@ path_clear(struct wasi_instance *wasi, struct path_info *pi)
 {
         wasi_fdinfo_release(wasi, pi->dirfdinfo);
         free(pi->hostpath);
-        free(pi->wasmpath);
 }
 
 int
@@ -77,7 +76,7 @@ wasi_copyin_and_convert_path(struct exec_context *ctx,
                    dirwasifd, wasmpath, hostpath);
         pi->hostpath = hostpath;
         pi->dirfdinfo = dirfdinfo;
-        pi->wasmpath = wasmpath;
+        free(wasmpath);
         *usererrorp = 0;
         return 0;
 fail:
