@@ -170,6 +170,8 @@ assert_held(struct toywasm_mutex *lock) ASSERT_HELD(lock)
  * modelled after https://tc39.es/ecma262/#sec-atomics.notify
  *
  * returns the number of waiters woken.
+ *
+ * Note: the lock in held by the caller. (via memory_atomic_getptr)
  */
 uint32_t
 atomics_notify(struct waiter_list_table *tab, uint32_t ident, uint32_t count)
@@ -205,6 +207,8 @@ atomics_notify(struct waiter_list_table *tab, uint32_t ident, uint32_t count)
  * modelled after https://tc39.es/ecma262/#sec-atomics.wait
  *
  * typical return values are: 0, ETIMEDOUT, and EOVERFLOW.
+ *
+ * Note: the lock in held by the caller. (via memory_atomic_getptr)
  */
 int
 atomics_wait(struct waiter_list_table *tab, uint32_t ident,
@@ -217,7 +221,6 @@ atomics_wait(struct waiter_list_table *tab, uint32_t ident,
         struct waiter_list *l = waiter_list_lookup(tab, ident, &lock, true);
         assert_held(lock);
         if (l->nwaiters == UINT32_MAX) {
-                toywasm_mutex_unlock(lock);
                 return EOVERFLOW;
         }
         struct waiter w0;
