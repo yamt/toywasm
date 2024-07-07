@@ -220,6 +220,9 @@ atomics_wait(struct waiter_list_table *tab, uint32_t ident,
         struct toywasm_mutex *lock;
         struct waiter_list *l = waiter_list_lookup(tab, ident, &lock, true);
         assert_held(lock);
+        if (l == NULL) {
+                return ENOMEM;
+        }
         if (l->nwaiters == UINT32_MAX) {
                 return EOVERFLOW;
         }
