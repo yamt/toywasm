@@ -660,6 +660,16 @@ retry:;
                         }
                         *resultp = 2; /* timed out */
                 } else {
+                        /*
+                         * REVISIT: while atomics_wait can possibly fail with
+                         * ENOMEM, we don't have a nice way to deal with it.
+                         * probably we can preallocate the memory similarly
+                         * to solaris turnstiles to avoid the dynamic memory
+                         * allocation in atomics_wait. but i'm not sure if
+                         * it's worth the effort at this point. for now,
+                         * just return an error. (it would cause the
+                         * interpreter loop fail.)
+                         */
                         goto fail;
                 }
 #endif
