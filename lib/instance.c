@@ -172,6 +172,14 @@ memory_instance_create(struct mem_context *mctx, struct meminst **mip,
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
         if ((mt->flags & MEMTYPE_FLAG_SHARED) != 0) {
 #if defined(TOYWASM_PREALLOC_SHARED_MEMORY)
+                /*
+                 * REVISIT: a lim.max allocation failure below is not fatal.
+                 * we can just fall back to a smaller allocation. (we may
+                 * need some heuristics to decide the size.)
+                 * if the application eventually ends up with growing the
+                 * memory up to lim.max, it will probably fail. i guess it's
+                 * rare, though.
+                 */
                 uint32_t need_in_pages = mt->lim.max;
 #else
                 uint32_t need_in_pages = mt->lim.min;
