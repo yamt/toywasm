@@ -233,6 +233,9 @@ wasi_convert_errno(int host_errno)
         case ENOTSUP:
                 wasmerrno = 58;
                 break;
+        case EOVERFLOW:
+                wasmerrno = 61;
+                break;
         case EPERM:
                 wasmerrno = 63;
                 break;
