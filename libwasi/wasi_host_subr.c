@@ -245,6 +245,9 @@ wasi_convert_errno(int host_errno)
         case ERANGE:
                 wasmerrno = 68;
                 break;
+        case ESPIPE:
+                wasmerrno = 70;
+                break;
 #if defined(ENOTCAPABLE)
         case ENOTCAPABLE:
                 wasmerrno = 76;
