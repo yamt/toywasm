@@ -1,4 +1,9 @@
+#include "fuzz_config.h"
+
 #include <stddef.h>
+#if defined(FUZZ_WASI)
+#include <unistd.h>
+#endif
 
 #include <toywasm/exec_context.h>
 #include <toywasm/instance.h>
@@ -7,6 +12,9 @@
 #include <toywasm/module.h>
 #include <toywasm/report.h>
 #include <toywasm/type.h>
+#if defined(FUZZ_WASI)
+#include <toywasm/wasi.h>
+#endif
 
 static void
 setup_exec_context(struct exec_context *ectx)
@@ -31,6 +39,13 @@ setup_exec_context(struct exec_context *ectx)
 extern "C" int
 LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 {
+        struct import_object *wasi_import_object = NULL;
+#if defined(FUZZ_WASI)
+        static const char *args[] = {
+                "dummy",
+                "args",
+        };
+#endif
         struct mem_context mctx;
         mem_context_init(&mctx);
         /*
@@ -47,10 +62,41 @@ LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
         if (ret != 0) {
                 goto fail_load;
         }
+#if defined(FUZZ_WASI)
+        struct wasi_instance *wasi;
+        ret = wasi_instance_create(&mctx, &wasi);
+        if (ret != 0) {
+                goto fail_wasi;
+        }
+        wasi_instance_set_args(wasi, 2, args);
+        wasi_instance_set_environ(wasi, 2, args);
+        ret = import_object_create_for_wasi(&mctx, wasi, &wasi_import_object);
+        if (ret != 0) {
+                goto fail_wasi_impobj;
+        }
+        int pipes[2];
+        ret = pipe(pipes);
+        if (ret != 0) {
+                goto fail_pipe;
+        }
+        ret = wasi_instance_add_hostfd(wasi, 0, pipes[0]);
+        if (ret != 0) {
+                goto fail_wasi_stdio;
+        }
+        ret = wasi_instance_add_hostfd(wasi, 1, pipes[1]);
+        if (ret != 0) {
+                goto fail_wasi_stdio;
+        }
+        ret = wasi_instance_add_hostfd(wasi, 2, pipes[1]);
+        if (ret != 0) {
+                goto fail_wasi_stdio;
+        }
+#endif
         struct instance *inst;
         struct report report;
         report_init(&report);
-        ret = instance_create_no_init(&mctx, m, &inst, NULL, &report);
+        ret = instance_create_no_init(&mctx, m, &inst, wasi_import_object,
+                                      &report);
         report_clear(&report);
         if (ret != 0) {
                 goto fail_instantiate;
@@ -105,6 +151,16 @@ fail_exec_func:
 fail_exec_init:
         instance_destroy(inst);
 fail_instantiate:
+#if defined(FUZZ_WASI)
+        import_object_destroy(&mctx, wasi_import_object);
+fail_wasi_impobj:
+fail_wasi_stdio:
+        close(pipes[0]);
+        close(pipes[1]);
+fail_pipe:
+        wasi_instance_destroy(wasi);
+fail_wasi:
+#endif
         module_destroy(&mctx, m);
 fail_load:
         mem_context_clear(&mctx);
