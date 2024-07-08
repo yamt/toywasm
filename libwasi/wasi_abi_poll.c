@@ -42,6 +42,10 @@ wasi_poll_oneoff(struct exec_context *ctx, struct host_instance *hi,
         }
         void *p;
         size_t insize = nsubscriptions * sizeof(struct wasi_subscription);
+        if (insize > UINT32_MAX) {
+                ret = EOVERFLOW;
+                goto fail;
+        }
 retry:
         host_ret = host_func_check_align(ctx, in, WASI_SUBSCRIPTION_ALIGN);
         if (host_ret != 0) {
