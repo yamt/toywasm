@@ -342,7 +342,7 @@ main(int argc, char *const *argv)
         mem_context_init(dyld_mctx);
         mem_context_init(impobj_mctx);
         modules_mctx->parent = mctx;
-        modules_mctx->parent = mctx;
+        instances_mctx->parent = mctx;
         wasi_mctx->parent = mctx;
         dyld_mctx->parent = mctx;
         impobj_mctx->parent = mctx;
