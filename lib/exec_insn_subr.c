@@ -478,17 +478,15 @@ retry:
                 if (new_size_in_bytes >> page_shift != new_size) {
                         ret = EOVERFLOW;
                 } else {
-                        void *np =
-                                mem_extend(mi->mctx, mi->data, mi->allocated,
-                                           new_size_in_bytes);
+                        void *np = mem_extend_zero(mi->mctx, mi->data,
+                                                   mi->allocated,
+                                                   new_size_in_bytes);
                         if (np == NULL) {
                                 ret = ENOMEM;
                         } else {
                                 ret = 0;
                                 mi->data = np;
                                 assert(new_size_in_bytes > mi->allocated);
-                                memset(mi->data + mi->allocated, 0,
-                                       new_size_in_bytes - mi->allocated);
                                 mi->allocated = new_size_in_bytes;
                         }
                 }
