@@ -310,16 +310,13 @@ table_instance_create(struct mem_context *mctx, struct tableinst **tip,
                 ret = EOVERFLOW;
                 goto fail;
         }
-        if (ncells > UINT32_MAX) {
-                /* implementation limit */
-                ret = EOVERFLOW;
-                goto fail;
+        if (ncells > 0) {
+                tinst->cells = mem_calloc(mctx, sizeof(*tinst->cells), ncells);
+                if (tinst->cells == NULL) {
+                        ret = ENOMEM;
+                        goto fail;
+                }
         }
-        ret = ARRAY_EXTEND(mctx, tinst->cells, 0, ncells);
-        if (ret != 0) {
-                goto fail;
-        }
-        memset(tinst->cells, 0, ncells * sizeof(*tinst->cells));
         *tip = tinst;
         return 0;
 fail:
