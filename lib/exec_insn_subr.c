@@ -335,6 +335,9 @@ fail:
 int
 table_grow(struct tableinst *t, const struct val *val, uint32_t n)
 {
+        if (n == 0) {
+                return t->size;
+        }
         if (UINT32_MAX - t->size < n || t->size + n > t->type->lim.max) {
                 return (uint32_t)-1;
         }
@@ -342,13 +345,22 @@ table_grow(struct tableinst *t, const struct val *val, uint32_t n)
         uint32_t newsize = t->size + n;
         uint32_t csz = valtype_cellsize(t->type->et);
         size_t newncells = (size_t)newsize * csz;
+        size_t newbytes = newncells * sizeof(*t->cells);
         int ret;
-        if (newncells / csz != newsize || newncells > UINT32_MAX) {
-                /* implementation limit */
+        if (newbytes / sizeof(*t->cells) / csz != newsize) {
                 ret = EOVERFLOW;
         } else {
-                size_t oldncells = t->size * csz;
-                ret = ARRAY_EXTEND(t->mctx, t->cells, oldncells, newncells);
+                size_t oldncells = (size_t)t->size * csz;
+                size_t oldbytes = oldncells * sizeof(*t->cells);
+                assert(oldbytes / sizeof(*t->cells) / csz == t->size);
+                assert(oldbytes < newbytes);
+                void *np = mem_extend(t->mctx, t->cells, oldbytes, newbytes);
+                if (np == NULL) {
+                        ret = ENOMEM;
+                } else {
+                        t->cells = np;
+                        ret = 0;
+                }
         }
         if (ret != 0) {
                 return (uint32_t)-1;
