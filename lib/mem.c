@@ -190,6 +190,16 @@ mem_extend(struct mem_context *ctx, void *p, size_t oldsz, size_t newsz)
 }
 
 void *
+mem_extend_zero(struct mem_context *ctx, void *p, size_t oldsz, size_t newsz)
+{
+        uint8_t *np = mem_extend(ctx, p, oldsz, newsz);
+        if (np != NULL) {
+                memset(np + oldsz, 0, newsz - oldsz);
+        }
+        return np;
+}
+
+void *
 mem_shrink(struct mem_context *ctx, void *p, size_t oldsz, size_t newsz)
 {
         assert(p != NULL);
