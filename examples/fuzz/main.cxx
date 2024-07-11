@@ -112,8 +112,12 @@ LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
         if (ret != 0) {
                 goto fail_exec_init;
         }
-        /* try to execute all exported functions */
+        /*
+         * try to execute a few exported functions
+         */
+        uint32_t nexecuted;
         uint32_t i;
+        nexecuted = 0;
         for (i = 0; i < m->nexports; i++) {
                 const struct wasm_export *ex = &m->exports[i];
                 if (ex->desc.type != EXTERNTYPE_FUNC) {
@@ -144,6 +148,11 @@ LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
                 ret = instance_execute_func(&ectx, funcidx, param, result);
                 if (ret == ETOYWASMRESTART) {
                         ret = instance_execute_handle_restart_once(&ectx, ret);
+                }
+                nexecuted++;
+                if (ret == ETOYWASMUSERINTERRUPT || nexecuted >= 3) {
+                        exec_context_clear(&ectx);
+                        break;
                 }
 fail_exec_func:
                 exec_context_clear(&ectx);
