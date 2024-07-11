@@ -126,8 +126,8 @@ wasi_host_dir_read(struct wasi_fdinfo *fdinfo, struct wasi_dirent *wde,
         uint32_t namlen = strlen(d->d_name);
         le32_encode(&wde->d_namlen, namlen);
         wde->d_type = wasi_convert_dirent_filetype(d->d_type);
-        xlog_trace("fd_readdir: ino %" PRIu64 " nam %.*s", (uint64_t)d->d_ino,
-                   (int)namlen, d->d_name);
+        xlog_trace("fd_readdir: ino %" PRIu64 " nam %.*s",
+                   le64_decode(&wde->d_ino), (int)namlen, d->d_name);
         *namep = (const void *)d->d_name;
         return 0;
 fail:
