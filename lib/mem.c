@@ -129,6 +129,7 @@ mem_alloc(struct mem_context *ctx, size_t sz)
         }
         void *p = malloc(sz);
         if (p == NULL) {
+                mem_unreserve(ctx, sz);
                 return NULL;
         }
         return p;
@@ -184,6 +185,7 @@ mem_extend(struct mem_context *ctx, void *p, size_t oldsz, size_t newsz)
         }
         void *np = realloc(p, newsz);
         if (np == NULL) {
+                mem_unreserve(ctx, diff);
                 return NULL;
         }
         return np;
@@ -205,11 +207,11 @@ mem_shrink(struct mem_context *ctx, void *p, size_t oldsz, size_t newsz)
         assert(p != NULL);
         assert(oldsz > newsz);
         assert_malloc_size(p, oldsz);
-        size_t diff = oldsz - newsz;
-        mem_unreserve(ctx, diff);
         void *np = realloc(p, newsz);
         if (np == NULL) {
                 return NULL;
         }
+        size_t diff = oldsz - newsz;
+        mem_unreserve(ctx, diff);
         return np;
 }
