@@ -123,10 +123,10 @@ mem_context_setlimit(struct mem_context *ctx, size_t limit)
 void *
 mem_alloc(struct mem_context *ctx, size_t sz)
 {
+        assert(sz > 0);
         if (mem_reserve(ctx, sz)) {
                 return NULL;
         }
-        assert(sz > 0);
         void *p = malloc(sz);
         if (p == NULL) {
                 return NULL;
