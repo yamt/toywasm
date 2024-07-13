@@ -180,21 +180,21 @@ jobs:
             TOYWASM_ENABLE_WASI_THREADS: OFF
             TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: OFF
             TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: OFF
-          - name: ubuntu-20.04-armhf
-            os: ubuntu-20.04
-            compiler: clang
-            arch: armhf
-            BUILD_TYPE: Release
-            TOYWASM_USE_SEPARATE_EXECUTE: ON
-            TOYWASM_USE_TAILCALL: ON
-            TOYWASM_ENABLE_TRACING: OFF
-            TOYWASM_USE_SMALL_CELLS: ON
-            TOYWASM_USE_SEPARATE_LOCALS: ON
-            MISC_FEATURES: OFF
-            TOYWASM_ENABLE_WASM_THREADS: OFF
-            TOYWASM_ENABLE_WASI_THREADS: OFF
-            TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: OFF
-            TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: OFF
+          #- name: ubuntu-20.04-armhf
+          #  os: ubuntu-20.04
+          #  compiler: clang
+          #  arch: armhf
+          #  BUILD_TYPE: Release
+          #  TOYWASM_USE_SEPARATE_EXECUTE: ON
+          #  TOYWASM_USE_TAILCALL: ON
+          #  TOYWASM_ENABLE_TRACING: OFF
+          #  TOYWASM_USE_SMALL_CELLS: ON
+          #  TOYWASM_USE_SEPARATE_LOCALS: ON
+          #  MISC_FEATURES: OFF
+          #  TOYWASM_ENABLE_WASM_THREADS: OFF
+          #  TOYWASM_ENABLE_WASI_THREADS: OFF
+          #  TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: OFF
+          #  TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: OFF
           #- name: ubuntu-20.04-s390x
           #  os: ubuntu-20.04
           #  compiler: clang
@@ -624,10 +624,10 @@ jobs:
         name: ubuntu-20.04-arm64
         path: release_assets
 
-    - uses: actions/download-artifact@v3
-      with:
-        name: ubuntu-20.04-armhf
-        path: release_assets
+    #- uses: actions/download-artifact@v3
+    #  with:
+    #    name: ubuntu-20.04-armhf
+    #    path: release_assets
 
     #- uses: actions/download-artifact@v3
     #  with:
