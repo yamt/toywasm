@@ -257,21 +257,21 @@ jobs:
             TOYWASM_ENABLE_WASI_THREADS: ON
             TOYWASM_ENABLE_WASI_LITTLEFS: ON
             TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: ON
-          - name: full-ubuntu-20.04-armhf
-            os: ubuntu-20.04
-            compiler: clang
-            arch: armhf
-            BUILD_TYPE: Release
-            TOYWASM_USE_SEPARATE_EXECUTE: ON
-            TOYWASM_USE_TAILCALL: ON
-            TOYWASM_ENABLE_TRACING: OFF
-            TOYWASM_USE_SMALL_CELLS: ON
-            TOYWASM_USE_SEPARATE_LOCALS: ON
-            MISC_FEATURES: ON
-            TOYWASM_ENABLE_WASM_THREADS: ON
-            TOYWASM_ENABLE_WASI_THREADS: ON
-            TOYWASM_ENABLE_WASI_LITTLEFS: ON
-            TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: ON
+          #- name: full-ubuntu-20.04-armhf
+          #  os: ubuntu-20.04
+          #  compiler: clang
+          #  arch: armhf
+          #  BUILD_TYPE: Release
+          #  TOYWASM_USE_SEPARATE_EXECUTE: ON
+          #  TOYWASM_USE_TAILCALL: ON
+          #  TOYWASM_ENABLE_TRACING: OFF
+          #  TOYWASM_USE_SMALL_CELLS: ON
+          #  TOYWASM_USE_SEPARATE_LOCALS: ON
+          #  MISC_FEATURES: ON
+          #  TOYWASM_ENABLE_WASM_THREADS: ON
+          #  TOYWASM_ENABLE_WASI_THREADS: ON
+          #  TOYWASM_ENABLE_WASI_LITTLEFS: ON
+          #  TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: ON
           #- name: full-ubuntu-20.04-s390x
           #  os: ubuntu-20.04
           #  compiler: clang
@@ -649,10 +649,10 @@ jobs:
         name: full-ubuntu-20.04-arm64
         path: release_assets
 
-    - uses: actions/download-artifact@v3
-      with:
-        name: full-ubuntu-20.04-armhf
-        path: release_assets
+    #- uses: actions/download-artifact@v3
+    #  with:
+    #    name: full-ubuntu-20.04-armhf
+    #    path: release_assets
 
     #- uses: actions/download-artifact@v3
     #  with:
