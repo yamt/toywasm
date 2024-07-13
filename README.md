@@ -72,13 +72,15 @@ It includes
 |Ubuntu/amd64            |Yes              |                             |
 |Ubuntu/i386             |Yes              |32-bit, smaller alignment    |
 |Ubuntu/arm64            |Yes (on qemu)    |                             |
-|Ubuntu/armhf            |Yes (on qemu)    |32-bit                       |
-|Ubuntu/s390x            |Yes (on qemu)    |Big endian                   |
+|Ubuntu/armhf            |[Disabled]       |32-bit                       |
+|Ubuntu/s390x            |[Disabled]       |Big endian                   |
 |Ubuntu/riscv64          |Yes (on qemu)    |                             |
 |wasm32-wasi-threads     |No               |Occasionally tested manually |
 |NuttX/esp32             |No               |Occasionally tested manually |
 |NuttX/sim on macOS/amd64|No               |Occasionally tested manually |
 |NetBSD/amd64            |No               |Occasionally tested manually |
+
+[Disabled]: https://github.com/yamt/toywasm/pull/238#issuecomment-2226868990
 
 ## Use as a command
 
