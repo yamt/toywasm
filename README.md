@@ -106,6 +106,7 @@ Options:
 	--max-stack-cells NUMBER_OF_CELLS
 	--repl
 	--repl-prompt STRING
+	--print-build-options
 	--print-stats
 	--timeout TIMEOUT_MS
 	--version
