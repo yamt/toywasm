@@ -44,6 +44,7 @@ enum longopt {
         opt_register,
         opt_repl,
         opt_repl_prompt,
+        opt_print_build_options,
         opt_print_stats,
         opt_timeout,
 #if defined(TOYWASM_ENABLE_TRACING)
@@ -162,6 +163,12 @@ static const struct option longopts[] = {
                 required_argument,
                 NULL,
                 opt_repl_prompt,
+        },
+        {
+                "print-build-options",
+                no_argument,
+                NULL,
+                opt_print_build_options,
         },
         {
                 "print-stats",
@@ -465,6 +472,10 @@ main(int argc, char *const *argv)
                         break;
                 case opt_repl_prompt:
                         opts->prompt = optarg;
+                        break;
+                case opt_print_build_options:
+                        toywasm_repl_print_build_options();
+                        might_need_help = false;
                         break;
                 case opt_print_stats:
                         opts->print_stats = true;

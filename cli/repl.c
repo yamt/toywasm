@@ -1398,8 +1398,13 @@ toywasm_repl_print_version(void)
 #if defined(__linux__)
         nbio_printf("__linux__ defined\n");
 #endif
+}
+
+void
+toywasm_repl_print_build_options(void)
+{
         extern const char *toywasm_config_string;
-        nbio_printf("Build-time options:\n%s", toywasm_config_string);
+        nbio_printf("%s", toywasm_config_string);
 }
 
 static int
