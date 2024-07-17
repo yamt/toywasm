@@ -12,7 +12,7 @@ list_check(const struct list_head *h)
         assert((h->tailnextp == &h->first) == (h->first == NULL));
 }
 
-void
+static void
 list_check2(const struct list_head *h, const void *elem0,
             const struct list_entry *e0, bool elem0_on_list)
 {
