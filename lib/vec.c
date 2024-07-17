@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -37,7 +38,10 @@ _vec_prealloc(struct mem_context *mctx, void *vec, size_t elem_size,
 {
         struct _vec *v = vec;
         int ret;
-        uint32_t need = v->lsize + count;
+        uint32_t need;
+        if (ADD_U32_OVERFLOW(v->lsize, count, &need)) {
+                return EOVERFLOW;
+        }
         if (need > v->psize) {
                 ret = array_extend(mctx, (void **)&v->p, elem_size, v->psize,
                                    need);
