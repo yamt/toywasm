@@ -150,8 +150,8 @@ mem_calloc(struct mem_context *ctx, size_t a, size_t b)
 {
         assert(a > 0);
         assert(b > 0);
-        size_t sz = a * b;
-        if (sz / a != b) {
+        size_t sz;
+        if (MUL_SIZE_OVERFLOW(a, b, &sz)) {
                 return NULL;
         }
         return mem_zalloc(ctx, sz);
