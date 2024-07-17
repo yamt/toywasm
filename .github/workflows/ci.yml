@@ -421,6 +421,11 @@ jobs:
       run: |
         ./toywasm --version
 
+    - name: toywasm --print-build-option
+      working-directory: ${{env.builddir}}
+      run: |
+        ./toywasm --print-build-option
+
     - name: Test
       working-directory: ${{env.builddir}}
       run: |
@@ -552,6 +557,13 @@ jobs:
       working-directory: ${{env.builddir}}
       run: |
         ${{github.workspace}}/test/toywasm-on-toywasm.py --version
+
+    - name: toywasm --print-build-option
+      env:
+        TOYWASM_WASM: ${{env.builddir}}/toywasm
+      working-directory: ${{env.builddir}}
+      run: |
+        ${{github.workspace}}/test/toywasm-on-toywasm.py --print-build-option
 
     - name: Test
       working-directory: ${{env.builddir}}
