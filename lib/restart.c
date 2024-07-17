@@ -19,7 +19,7 @@
  *    :
  *    :
  *  if (...) {
- *      restart->restart_type = RESTART_XXX;
+ *      restart->restart_type = RESTART_xxx;
  *      // save the context to restart->restart_u.u_xxx
  *      host_ret = ETOYWASMRESTART; // restartable error
  *  } else {
