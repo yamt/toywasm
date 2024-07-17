@@ -437,7 +437,6 @@ jobs:
       if: matrix.BUILD_TYPE == 'Release' && (matrix.arch == 'native' || (matrix.arch != 's390x' && matrix.arch != 'riscv64' && startsWith(matrix.name, 'full-')))
       working-directory: ${{env.builddir}}
       run: |
-        ./toywasm --version
         ctest -C ${{matrix.BUILD_TYPE}} -V -L slow
 
     - name: Install
