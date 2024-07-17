@@ -1,3 +1,7 @@
+#if !defined(__has_builtin)
+#define __has_builtin(a) 0
+#endif
+
 #if !defined(__has_attribute)
 #define __has_attribute(a) 0
 #endif
@@ -139,6 +143,18 @@
 #define __noinline
 #endif
 #endif /* !defined(__noinline) */
+
+#if __has_builtin(__builtin_add_overflow)
+#define ADD_U32_OVERFLOW(a, b, c) __builtin_add_overflow(a, b, c)
+#else
+#define ADD_U32_OVERFLOW(a, b, c) ((UINT32_MAX - a < b) ? 1 : (*c = a + b, 0))
+#endif
+
+#if __has_builtin(__builtin_mul_overflow)
+#define MUL_SIZE_OVERFLOW(a, b, c) __builtin_mul_overflow(a, b, c)
+#else
+#define MUL_SIZE_OVERFLOW(a, b, c) ((SIZE_MAX - a < b) ? 1 : (*c = a + b, 0))
+#endif
 
 #if !defined(__BEGIN_EXTERN_C)
 #if defined(__cplusplus)
