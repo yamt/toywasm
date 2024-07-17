@@ -22,8 +22,8 @@ array_extend(struct mem_context *mctx, void **p, size_t elem_size,
                 return 0;
         }
         const size_t old_bytesize = elem_size * old_elem_count;
-        const size_t bytesize = elem_size * new_elem_count;
-        if (bytesize / elem_size != new_elem_count) {
+        size_t bytesize;
+        if (MUL_SIZE_OVERFLOW(elem_size, new_elem_count, &bytesize)) {
                 return EOVERFLOW;
         }
         np = mem_extend(mctx, *p, old_bytesize, bytesize);
