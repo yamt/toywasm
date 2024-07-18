@@ -153,7 +153,9 @@
 #if __has_builtin(__builtin_mul_overflow)
 #define MUL_SIZE_OVERFLOW(a, b, c) __builtin_mul_overflow(a, b, c)
 #else
-#define MUL_SIZE_OVERFLOW(a, b, c) ((SIZE_MAX - a < b) ? 1 : (*c = a + b, 0))
+/* Note: (floor(x) < b) == (x < b) */
+#define MUL_SIZE_OVERFLOW(a, b, c)                                            \
+        (a != 0 && (SIZE_MAX / a < b) ? 1 : (*c = a * b, 0))
 #endif
 
 #if !defined(__BEGIN_EXTERN_C)
