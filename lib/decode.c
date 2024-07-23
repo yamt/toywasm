@@ -111,7 +111,11 @@ _read_vec_with_ctx_impl(struct mem_context *mctx, const uint8_t **pp,
                 *pp = p;
                 return 0;
         }
-        uint32_t total_count = orig_count + vec_count;
+        uint32_t total_count;
+        if (ADD_U32_OVERFLOW(orig_count, vec_count, &total_count)) {
+                ret = EOVERFLOW;
+                goto fail;
+        }
         ret = array_extend(mctx, resultp, elem_size, orig_count, total_count);
         if (ret != 0) {
                 goto fail;
