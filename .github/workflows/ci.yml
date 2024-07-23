@@ -452,7 +452,7 @@ jobs:
       # https://github.com/yamt/toywasm/pull/53#issuecomment-1605899935
       run: |
         sudo apt-get update && sudo apt-get install -y software-properties-common
-        sudo add-apt-repository -y ppa:canonical-server/server-backports
+        sudo add-apt-repository -y ppa:bryce/backports-ppa-qemu-check
         sudo apt-get update && sudo apt-get install -y qemu-user-static
 
     - name: toywasm --version
