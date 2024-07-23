@@ -57,9 +57,12 @@ void
 _vec_free(struct mem_context *mctx, void *vec, size_t elem_size)
 {
         struct _vec *v = vec;
-        int ret = array_shrink(mctx, (void **)&v->p, elem_size, v->psize, 0);
-        assert(ret == 0);
-        assert(v->p == NULL);
+        if (v->p != NULL) {
+                int ret = array_shrink(mctx, (void **)&v->p, elem_size,
+                                       v->psize, 0);
+                assert(ret == 0);
+                assert(v->p == NULL);
+        }
         v->lsize = 0;
         v->psize = 0;
 }

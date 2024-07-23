@@ -107,6 +107,10 @@ _read_vec_with_ctx_impl(struct mem_context *mctx, const uint8_t **pp,
         if (ret != 0) {
                 goto fail;
         }
+        if (vec_count == 0) {
+                *pp = p;
+                return 0;
+        }
         uint32_t total_count = orig_count + vec_count;
         ret = array_extend(mctx, resultp, elem_size, orig_count, total_count);
         if (ret != 0) {
@@ -124,6 +128,7 @@ _read_vec_with_ctx_impl(struct mem_context *mctx, const uint8_t **pp,
                                 }
                         }
                         /* revert the array size */
+                        assert(orig_count < total_count);
                         int ret1 = array_shrink(mctx, resultp, elem_size,
                                                 total_count, orig_count);
                         assert(ret1 == 0);
