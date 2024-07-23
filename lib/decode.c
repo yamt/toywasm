@@ -131,7 +131,6 @@ _read_vec_with_ctx_impl(struct mem_context *mctx, const uint8_t **pp,
                 }
         }
 
-        ret = 0;
         *pp = p;
         *countp = total_count;
         return 0;
