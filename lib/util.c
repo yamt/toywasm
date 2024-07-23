@@ -17,10 +17,7 @@ array_extend(struct mem_context *mctx, void **p, size_t elem_size,
         void *np;
 
         assert(elem_size > 0);
-        assert(old_elem_count <= new_elem_count);
-        if (old_elem_count == new_elem_count) {
-                return 0;
-        }
+        assert(old_elem_count < new_elem_count);
         const size_t old_bytesize = elem_size * old_elem_count;
         size_t bytesize;
         if (MUL_SIZE_OVERFLOW(elem_size, new_elem_count, &bytesize)) {
@@ -41,10 +38,7 @@ array_shrink(struct mem_context *mctx, void **p, size_t elem_size,
         void *np;
 
         assert(elem_size > 0);
-        assert(old_elem_count >= new_elem_count);
-        if (old_elem_count == new_elem_count) {
-                return 0;
-        }
+        assert(old_elem_count > new_elem_count);
         const size_t old_bytesize = elem_size * old_elem_count;
         if (new_elem_count == 0) {
                 mem_free(mctx, *p, old_bytesize);
