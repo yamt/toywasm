@@ -194,7 +194,8 @@ host_func_copyout(struct exec_context *ctx, const void *hostaddr,
 static int
 check_memidx(struct exec_context *ctx, uint32_t memidx)
 {
-        if (memidx < ctx->instance->module->nmems) {
+        const struct module *m = ctx->instance->module;
+        if (memidx < m->nmems + m->nimportedmems) {
                 return 0;
         }
         return trap_with_id(
