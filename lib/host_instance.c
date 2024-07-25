@@ -191,6 +191,41 @@ host_func_copyout(struct exec_context *ctx, const void *hostaddr,
         return 0;
 }
 
+static int
+check_memidx(struct exec_context *ctx, uint32_t memidx)
+{
+        if (memidx < ctx->instance->module->nmems) {
+                return 0;
+        }
+        return trap_with_id(
+                ctx, TRAP_INVALID_MEMORY,
+                "access to invalid memidx %" PRIx32 " in a host call", memidx);
+}
+
+int
+host_func_memory_getptr(struct exec_context *ctx, uint32_t memidx,
+                        uint32_t ptr, uint32_t offset, uint32_t size,
+                        void **pp)
+{
+        int ret = check_memidx(ctx, memidx);
+        if (ret != 0) {
+                return ret;
+        }
+        return memory_getptr(ctx, memidx, ptr, offset, size, pp);
+}
+
+int
+host_func_memory_getptr2(struct exec_context *ctx, uint32_t memidx,
+                         uint32_t ptr, uint32_t offset, uint32_t size,
+                         void **pp, bool *movedp)
+{
+        int ret = check_memidx(ctx, memidx);
+        if (ret != 0) {
+                return ret;
+        }
+        return memory_getptr2(ctx, memidx, ptr, offset, size, pp, movedp);
+}
+
 int
 schedule_call_from_hostfunc(struct exec_context *ctx,
                             struct restart_info *restart,
