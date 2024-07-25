@@ -51,7 +51,7 @@ retry:
         if (host_ret != 0) {
                 goto fail;
         }
-        host_ret = memory_getptr(ctx, 0, in, 0, insize, &p);
+        host_ret = host_func_memory_getptr(ctx, 0, in, 0, insize, &p);
         if (host_ret != 0) {
                 goto fail;
         }
@@ -62,7 +62,8 @@ retry:
         if (host_ret != 0) {
                 goto fail;
         }
-        host_ret = memory_getptr2(ctx, 0, out, 0, outsize, &p, &moved);
+        host_ret =
+                host_func_memory_getptr2(ctx, 0, out, 0, outsize, &p, &moved);
         if (host_ret != 0) {
                 goto fail;
         }

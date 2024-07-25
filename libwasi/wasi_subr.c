@@ -81,8 +81,8 @@ retry:
         if (host_ret != 0) {
                 goto fail;
         }
-        host_ret = memory_getptr(ctx, 0, iov_uaddr, 0,
-                                 iov_count * sizeof(struct wasi_iov), &p);
+        host_ret = host_func_memory_getptr(
+                ctx, 0, iov_uaddr, 0, iov_count * sizeof(struct wasi_iov), &p);
         if (host_ret != 0) {
                 goto fail;
         }
@@ -94,8 +94,8 @@ retry:
                 uint32_t iov_len = le32_decode(&iov_in_module[i].iov_len);
                 xlog_trace("iov [%" PRIu32 "] base %" PRIx32 " len %" PRIu32,
                            i, iov_base, iov_len);
-                host_ret = memory_getptr2(ctx, 0, iov_base, 0, iov_len, &p,
-                                          &moved);
+                host_ret = host_func_memory_getptr2(ctx, 0, iov_base, 0,
+                                                    iov_len, &p, &moved);
                 if (host_ret != 0) {
                         goto fail;
                 }
