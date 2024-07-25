@@ -92,6 +92,7 @@ enum trapid {
         TRAP_UNCAUGHT_EXCEPTION,
         TRAP_THROW_REF_NULL,
         TRAP_UNRESOLVED_IMPORTED_FUNC,
+        TRAP_INVALID_MEMORY,
 };
 
 enum exec_event {
