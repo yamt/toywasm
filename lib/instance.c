@@ -305,8 +305,8 @@ table_instance_create(struct mem_context *mctx, struct tableinst **tip,
         tinst->mctx = mctx;
         tinst->size = tinst->type->lim.min;
         uint32_t csz = valtype_cellsize(tt->et);
-        size_t ncells = (size_t)tinst->size * csz;
-        if (ncells / csz != tinst->size) {
+        size_t ncells;
+        if (MUL_SIZE_OVERFLOW((size_t)tinst->size, (size_t)csz, &ncells)) {
                 ret = EOVERFLOW;
                 goto fail;
         }
