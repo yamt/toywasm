@@ -49,14 +49,14 @@ memory_getptr2(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
         assert(meminst->allocated <=
                (uint64_t)meminst->size_in_pages
                        << memtype_page_shift(meminst->type));
-        if (__predict_false(offset > UINT32_MAX - ptr)) {
+        uint32_t ea;
+        if (ADD_U32_OVERFLOW(ptr, offset, &ea)) {
                 /*
                  * i failed to find this in the spec.
                  * but some of spec tests seem to test this.
                  */
                 goto do_trap;
         }
-        uint32_t ea = ptr + offset;
         if (__predict_false(size == 0)) {
                 /*
                  * a zero-length access still needs address check.
@@ -70,10 +70,10 @@ memory_getptr2(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
                 }
                 goto success;
         }
-        if (size - 1 > UINT32_MAX - ea) {
+        uint32_t last_byte = ea + (size - 1);
+        if (ADD_U32_OVERFLOW(ea, size - 1, &last_byte)) {
                 goto do_trap;
         }
-        uint32_t last_byte = ea + (size - 1);
         if (__predict_false(last_byte >= meminst->allocated)) {
                 const uint32_t page_shift = memtype_page_shift(meminst->type);
                 uint32_t need_in_pages = (last_byte >> page_shift) + 1;
