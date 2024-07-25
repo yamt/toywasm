@@ -268,7 +268,7 @@ wasi_path_readlink(struct exec_context *ctx, struct host_instance *hi,
          * https://github.com/bytecodealliance/wasmtime/commit/24b607cf751930c51f2b6449cdfbf2e81dce1c31
          */
         void *p;
-        host_ret = memory_getptr(ctx, 0, buf, 0, buflen, &p);
+        host_ret = host_func_memory_getptr(ctx, 0, buf, 0, buflen, &p);
         if (host_ret != 0) {
                 goto fail;
         }

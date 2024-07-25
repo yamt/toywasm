@@ -30,7 +30,7 @@ wasi_random_get(struct exec_context *ctx, struct host_instance *hi,
         uint32_t buflen = HOST_FUNC_PARAM(ft, params, 1, i32);
         int ret = 0;
         void *p;
-        int host_ret = memory_getptr(ctx, 0, buf, 0, buflen, &p);
+        int host_ret = host_func_memory_getptr(ctx, 0, buf, 0, buflen, &p);
         if (host_ret != 0) {
                 goto fail;
         }
