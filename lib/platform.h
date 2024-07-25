@@ -153,7 +153,10 @@
 #if __has_builtin(__builtin_mul_overflow)
 #define MUL_SIZE_OVERFLOW(a, b, c) __builtin_mul_overflow(a, b, c)
 #else
-/* Note: (floor(x) < b) == (x < b) */
+/*
+ * Note: (floor(x) < b) == (x < b) where
+ * x is a real number and b is an integer.
+ */
 #define MUL_SIZE_OVERFLOW(a, b, c)                                            \
         (a != 0 && (SIZE_MAX / a < b) ? 1 : (*c = a * b, 0))
 #endif
