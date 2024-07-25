@@ -45,6 +45,7 @@ memory_getptr2(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
                uint32_t offset, uint32_t size, void **pp, bool *movedp)
 {
         const struct instance *inst = ctx->instance;
+        assert(memidx < inst->module->nmems);
         struct meminst *meminst = VEC_ELEM(inst->mems, memidx);
         assert(meminst->allocated <=
                (uint64_t)meminst->size_in_pages
