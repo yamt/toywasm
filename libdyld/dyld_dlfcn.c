@@ -75,7 +75,7 @@ dyld_dlfcn_load_object(struct exec_context *ctx, struct host_instance *hi,
         }
 
         void *vp;
-        ret = memory_getptr(ctx, 0, namep, 0, namelen, &vp);
+        ret = host_func_memory_getptr(ctx, 0, namep, 0, namelen, &vp);
         if (ret != 0) {
                 user_ret = 1;
                 goto fail;
@@ -169,7 +169,7 @@ dyld_dlfcn_resolve_symbol(struct exec_context *ctx, struct host_instance *hi,
         const struct dyld_dynamic_object *dobj = &VEC_ELEM(d->dynobjs, idx);
 
         void *vp;
-        ret = memory_getptr(ctx, 0, namep, 0, namelen, &vp);
+        ret = host_func_memory_getptr(ctx, 0, namep, 0, namelen, &vp);
         if (ret != 0) {
                 user_ret = 1;
                 goto fail;
