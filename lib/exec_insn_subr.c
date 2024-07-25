@@ -338,16 +338,17 @@ table_grow(struct tableinst *t, const struct val *val, uint32_t n)
         if (n == 0) {
                 return t->size;
         }
-        if (UINT32_MAX - t->size < n || t->size + n > t->type->lim.max) {
+        uint32_t newsize;
+        if (ADD_U32_OVERFLOW(t->size, n, &newsize) ||
+            newsize > t->type->lim.max) {
                 return (uint32_t)-1;
         }
-
-        uint32_t newsize = t->size + n;
         uint32_t csz = valtype_cellsize(t->type->et);
-        size_t newncells = (size_t)newsize * csz;
-        size_t newbytes = newncells * sizeof(*t->cells);
+        size_t newncells;
+        size_t newbytes;
         int ret;
-        if (newbytes / sizeof(*t->cells) / csz != newsize) {
+        if (MUL_SIZE_OVERFLOW((size_t)newsize, (size_t)csz, &newncells) ||
+            MUL_SIZE_OVERFLOW(newncells, sizeof(*t->cells), &newbytes)) {
                 ret = EOVERFLOW;
         } else {
                 size_t oldncells = (size_t)t->size * csz;
