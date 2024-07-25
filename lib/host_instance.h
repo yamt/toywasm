@@ -89,6 +89,12 @@ int host_func_copyout(struct exec_context *ctx, const void *hostaddr,
                       uint32_t wasmaddr, size_t len, size_t align);
 int host_func_copyin(struct exec_context *ctx, void *hostaddr,
                      uint32_t wasmaddr, size_t len, size_t align);
+int host_func_memory_getptr(struct exec_context *ctx, uint32_t memidx,
+                            uint32_t ptr, uint32_t offset, uint32_t size,
+                            void **pp);
+int host_func_memory_getptr2(struct exec_context *ctx, uint32_t memidx,
+                             uint32_t ptr, uint32_t offset, uint32_t size,
+                             void **pp, bool *movedp);
 struct restart_info;
 int schedule_call_from_hostfunc(struct exec_context *ctx,
                                 struct restart_info *restart,
