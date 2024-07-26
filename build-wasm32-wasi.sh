@@ -8,7 +8,7 @@ set -e
 # To build with wasi-threads enabled, not backed by pthread
 #    EXTRA_CMAKE_OPTIONS="-DTOYWASM_ENABLE_WASM_THREADS=ON -DTOYWASM_ENABLE_WASI_THREADS=ON -DTOYWASM_USE_USER_SCHED=ON" ./build-wasm32-wasi.sh
 
-MAJOR=${WASI_SDK_MAJOR:-22}
+MAJOR=${WASI_SDK_MAJOR:-23}
 MINOR=${WASI_SDK_MINOR:-0}
 WASI_SDK_DIR=${WASI_SDK_DIR:-$(pwd)/.wasi-sdk-${MAJOR}.${MINOR}}
 CMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE:-${WASI_SDK_DIR}/share/cmake/wasi-sdk.cmake}
@@ -20,6 +20,7 @@ mkdir -p ${DIST_DIR}
 
 fetch_wasi_sdk()
 {
+    MACHINE=$(uname -m)
     UNAME=$(uname -s)
     case ${UNAME} in
     Darwin)
@@ -33,14 +34,14 @@ fetch_wasi_sdk()
         exit 1
         ;;
     esac
-    TAR=wasi-sdk-${MAJOR}.${MINOR}-${PLATFORM}.tar.gz
+    TAR=wasi-sdk-${MAJOR}.${MINOR}-${MACHINE}-${PLATFORM}.tar.gz
     if [ ! -f ${DIST_DIR}/${TAR} ]; then
         URL=https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${MAJOR}/${TAR}
         curl -L -o ${DIST_DIR}/${TAR} ${URL}
     fi
     pax -rz \
     -f ${DIST_DIR}/${TAR} \
-    -s"!^wasi-sdk-${MAJOR}\.${MINOR}!${WASI_SDK_DIR}!"
+    -s"!^wasi-sdk-${MAJOR}\.${MINOR}-${MACHINE}-${PLATFORM}!${WASI_SDK_DIR}!"
 }
 
 test -d "${WASI_SDK_DIR}" || fetch_wasi_sdk
