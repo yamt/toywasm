@@ -20,7 +20,6 @@ mkdir -p ${DIST_DIR}
 
 fetch_wasi_sdk()
 {
-    MACHINE=$(uname -m)
     UNAME=$(uname -s)
     case ${UNAME} in
     Darwin)
@@ -34,14 +33,20 @@ fetch_wasi_sdk()
         exit 1
         ;;
     esac
-    TAR=wasi-sdk-${MAJOR}.${MINOR}-${MACHINE}-${PLATFORM}.tar.gz
+    MACHINE=
+    DIR_SUFFIX=
+    if [ ${MAJOR} -ge 23 ]; then
+        MACHINE=-$(uname -m)
+        DIR_SUFFIX=${MACHINE}-${PLATFORM}
+    fi
+    TAR=wasi-sdk-${MAJOR}.${MINOR}${MACHINE}-${PLATFORM}.tar.gz
     if [ ! -f ${DIST_DIR}/${TAR} ]; then
         URL=https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${MAJOR}/${TAR}
         curl -L -o ${DIST_DIR}/${TAR} ${URL}
     fi
     pax -rz \
     -f ${DIST_DIR}/${TAR} \
-    -s"!^wasi-sdk-${MAJOR}\.${MINOR}-${MACHINE}-${PLATFORM}!${WASI_SDK_DIR}!"
+    -s"!^wasi-sdk-${MAJOR}\.${MINOR}${DIR_SUFFIX}!${WASI_SDK_DIR}!"
 }
 
 test -d "${WASI_SDK_DIR}" || fetch_wasi_sdk
