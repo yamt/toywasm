@@ -78,6 +78,7 @@ valtype_str(enum valtype vt)
                 [TYPE_v128] = "v128",
                 [TYPE_funcref] = "funcref",
                 [TYPE_externref] = "externref",
+                [TYPE_exnref] = "exnref",
         };
         return types[vt];
 }
