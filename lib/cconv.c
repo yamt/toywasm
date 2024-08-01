@@ -35,7 +35,7 @@ do_trap:
                                     "__indirect_function_table is not found");
         }
         const struct tableinst *t = VEC_ELEM(inst->tables, tableidx);
-        if (t->type->et != TYPE_FUNCREF) {
+        if (t->type->et != TYPE_funcref) {
                 goto do_trap;
         }
         const struct funcinst *func;

@@ -76,8 +76,8 @@ valtype_str(enum valtype vt)
                 [TYPE_f32] = "f32",
                 [TYPE_f64] = "f64",
                 [TYPE_v128] = "v128",
-                [TYPE_FUNCREF] = "funcref",
-                [TYPE_EXTERNREF] = "externref",
+                [TYPE_funcref] = "funcref",
+                [TYPE_externref] = "externref",
         };
         return types[vt];
 }
@@ -1480,7 +1480,7 @@ read_element(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
                 }
                 /* fallthrough */
         default: /* 0, 4 */
-                elem->type = TYPE_FUNCREF;
+                elem->type = TYPE_funcref;
                 break;
         case 5:
         case 6:
@@ -1508,7 +1508,7 @@ read_element(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
                 /*
                  * vec(funcidx)
                  */
-                assert(elem->type == TYPE_FUNCREF);
+                assert(elem->type == TYPE_funcref);
                 ret = read_vec_u32(load_mctx(ctx), &p, ep, &elem->init_size,
                                    &elem->funcs);
                 if (ret != 0) {

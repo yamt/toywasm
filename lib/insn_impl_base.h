@@ -617,7 +617,7 @@ INSN_IMPL(ref_func)
                         }
                 }
         }
-        PUSH_VAL(TYPE_FUNCREF, result);
+        PUSH_VAL(TYPE_funcref, result);
         SAVE_PC;
         INSN_SUCCESS;
 fail:

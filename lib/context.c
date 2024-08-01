@@ -75,9 +75,9 @@ resulttype_alloc(struct mem_context *mctx, uint32_t ntypes,
                 DEFINE_RESULTTYPE_WITH_SINGLE_TYPE(static const, f32);
                 DEFINE_RESULTTYPE_WITH_SINGLE_TYPE(static const, f64);
                 DEFINE_RESULTTYPE_WITH_SINGLE_TYPE(static const, v128);
-                DEFINE_RESULTTYPE_WITH_SINGLE_TYPE(static const, EXNREF);
-                DEFINE_RESULTTYPE_WITH_SINGLE_TYPE(static const, FUNCREF);
-                DEFINE_RESULTTYPE_WITH_SINGLE_TYPE(static const, EXTERNREF);
+                DEFINE_RESULTTYPE_WITH_SINGLE_TYPE(static const, exnref);
+                DEFINE_RESULTTYPE_WITH_SINGLE_TYPE(static const, funcref);
+                DEFINE_RESULTTYPE_WITH_SINGLE_TYPE(static const, externref);
                 enum valtype t = types[0];
                 const struct resulttype *p;
                 switch (t) {
@@ -86,9 +86,9 @@ resulttype_alloc(struct mem_context *mctx, uint32_t ntypes,
                         HANDLE_TYPE(f32)
                         HANDLE_TYPE(f64)
                         HANDLE_TYPE(v128)
-                        HANDLE_TYPE(EXNREF)
-                        HANDLE_TYPE(FUNCREF)
-                        HANDLE_TYPE(EXTERNREF)
+                        HANDLE_TYPE(exnref)
+                        HANDLE_TYPE(funcref)
+                        HANDLE_TYPE(externref)
                 case TYPE_ANYREF:
                 case TYPE_UNKNOWN:
                         p = NULL;

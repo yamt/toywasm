@@ -19,9 +19,9 @@ enum valtype {
         TYPE_v128 = _S7(-0x05),
 
         /* reftype */
-        TYPE_EXNREF = _S7(-0x17),
-        TYPE_FUNCREF = _S7(-0x10),
-        TYPE_EXTERNREF = _S7(-0x11),
+        TYPE_exnref = _S7(-0x17),
+        TYPE_funcref = _S7(-0x10),
+        TYPE_externref = _S7(-0x11),
 
         /* pseudo types for validation logic */
         TYPE_ANYREF = 0xfe, /* any reftype */

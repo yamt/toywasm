@@ -487,7 +487,7 @@ static void
 push_exception(struct exec_context *ectx, uint32_t tagidx,
                const struct resulttype *rt)
 {
-        uint32_t exnref_csz = valtype_cellsize(TYPE_EXNREF);
+        uint32_t exnref_csz = valtype_cellsize(TYPE_exnref);
         uint32_t csz = resulttype_cellsize(rt);
         assert(csz < exnref_csz);
         assert(ectx->stack.lsize >= csz);

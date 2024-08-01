@@ -904,7 +904,7 @@ arg_conv(enum valtype type, const char *s, struct val *result)
                 ret = parse_v128(s, result);
                 break;
 #endif
-        case TYPE_FUNCREF:
+        case TYPE_funcref:
                 ret = str_to_ptr(s, 0, &u);
                 if (ret != 0) {
                         break;
@@ -915,7 +915,7 @@ arg_conv(enum valtype type, const char *s, struct val *result)
                 }
                 result->u.funcref.func = (void *)(uintptr_t)u;
                 break;
-        case TYPE_EXTERNREF:
+        case TYPE_externref:
                 ret = str_to_ptr(s, 0, &u);
                 if (ret != 0) {
                         break;
@@ -927,7 +927,7 @@ arg_conv(enum valtype type, const char *s, struct val *result)
                 result->u.externref = (void *)(uintptr_t)u;
                 break;
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
-                /* REVISIT: what to do for TYPE_EXNREF? */
+                /* REVISIT: what to do for TYPE_exnref? */
 #endif
         default:
                 xlog_printf("arg_conv: unimplementd type %02x\n", type);
@@ -971,7 +971,7 @@ repl_print_result(const struct resulttype *rt, const struct val *vals)
                                     le64_decode(&val->u.v128.i64[0]));
                         break;
 #endif
-                case TYPE_FUNCREF:
+                case TYPE_funcref:
                         if (val->u.funcref.func == NULL) {
                                 nbio_printf("%snull:funcref", sep);
                         } else {
@@ -979,7 +979,7 @@ repl_print_result(const struct resulttype *rt, const struct val *vals)
                                             (uintptr_t)val->u.funcref.func);
                         }
                         break;
-                case TYPE_EXTERNREF:
+                case TYPE_externref:
                         if ((uintptr_t)val->u.externref == EXTERNREF_0) {
                                 nbio_printf("%s0:externref", sep);
                         } else if (val->u.externref == NULL) {
@@ -990,7 +990,7 @@ repl_print_result(const struct resulttype *rt, const struct val *vals)
                         }
                         break;
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
-                case TYPE_EXNREF:
+                case TYPE_exnref:
                         if (val->u.exnref.tag == NULL) {
                                 nbio_printf("%snull:exnref", sep);
                         } else {

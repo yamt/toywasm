@@ -25,13 +25,13 @@ valtype_cellsize(enum valtype t)
                 sz = 4;
                 break;
 #endif
-        case TYPE_FUNCREF:
-        case TYPE_EXTERNREF:
+        case TYPE_funcref:
+        case TYPE_externref:
                 sz = EXTERNREF_NCELLS;
                 assert(sizeof(void *) == sz * sizeof(struct cell));
                 break;
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
-        case TYPE_EXNREF:
+        case TYPE_exnref:
                 sz = EXNREF_NCELLS;
                 assert(sizeof(struct wasm_exception) <=
                        sz * sizeof(struct cell));
