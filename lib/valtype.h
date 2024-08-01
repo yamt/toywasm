@@ -6,20 +6,22 @@
  * they can be distinguished from typeidx in eg. block types.
  */
 
+#define _S7(x) (0x7f & (uint8_t)(x))
+
 enum valtype {
         /* numtype */
-        TYPE_i32 = 0x7f, /* -0x01 */
-        TYPE_i64 = 0x7e, /* -0x02 */
-        TYPE_f32 = 0x7d, /* -0x03 */
-        TYPE_f64 = 0x7c, /* -0x04 */
+        TYPE_i32 = _S7(-0x01),
+        TYPE_i64 = _S7(-0x02),
+        TYPE_f32 = _S7(-0x03),
+        TYPE_f64 = _S7(-0x04),
 
         /* vectype */
-        TYPE_v128 = 0x7b, /* -0x05 */
+        TYPE_v128 = _S7(-0x05),
 
         /* reftype */
-        TYPE_EXNREF = 0x69,    /* -0x17 */
-        TYPE_FUNCREF = 0x70,   /* -0x10 */
-        TYPE_EXTERNREF = 0x6f, /* -0x11 */
+        TYPE_EXNREF = _S7(-0x17),
+        TYPE_FUNCREF = _S7(-0x10),
+        TYPE_EXTERNREF = _S7(-0x11),
 
         /* pseudo types for validation logic */
         TYPE_ANYREF = 0xfe, /* any reftype */
