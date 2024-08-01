@@ -283,14 +283,14 @@ write_element(struct writer *w, const struct element *e)
         if (e->funcs != NULL) {
                 switch (e->mode) {
                 case ELEM_MODE_ACTIVE: /* 0, 2 */
-                        if (e->table != 0 || e->type != TYPE_FUNCREF) {
+                        if (e->table != 0 || e->type != TYPE_funcref) {
                                 type = 0x02;
                         } else {
                                 type = 0x00;
                         }
                         break;
                 case ELEM_MODE_PASSIVE: /* 1 */
-                        assert(e->type == TYPE_FUNCREF);
+                        assert(e->type == TYPE_funcref);
                         type = 0x01;
                         break;
                 case ELEM_MODE_DECLARATIVE: /* 3 */
@@ -302,7 +302,7 @@ write_element(struct writer *w, const struct element *e)
                 /* 4, 5, 6, 7 */
                 switch (e->mode) {
                 case ELEM_MODE_ACTIVE: /* 4, 6 */
-                        if (e->table != 0 || e->type != TYPE_FUNCREF) {
+                        if (e->table != 0 || e->type != TYPE_funcref) {
                                 type = 0x06;
                         } else {
                                 type = 0x04;
@@ -341,7 +341,7 @@ write_element(struct writer *w, const struct element *e)
         case 2:
         case 3:
                 switch (e->type) {
-                case TYPE_FUNCREF:
+                case TYPE_funcref:
                         elemkind = 0x00;
                         break;
                 default:

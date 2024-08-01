@@ -503,7 +503,7 @@ INSN_IMPL(call_indirect)
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
                 const struct tabletype *tab = module_tabletype(m, tableidx);
-                if (tab->et != TYPE_FUNCREF) {
+                if (tab->et != TYPE_funcref) {
                         ret = validation_failure(
                                 vctx,
                                 "call_indirect unexpected table type %" PRIu32,

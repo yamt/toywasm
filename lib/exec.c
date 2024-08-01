@@ -611,7 +611,7 @@ do_exception(struct exec_context *ctx)
          * pop an exception on the top of the stack.
          * cf. push_exception
          */
-        uint32_t exnref_csz = valtype_cellsize(TYPE_EXNREF);
+        uint32_t exnref_csz = valtype_cellsize(TYPE_exnref);
         assert(ctx->stack.lsize >= exnref_csz);
         const struct cell *exc_cells =
                 &VEC_ELEM(ctx->stack, ctx->stack.lsize - exnref_csz);

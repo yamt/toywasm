@@ -88,7 +88,7 @@ INSN_IMPL(try_table)
                                 }
                         }
                         if (with_exnref) {
-                                ret = push_valtype(TYPE_EXNREF, vctx);
+                                ret = push_valtype(TYPE_exnref, vctx);
                                 if (ret != 0) {
                                         goto fail;
                                 }
@@ -194,7 +194,7 @@ INSN_IMPL(throw)
                         /*
                          * ensure to allocate enough stack for push_exception
                          */
-                        ret = push_valtype(TYPE_EXNREF, vctx);
+                        ret = push_valtype(TYPE_exnref, vctx);
                         if (ret != 0) {
                                 goto fail;
                         }
@@ -217,7 +217,7 @@ INSN_IMPL(throw_ref)
         } else if (VALIDATING) {
                 struct validation_context *vctx = VCTX;
                 enum valtype t;
-                ret = pop_valtype(TYPE_EXNREF, &t, vctx);
+                ret = pop_valtype(TYPE_exnref, &t, vctx);
                 if (ret != 0) {
                         goto fail;
                 }

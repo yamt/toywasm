@@ -911,7 +911,7 @@ dyld_create_shared_resources(struct dyld *d)
                 assert(d->table_base == 0);
                 d->table_base = 1; /* do not use the first one */
                 struct tabletype *tt = &d->u.pie.tt;
-                tt->et = TYPE_FUNCREF;
+                tt->et = TYPE_funcref;
                 tt->lim.min = d->table_base;
                 tt->lim.max = UINT32_MAX;
                 ret = table_instance_create(d->mctx, &d->tableinst, tt);
@@ -1071,7 +1071,7 @@ dyld_adopt_shared_resources(struct dyld *d, const struct dyld_object *obj)
                 return ret;
         }
         d->tableinst = VEC_ELEM(inst->tables, tableidx);
-        if (d->tableinst->type->et != TYPE_FUNCREF) {
+        if (d->tableinst->type->et != TYPE_funcref) {
                 xlog_error("dyld: unexpected type of table from %.*s",
                            CSTR(obj->name));
                 return EINVAL;

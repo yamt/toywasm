@@ -301,7 +301,7 @@ table_get_func(struct exec_context *ectx, const struct tableinst *t,
                uint32_t i, const struct functype *ft,
                const struct funcinst **fip)
 {
-        assert(t->type->et == TYPE_FUNCREF);
+        assert(t->type->et == TYPE_funcref);
         int ret;
         if (__predict_false(i >= t->size)) {
                 ret = trap_with_id(

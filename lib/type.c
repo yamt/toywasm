@@ -41,10 +41,10 @@ is_reftype(enum valtype vt)
 {
         switch (vt) {
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
-        case TYPE_EXNREF:
+        case TYPE_exnref:
 #endif
-        case TYPE_FUNCREF:
-        case TYPE_EXTERNREF:
+        case TYPE_funcref:
+        case TYPE_externref:
                 return true;
         default:
                 break;
@@ -393,11 +393,11 @@ valtype_to_char(enum valtype t)
                 return 'F';
         case TYPE_v128:
                 return 'v';
-        case TYPE_EXNREF:
+        case TYPE_exnref:
                 return 'x';
-        case TYPE_FUNCREF:
+        case TYPE_funcref:
                 return 'c';
-        case TYPE_EXTERNREF:
+        case TYPE_externref:
                 return 'e';
         default:
                 break;
