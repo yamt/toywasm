@@ -44,6 +44,8 @@
         ERRCHK(print_u32_array_init(out, __VA_ARGS__))
 #define PRINT_U32_ARRAY_LITERAL(out, ...)                                     \
         ERRCHK(print_u32_array_literal(out, __VA_ARGS__))
+#define PRINT_ENUM_FIELD(out, s, f)                                           \
+        PRINT(out, "." #f " = %" PRIu32 ",\n", (uint32_t)(s)->f)
 #define PRINT_U8_FIELD(out, s, f) PRINT(out, "." #f " = %" PRIu8 ",\n", (s)->f)
 #define PRINT_U32_FIELD(out, s, f)                                            \
         PRINT(out, "." #f " = %" PRIu32 ",\n", (s)->f)
@@ -85,7 +87,7 @@ print_resulttype(FILE *out, const struct resulttype *rt)
         int ret = 0;
         uint32_t i;
         PRINT(out, "{\n");
-        PRINT(out, ".ntypes = %" PRIu32 ",\n", rt->ntypes);
+        PRINT_U32_FIELD(out, rt, ntypes);
         if (rt->ntypes == 0) {
                 PRINT(out, ".types = NULL,\n");
         } else {
@@ -116,8 +118,8 @@ print_localtype(FILE *out, const struct localtype *lt)
         int ret = 0;
         uint32_t i;
         PRINT(out, "{\n");
-        PRINT(out, ".nlocals = %" PRIu32 ",\n", lt->nlocals);
-        PRINT(out, ".nlocalchunks = %" PRIu32 ",\n", lt->nlocalchunks);
+        PRINT_U32_FIELD(out, lt, nlocals);
+        PRINT_U32_FIELD(out, lt, nlocalchunks);
         if (lt->nlocalchunks == 0) {
                 PRINT(out, ".localchunks = NULL,\n");
         } else {
@@ -126,9 +128,8 @@ print_localtype(FILE *out, const struct localtype *lt)
                 for (i = 0; i < lt->nlocalchunks; i++) {
                         const struct localchunk *ch = &lt->localchunks[i];
                         PRINT(out, "{\n");
-                        PRINT(out, ".type = 0x%02" PRIx32 ",\n",
-                              (uint32_t)ch->type);
-                        PRINT(out, ".n = 0x%" PRIx32 ",\n", ch->n);
+                        PRINT_ENUM_FIELD(out, ch, type);
+                        PRINT_U32_FIELD(out, ch, n);
                         PRINT(out, "},\n");
                 }
                 PRINT(out, "},\n");
@@ -174,7 +175,7 @@ print_exprs(FILE *out, const struct expr *expr, const struct ctx *ctx)
 
         const struct expr_exec_info *ei = &expr->ei;
         PRINT(out, ".ei = {\n");
-        PRINT(out, ".njumps = %" PRIu32 ",\n", ei->njumps);
+        PRINT_U32_FIELD(out, ei, njumps);
         if (ei->njumps == 0) {
                 PRINT(out, ".jumps = NULL,\n");
         } else {
@@ -189,13 +190,13 @@ print_exprs(FILE *out, const struct expr *expr, const struct ctx *ctx)
                 }
                 PRINT(out, "},\n");
         }
-        PRINT(out, ".maxlabels = %" PRIu32 ",\n", ei->maxlabels);
-        PRINT(out, ".maxcells = %" PRIu32 ",\n", ei->maxcells);
+        PRINT_U32_FIELD(out, ei, maxlabels);
+        PRINT_U32_FIELD(out, ei, maxcells);
 #if defined(TOYWASM_USE_SMALL_CELLS)
         const struct type_annotations *an = &ei->type_annotations;
         PRINT(out, ".type_annotations = {\n");
-        PRINT(out, ".default_size = %" PRIu32 ",\n", an->default_size);
-        PRINT(out, ".ntypes = %" PRIu32 ",\n", an->ntypes);
+        PRINT_U32_FIELD(out, an, default_size);
+        PRINT_U32_FIELD(out, an, ntypes);
         if (an->ntypes == 0) {
                 PRINT(out, ".types = NULL,\n");
         } else {
@@ -204,8 +205,8 @@ print_exprs(FILE *out, const struct expr *expr, const struct ctx *ctx)
                 for (i = 0; i < an->ntypes; i++) {
                         const struct type_annotation *a = &an->types[i];
                         PRINT(out, "{\n");
-                        PRINT(out, ".pc = 0x%" PRIx32 ",\n", a->pc);
-                        PRINT(out, ".size = 0x%" PRIx32 ",\n", a->size);
+                        PRINT_U32_FIELD(out, a, pc);
+                        PRINT_U32_FIELD(out, a, size);
                         PRINT(out, "},\n");
                 }
                 PRINT(out, "},\n");
@@ -224,8 +225,8 @@ print_limits(FILE *out, const struct limits *lim)
 {
         int ret = 0;
         PRINT(out, "{\n");
-        PRINT(out, ".min = 0x%" PRIx32 ",\n", lim->min);
-        PRINT(out, ".max = 0x%" PRIx32 ",\n", lim->max);
+        PRINT_U32_FIELD(out, lim, min);
+        PRINT_U32_FIELD(out, lim, max);
         PRINT(out, "},\n");
 fail:
         return ret;
@@ -236,7 +237,7 @@ print_tabletype(FILE *out, const struct tabletype *type)
 {
         int ret = 0;
         PRINT(out, "{\n");
-        PRINT(out, ".et = 0x%02" PRIx32 ",\n", (uint32_t)type->et);
+        PRINT_ENUM_FIELD(out, type, et);
         PRINT(out, ".lim = ");
         PRINT_LIMITS(out, &type->lim);
         PRINT(out, "},\n");
@@ -251,7 +252,7 @@ print_memtype(FILE *out, const struct memtype *type)
         PRINT(out, "{\n");
         PRINT(out, ".lim = ");
         PRINT_LIMITS(out, &type->lim);
-        PRINT(out, ".flags = 0x%02" PRIx8 ",\n", type->flags);
+        PRINT_U8_FIELD(out, type, flags);
 #if defined(TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES)
         PRINT_U8_FIELD(out, type, page_shift);
 #endif
@@ -265,8 +266,8 @@ print_globaltype(FILE *out, const struct globaltype *type)
 {
         int ret = 0;
         PRINT(out, "{\n");
-        PRINT(out, ".t = 0x%02" PRIx32 ",\n", (uint32_t)type->t);
-        PRINT(out, ".mut = 0x%02" PRIx32 ",\n", (uint32_t)type->mut);
+        PRINT_ENUM_FIELD(out, type, t);
+        PRINT_ENUM_FIELD(out, type, mut);
         PRINT(out, "},\n");
 fail:
         return ret;
@@ -535,10 +536,10 @@ dump_module_as_cstruct(FILE *out, const char *name, const struct module *m)
                         PRINT_EXPRS_LIST(out, e->init_exprs, e->init_size,
                                          &ctx);
                 }
-                PRINT(out, ".init_size = %" PRIu32 ",\n", e->init_size);
-                PRINT(out, ".type = 0x%02" PRIx32 ",\n", (uint32_t)e->type);
-                PRINT(out, ".mode = 0x%02" PRIx32 ",\n", (uint32_t)e->mode);
-                PRINT(out, ".table = %" PRIu32 ",\n", e->table);
+                PRINT_U32_FIELD(out, e, init_size);
+                PRINT_ENUM_FIELD(out, e, type);
+                PRINT_ENUM_FIELD(out, e, mode);
+                PRINT_U32_FIELD(out, e, table);
                 PRINT(out, ".offset = ");
                 PRINT_EXPRS(out, &e->offset, &ctx);
                 PRINT(out, "},\n");
@@ -549,9 +550,9 @@ dump_module_as_cstruct(FILE *out, const char *name, const struct module *m)
         for (i = 0; i < m->ndatas; i++) {
                 const struct data *d = &m->datas[i];
                 PRINT(out, "{\n");
-                PRINT(out, ".mode = %" PRIu32 ",\n", (uint32_t)d->mode);
-                PRINT(out, ".init_size = %" PRIu32 ",\n", d->init_size);
-                PRINT(out, ".memory = %" PRIu32 ",\n", d->memory);
+                PRINT_ENUM_FIELD(out, d, mode);
+                PRINT_U32_FIELD(out, d, init_size);
+                PRINT_U32_FIELD(out, d, memory);
                 PRINT(out, ".offset = ");
                 PRINT_EXPRS(out, &d->offset, &ctx);
                 PRINT(out, ".init = (void *)");
@@ -564,18 +565,15 @@ dump_module_as_cstruct(FILE *out, const char *name, const struct module *m)
         for (i = 0; i < m->nimports; i++) {
                 const struct import *im = &m->imports[i];
                 PRINT(out, "{\n");
-                PRINT(out, ".module_name = ");
-                PRINT_NAME(out, &im->module_name);
-                PRINT(out, ".name = ");
-                PRINT_NAME(out, &im->name);
+                PRINT_NAME_FIELD(out, im, module_name);
+                PRINT_NAME_FIELD(out, im, name);
                 const struct importdesc *desc = &im->desc;
                 PRINT(out, ".desc = {");
-                PRINT(out, ".type = %02" PRIu32 ",\n", (uint32_t)desc->type);
+                PRINT_ENUM_FIELD(out, desc, type);
                 PRINT(out, ".u = {");
                 switch (desc->type) {
                 case EXTERNTYPE_FUNC:
-                        PRINT(out, ".typeidx = %" PRIu32 ",\n",
-                              desc->u.typeidx);
+                        PRINT_U32_FIELD(out, &desc->u, typeidx);
                         break;
                 case EXTERNTYPE_TABLE:
                         PRINT(out, ".tabletype = ");
@@ -607,11 +605,10 @@ dump_module_as_cstruct(FILE *out, const char *name, const struct module *m)
                 const struct wasm_export *ex = &m->exports[i];
                 const struct exportdesc *desc = &ex->desc;
                 PRINT(out, "{\n");
-                PRINT(out, ".name = ");
-                PRINT_NAME(out, &ex->name);
+                PRINT_NAME_FIELD(out, ex, name);
                 PRINT(out, ".desc = {\n");
-                PRINT(out, ".type = %" PRIu32 ",\n", desc->type);
-                PRINT(out, ".idx = %" PRIu32 ",\n", desc->idx);
+                PRINT_ENUM_FIELD(out, desc, type);
+                PRINT_U32_FIELD(out, desc, idx);
                 PRINT(out, "},\n");
                 PRINT(out, "},\n");
         }
