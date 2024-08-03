@@ -5,6 +5,9 @@
 
 #include <toywasm/context.h>
 #include <toywasm/type.h>
+#if defined(TOYWASM_ENABLE_DYLD)
+#include <toywasm/dylink_type.h>
+#endif
 
 #include "cstruct.h"
 
@@ -31,6 +34,7 @@
 #define PRINT_RESULTTYPE(out, ...) ERRCHK(print_resulttype(out, __VA_ARGS__))
 #define PRINT_LOCALTYPE(out, ...) ERRCHK(print_localtype(out, __VA_ARGS__))
 #define PRINT_NAME(out, ...) ERRCHK(print_name(out, __VA_ARGS__))
+#define PRINT_DYLINK(out, ...) ERRCHK(print_dylink(out, __VA_ARGS__))
 #define PRINT_U8_ARRAY_INIT(out, ...)                                         \
         ERRCHK(print_u8_array_init(out, __VA_ARGS__))
 #define PRINT_U8_ARRAY_LITERAL(out, ...)                                      \
@@ -355,6 +359,56 @@ fail:
         return ret;
 }
 
+#if defined(TOYWASM_ENABLE_DYLD)
+#define PRINT_U32_FIELD(out, s, f)                                            \
+        PRINT(out, "." #f " = %" PRIu32 ",\n", (s)->f)
+
+#define PRINT_NAME_FIELD(out, s, f)                                           \
+        PRINT(out, "." #f " = ");                                             \
+        PRINT_NAME(out, &(s)->f)
+
+static int
+print_dylink(FILE *out, const struct dylink *dylink)
+{
+        int ret = 0;
+        uint32_t i;
+        PRINT(out, "{\n");
+
+        PRINT(out, ".mem_info = {\n");
+        PRINT_U32_FIELD(out, &(dylink->mem_info), memorysize);
+        PRINT_U32_FIELD(out, &(dylink->mem_info), memoryalignment);
+        PRINT_U32_FIELD(out, &(dylink->mem_info), tablesize);
+        PRINT_U32_FIELD(out, &(dylink->mem_info), tablealignment);
+        PRINT(out, "},\n");
+
+        PRINT(out, ".needs = {\n");
+        PRINT_U32_FIELD(out, &(dylink->needs), count);
+        PRINT(out, ".names = (void *)(const struct name[]){\n");
+        for (i = 0; i < dylink->needs.count; i++) {
+                PRINT_NAME(out, &dylink->needs.names[i]);
+        }
+        PRINT(out, "},\n");
+        PRINT(out, "},\n");
+
+        PRINT_U32_FIELD(out, dylink, nimport_info);
+        PRINT(out,
+              ".import_info = (void *)(const struct dylink_import_info[]){\n");
+        for (i = 0; i < dylink->nimport_info; i++) {
+                const struct dylink_import_info *ii = &dylink->import_info[i];
+                PRINT(out, "{\n");
+                PRINT_NAME_FIELD(out, ii, module_name);
+                PRINT_NAME_FIELD(out, ii, name);
+                PRINT_U32_FIELD(out, ii, flags);
+                PRINT(out, "},\n");
+        }
+        PRINT(out, "},\n");
+
+        PRINT(out, "},\n");
+fail:
+        return ret;
+}
+#endif
+
 int
 dump_module_as_cstruct(FILE *out, const char *name, const struct module *m)
 {
@@ -368,6 +422,9 @@ dump_module_as_cstruct(FILE *out, const char *name, const struct module *m)
         PRINT(out, "#include <stddef.h>\n");
 
         PRINT(out, "#include <toywasm/type.h>\n");
+#if defined(TOYWASM_ENABLE_DYLD)
+        PRINT(out, "#include <toywasm/dylink_type.h>\n");
+#endif
         PRINT(out, "#include <toywasm/util.h>\n");
 
         /*
@@ -598,7 +655,10 @@ dump_module_as_cstruct(FILE *out, const char *name, const struct module *m)
         }
 #endif
 #if defined(TOYWASM_ENABLE_DYLD)
-#error TOYWASM_ENABLE_DYLD not implented
+        if (m->dylink != NULL) {
+                PRINT(out, ".dylink = (void *)&(const struct dylink)");
+                PRINT_DYLINK(out, m->dylink);
+        }
 #endif
 
         PRINT(out, "};\n");
