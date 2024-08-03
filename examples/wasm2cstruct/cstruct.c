@@ -31,8 +31,14 @@
 #define PRINT_RESULTTYPE(out, ...) ERRCHK(print_resulttype(out, __VA_ARGS__))
 #define PRINT_LOCALTYPE(out, ...) ERRCHK(print_localtype(out, __VA_ARGS__))
 #define PRINT_NAME(out, ...) ERRCHK(print_name(out, __VA_ARGS__))
-#define PRINT_BYTES(out, ...) ERRCHK(print_bytes(out, __VA_ARGS__))
-#define PRINT_U32_LIST(out, ...) ERRCHK(print_u32_list(out, __VA_ARGS__))
+#define PRINT_U8_ARRAY_INIT(out, ...)                                         \
+        ERRCHK(print_u8_array_init(out, __VA_ARGS__))
+#define PRINT_U8_ARRAY_LITERAL(out, ...)                                      \
+        ERRCHK(print_u8_array_literal(out, __VA_ARGS__))
+#define PRINT_U32_ARRAY_INIT(out, ...)                                        \
+        ERRCHK(print_u32_array_init(out, __VA_ARGS__))
+#define PRINT_U32_ARRAY_LITERAL(out, ...)                                     \
+        ERRCHK(print_u32_array_literal(out, __VA_ARGS__))
 
 struct ctx {
         const uint8_t *func_exprs_start;
@@ -267,29 +273,51 @@ fail:
 }
 
 static int
-print_bytes(FILE *out, const uint8_t *p, uint32_t size)
+print_u8_array_init(FILE *out, const uint8_t *p, uint32_t size)
 {
         int ret = 0;
         uint32_t i;
-        PRINT(out, "(const uint8_t []){\n");
+        PRINT(out, "{\n");
         for (i = 0; i < size; i++) {
                 PRINT(out, "0x%02" PRIx32 ",\n", (uint32_t)p[i]);
         }
-        PRINT(out, "},\n");
+        PRINT(out, "}");
 fail:
         return ret;
 }
 
 static int
-print_u32_list(FILE *out, const uint32_t *p, uint32_t size)
+print_u8_array_literal(FILE *out, const uint8_t *p, uint32_t size)
+{
+        int ret = 0;
+        PRINT(out, "(const uint8_t [])\n");
+        PRINT_U8_ARRAY_INIT(out, p, size);
+        PRINT(out, ",\n");
+fail:
+        return ret;
+}
+
+static int
+print_u32_array_init(FILE *out, const uint32_t *p, uint32_t size)
 {
         int ret = 0;
         uint32_t i;
-        PRINT(out, "(const uint32_t []){\n");
+        PRINT(out, "{\n");
         for (i = 0; i < size; i++) {
-                PRINT(out, "0x%" PRIx32 ",", p[i]);
+                PRINT(out, "0x%" PRIx32 ",\n", p[i]);
         }
-        PRINT(out, "},\n");
+        PRINT(out, "}");
+fail:
+        return ret;
+}
+
+static int
+print_u32_array_literal(FILE *out, const uint32_t *p, uint32_t size)
+{
+        int ret = 0;
+        PRINT(out, "(const uint32_t [])\n");
+        PRINT_U32_ARRAY_INIT(out, p, size);
+        PRINT(out, ",\n");
 fail:
         return ret;
 }
@@ -319,7 +347,8 @@ print_name(FILE *out, const struct name *name)
                 PRINT(out, ".data = NULL,\n");
         } else {
                 PRINT(out, ".data = (void *)");
-                print_bytes(out, (const uint8_t *)name->data, name->nbytes);
+                PRINT_U8_ARRAY_LITERAL(out, (const uint8_t *)name->data,
+                                       name->nbytes);
         }
         PRINT(out, "},\n");
 fail:
@@ -419,7 +448,7 @@ dump_module_as_cstruct(FILE *out, const char *name, const struct module *m)
                 PRINT(out, "{\n");
                 if (e->funcs != NULL) {
                         PRINT(out, ".funcs = (void *)");
-                        PRINT_U32_LIST(out, e->funcs, e->init_size);
+                        PRINT_U32_ARRAY_LITERAL(out, e->funcs, e->init_size);
                 } else {
                         PRINT(out, ".init_exprs = (void *)");
                         PRINT_EXPRS_LIST(out, e->init_exprs, e->init_size,
@@ -445,7 +474,7 @@ dump_module_as_cstruct(FILE *out, const char *name, const struct module *m)
                 PRINT(out, ".offset = ");
                 PRINT_EXPRS(out, &d->offset, &ctx);
                 PRINT(out, ".init = (void *)");
-                PRINT_BYTES(out, d->init, d->init_size);
+                PRINT_U8_ARRAY_LITERAL(out, d->init, d->init_size);
                 PRINT(out, "},\n");
         }
         PRINT(out, "};\n");
@@ -504,6 +533,15 @@ dump_module_as_cstruct(FILE *out, const char *name, const struct module *m)
         }
         PRINT(out, "};\n");
 
+#if defined(TOYWASM_ENABLE_WASM_NAME_SECTION)
+        if (m->name_section_start != NULL) {
+                PRINT(out, "static const uint8_t name_section[] = \n");
+                size_t size = m->name_section_end - m->name_section_start;
+                PRINT_U8_ARRAY_INIT(out, m->name_section_start, size);
+                PRINT(out, ";\n");
+        }
+#endif
+
         PRINT(out, "const struct module %s = {\n", name);
 
         PRINT(out, "    .ntypes = ARRAYCOUNT(types),\n");
@@ -553,7 +591,11 @@ dump_module_as_cstruct(FILE *out, const char *name, const struct module *m)
         }
 
 #if defined(TOYWASM_ENABLE_WASM_NAME_SECTION)
-#error TOYWASM_ENABLE_WASM_NAME_SECTION not implented
+        if (m->name_section_start != NULL) {
+                PRINT(out, ".name_section_start = name_section,\n");
+                PRINT(out, ".name_section_end = name_section + %zu,\n",
+                      m->name_section_end - m->name_section_start);
+        }
 #endif
 #if defined(TOYWASM_ENABLE_DYLD)
 #error TOYWASM_ENABLE_DYLD not implented
