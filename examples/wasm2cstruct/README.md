@@ -29,13 +29,19 @@ the generated C source file.
 
 [runwasi_cstruct]: ../runwasi_cstruct
 
+## Notes
+
 * This effectively preloads a module at the build-time of the embedder.
 
 * The generated structure and its all dependencies are `const` qualified.
-  The compiler likely places them into a read-only sections.
+  The compiler likely places them into read-only sections.
 
 * While it's less flexible than dynamically loading modules using
-  the `module_create` API, it's likely more memory-efficient.
-  More importantly, the loaded modules can be placed on the ROM directly.
+  the `module_create` API, it's likely more memory-efficient
+  especially when you want to save the malloc'ed memory.
+  More importantly, this can allow placing the loaded modules into
+  the ROM directly.
 
 * You can't use `module_destroy` on the generated structure.
+
+* Maybe it makes sense to use this for modules like libc.so.
