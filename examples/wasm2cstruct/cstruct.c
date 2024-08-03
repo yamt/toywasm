@@ -43,6 +43,12 @@
         ERRCHK(print_u32_array_init(out, __VA_ARGS__))
 #define PRINT_U32_ARRAY_LITERAL(out, ...)                                     \
         ERRCHK(print_u32_array_literal(out, __VA_ARGS__))
+#define PRINT_U8_FIELD(out, s, f) PRINT(out, "." #f " = %" PRIu8 ",\n", (s)->f)
+#define PRINT_U32_FIELD(out, s, f)                                            \
+        PRINT(out, "." #f " = %" PRIu32 ",\n", (s)->f)
+#define PRINT_NAME_FIELD(out, s, f)                                           \
+        PRINT(out, "." #f " = ");                                             \
+        PRINT_NAME(out, &(s)->f)
 
 struct ctx {
         const uint8_t *func_exprs_start;
@@ -243,7 +249,7 @@ print_memtype(FILE *out, const struct memtype *type)
         PRINT_LIMITS(out, &type->lim);
         PRINT(out, ".flags = 0x%02" PRIx8 ",\n", type->flags);
 #if defined(TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES)
-#error TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES not implented
+        PRINT_U8_FIELD(out, type, page_shift);
 #endif
         PRINT(out, "},\n");
 fail:
@@ -360,13 +366,6 @@ fail:
 }
 
 #if defined(TOYWASM_ENABLE_DYLD)
-#define PRINT_U32_FIELD(out, s, f)                                            \
-        PRINT(out, "." #f " = %" PRIu32 ",\n", (s)->f)
-
-#define PRINT_NAME_FIELD(out, s, f)                                           \
-        PRINT(out, "." #f " = ");                                             \
-        PRINT_NAME(out, &(s)->f)
-
 static int
 print_dylink(FILE *out, const struct dylink *dylink)
 {
