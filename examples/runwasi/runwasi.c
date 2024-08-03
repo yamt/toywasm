@@ -11,37 +11,16 @@
 #include "runwasi.h"
 
 int
-runwasi(struct mem_context *mctx, const char *filename, unsigned int ndirs,
-        char **dirs, unsigned int nenvs, const char *const *envs, int argc,
-        const char *const *argv, const int stdio_fds[3],
-        struct import_object *base_imports, uint32_t *wasi_exit_code_p)
+runwasi_module(struct mem_context *mctx, const struct module *m,
+               unsigned int ndirs, char **dirs, unsigned int nenvs,
+               const char *const *envs, int argc, const char *const *argv,
+               const int stdio_fds[3], struct import_object *base_imports,
+               uint32_t *wasi_exit_code_p)
 {
-        struct module *m = NULL;
         struct wasi_instance *wasi = NULL;
         struct import_object *wasi_import_object = NULL;
         struct instance *inst = NULL;
         int ret;
-
-        /*
-         * load a module
-         */
-        uint8_t *p;
-        size_t sz;
-        ret = map_file(filename, (void **)&p, &sz);
-        if (ret != 0) {
-                xlog_error("map_file failed with %d", ret);
-                goto fail;
-        }
-        struct load_context lctx;
-        load_context_init(&lctx, mctx);
-        ret = module_create(&m, p, p + sz, &lctx);
-        if (ret != 0) {
-                xlog_error("module_load failed with %d: %s", ret,
-                           report_getmessage(&lctx.report));
-                load_context_clear(&lctx);
-                goto fail;
-        }
-        load_context_clear(&lctx);
 
         /*
          * find the entry point
@@ -154,6 +133,43 @@ fail:
         if (wasi != NULL) {
                 wasi_instance_destroy(wasi);
         }
+        return ret;
+}
+
+int
+runwasi(struct mem_context *mctx, const char *filename, unsigned int ndirs,
+        char **dirs, unsigned int nenvs, const char *const *envs, int argc,
+        const char *const *argv, const int stdio_fds[3],
+        struct import_object *base_imports, uint32_t *wasi_exit_code_p)
+{
+        struct module *m = NULL;
+        int ret;
+
+        /*
+         * load a module
+         */
+        uint8_t *p;
+        size_t sz;
+        ret = map_file(filename, (void **)&p, &sz);
+        if (ret != 0) {
+                xlog_error("map_file failed with %d", ret);
+                goto fail;
+        }
+        struct load_context lctx;
+        load_context_init(&lctx, mctx);
+        ret = module_create(&m, p, p + sz, &lctx);
+        if (ret != 0) {
+                xlog_error("module_load failed with %d: %s", ret,
+                           report_getmessage(&lctx.report));
+                load_context_clear(&lctx);
+                goto fail;
+        }
+        load_context_clear(&lctx);
+
+        ret = runwasi_module(mctx, m, ndirs, dirs, nenvs, envs, argc, argv,
+                             stdio_fds, base_imports, wasi_exit_code_p);
+
+fail:
         if (m != NULL) {
                 module_destroy(mctx, m);
         }
