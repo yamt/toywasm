@@ -148,7 +148,9 @@ print_exprs(FILE *out, const struct expr *expr, const struct ctx *ctx)
                 PRINT(out, "},\n");
         }
 
-        /* TODO: TOYWASM_MAINTAIN_EXPR_END */
+#if defined(TOYWASM_MAINTAIN_EXPR_END)
+#error TOYWASM_MAINTAIN_EXPR_END not implented
+#endif
 
         const struct expr_exec_info *ei = &expr->ei;
         PRINT(out, ".ei = {\n");
@@ -230,7 +232,9 @@ print_memtype(FILE *out, const struct memtype *type)
         PRINT(out, ".lim = ");
         PRINT_LIMITS(out, &type->lim);
         PRINT(out, ".flags = 0x%02" PRIx8 ",\n", type->flags);
-        /* TODO: TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES */
+#if defined(TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES)
+#error TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES not implented
+#endif
         PRINT(out, "},\n");
 fail:
         return ret;
@@ -475,7 +479,9 @@ dump_module_as_cstruct(FILE *out, const char *name, const struct module *m)
                         PRINT(out, ".globaltype = ");
                         PRINT_GLOBALTYPE(out, &desc->u.globaltype);
                         break;
-                        /* TODO: TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING */
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+#error TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING not implented
+#endif
                 }
                 PRINT(out, "},\n");
                 PRINT(out, "},\n");
@@ -522,7 +528,9 @@ dump_module_as_cstruct(FILE *out, const char *name, const struct module *m)
         PRINT(out, "    .nglobals = ARRAYCOUNT(globals),\n");
         PRINT(out, "    .globals = (void *)globals,\n");
 
-        /* TODO: tags */
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+#error TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING not implented
+#endif
 
         PRINT(out, "    .nelems = ARRAYCOUNT(elems),\n");
         PRINT(out, "    .elems = (void *)elems,\n");
@@ -544,8 +552,12 @@ dump_module_as_cstruct(FILE *out, const char *name, const struct module *m)
                       pc_offset);
         }
 
-        /* TODO TOYWASM_ENABLE_WASM_NAME_SECTION */
-        /* TODO TOYWASM_ENABLE_DYLD */
+#if defined(TOYWASM_ENABLE_WASM_NAME_SECTION)
+#error TOYWASM_ENABLE_WASM_NAME_SECTION not implented
+#endif
+#if defined(TOYWASM_ENABLE_DYLD)
+#error TOYWASM_ENABLE_DYLD not implented
+#endif
 
         PRINT(out, "};\n");
 fail:
