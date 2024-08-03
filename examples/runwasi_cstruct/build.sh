@@ -1,0 +1,6 @@
+#! /bin/sh
+
+set -e
+
+TOYWASM_EXTRA_CMAKE_OPTIONS="-DTOYWASM_ENABLE_WASM_THREADS=ON -DTOYWASM_ENABLE_WASM_TAILCALL=ON" \
+../build-toywasm-and-app.sh
