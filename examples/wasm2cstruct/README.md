@@ -5,7 +5,7 @@ which provides a structure which represents the loaded module.
 (`struct module`)
 
 ```shell
-% wasm2cstruct g_wasm_module foo.wasm | clang-format > foo.c 
+% wasm2cstruct g_wasm_module foo.wasm | clang-format > foo.c
 ```
 
 Note: the first argument is the C symbol to use.
