@@ -43,5 +43,7 @@ the generated C source file.
   the ROM directly.
 
 * You can't use `module_destroy` on the generated structure.
+  Note that `module_destroy` is the only operation in toywasm which
+  modifies a loaded module.
 
-* Maybe it makes sense to use this for modules like libc.so.
+* Maybe it makes sense to use this for modules like `libc.so`.
