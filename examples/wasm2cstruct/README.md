@@ -5,10 +5,12 @@ which provides a structure which represents the loaded module.
 (`struct module`)
 
 ```shell
-% wasm2cstruct g_wasm_module foo.wasm | clang-format > foo.c
+% wasm2cstruct g_wasm_module foo.wasm | clang-format > module.c
 ```
 
 Note: the first argument is the C symbol to use.
+
+Note: `clang-format` here is just for possible human-readers of the module.
 
 The generated C source file contains a single exported symbol for the
 `struct module`.
@@ -21,6 +23,11 @@ extern struct module g_wasm_module;
 /* instantiate the preloaded module */
 instance_create(..., &g_wasm_module, ...);
 ```
+
+See [runwasi_cstruct] for a complete example to consume
+the generated C source file.
+
+[runwasi_cstruct]: ../runwasi_cstruct
 
 * This effectively preloads a module at the build-time of the embedder.
 
