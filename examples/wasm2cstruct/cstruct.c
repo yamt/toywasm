@@ -56,6 +56,8 @@ struct ctx {
         const uint8_t *func_exprs_end;
 };
 
+#if defined(TOYWASM_USE_RESULTTYPE_CELLIDX) ||                                \
+        defined(TOYWASM_USE_LOCALTYPE_CELLIDX)
 static int
 print_cellidx(FILE *out, const struct localcellidx *idx, uint32_t size)
 {
@@ -75,6 +77,7 @@ print_cellidx(FILE *out, const struct localcellidx *idx, uint32_t size)
 fail:
         return ret;
 }
+#endif
 
 static int
 print_resulttype(FILE *out, const struct resulttype *rt)
