@@ -628,48 +628,46 @@ dump_module_as_cstruct(FILE *out, const char *name, const struct module *m)
 
         PRINT(out, "const struct module %s = {\n", name);
 
-        PRINT(out, "    .ntypes = ARRAYCOUNT(types),\n");
-        PRINT(out, "    .types = (void *)types,\n");
+        PRINT(out, ".ntypes = ARRAYCOUNT(types),\n");
+        PRINT(out, ".types = (void *)types,\n");
 
-        PRINT(out, "    .nimportedfuncs = %" PRIu32 ",\n", m->nimportedfuncs);
-        PRINT(out, "    .nfuncs = ARRAYCOUNT(funcs),\n");
-        PRINT(out, "    .functypeidxes = (void *)functypeidxes,\n");
-        PRINT(out, "    .funcs = (void *)funcs,\n");
+        PRINT(out, ".nimportedfuncs = %" PRIu32 ",\n", m->nimportedfuncs);
+        PRINT(out, ".nfuncs = ARRAYCOUNT(funcs),\n");
+        PRINT(out, ".functypeidxes = (void *)functypeidxes,\n");
+        PRINT(out, ".funcs = (void *)funcs,\n");
 
-        PRINT(out, "    .nimportedtables = %" PRIu32 ",\n",
-              m->nimportedtables);
-        PRINT(out, "    .ntables = ARRAYCOUNT(tables),\n");
-        PRINT(out, "    .tables = (void *)tables,\n");
+        PRINT(out, ".nimportedtables = %" PRIu32 ",\n", m->nimportedtables);
+        PRINT(out, ".ntables = ARRAYCOUNT(tables),\n");
+        PRINT(out, ".tables = (void *)tables,\n");
 
-        PRINT(out, "    .nimportedmems = %" PRIu32 ",\n", m->nimportedmems);
-        PRINT(out, "    .nmems = ARRAYCOUNT(mems),\n");
-        PRINT(out, "    .mems = (void *)mems,\n");
+        PRINT(out, ".nimportedmems = %" PRIu32 ",\n", m->nimportedmems);
+        PRINT(out, ".nmems = ARRAYCOUNT(mems),\n");
+        PRINT(out, ".mems = (void *)mems,\n");
 
-        PRINT(out, "    .nimportedglobals = %" PRIu32 ",\n",
-              m->nimportedglobals);
-        PRINT(out, "    .nglobals = ARRAYCOUNT(globals),\n");
-        PRINT(out, "    .globals = (void *)globals,\n");
+        PRINT(out, ".nimportedglobals = %" PRIu32 ",\n", m->nimportedglobals);
+        PRINT(out, ".nglobals = ARRAYCOUNT(globals),\n");
+        PRINT(out, ".globals = (void *)globals,\n");
 
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
         PRINT_U32_FIELD(out, m, nimportedtags);
-        PRINT(out, "    .ntags = ARRAYCOUNT(tags),\n");
-        PRINT(out, "    .tags = (void *)tags,\n");
+        PRINT(out, ".ntags = ARRAYCOUNT(tags),\n");
+        PRINT(out, ".tags = (void *)tags,\n");
 #endif
 
-        PRINT(out, "    .nelems = ARRAYCOUNT(elems),\n");
-        PRINT(out, "    .elems = (void *)elems,\n");
+        PRINT(out, ".nelems = ARRAYCOUNT(elems),\n");
+        PRINT(out, ".elems = (void *)elems,\n");
 
-        PRINT(out, "    .ndatas = ARRAYCOUNT(datas),\n");
-        PRINT(out, "    .datas = (void *)datas,\n");
+        PRINT(out, ".ndatas = ARRAYCOUNT(datas),\n");
+        PRINT(out, ".datas = (void *)datas,\n");
 
-        PRINT(out, "    .has_start = %s,\n", m->has_start ? "true" : "false");
-        PRINT(out, "    .start = %" PRIu32 ",\n", m->start);
+        PRINT(out, ".has_start = %s,\n", m->has_start ? "true" : "false");
+        PRINT(out, ".start = %" PRIu32 ",\n", m->start);
 
-        PRINT(out, "    .nimports = ARRAYCOUNT(imports),\n");
-        PRINT(out, "    .imports = (void *)imports,\n");
+        PRINT(out, ".nimports = ARRAYCOUNT(imports),\n");
+        PRINT(out, ".imports = (void *)imports,\n");
 
-        PRINT(out, "    .nexports = ARRAYCOUNT(exports),\n");
-        PRINT(out, "    .exports = (void *)exports,\n");
+        PRINT(out, ".nexports = ARRAYCOUNT(exports),\n");
+        PRINT(out, ".exports = (void *)exports,\n");
 
         if (m->nfuncs > 0) {
                 PRINT(out, "    .bin = all_funcs_exprs - %" PRIu32 ",\n",
