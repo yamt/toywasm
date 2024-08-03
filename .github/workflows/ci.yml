@@ -487,6 +487,20 @@ jobs:
         ./examples/wasm2wasm/build/wasm2wasm out.wasm out2.wasm
         cmp out.wasm out2.wasm
 
+    # Note: the generated file (module.c) will be used by the next step
+    - name: Test "wasm2cstruct" example with the library we built
+      if: matrix.arch == 'native'
+      run: |
+        ./test/build-example.sh wasm2cstruct ${{env.builddir}}/toywasm-v*.tgz build
+        wat2wasm --debug-names wat/wasi/recursive_hello_arg.wat
+        ./examples/wasm2cstruct/build/wasm2cstruct g_wasm_module $(pwd)/recursive_hello_arg.wasm > ./examples/runwasi_cstruct/module.c
+
+    - name: Test "runwasi_cstruct" example with the library we built
+      if: matrix.arch == 'native'
+      run: |
+        ./test/build-example.sh runwasi_cstruct ${{env.builddir}}/toywasm-v*.tgz build
+        ./examples/runwasi_cstruct/build/runwasi_cstruct -- foo hello
+
     - name: Upload artifacts
       if: matrix.name != 'noname'
       uses: actions/upload-artifact@v3
