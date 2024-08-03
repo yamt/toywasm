@@ -47,3 +47,6 @@ the generated C source file.
   modifies a loaded module.
 
 * Maybe it makes sense to use this for modules like `libc.so`.
+
+* A compiler for a modern language might be able to do something similar
+  via compile-time code execution. Unfortunately C is not such a language.
