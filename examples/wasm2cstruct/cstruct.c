@@ -25,6 +25,7 @@
 #define PRINT_CELLIDX(out, ...) ERRCHK(print_cellidx(out, __VA_ARGS__))
 #define PRINT_LIMITS(out, ...) ERRCHK(print_limits(out, __VA_ARGS__))
 #define PRINT_GLOBALTYPE(out, ...) ERRCHK(print_globaltype(out, __VA_ARGS__))
+#define PRINT_TAGTYPE(out, ...) ERRCHK(print_tagtype(out, __VA_ARGS__))
 #define PRINT_TABLETYPE(out, ...) ERRCHK(print_tabletype(out, __VA_ARGS__))
 #define PRINT_MEMTYPE(out, ...) ERRCHK(print_memtype(out, __VA_ARGS__))
 #define PRINT_MEMTYPE(out, ...) ERRCHK(print_memtype(out, __VA_ARGS__))
@@ -268,6 +269,19 @@ fail:
         return ret;
 }
 
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+static int
+print_tagtype(FILE *out, const struct tagtype *type)
+{
+        int ret = 0;
+        PRINT(out, "{\n");
+        PRINT_U32_FIELD(out, type, typeidx);
+        PRINT(out, "},\n");
+fail:
+        return ret;
+}
+#endif
+
 static int
 print_global(FILE *out, const struct global *g, const struct ctx *ctx)
 {
@@ -498,6 +512,14 @@ dump_module_as_cstruct(FILE *out, const char *name, const struct module *m)
         }
         PRINT(out, "};\n");
 
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+        PRINT(out, "static const struct tagtype tags[] = {\n");
+        for (i = 0; i < m->ntags; i++) {
+                PRINT_TAGTYPE(out, &m->tags[i]);
+        }
+        PRINT(out, "};\n");
+#endif
+
         PRINT(out, "static const struct element elems[] = {\n");
         for (i = 0; i < m->nelems; i++) {
                 const struct element *e = &m->elems[i];
@@ -565,7 +587,10 @@ dump_module_as_cstruct(FILE *out, const char *name, const struct module *m)
                         PRINT_GLOBALTYPE(out, &desc->u.globaltype);
                         break;
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
-#error TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING not implented
+                case EXTERNTYPE_TAG:
+                        PRINT(out, ".tagtype = ");
+                        PRINT_TAGTYPE(out, &desc->u.tagtype);
+                        break;
 #endif
                 }
                 PRINT(out, "},\n");
@@ -623,7 +648,9 @@ dump_module_as_cstruct(FILE *out, const char *name, const struct module *m)
         PRINT(out, "    .globals = (void *)globals,\n");
 
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
-#error TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING not implented
+        PRINT_U32_FIELD(out, m, nimportedtags);
+        PRINT(out, "    .ntags = ARRAYCOUNT(tags),\n");
+        PRINT(out, "    .tags = (void *)tags,\n");
 #endif
 
         PRINT(out, "    .nelems = ARRAYCOUNT(elems),\n");
