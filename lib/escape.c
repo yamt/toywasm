@@ -31,7 +31,7 @@ need_escape(char ch)
          * delimiters in log messages.
          */
         return ch < 0x20 || ch == ' ' || ch == '=' || ch == ':' ||
-               ch == '\\' || ch == '.' || ch == ',' || ch >= 0x7f;
+               ch == '\\' || ch == ',' || ch >= 0x7f;
 }
 
 static char
