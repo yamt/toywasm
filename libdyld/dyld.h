@@ -94,5 +94,6 @@ struct instance *dyld_main_object_instance(struct dyld *d);
 void dyld_options_set_defaults(struct dyld_options *opts);
 int import_object_create_for_dyld(struct mem_context *mctx, struct dyld *d,
                                   struct import_object **impp);
+void dyld_print_stats(struct dyld *d);
 
 __END_EXTERN_C

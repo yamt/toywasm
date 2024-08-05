@@ -3,6 +3,7 @@
 set(lib_dyld_sources
 	"dyld.c"
 	"dyld_plt.c"
+	"dyld_stats.c"
 )
 
 if(TOYWASM_ENABLE_DYLD_DLFCN)
