@@ -652,8 +652,7 @@ dyld_object_destroy(struct dyld_object *obj)
         struct dyld *d = obj->dyld;
         struct mem_context *mctx = d->mctx;
         if (obj->local_import_obj != NULL) {
-                import_object_destroy(&obj->instance_mctx,
-                                      obj->local_import_obj);
+                import_object_destroy(mctx, obj->local_import_obj);
         }
         mem_free(mctx, obj->gots, obj->ngots * sizeof(*obj->gots));
         mem_free(mctx, obj->plts, obj->nplts * sizeof(*obj->plts));
