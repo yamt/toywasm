@@ -177,6 +177,13 @@ repl_unload_u(struct repl_state *state, struct repl_module_state_u *mod_u)
 #if defined(TOYWASM_ENABLE_DYLD)
         if (state->opts.enable_dyld) {
                 struct dyld *d = &mod_u->u.dyld;
+#if defined(TOYWASM_ENABLE_DYLD)
+                if (state->opts.print_stats) {
+                        nbio_printf("=== dyld memory consumption immediately "
+                                    "before dyld_clear ===\n");
+                        dyld_print_stats(d);
+                }
+#endif
                 dyld_clear(d);
                 return;
         }
