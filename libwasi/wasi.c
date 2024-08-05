@@ -31,6 +31,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "mem.h"
 #include "nbio.h"
 #include "wasi.h"
 #include "wasi_impl.h"
@@ -167,7 +168,7 @@ wasi_instance_create(struct mem_context *mctx,
 {
         struct wasi_instance *inst;
 
-        inst = xzalloc(sizeof(*inst));
+        inst = mem_zalloc(mctx, sizeof(*inst));
         if (inst == NULL) {
                 return ENOMEM;
         }
@@ -296,7 +297,7 @@ wasi_instance_destroy(struct wasi_instance *inst)
         }
         toywasm_cv_destroy(&inst->cv);
         toywasm_mutex_destroy(&inst->lock);
-        free(inst);
+        mem_free(inst->mctx, inst, sizeof(*inst));
 }
 
 static const struct name wasi_snapshot_preview1 =
