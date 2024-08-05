@@ -652,7 +652,8 @@ dyld_object_destroy(struct dyld_object *obj)
         struct dyld *d = obj->dyld;
         struct mem_context *mctx = d->mctx;
         if (obj->local_import_obj != NULL) {
-                import_object_destroy(mctx, obj->local_import_obj);
+                import_object_destroy(&obj->instance_mctx,
+                                      obj->local_import_obj);
         }
         mem_free(mctx, obj->gots, obj->ngots * sizeof(*obj->gots));
         mem_free(mctx, obj->plts, obj->nplts * sizeof(*obj->plts));
@@ -660,11 +661,13 @@ dyld_object_destroy(struct dyld_object *obj)
                 instance_destroy(obj->instance);
         }
         if (obj->module != NULL) {
-                module_destroy(mctx, obj->module);
+                module_destroy(&obj->module_mctx, obj->module);
         }
         if (obj->bin != NULL) {
                 unmap_file((void *)obj->bin, obj->binsz);
         }
+        mem_context_clear(&obj->module_mctx);
+        mem_context_clear(&obj->instance_mctx);
         mem_free(mctx, obj, sizeof(*obj));
 }
 
@@ -790,6 +793,10 @@ dyld_load_object_from_file(struct dyld *d, const struct name *name,
                 ret = ENOMEM;
                 goto fail;
         }
+        mem_context_init(&obj->module_mctx);
+        obj->module_mctx.parent = d->mctx;
+        mem_context_init(&obj->instance_mctx);
+        obj->instance_mctx.parent = d->mctx;
         obj->dyld = d;
         obj->name = name;
         ret = map_file(filename, (void *)&obj->bin, &obj->binsz);
@@ -797,7 +804,7 @@ dyld_load_object_from_file(struct dyld *d, const struct name *name,
                 goto fail;
         }
         struct load_context lctx;
-        load_context_init(&lctx, d->mctx);
+        load_context_init(&lctx, &obj->module_mctx);
         ret = module_create(&obj->module, obj->bin, obj->bin + obj->binsz,
                             &lctx);
         if (ret != 0) {
@@ -862,7 +869,7 @@ dyld_load_object_from_file(struct dyld *d, const struct name *name,
         obj->local_import_obj->next = d->shared_import_obj;
         struct report report;
         report_init(&report);
-        ret = instance_create(d->mctx, obj->module, &obj->instance,
+        ret = instance_create(&obj->instance_mctx, obj->module, &obj->instance,
                               obj->local_import_obj, &report);
         if (ret != 0) {
                 xlog_error("instance_create failed with %d: %s", ret,

@@ -1,6 +1,7 @@
 #include <stdbool.h>
 
 #include "list.h"
+#include "mem.h"
 #include "type.h"
 
 struct dyld;
@@ -39,6 +40,9 @@ struct dyld_object {
         size_t binsz;
         struct module *module;
         struct instance *instance;
+
+        struct mem_context module_mctx;
+        struct mem_context instance_mctx;
 
         struct dyld *dyld;
         LIST_ENTRY(struct dyld_object) q;
