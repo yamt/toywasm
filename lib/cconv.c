@@ -4,6 +4,7 @@
  */
 
 #include "exec.h"
+#include "instance.h"
 #include "module.h"
 #include "type.h"
 

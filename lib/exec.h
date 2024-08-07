@@ -29,7 +29,6 @@ int exec_const_expr(const struct expr *expr, enum valtype type,
 
 int memory_init(struct exec_context *ctx, uint32_t memidx, uint32_t dataidx,
                 uint32_t d, uint32_t s, uint32_t n);
-uint32_t memory_grow(struct meminst *mi, uint32_t sz);
 uint32_t memory_grow2(struct exec_context *ctx, uint32_t memidx, uint32_t sz);
 
 int memory_notify(struct exec_context *ctx, uint32_t memidx, uint32_t addr,
@@ -42,15 +41,6 @@ int table_init(struct exec_context *ctx, uint32_t tableidx, uint32_t elemidx,
                uint32_t d, uint32_t s, uint32_t n);
 int table_access(struct exec_context *ectx, uint32_t tableidx, uint32_t offset,
                  uint32_t n);
-void table_set(struct tableinst *tinst, uint32_t elemidx,
-               const struct val *val);
-void table_get(struct tableinst *tinst, uint32_t elemidx, struct val *val);
-int table_get_func(struct exec_context *ectx, const struct tableinst *t,
-                   uint32_t i, const struct functype *ft,
-                   const struct funcinst **fip);
-int table_grow(struct tableinst *tinst, const struct val *val, uint32_t n);
-void global_set(struct globalinst *ginst, const struct val *val);
-void global_get(struct globalinst *ginst, struct val *val);
 void data_drop(struct exec_context *ectx, uint32_t dataidx);
 void elem_drop(struct exec_context *ectx, uint32_t elemidx);
 
@@ -73,9 +63,6 @@ int memory_getptr(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
                   uint32_t offset, uint32_t size, void **pp);
 int memory_getptr2(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
                    uint32_t offset, uint32_t size, void **pp, bool *movedp);
-int memory_instance_getptr2(struct meminst *meminst, uint32_t ptr,
-                            uint32_t offset, uint32_t size, void **pp,
-                            bool *movedp);
 struct toywasm_mutex;
 int memory_atomic_getptr(struct exec_context *ctx, uint32_t memidx,
                          uint32_t ptr, uint32_t offset, uint32_t size,

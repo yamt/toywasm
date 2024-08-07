@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <stdint.h>
 
 #include "platform.h"
@@ -5,6 +6,8 @@
 struct module;
 struct instance;
 struct exec_context;
+struct funcinst;
+struct functype;
 struct resulttype;
 struct import;
 struct import_object;
@@ -12,6 +15,7 @@ struct import_object_entry;
 struct mem_context;
 struct report;
 struct name;
+struct val;
 
 __BEGIN_EXTERN_C
 
@@ -130,18 +134,31 @@ struct memtype;
 int memory_instance_create(struct mem_context *mctx, struct meminst **mip,
                            const struct memtype *mt);
 void memory_instance_destroy(struct mem_context *mctx, struct meminst *mi);
+uint32_t memory_grow(struct meminst *mi, uint32_t sz);
+int memory_instance_getptr2(struct meminst *meminst, uint32_t ptr,
+                            uint32_t offset, uint32_t size, void **pp,
+                            bool *movedp);
 
 struct globalinst;
 struct globaltype;
 int global_instance_create(struct mem_context *mctx, struct globalinst **gip,
                            const struct globaltype *gt);
 void global_instance_destroy(struct mem_context *mctx, struct globalinst *gi);
+void global_set(struct globalinst *ginst, const struct val *val);
+void global_get(struct globalinst *ginst, struct val *val);
 
 struct tableinst;
 struct tabletype;
 int table_instance_create(struct mem_context *mctx, struct tableinst **tip,
                           const struct tabletype *tt);
 void table_instance_destroy(struct mem_context *mctx, struct tableinst *ti);
+void table_set(struct tableinst *tinst, uint32_t elemidx,
+               const struct val *val);
+void table_get(struct tableinst *tinst, uint32_t elemidx, struct val *val);
+int table_grow(struct tableinst *tinst, const struct val *val, uint32_t n);
+int table_get_func(struct exec_context *ectx, const struct tableinst *t,
+                   uint32_t i, const struct functype *ft,
+                   const struct funcinst **fip);
 
 /*
  * create_satisfying_shared_memories:

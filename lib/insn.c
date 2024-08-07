@@ -18,6 +18,7 @@
 #include "insn_macros.h"
 #include "insn_op.h"
 #include "insn_op_helpers.h"
+#include "instance.h"
 #include "leb128.h"
 #include "mem.h"
 #include "platform.h"
