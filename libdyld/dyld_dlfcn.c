@@ -16,7 +16,7 @@
 #include "dyld_dlfcn_abi.h"
 #include "dyld_impl.h"
 #include "endian.h"
-#include "exec.h"
+#include "exec_context.h"
 #include "host_instance.h"
 #include "mem.h"
 #include "xlog.h"

@@ -4,7 +4,8 @@
 #include "dyld.h"
 #include "dyld_impl.h"
 #include "dyld_plt.h"
-#include "exec.h"
+#include "exec_context.h"
+#include "instance.h"
 #include "xlog.h"
 
 int
