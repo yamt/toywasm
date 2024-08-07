@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "cconv.h"
 #include "exec.h"
 #include "host_instance.h"
 #include "instance.h"
@@ -159,13 +160,18 @@ int
 host_func_copyin(struct exec_context *ctx, void *hostaddr, uint32_t wasmaddr,
                  size_t len, size_t align)
 {
+        uint32_t memidx;
         void *p;
         int ret;
+        ret = cconv_default_memory(ctx, &memidx);
+        if (ret != 0) {
+                return ret;
+        }
         ret = host_func_check_align(ctx, wasmaddr, align);
         if (ret != 0) {
                 return ret;
         }
-        ret = memory_getptr(ctx, 0, wasmaddr, 0, len, &p);
+        ret = memory_getptr(ctx, memidx, wasmaddr, 0, len, &p);
         if (ret != 0) {
                 return ret;
         }
@@ -177,13 +183,18 @@ int
 host_func_copyout(struct exec_context *ctx, const void *hostaddr,
                   uint32_t wasmaddr, size_t len, size_t align)
 {
+        uint32_t memidx;
         void *p;
         int ret;
+        ret = cconv_default_memory(ctx, &memidx);
+        if (ret != 0) {
+                return ret;
+        }
         ret = host_func_check_align(ctx, wasmaddr, align);
         if (ret != 0) {
                 return ret;
         }
-        ret = memory_getptr(ctx, 0, wasmaddr, 0, len, &p);
+        ret = memory_getptr(ctx, memidx, wasmaddr, 0, len, &p);
         if (ret != 0) {
                 return ret;
         }
@@ -191,24 +202,12 @@ host_func_copyout(struct exec_context *ctx, const void *hostaddr,
         return 0;
 }
 
-static int
-check_memidx(struct exec_context *ctx, uint32_t memidx)
-{
-        const struct module *m = ctx->instance->module;
-        if (memidx < m->nmems + m->nimportedmems) {
-                return 0;
-        }
-        return trap_with_id(
-                ctx, TRAP_INVALID_MEMORY,
-                "access to invalid memidx %" PRIx32 " in a host call", memidx);
-}
-
 int
-host_func_memory_getptr(struct exec_context *ctx, uint32_t memidx,
-                        uint32_t ptr, uint32_t offset, uint32_t size,
-                        void **pp)
+host_func_getptr(struct exec_context *ctx, uint32_t ptr, uint32_t offset,
+                 uint32_t size, void **pp)
 {
-        int ret = check_memidx(ctx, memidx);
+        uint32_t memidx;
+        int ret = cconv_default_memory(ctx, &memidx);
         if (ret != 0) {
                 return ret;
         }
@@ -216,11 +215,11 @@ host_func_memory_getptr(struct exec_context *ctx, uint32_t memidx,
 }
 
 int
-host_func_memory_getptr2(struct exec_context *ctx, uint32_t memidx,
-                         uint32_t ptr, uint32_t offset, uint32_t size,
-                         void **pp, bool *movedp)
+host_func_getptr2(struct exec_context *ctx, uint32_t ptr, uint32_t offset,
+                  uint32_t size, void **pp, bool *movedp)
 {
-        int ret = check_memidx(ctx, memidx);
+        uint32_t memidx;
+        int ret = cconv_default_memory(ctx, &memidx);
         if (ret != 0) {
                 return ret;
         }
