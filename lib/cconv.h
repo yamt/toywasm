@@ -13,6 +13,7 @@ int cconv_deref_func_ptr(struct exec_context *ctx, const struct instance *inst,
                          uint32_t wasmfuncptr, const struct functype *ft,
                          const struct funcinst **fip);
 
-int cconv_default_memory(struct exec_context *ctx, uint32_t *memidxp);
+int cconv_default_memory(struct exec_context *ctx, const struct instance *inst,
+                         uint32_t *memidxp);
 
 __END_EXTERN_C
