@@ -63,9 +63,10 @@ do_trap:
 }
 
 int
-cconv_default_memory(struct exec_context *ctx, uint32_t *memidxp)
+cconv_default_memory(struct exec_context *ctx, const struct instance *inst,
+                     uint32_t *memidxp)
 {
-        const struct module *m = ctx->instance->module;
+        const struct module *m = inst->module;
         int ret;
         /*
          * XXX searching exports on each call can be too slow.
