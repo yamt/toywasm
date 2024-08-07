@@ -203,12 +203,23 @@ int
 host_func_getptr2(struct exec_context *ctx, uint32_t ptr, uint32_t offset,
                   uint32_t size, void **pp, bool *movedp)
 {
-        uint32_t memidx;
-        int ret = cconv_default_memory(ctx, ctx->instance, &memidx);
+        struct meminst *meminst;
+        int ret = cconv_default_memory(ctx, ctx->instance, &meminst);
         if (ret != 0) {
                 return ret;
         }
-        return memory_getptr2(ctx, memidx, ptr, offset, size, pp, movedp);
+        ret = memory_instance_getptr2(meminst, ptr, offset, size, pp, movedp);
+        if (ret == ETOYWASMTRAP) {
+                ret = trap_with_id(
+                        ctx, TRAP_OUT_OF_BOUNDS_MEMORY_ACCESS,
+                        "host function invalid memory access at %08" PRIx32
+                        " + %08" PRIx32 ", size %" PRIu32
+                        ", meminst size %" PRIu32 ", pagesize %" PRIu32,
+                        ptr, offset, size, meminst->size_in_pages,
+                        1 << memtype_page_shift(meminst->type));
+                assert(ret != 0);
+        }
+        return ret;
 }
 
 int
