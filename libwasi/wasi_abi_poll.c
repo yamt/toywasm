@@ -52,7 +52,7 @@ retry:
         if (host_ret != 0) {
                 goto fail;
         }
-        host_ret = host_func_getptr(ctx, in, 0, insize, &p);
+        host_ret = host_func_getptr(ctx, in, insize, &p);
         if (host_ret != 0) {
                 goto fail;
         }
@@ -63,7 +63,7 @@ retry:
         if (host_ret != 0) {
                 goto fail;
         }
-        host_ret = host_func_getptr2(ctx, out, 0, outsize, &p, &moved);
+        host_ret = host_func_getptr2(ctx, out, outsize, &p, &moved);
         if (host_ret != 0) {
                 goto fail;
         }
