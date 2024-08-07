@@ -3,7 +3,7 @@
 #include <inttypes.h>
 #include <stdlib.h>
 
-#include "exec.h"
+#include "exec_context.h"
 #include "timeutil.h"
 #include "wasi_impl.h"
 #include "xlog.h"

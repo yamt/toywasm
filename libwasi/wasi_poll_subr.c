@@ -4,7 +4,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "exec.h"
+#include "exec_context.h"
 #include "nbio.h"
 #include "restart.h"
 #include "wasi_host_subr.h"

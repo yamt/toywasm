@@ -13,7 +13,6 @@
 #endif
 
 #include "endian.h"
-#include "exec.h"
 #include "wasi_impl.h"
 #include "xlog.h"
 

@@ -13,7 +13,7 @@
 
 #include "cluster.h"
 #include "endian.h"
-#include "exec.h"
+#include "exec_context.h"
 #include "host_instance.h"
 #include "idalloc.h"
 #include "instance.h"
