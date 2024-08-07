@@ -3,6 +3,7 @@
  * a part of core wasm.
  */
 
+#include "cconv.h"
 #include "exec.h"
 #include "instance.h"
 #include "module.h"
@@ -10,6 +11,18 @@
 
 static const struct name name_func_table =
         NAME_FROM_CSTR_LITERAL("__indirect_function_table");
+
+/*
+ * the export name "memory" is defined by wasi.
+ * https://github.com/WebAssembly/WASI/blob/main/legacy/README.md
+ * it's widely used for non-wasi interfaces as well.
+ *
+ * Note: some runtimes, including old versions of toywasm, assume
+ * the memidx 0 even for wasi. it would end up with some
+ * incompatibilities with multi-memory proposal.
+ */
+static const struct name name_default_memory =
+        NAME_FROM_CSTR_LITERAL("memory");
 
 /*
  * dereference a C function pointer.
@@ -46,5 +59,22 @@ do_trap:
                 return ret;
         }
         *fip = func;
+        return 0;
+}
+
+int
+cconv_default_memory(struct exec_context *ctx, uint32_t *memidxp)
+{
+        const struct module *m = ctx->instance->module;
+        int ret;
+        /*
+         * XXX searching exports on each call can be too slow.
+         */
+        ret = module_find_export(m, &name_default_memory, EXTERNTYPE_MEMORY,
+                                 memidxp);
+        if (ret != 0) {
+                return trap_with_id(ctx, TRAP_DEFAULT_MEMORY_NOT_FOUND,
+                                    "default memory not found");
+        }
         return 0;
 }
