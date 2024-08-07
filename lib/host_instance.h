@@ -14,7 +14,7 @@ struct host_func {
 };
 
 #define HOST_FUNC_DECL(NAME)                                                  \
-        int NAME(struct exec_context *, struct host_instance *hi,             \
+        int NAME(struct exec_context *ctx, struct host_instance *hi,          \
                  const struct functype *ft, const struct cell *params,        \
                  struct cell *results)
 
