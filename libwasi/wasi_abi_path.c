@@ -5,7 +5,6 @@
 #include <string.h>
 
 #include "endian.h"
-#include "exec.h"
 #include "nbio.h"
 #include "wasi_impl.h"
 #include "wasi_path_subr.h"

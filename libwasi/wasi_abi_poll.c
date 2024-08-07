@@ -5,7 +5,7 @@
 #include <string.h>
 
 #include "endian.h"
-#include "exec.h"
+#include "exec_context.h"
 #include "restart.h"
 #include "wasi_impl.h"
 #include "wasi_poll_subr.h"

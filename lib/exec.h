@@ -52,13 +52,6 @@ void rewind_stack(struct exec_context *ctx, uint32_t height, uint32_t arity);
 int invoke(struct funcinst *finst, const struct resulttype *paramtype,
            const struct resulttype *resulttype, struct exec_context *ctx);
 
-int check_interrupt(struct exec_context *ctx);
-int check_interrupt_interval_ms(struct exec_context *ctx);
-
-int vtrap(struct exec_context *ctx, enum trapid id, const char *fmt,
-          va_list ap);
-int trap_with_id(struct exec_context *ctx, enum trapid id, const char *fmt,
-                 ...) __attribute__((__format__(__printf__, 3, 4)));
 int memory_getptr(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
                   uint32_t offset, uint32_t size, void **pp);
 int memory_getptr2(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,

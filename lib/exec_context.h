@@ -346,4 +346,12 @@ int exec_push_vals(struct exec_context *ctx, const struct resulttype *rt,
 void exec_pop_vals(struct exec_context *ctx, const struct resulttype *rt,
                    struct val *results);
 
+int check_interrupt(struct exec_context *ctx);
+int check_interrupt_interval_ms(struct exec_context *ctx);
+
+int vtrap(struct exec_context *ctx, enum trapid id, const char *fmt,
+          va_list ap);
+int trap_with_id(struct exec_context *ctx, enum trapid id, const char *fmt,
+                 ...) __attribute__((__format__(__printf__, 3, 4)));
+
 __END_EXTERN_C

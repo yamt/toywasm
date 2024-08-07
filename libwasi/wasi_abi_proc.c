@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "exec.h"
+#include "exec_context.h"
 #include "wasi_impl.h"
 
 #include "wasi_hostfuncs.h"

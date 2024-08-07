@@ -8,7 +8,6 @@
 #include <string.h>
 
 #include "endian.h"
-#include "exec.h"
 #include "host_instance.h"
 #include "wasi_abi.h"
 #include "wasi_subr.h"
