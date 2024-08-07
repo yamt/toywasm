@@ -73,6 +73,9 @@ int memory_getptr(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
                   uint32_t offset, uint32_t size, void **pp);
 int memory_getptr2(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
                    uint32_t offset, uint32_t size, void **pp, bool *movedp);
+int memory_instance_getptr2(struct meminst *meminst, uint32_t ptr,
+                            uint32_t offset, uint32_t size, void **pp,
+                            bool *movedp);
 struct toywasm_mutex;
 int memory_atomic_getptr(struct exec_context *ctx, uint32_t memidx,
                          uint32_t ptr, uint32_t offset, uint32_t size,

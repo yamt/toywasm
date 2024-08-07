@@ -41,12 +41,9 @@ trap_with_id(struct exec_context *ctx, enum trapid id, const char *fmt, ...)
 }
 
 int
-memory_getptr2(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
-               uint32_t offset, uint32_t size, void **pp, bool *movedp)
+memory_instance_getptr2(struct meminst *meminst, uint32_t ptr, uint32_t offset,
+                        uint32_t size, void **pp, bool *movedp)
 {
-        const struct instance *inst = ctx->instance;
-        assert(memidx < inst->module->nmems + inst->module->nimportedmems);
-        struct meminst *meminst = VEC_ELEM(inst->mems, memidx);
         assert(meminst->allocated <=
                (uint64_t)meminst->size_in_pages
                        << memtype_page_shift(meminst->type));
@@ -79,19 +76,8 @@ memory_getptr2(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
                 const uint32_t page_shift = memtype_page_shift(meminst->type);
                 uint32_t need_in_pages = (last_byte >> page_shift) + 1;
                 if (need_in_pages > meminst->size_in_pages) {
-                        int ret;
 do_trap:
-                        ret = trap_with_id(
-                                ctx, TRAP_OUT_OF_BOUNDS_MEMORY_ACCESS,
-                                "invalid memory access at %04" PRIx32
-                                " %08" PRIx32 " + %08" PRIx32 ", size %" PRIu32
-                                ", meminst size %" PRIu32
-                                ", pagesize %" PRIu32,
-                                memidx, ptr, offset, size,
-                                meminst->size_in_pages,
-                                1 << memtype_page_shift(meminst->type));
-                        assert(ret != 0); /* appease clang-tidy */
-                        return ret;
+                        return ETOYWASMTRAP;
                 }
                 /*
                  * Note: shared memories do never come here because
@@ -111,8 +97,8 @@ do_trap:
                         return ENOMEM;
                 }
                 meminst->data = np;
-                xlog_trace_insn("extend memory %" PRIu32 " from %zu to %zu",
-                                memidx, meminst->allocated, need);
+                xlog_trace_insn("extend memory from %zu to %zu",
+                                meminst->allocated, need);
                 if (movedp != NULL) {
                         *movedp = true;
                 }
@@ -121,12 +107,34 @@ do_trap:
                 meminst->allocated = need;
         }
 success:
-        xlog_trace_insn("memory access: at %04" PRIx32 " %08" PRIx32
-                        " + %08" PRIx32 ", size %" PRIu32
-                        ", meminst size %" PRIu32,
-                        memidx, ptr, offset, size, meminst->size_in_pages);
+        xlog_trace_insn("memory access: at %08" PRIx32 " + %08" PRIx32
+                        ", size %" PRIu32 ", meminst size %" PRIu32,
+                        ptr, offset, size, meminst->size_in_pages);
         *pp = meminst->data + ea;
         return 0;
+}
+
+int
+memory_getptr2(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
+               uint32_t offset, uint32_t size, void **pp, bool *movedp)
+{
+        const struct instance *inst = ctx->instance;
+        assert(memidx < inst->module->nmems + inst->module->nimportedmems);
+        struct meminst *meminst = VEC_ELEM(inst->mems, memidx);
+        int ret = memory_instance_getptr2(meminst, ptr, offset, size, pp,
+                                          movedp);
+
+        if (ret == ETOYWASMTRAP) {
+                ret = trap_with_id(
+                        ctx, TRAP_OUT_OF_BOUNDS_MEMORY_ACCESS,
+                        "invalid memory access at %04" PRIx32 " %08" PRIx32
+                        " + %08" PRIx32 ", size %" PRIu32
+                        ", meminst size %" PRIu32 ", pagesize %" PRIu32,
+                        memidx, ptr, offset, size, meminst->size_in_pages,
+                        1 << memtype_page_shift(meminst->type));
+                assert(ret != 0);
+        }
+        return ret;
 }
 
 int
