@@ -228,6 +228,17 @@ host_func_memory_getptr2(struct exec_context *ctx, uint32_t memidx,
 }
 
 int
+host_func_trap(struct exec_context *ctx, const char *fmt, ...)
+{
+        int ret;
+        va_list ap;
+        va_start(ap, fmt);
+        ret = vtrap(ctx, TRAP_MISC, fmt, ap);
+        va_end(ap);
+        return ret;
+}
+
+int
 schedule_call_from_hostfunc(struct exec_context *ctx,
                             struct restart_info *restart,
                             const struct funcinst *func)
