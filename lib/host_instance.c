@@ -160,18 +160,13 @@ int
 host_func_copyin(struct exec_context *ctx, void *hostaddr, uint32_t wasmaddr,
                  size_t len, size_t align)
 {
-        uint32_t memidx;
         void *p;
         int ret;
-        ret = cconv_default_memory(ctx, &memidx);
-        if (ret != 0) {
-                return ret;
-        }
         ret = host_func_check_align(ctx, wasmaddr, align);
         if (ret != 0) {
                 return ret;
         }
-        ret = memory_getptr(ctx, memidx, wasmaddr, 0, len, &p);
+        ret = host_func_getptr(ctx, wasmaddr, 0, len, &p);
         if (ret != 0) {
                 return ret;
         }
@@ -183,18 +178,13 @@ int
 host_func_copyout(struct exec_context *ctx, const void *hostaddr,
                   uint32_t wasmaddr, size_t len, size_t align)
 {
-        uint32_t memidx;
         void *p;
         int ret;
-        ret = cconv_default_memory(ctx, &memidx);
-        if (ret != 0) {
-                return ret;
-        }
         ret = host_func_check_align(ctx, wasmaddr, align);
         if (ret != 0) {
                 return ret;
         }
-        ret = memory_getptr(ctx, memidx, wasmaddr, 0, len, &p);
+        ret = host_func_getptr(ctx, wasmaddr, 0, len, &p);
         if (ret != 0) {
                 return ret;
         }
@@ -206,12 +196,7 @@ int
 host_func_getptr(struct exec_context *ctx, uint32_t ptr, uint32_t offset,
                  uint32_t size, void **pp)
 {
-        uint32_t memidx;
-        int ret = cconv_default_memory(ctx, &memidx);
-        if (ret != 0) {
-                return ret;
-        }
-        return memory_getptr(ctx, memidx, ptr, offset, size, pp);
+        return host_func_getptr2(ctx, ptr, offset, size, pp, NULL);
 }
 
 int
