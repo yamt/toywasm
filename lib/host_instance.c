@@ -166,7 +166,7 @@ host_func_copyin(struct exec_context *ctx, void *hostaddr, uint32_t wasmaddr,
         if (ret != 0) {
                 return ret;
         }
-        ret = host_func_getptr(ctx, wasmaddr, 0, len, &p);
+        ret = host_func_getptr(ctx, wasmaddr, len, &p);
         if (ret != 0) {
                 return ret;
         }
@@ -184,7 +184,7 @@ host_func_copyout(struct exec_context *ctx, const void *hostaddr,
         if (ret != 0) {
                 return ret;
         }
-        ret = host_func_getptr(ctx, wasmaddr, 0, len, &p);
+        ret = host_func_getptr(ctx, wasmaddr, len, &p);
         if (ret != 0) {
                 return ret;
         }
@@ -193,29 +193,29 @@ host_func_copyout(struct exec_context *ctx, const void *hostaddr,
 }
 
 int
-host_func_getptr(struct exec_context *ctx, uint32_t ptr, uint32_t offset,
-                 uint32_t size, void **pp)
+host_func_getptr(struct exec_context *ctx, uint32_t ptr, uint32_t size,
+                 void **pp)
 {
-        return host_func_getptr2(ctx, ptr, offset, size, pp, NULL);
+        return host_func_getptr2(ctx, ptr, size, pp, NULL);
 }
 
 int
-host_func_getptr2(struct exec_context *ctx, uint32_t ptr, uint32_t offset,
-                  uint32_t size, void **pp, bool *movedp)
+host_func_getptr2(struct exec_context *ctx, uint32_t ptr, uint32_t size,
+                  void **pp, bool *movedp)
 {
         struct meminst *meminst;
         int ret = cconv_default_memory(ctx, ctx->instance, &meminst);
         if (ret != 0) {
                 return ret;
         }
-        ret = memory_instance_getptr2(meminst, ptr, offset, size, pp, movedp);
+        ret = memory_instance_getptr2(meminst, ptr, 0, size, pp, movedp);
         if (ret == ETOYWASMTRAP) {
                 ret = trap_with_id(
                         ctx, TRAP_OUT_OF_BOUNDS_MEMORY_ACCESS,
                         "host function invalid memory access at %08" PRIx32
-                        " + %08" PRIx32 ", size %" PRIu32
-                        ", meminst size %" PRIu32 ", pagesize %" PRIu32,
-                        ptr, offset, size, meminst->size_in_pages,
+                        ", size %" PRIu32 ", meminst size %" PRIu32
+                        ", pagesize %" PRIu32,
+                        ptr, size, meminst->size_in_pages,
                         1 << memtype_page_shift(meminst->type));
                 assert(ret != 0);
         }
