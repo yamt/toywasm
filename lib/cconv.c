@@ -64,18 +64,20 @@ do_trap:
 
 int
 cconv_default_memory(struct exec_context *ctx, const struct instance *inst,
-                     uint32_t *memidxp)
+                     struct meminst **mip)
 {
         const struct module *m = inst->module;
+        uint32_t memidx;
         int ret;
         /*
          * XXX searching exports on each call can be too slow.
          */
         ret = module_find_export(m, &name_default_memory, EXTERNTYPE_MEMORY,
-                                 memidxp);
+                                 &memidx);
         if (ret != 0) {
                 return trap_with_id(ctx, TRAP_DEFAULT_MEMORY_NOT_FOUND,
                                     "default memory not found");
         }
+        *mip = VEC_ELEM(inst->mems, memidx);
         return 0;
 }
