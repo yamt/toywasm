@@ -103,7 +103,8 @@ retry:
         }
         hostchildfd = -1;
         uint32_t r = host_to_le32(wasichildfd);
-        host_ret = wasi_copyout(ctx, &r, retp, sizeof(r), WASI_U32_ALIGN);
+        host_ret = wasi_copyout(ctx, wasi_memory(wasi), &r, retp, sizeof(r),
+                                WASI_U32_ALIGN);
         if (host_ret != 0) {
                 /* XXX close wasichildfd? */
                 goto fail;
@@ -170,7 +171,8 @@ wasi_sock_recv(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        host_ret = wasi_copyin_iovec(ctx, iov_addr, iov_count, &hostiov, &ret);
+        host_ret = wasi_copyin_iovec(ctx, wasi_memory(wasi), iov_addr,
+                                     iov_count, &hostiov, &ret);
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
@@ -216,13 +218,15 @@ retry:
                 roflags = WASI_ROFLAG_RECV_DATA_TRUNCATED;
         }
         uint32_t r = host_to_le32(n);
-        host_ret = wasi_copyout(ctx, &r, retp, sizeof(r), WASI_U32_ALIGN);
+        host_ret = wasi_copyout(ctx, wasi_memory(wasi), &r, retp, sizeof(r),
+                                WASI_U32_ALIGN);
         if (host_ret != 0) {
                 goto fail;
         }
         uint16_t roflags_wasm = host_to_le16(roflags);
-        host_ret = wasi_copyout(ctx, &roflags_wasm, roflagsp,
-                                sizeof(roflags_wasm), WASI_U16_ALIGN);
+        host_ret =
+                wasi_copyout(ctx, wasi_memory(wasi), &roflags_wasm, roflagsp,
+                             sizeof(roflags_wasm), WASI_U16_ALIGN);
         if (host_ret != 0) {
                 goto fail;
         }
@@ -268,7 +272,8 @@ wasi_sock_send(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        host_ret = wasi_copyin_iovec(ctx, iov_addr, iov_count, &hostiov, &ret);
+        host_ret = wasi_copyin_iovec(ctx, wasi_memory(wasi), iov_addr,
+                                     iov_count, &hostiov, &ret);
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
@@ -298,7 +303,8 @@ retry:
                 goto fail;
         }
         uint32_t r = host_to_le32(n);
-        host_ret = wasi_copyout(ctx, &r, retp, sizeof(r), WASI_U32_ALIGN);
+        host_ret = wasi_copyout(ctx, wasi_memory(wasi), &r, retp, sizeof(r),
+                                WASI_U32_ALIGN);
         ret = 0;
 fail:
         wasi_fdinfo_release(wasi, fdinfo);

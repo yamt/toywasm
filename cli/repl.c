@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "cconv.h"
 #include "endian.h"
 #include "exec_context.h"
 #include "exec_debug.h"
@@ -680,6 +681,11 @@ repl_load_from_buf(struct repl_state *state, const char *modname,
                 report_clear(&report);
                 goto fail;
         }
+#if defined(TOYWASM_ENABLE_WASI)
+        if (state->wasi != NULL) {
+                wasi_instance_set_memory(state->wasi, cconv_default_memory(mod->inst));
+        }
+#endif
         ret = repl_exec_init(state, mod, trap_ok);
         if (ret != 0) {
                 xlog_printf("repl_exec_init failed\n");

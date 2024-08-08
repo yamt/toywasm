@@ -191,7 +191,8 @@ wasi_fd_write(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        host_ret = wasi_copyin_iovec(ctx, iov_addr, iov_count, &hostiov, &ret);
+        host_ret = wasi_copyin_iovec(ctx, wasi_memory(wasi), iov_addr,
+                                     iov_count, &hostiov, &ret);
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
@@ -210,7 +211,8 @@ retry:
                 goto fail;
         }
         uint32_t r = host_to_le32(n);
-        host_ret = wasi_copyout(ctx, &r, retp, sizeof(r), WASI_U32_ALIGN);
+        host_ret = wasi_copyout(ctx, wasi_memory(wasi), &r, retp, sizeof(r),
+                                WASI_U32_ALIGN);
         ret = 0;
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
@@ -248,7 +250,8 @@ wasi_fd_pwrite(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        host_ret = wasi_copyin_iovec(ctx, iov_addr, iov_count, &hostiov, &ret);
+        host_ret = wasi_copyin_iovec(ctx, wasi_memory(wasi), iov_addr,
+                                     iov_count, &hostiov, &ret);
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
@@ -267,7 +270,8 @@ retry:
                 goto fail;
         }
         uint32_t r = host_to_le32(n);
-        host_ret = wasi_copyout(ctx, &r, retp, sizeof(r), WASI_U32_ALIGN);
+        host_ret = wasi_copyout(ctx, wasi_memory(wasi), &r, retp, sizeof(r),
+                                WASI_U32_ALIGN);
         ret = 0;
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
@@ -304,7 +308,8 @@ wasi_fd_read(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        host_ret = wasi_copyin_iovec(ctx, iov_addr, iov_count, &hostiov, &ret);
+        host_ret = wasi_copyin_iovec(ctx, wasi_memory(wasi), iov_addr,
+                                     iov_count, &hostiov, &ret);
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
@@ -340,7 +345,8 @@ tty_hack:
                 goto fail;
         }
         uint32_t r = host_to_le32(n);
-        host_ret = wasi_copyout(ctx, &r, retp, sizeof(r), WASI_U32_ALIGN);
+        host_ret = wasi_copyout(ctx, wasi_memory(wasi), &r, retp, sizeof(r),
+                                WASI_U32_ALIGN);
         ret = 0;
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
@@ -378,7 +384,8 @@ wasi_fd_pread(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        host_ret = wasi_copyin_iovec(ctx, iov_addr, iov_count, &hostiov, &ret);
+        host_ret = wasi_copyin_iovec(ctx, wasi_memory(wasi), iov_addr,
+                                     iov_count, &hostiov, &ret);
         if (host_ret != 0 || ret != 0) {
                 goto fail;
         }
@@ -397,7 +404,8 @@ retry:
                 goto fail;
         }
         uint32_t r = host_to_le32(n);
-        host_ret = wasi_copyout(ctx, &r, retp, sizeof(r), WASI_U32_ALIGN);
+        host_ret = wasi_copyout(ctx, wasi_memory(wasi), &r, retp, sizeof(r),
+                                WASI_U32_ALIGN);
         ret = 0;
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
@@ -476,7 +484,8 @@ wasi_fd_readdir(struct exec_context *ctx, struct host_instance *hi,
                         break;
                 }
                 /* it's ok to return unaligned structure */
-                host_ret = wasi_copyout(ctx, &wde, buf, sizeof(wde), 1);
+                host_ret = wasi_copyout(ctx, wasi_memory(wasi), &wde, buf,
+                                        sizeof(wde), 1);
                 if (host_ret != 0) {
                         goto fail;
                 }
@@ -488,7 +497,8 @@ wasi_fd_readdir(struct exec_context *ctx, struct host_instance *hi,
                         n = buflen; /* signal buffer full */
                         break;
                 }
-                host_ret = wasi_copyout(ctx, d_name, buf, namlen, 1);
+                host_ret = wasi_copyout(ctx, wasi_memory(wasi), d_name, buf,
+                                        namlen, 1);
                 if (host_ret != 0) {
                         goto fail;
                 }
@@ -497,7 +507,8 @@ wasi_fd_readdir(struct exec_context *ctx, struct host_instance *hi,
         }
         toywasm_mutex_unlock(&wasi->lock);
         uint32_t r = host_to_le32(n);
-        host_ret = wasi_copyout(ctx, &r, retp, sizeof(r), WASI_U32_ALIGN);
+        host_ret = wasi_copyout(ctx, wasi_memory(wasi), &r, retp, sizeof(r),
+                                WASI_U32_ALIGN);
 fail_unlocked:
         wasi_fdinfo_release(wasi, fdinfo);
         if (host_ret == 0) {
@@ -611,8 +622,8 @@ wasi_fd_fdstat_get(struct exec_context *ctx, struct host_instance *hi,
          */
         st.fs_rights_inheriting = ~UINT64_C(0);
 
-        host_ret = wasi_copyout(ctx, &st, stat_addr, sizeof(st),
-                                WASI_FDSTAT_ALIGN);
+        host_ret = wasi_copyout(ctx, wasi_memory(wasi), &st, stat_addr,
+                                sizeof(st), WASI_FDSTAT_ALIGN);
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
         if (host_ret == 0) {
@@ -717,8 +728,8 @@ wasi_fd_seek(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         uint64_t result = host_to_le64(off);
-        host_ret = wasi_copyout(ctx, &result, retp, sizeof(result),
-                                WASI_U64_ALIGN);
+        host_ret = wasi_copyout(ctx, wasi_memory(wasi), &result, retp,
+                                sizeof(result), WASI_U64_ALIGN);
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
         if (host_ret == 0) {
@@ -772,8 +783,8 @@ wasi_unstable_fd_seek(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         uint64_t result = host_to_le64(off);
-        host_ret = wasi_copyout(ctx, &result, retp, sizeof(result),
-                                WASI_U64_ALIGN);
+        host_ret = wasi_copyout(ctx, wasi_memory(wasi), &result, retp,
+                                sizeof(result), WASI_U64_ALIGN);
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
         if (host_ret == 0) {
@@ -811,8 +822,8 @@ wasi_fd_tell(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         uint64_t result = host_to_le64(off);
-        host_ret = wasi_copyout(ctx, &result, retp, sizeof(result),
-                                WASI_U64_ALIGN);
+        host_ret = wasi_copyout(ctx, wasi_memory(wasi), &result, retp,
+                                sizeof(result), WASI_U64_ALIGN);
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
         if (host_ret == 0) {
@@ -980,8 +991,8 @@ wasi_fd_filestat_get(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        host_ret = wasi_copyout(ctx, &wst, retp, sizeof(wst),
-                                WASI_FILESTAT_ALIGN);
+        host_ret = wasi_copyout(ctx, wasi_memory(wasi), &wst, retp,
+                                sizeof(wst), WASI_FILESTAT_ALIGN);
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
         if (host_ret == 0) {
@@ -1020,8 +1031,8 @@ wasi_unstable_fd_filestat_get(struct exec_context *ctx,
         if (ret != 0) {
                 goto fail;
         }
-        host_ret = wasi_copyout(ctx, &uwst, retp, sizeof(uwst),
-                                WASI_UNSTABLE_FILESTAT_ALIGN);
+        host_ret = wasi_copyout(ctx, wasi_memory(wasi), &uwst, retp,
+                                sizeof(uwst), WASI_UNSTABLE_FILESTAT_ALIGN);
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
         if (host_ret == 0) {

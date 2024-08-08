@@ -76,7 +76,8 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
         fdinfo = NULL;
         xlog_trace("-> new wasi fd %" PRIu32, wasifd);
         uint32_t r = host_to_le32(wasifd);
-        host_ret = wasi_copyout(ctx, &r, retp, sizeof(r), WASI_U32_ALIGN);
+        host_ret = wasi_copyout(ctx, wasi_memory(wasi), &r, retp, sizeof(r),
+                                WASI_U32_ALIGN);
         if (host_ret != 0) {
                 /* XXX close wasifd? */
                 goto fail;
@@ -209,7 +210,8 @@ wasi_path_symlink(struct exec_context *ctx, struct host_instance *hi,
                 ret = ENOMEM;
                 goto fail;
         }
-        host_ret = wasi_copyin(ctx, target_buf, target, targetlen, 1);
+        host_ret = wasi_copyin(ctx, wasi_memory(wasi), target_buf, target,
+                               targetlen, 1);
         if (host_ret != 0) {
                 goto fail;
         }
@@ -267,7 +269,7 @@ wasi_path_readlink(struct exec_context *ctx, struct host_instance *hi,
          * https://github.com/bytecodealliance/wasmtime/commit/24b607cf751930c51f2b6449cdfbf2e81dce1c31
          */
         void *p;
-        host_ret = host_func_getptr(ctx, buf, buflen, &p);
+        host_ret = host_func_getptr(ctx, wasi_memory(wasi), buf, buflen, &p);
         if (host_ret != 0) {
                 goto fail;
         }
@@ -277,8 +279,8 @@ wasi_path_readlink(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         uint32_t result = le32_to_host(n);
-        host_ret = wasi_copyout(ctx, &result, retp, sizeof(result),
-                                WASI_U32_ALIGN);
+        host_ret = wasi_copyout(ctx, wasi_memory(wasi), &result, retp,
+                                sizeof(result), WASI_U32_ALIGN);
         if (host_ret != 0) {
                 goto fail;
         }
@@ -412,8 +414,8 @@ wasi_path_filestat_get(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        host_ret = wasi_copyout(ctx, &wst, retp, sizeof(wst),
-                                WASI_FILESTAT_ALIGN);
+        host_ret = wasi_copyout(ctx, wasi_memory(wasi), &wst, retp,
+                                sizeof(wst), WASI_FILESTAT_ALIGN);
 fail:
         path_clear(wasi, &pi);
         if (host_ret == 0) {
@@ -461,8 +463,8 @@ wasi_unstable_path_filestat_get(struct exec_context *ctx,
         if (ret != 0) {
                 goto fail;
         }
-        host_ret = wasi_copyout(ctx, &uwst, retp, sizeof(uwst),
-                                WASI_UNSTABLE_FILESTAT_ALIGN);
+        host_ret = wasi_copyout(ctx, wasi_memory(wasi), &uwst, retp,
+                                sizeof(uwst), WASI_UNSTABLE_FILESTAT_ALIGN);
 fail:
         path_clear(wasi, &pi);
         if (host_ret == 0) {
