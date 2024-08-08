@@ -40,8 +40,8 @@ wasi_fd_prestat_get(struct exec_context *ctx, struct host_instance *hi,
                 prestat_path = fdinfo_prestat->wasm_path;
         }
         st.dir_name_len = host_to_le32(strlen(prestat_path));
-        host_ret =
-                wasi_copyout(ctx, &st, retp, sizeof(st), WASI_PRESTAT_ALIGN);
+        host_ret = wasi_copyout(ctx, wasi_memory(wasi), &st, retp, sizeof(st),
+                                WASI_PRESTAT_ALIGN);
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
         if (host_ret == 0) {
@@ -89,7 +89,8 @@ wasi_fd_prestat_dir_name(struct exec_context *ctx, struct host_instance *hi,
                 ret = EINVAL;
                 goto fail;
         }
-        host_ret = wasi_copyout(ctx, prestat_path, path, len, 1);
+        host_ret = wasi_copyout(ctx, wasi_memory(wasi), prestat_path, path,
+                                len, 1);
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
         if (host_ret == 0) {

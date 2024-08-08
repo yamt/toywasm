@@ -52,7 +52,7 @@ retry:
         if (host_ret != 0) {
                 goto fail;
         }
-        host_ret = host_func_getptr(ctx, in, insize, &p);
+        host_ret = host_func_getptr(ctx, wasi_memory(wasi), in, insize, &p);
         if (host_ret != 0) {
                 goto fail;
         }
@@ -63,7 +63,8 @@ retry:
         if (host_ret != 0) {
                 goto fail;
         }
-        host_ret = host_func_getptr2(ctx, out, outsize, &p, &moved);
+        host_ret = host_func_getptr2(ctx, wasi_memory(wasi), out, outsize, &p,
+                                     &moved);
         if (host_ret != 0) {
                 goto fail;
         }
@@ -222,8 +223,8 @@ retry:
         }
         assert(events + nevents == ev);
         uint32_t result = host_to_le32(nevents);
-        host_ret = wasi_copyout(ctx, &result, retp, sizeof(result),
-                                WASI_U32_ALIGN);
+        host_ret = wasi_copyout(ctx, wasi_memory(wasi), &result, retp,
+                                sizeof(result), WASI_U32_ALIGN);
         ret = 0;
 fail:
         for (i = 0; i < nfdinfos; i++) {

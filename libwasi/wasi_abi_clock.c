@@ -17,6 +17,7 @@ wasi_clock_res_get(struct exec_context *ctx, struct host_instance *hi,
                    struct cell *results)
 {
         WASI_TRACE;
+        struct wasi_instance *wasi = (void *)hi;
         HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t clockid = HOST_FUNC_PARAM(ft, params, 0, i32);
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 1, i32);
@@ -35,8 +36,8 @@ wasi_clock_res_get(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         uint64_t result = host_to_le64(timespec_to_ns(&ts));
-        host_ret = wasi_copyout(ctx, &result, retp, sizeof(result),
-                                WASI_U64_ALIGN);
+        host_ret = wasi_copyout(ctx, wasi_memory(wasi), &result, retp,
+                                sizeof(result), WASI_U64_ALIGN);
 fail:
         if (host_ret == 0) {
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
@@ -52,6 +53,7 @@ wasi_clock_time_get(struct exec_context *ctx, struct host_instance *hi,
                     struct cell *results)
 {
         WASI_TRACE;
+        struct wasi_instance *wasi = (void *)hi;
         HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t clockid = HOST_FUNC_PARAM(ft, params, 0, i32);
 #if 0 /* REVISIT what to do with the precision? */
@@ -73,8 +75,8 @@ wasi_clock_time_get(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         uint64_t result = host_to_le64(timespec_to_ns(&ts));
-        host_ret = wasi_copyout(ctx, &result, retp, sizeof(result),
-                                WASI_U64_ALIGN);
+        host_ret = wasi_copyout(ctx, wasi_memory(wasi), &result, retp,
+                                sizeof(result), WASI_U64_ALIGN);
 fail:
         if (host_ret == 0) {
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,

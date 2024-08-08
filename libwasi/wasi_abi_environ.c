@@ -19,8 +19,8 @@ args_environ_sizes_get(struct exec_context *ctx, struct wasi_instance *wasi,
         uint32_t argv_buf_sizep = HOST_FUNC_PARAM(ft, params, 1, i32);
         int host_ret;
         uint32_t argc_le32 = host_to_le32(argc);
-        host_ret = wasi_copyout(ctx, &argc_le32, argcp, sizeof(argc_le32),
-                                WASI_U32_ALIGN);
+        host_ret = wasi_copyout(ctx, wasi_memory(wasi), &argc_le32, argcp,
+                                sizeof(argc_le32), WASI_U32_ALIGN);
         if (host_ret != 0) {
                 goto fail;
         }
@@ -30,8 +30,8 @@ args_environ_sizes_get(struct exec_context *ctx, struct wasi_instance *wasi,
                 argv_buf_size += strlen(argv[i]) + 1;
         }
         argv_buf_size = host_to_le32(argv_buf_size);
-        host_ret = wasi_copyout(ctx, &argv_buf_size, argv_buf_sizep,
-                                sizeof(argv_buf_size), 1);
+        host_ret = wasi_copyout(ctx, wasi_memory(wasi), &argv_buf_size,
+                                argv_buf_sizep, sizeof(argv_buf_size), 1);
 fail:
         if (host_ret == 0) {
                 int ret = 0; /* never fail */
@@ -69,13 +69,13 @@ args_environ_get(struct exec_context *ctx, struct wasi_instance *wasi,
         }
         for (i = 0; i < argc; i++) {
                 size_t sz = strlen(argv[i]) + 1;
-                host_ret = wasi_copyout(ctx, argv[i],
+                host_ret = wasi_copyout(ctx, wasi_memory(wasi), argv[i],
                                         le32_to_host(wasm_argv[i]), sz, 1);
                 if (host_ret != 0) {
                         goto fail;
                 }
         }
-        host_ret = wasi_copyout(ctx, wasm_argv, argvp,
+        host_ret = wasi_copyout(ctx, wasi_memory(wasi), wasm_argv, argvp,
                                 argc * sizeof(*wasm_argv), WASI_U32_ALIGN);
 fail:
         free(wasm_argv);

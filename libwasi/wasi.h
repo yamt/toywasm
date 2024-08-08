@@ -3,6 +3,7 @@
 struct wasi_instance;
 struct import_object;
 struct mem_context;
+struct meminst;
 
 __BEGIN_EXTERN_C
 
@@ -18,6 +19,7 @@ __BEGIN_EXTERN_C
 
 int wasi_instance_create(struct mem_context *mctx,
                          struct wasi_instance **instp);
+void wasi_instance_set_memory(struct wasi_instance *inst, struct meminst *mem);
 void wasi_instance_set_args(struct wasi_instance *inst, int argc,
                             const char *const *argv);
 void wasi_instance_set_environ(struct wasi_instance *inst, int nenvs,

@@ -43,7 +43,8 @@ wasi_copyin_and_convert_path(struct exec_context *ctx,
                 ret = ENOMEM;
                 goto fail;
         }
-        host_ret = wasi_copyin(ctx, wasmpath, path, pathlen, 1);
+        host_ret = wasi_copyin(ctx, wasi_memory(wasi), wasmpath, path, pathlen,
+                               1);
         if (host_ret != 0) {
                 goto fail;
         }

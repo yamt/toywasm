@@ -54,6 +54,8 @@ struct wasi_instance {
         struct wasi_table fdtable[WASI_NTABLES] GUARDED_VAR(
                 lock); /* indexed by wasi fd */
 
+        struct meminst *memory;
+
         int argc;
         const char *const *argv;
         int nenvs;
@@ -70,8 +72,9 @@ struct wasi_instance {
 
 uint32_t wasi_convert_errno(int host_errno);
 
-#define wasi_copyout(c, h, w, l, a) host_func_copyout(c, h, w, l, a)
-#define wasi_copyin(c, h, w, l, a) host_func_copyin(c, h, w, l, a)
+#define wasi_copyout(c, m, h, w, l, a) host_func_copyout(c, m, h, w, l, a)
+#define wasi_copyin(c, m, h, w, l, a) host_func_copyin(c, m, h, w, l, a)
+#define wasi_memory(i) (i)->memory
 
 struct exec_context;
 struct wasi_instance;

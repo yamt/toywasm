@@ -59,8 +59,9 @@ fail:
 }
 
 int
-wasi_copyin_iovec(struct exec_context *ctx, uint32_t iov_uaddr,
-                  uint32_t iov_count, struct iovec **resultp, int *usererrorp)
+wasi_copyin_iovec(struct exec_context *ctx, struct meminst *mem,
+                  uint32_t iov_uaddr, uint32_t iov_count,
+                  struct iovec **resultp, int *usererrorp)
 {
         struct iovec *hostiov = NULL;
         void *p;
@@ -80,7 +81,7 @@ retry:
         if (host_ret != 0) {
                 goto fail;
         }
-        host_ret = host_func_getptr(ctx, iov_uaddr,
+        host_ret = host_func_getptr(ctx, mem, iov_uaddr,
                                     iov_count * sizeof(struct wasi_iov), &p);
         if (host_ret != 0) {
                 goto fail;
@@ -93,8 +94,8 @@ retry:
                 uint32_t iov_len = le32_decode(&iov_in_module[i].iov_len);
                 xlog_trace("iov [%" PRIu32 "] base %" PRIx32 " len %" PRIu32,
                            i, iov_base, iov_len);
-                host_ret =
-                        host_func_getptr2(ctx, iov_base, iov_len, &p, &moved);
+                host_ret = host_func_getptr2(ctx, mem, iov_base, iov_len, &p,
+                                             &moved);
                 if (host_ret != 0) {
                         goto fail;
                 }

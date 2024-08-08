@@ -24,12 +24,14 @@ wasi_random_get(struct exec_context *ctx, struct host_instance *hi,
                 struct cell *results)
 {
         WASI_TRACE;
+        struct wasi_instance *wasi = (void *)hi;
         HOST_FUNC_CONVERT_PARAMS(ft, params);
         uint32_t buf = HOST_FUNC_PARAM(ft, params, 0, i32);
         uint32_t buflen = HOST_FUNC_PARAM(ft, params, 1, i32);
         int ret = 0;
         void *p;
-        int host_ret = host_func_getptr(ctx, buf, buflen, &p);
+        int host_ret =
+                host_func_getptr(ctx, wasi_memory(wasi), buf, buflen, &p);
         if (host_ret != 0) {
                 goto fail;
         }
