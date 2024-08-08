@@ -85,7 +85,7 @@ assert_malloc_size(void *p, size_t sz)
 {
 #if !defined(NDEBUG) && defined(__APPLE__)
         size_t msz = malloc_size(p);
-        assert(msz == sz);
+        assert(msz >= sz); /* malloc_size can return larger */
 #endif
 }
 
