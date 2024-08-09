@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "cconv.h"
 #include "exec.h"
 #include "host_instance.h"
 #include "instance.h"
@@ -165,7 +166,7 @@ host_func_copyin(struct exec_context *ctx, void *hostaddr, uint32_t wasmaddr,
         if (ret != 0) {
                 return ret;
         }
-        ret = memory_getptr(ctx, 0, wasmaddr, 0, len, &p);
+        ret = host_func_getptr(ctx, wasmaddr, len, &p);
         if (ret != 0) {
                 return ret;
         }
@@ -183,7 +184,7 @@ host_func_copyout(struct exec_context *ctx, const void *hostaddr,
         if (ret != 0) {
                 return ret;
         }
-        ret = memory_getptr(ctx, 0, wasmaddr, 0, len, &p);
+        ret = host_func_getptr(ctx, wasmaddr, len, &p);
         if (ret != 0) {
                 return ret;
         }
@@ -191,40 +192,34 @@ host_func_copyout(struct exec_context *ctx, const void *hostaddr,
         return 0;
 }
 
-static int
-check_memidx(struct exec_context *ctx, uint32_t memidx)
+int
+host_func_getptr(struct exec_context *ctx, uint32_t ptr, uint32_t size,
+                 void **pp)
 {
-        const struct module *m = ctx->instance->module;
-        if (memidx < m->nmems + m->nimportedmems) {
-                return 0;
-        }
-        return trap_with_id(
-                ctx, TRAP_INVALID_MEMORY,
-                "access to invalid memidx %" PRIx32 " in a host call", memidx);
+        return host_func_getptr2(ctx, ptr, size, pp, NULL);
 }
 
 int
-host_func_memory_getptr(struct exec_context *ctx, uint32_t memidx,
-                        uint32_t ptr, uint32_t offset, uint32_t size,
-                        void **pp)
+host_func_getptr2(struct exec_context *ctx, uint32_t ptr, uint32_t size,
+                  void **pp, bool *movedp)
 {
-        int ret = check_memidx(ctx, memidx);
+        struct meminst *meminst;
+        int ret = cconv_default_memory(ctx, ctx->instance, &meminst);
         if (ret != 0) {
                 return ret;
         }
-        return memory_getptr(ctx, memidx, ptr, offset, size, pp);
-}
-
-int
-host_func_memory_getptr2(struct exec_context *ctx, uint32_t memidx,
-                         uint32_t ptr, uint32_t offset, uint32_t size,
-                         void **pp, bool *movedp)
-{
-        int ret = check_memidx(ctx, memidx);
-        if (ret != 0) {
-                return ret;
+        ret = memory_instance_getptr2(meminst, ptr, 0, size, pp, movedp);
+        if (ret == ETOYWASMTRAP) {
+                ret = trap_with_id(
+                        ctx, TRAP_OUT_OF_BOUNDS_MEMORY_ACCESS,
+                        "host function invalid memory access at %08" PRIx32
+                        ", size %" PRIu32 ", meminst size %" PRIu32
+                        ", pagesize %" PRIu32,
+                        ptr, size, meminst->size_in_pages,
+                        1 << memtype_page_shift(meminst->type));
+                assert(ret != 0);
         }
-        return memory_getptr2(ctx, memidx, ptr, offset, size, pp, movedp);
+        return ret;
 }
 
 int
