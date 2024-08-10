@@ -12,5 +12,8 @@
         "symlink_create": "this implementation doesn't care symlink contents",
         "symlink_filestat": "rights system not implemented.",
         "truncation_rights": "rights system not implemented."
+    },
+    "WASI threads proposal": {
+        "thread_spawn-simple": "https://github.com/WebAssembly/wasi-testsuite/pull/100"
     }
 }
