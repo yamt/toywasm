@@ -92,7 +92,7 @@ enum trapid {
         TRAP_UNCAUGHT_EXCEPTION,
         TRAP_THROW_REF_NULL,
         TRAP_UNRESOLVED_IMPORTED_FUNC,
-        TRAP_DEFAULT_MEMORY_NOT_FOUND,
+        TRAP_MEMORY_NOT_FOUND,
 };
 
 enum exec_event {

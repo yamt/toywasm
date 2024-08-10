@@ -206,9 +206,9 @@ host_func_getptr2(struct exec_context *ctx, struct meminst *mem, uint32_t ptr,
 {
         if (mem == NULL) {
                 return trap_with_id(
-                        ctx, TRAP_OUT_OF_BOUNDS_MEMORY_ACCESS,
+                        ctx, TRAP_MEMORY_NOT_FOUND,
                         "host function invalid memory access at %08" PRIx32
-                        ", size %" PRIu32 ", no memory",
+                        ", size %" PRIu32 ", no suitable memory",
                         ptr, size);
         }
         int ret = memory_instance_getptr2(mem, ptr, 0, size, pp, movedp);
