@@ -1,6 +1,6 @@
 #include <assert.h>
 #include <errno.h>
-#if !defined(_MSC_VER)
+#if !defined(__STDC_NO_ATOMICS__)
 #include <stdatomic.h>
 #endif
 #include <stdint.h>

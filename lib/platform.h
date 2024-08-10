@@ -177,7 +177,7 @@
         (a != 0 && (SIZE_MAX / a < b) ? 1 : (*c = a * b, 0))
 #endif
 
-#if defined(_MSC_VER)
+#if defined(__STDC_NO_ATOMICS__)
 #define _Atomic
 #define atomic_uint unsigned int
 #endif
