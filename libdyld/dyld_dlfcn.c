@@ -17,7 +17,6 @@
 #include "dyld_impl.h"
 #include "endian.h"
 #include "exec_context.h"
-#include "host_instance.h"
 #include "mem.h"
 #include "xlog.h"
 
@@ -75,9 +74,8 @@ dyld_dlfcn_load_object(struct exec_context *ctx, struct host_instance *hi,
         }
 
         void *vp;
-        ret = host_func_getptr(ctx, namep, namelen, &vp);
-        if (ret != 0) {
-                user_ret = 1;
+        host_ret = host_func_getptr(ctx, dyld_memory(d), namep, namelen, &vp);
+        if (host_ret != 0) {
                 goto fail;
         }
 
@@ -117,8 +115,8 @@ dyld_dlfcn_load_object(struct exec_context *ctx, struct host_instance *hi,
                 "dyld: dyld:load_object succeeded for %.*s, handle %" PRIu32,
                 CSTR(name), handle);
         uint32_t handle_le = host_to_le32(handle);
-        host_ret =
-                host_func_copyout(ctx, &handle_le, retp, sizeof(handle_le), 4);
+        host_ret = host_func_copyout(ctx, dyld_memory(d), &handle_le, retp,
+                                     sizeof(handle_le), 4);
         user_ret = 0;
 fail:
         if (host_ret == 0) {
@@ -169,9 +167,8 @@ dyld_dlfcn_resolve_symbol(struct exec_context *ctx, struct host_instance *hi,
         const struct dyld_dynamic_object *dobj = &VEC_ELEM(d->dynobjs, idx);
 
         void *vp;
-        ret = host_func_getptr(ctx, namep, namelen, &vp);
-        if (ret != 0) {
-                user_ret = 1;
+        host_ret = host_func_getptr(ctx, dyld_memory(d), namep, namelen, &vp);
+        if (host_ret != 0) {
                 goto fail;
         }
         struct name name;
@@ -198,7 +195,8 @@ dyld_dlfcn_resolve_symbol(struct exec_context *ctx, struct host_instance *hi,
                 "dyld: dyld:resolve_symbol succeeded for %.*s, addr %" PRIu32,
                 CSTR(&name), addr);
         uint32_t addr_le = host_to_le32(addr);
-        host_ret = host_func_copyout(ctx, &addr_le, retp, sizeof(addr_le), 4);
+        host_ret = host_func_copyout(ctx, dyld_memory(d), &addr_le, retp,
+                                     sizeof(addr_le), 4);
         user_ret = 0;
 fail:
         if (host_ret == 0) {

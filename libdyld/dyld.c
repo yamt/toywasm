@@ -671,7 +671,7 @@ dyld_object_destroy(struct dyld_object *obj)
 }
 
 static int
-dyld_execute_init_func(struct dyld_object *obj, const struct name *name)
+dyld_execute_obj_init_func1(struct dyld_object *obj, const struct name *name)
 {
         struct module *m = obj->module;
         uint32_t funcidx;
@@ -700,16 +700,21 @@ dyld_execute_init_func(struct dyld_object *obj, const struct name *name)
         return ret;
 }
 
+/*
+ * dyld_execute_obj_init_func:
+ *
+ * execute at most one of the init functions given by the names.
+ */
 static int
-dyld_execute_init_funcs(struct dyld_object *obj, const struct name *names,
-                        size_t nnames)
+dyld_execute_obj_init_func(struct dyld_object *obj, const struct name *names,
+                           size_t nnames)
 {
         xlog_trace("dyld: executing init funcs for object %.*s",
                    CSTR(obj->name));
         unsigned int i;
         for (i = 0; i < nnames; i++) {
                 const struct name *funcname = &names[i];
-                int ret = dyld_execute_init_func(obj, funcname);
+                int ret = dyld_execute_obj_init_func1(obj, funcname);
                 if (ret == ENOENT) {
                         xlog_trace("dyld: %.*s doesn't have %.*s",
                                    CSTR(obj->name), CSTR(funcname));
@@ -765,15 +770,15 @@ dyld_execute_all_init_funcs(struct dyld *d, struct dyld_object *start)
         }
 
         LIST_FOREACH(obj, &list, tq) {
-                int ret = dyld_execute_init_funcs(obj, reloc_funcs,
-                                                  ARRAYCOUNT(reloc_funcs));
+                int ret = dyld_execute_obj_init_func(obj, reloc_funcs,
+                                                     ARRAYCOUNT(reloc_funcs));
                 if (ret != 0) {
                         return ret;
                 }
         }
         LIST_FOREACH(obj, &list, tq) {
-                int ret = dyld_execute_init_funcs(obj, ctor_funcs,
-                                                  ARRAYCOUNT(ctor_funcs));
+                int ret = dyld_execute_obj_init_func(obj, ctor_funcs,
+                                                     ARRAYCOUNT(ctor_funcs));
                 if (ret != 0) {
                         return ret;
                 }
@@ -1374,14 +1379,17 @@ dyld_load(struct dyld *d, const char *filename)
                 global_set_i32(&d->heap_base, base);
                 global_set_i32(&d->heap_end, end);
         }
-        ret = dyld_execute_all_init_funcs(d, obj);
-        if (ret != 0) {
-                goto fail;
-        }
         return 0;
 fail:
         dyld_clear(d);
         return ret;
+}
+
+int
+dyld_execute_init_funcs(struct dyld *d)
+{
+        struct dyld_object *obj = LIST_FIRST(&d->objs);
+        return dyld_execute_all_init_funcs(d, obj);
 }
 
 void
@@ -1427,4 +1435,16 @@ dyld_main_object_instance(struct dyld *d)
 {
         const struct dyld_object *obj = LIST_FIRST(&d->objs);
         return obj->instance;
+}
+
+struct meminst *
+dyld_memory(struct dyld *d)
+{
+        return d->meminst;
+}
+
+struct tableinst *
+dyld_func_table(struct dyld *d)
+{
+        return d->tableinst;
 }
