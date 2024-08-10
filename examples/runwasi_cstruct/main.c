@@ -37,10 +37,10 @@ main(int argc, char **argv)
         }
         struct mem_context mctx;
         mem_context_init(&mctx);
-        ret = runwasi_module(&mctx, &g_wasm_module, a->ndirs, a->dirs, a->nenvs,
-                      (const char *const *)a->envs, a->argc,
-                      (const char *const *)a->argv, stdio_fds, NULL,
-                      &wasi_exit_code);
+        ret = runwasi_module(&mctx, &g_wasm_module, a->ndirs, a->dirs,
+                             a->nenvs, (const char *const *)a->envs, a->argc,
+                             (const char *const *)a->argv, stdio_fds, NULL,
+                             NULL, NULL, &wasi_exit_code);
         mem_context_clear(&mctx);
         free(a->dirs);
         free(a->envs);

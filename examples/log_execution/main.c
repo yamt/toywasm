@@ -51,7 +51,7 @@ main(int argc, char **argv)
         ret = runwasi(&mctx, a->filename, a->ndirs, a->dirs, a->nenvs,
                       (const char *const *)a->envs, a->argc,
                       (const char *const *)a->argv, stdio_fds, import_obj,
-                      &wasi_exit_code);
+                      NULL, NULL, &wasi_exit_code);
         import_object_destroy(&mctx, import_obj);
         mem_context_clear(&mctx);
         free(a->dirs);
