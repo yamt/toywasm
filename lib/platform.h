@@ -161,6 +161,10 @@
         (a != 0 && (SIZE_MAX / a < b) ? 1 : (*c = a * b, 0))
 #endif
 
+#if defined(_MSC_VER)
+#define _Atomic
+#endif
+
 #if !defined(__BEGIN_EXTERN_C)
 #if defined(__cplusplus)
 #define __BEGIN_EXTERN_C extern "C" {
