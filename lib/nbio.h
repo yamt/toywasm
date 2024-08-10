@@ -8,9 +8,6 @@
 
 __BEGIN_EXTERN_C
 
-int set_nonblocking(int fd, bool nonblocking, bool *orig);
-bool is_again(int error);
-
 /*
  * The following nbio_xxx functions are intended to be convenient
  * replacements of the corresponding libc functions, where
@@ -25,6 +22,10 @@ bool is_again(int error);
 int nbio_vfprintf(FILE *fp, const char *fmt, va_list ap);
 int nbio_fprintf(FILE *fp, const char *fmt, ...) __printflike(2, 3);
 int nbio_printf(const char *fmt, ...) __printflike(1, 2);
+#if !defined(_MSC_VER)
 ssize_t nbio_getline(char **linep, size_t *linecapp, FILE *fp);
+int set_nonblocking(int fd, bool nonblocking, bool *orig);
+bool is_again(int error);
+#endif
 
 __END_EXTERN_C
