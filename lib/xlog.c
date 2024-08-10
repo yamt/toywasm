@@ -33,6 +33,11 @@ int xlog_tracing = 0;
 void
 xlog_vprintf(const char *fmt, va_list ap)
 {
+#if defined(_MSC_VER)
+        flockfile(stderr);
+        nbio_vfprintf(stderr, fmt, ap);
+        funlockfile(stderr);
+#else
         struct timespec ts;
 
         clock_gettime(CLOCK_REALTIME, &ts);
@@ -51,6 +56,7 @@ xlog_vprintf(const char *fmt, va_list ap)
 #endif
         nbio_vfprintf(stderr, fmt, ap);
         funlockfile(stderr);
+#endif
 }
 
 void
