@@ -23,10 +23,8 @@ bool is_again(int error);
  *   the code (namely xlog and repl) needs to deal with non-blocking fds.
  */
 int nbio_vfprintf(FILE *fp, const char *fmt, va_list ap);
-int nbio_fprintf(FILE *fp, const char *fmt, ...)
-        __attribute__((__format__(__printf__, 2, 3)));
-int nbio_printf(const char *fmt, ...)
-        __attribute__((__format__(__printf__, 1, 2)));
+int nbio_fprintf(FILE *fp, const char *fmt, ...) __printflike(2, 3);
+int nbio_printf(const char *fmt, ...) __printflike(1, 2);
 ssize_t nbio_getline(char **linep, size_t *linecapp, FILE *fp);
 
 __END_EXTERN_C

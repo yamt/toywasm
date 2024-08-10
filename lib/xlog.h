@@ -3,16 +3,12 @@
 
 __BEGIN_EXTERN_C
 
-void xlog_printf(const char *, ...)
-        __attribute__((__format__(__printf__, 1, 2)));
+void xlog_printf(const char *, ...) __printflike(1, 2);
 
-void xlog_printf_raw(const char *, ...)
-        __attribute__((__format__(__printf__, 1, 2)));
+void xlog_printf_raw(const char *, ...) __printflike(1, 2);
 
-void xlog__trace(const char *, ...)
-        __attribute__((__format__(__printf__, 1, 2)));
-void xlog_error(const char *, ...)
-        __attribute__((__format__(__printf__, 1, 2)));
+void xlog__trace(const char *, ...) __printflike(1, 2);
+void xlog_error(const char *, ...) __printflike(1, 2);
 
 #if defined(TOYWASM_ENABLE_TRACING)
 extern int xlog_tracing;
