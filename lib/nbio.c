@@ -4,9 +4,11 @@
 
 #include <assert.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <limits.h>
+#if !defined(_MSC_VER)
+#include <fcntl.h>
 #include <poll.h>
+#endif
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -24,6 +26,7 @@
 #define funlockfile(f)
 #endif
 
+#if !defined(_MSC_VER)
 int
 set_nonblocking(int fd, bool nonblocking, bool *orig)
 {
@@ -52,10 +55,14 @@ is_again(int error)
         /* handle a BSD vs SYSV historical mess */
         return (error == EWOULDBLOCK || error == EAGAIN);
 }
+#endif
 
 int
 nbio_vfprintf(FILE *fp, const char *fmt, va_list ap)
 {
+#if defined(_MSC_VER)
+        return vfprintf(fp, fmt, ap);
+#else
         /*
          * XXX this implementation is effectively unbuffered.
          */
@@ -113,6 +120,7 @@ nbio_vfprintf(FILE *fp, const char *fmt, va_list ap)
         assert(written >= INT_MIN);
         errno = saved_errno;
         return (int)written;
+#endif
 }
 
 int
@@ -137,6 +145,7 @@ nbio_printf(const char *fmt, ...)
         return ret;
 }
 
+#if !defined(_MSC_VER)
 ssize_t
 nbio_getline(char **linep, size_t *linecapp, FILE *fp)
 {
@@ -159,3 +168,4 @@ nbio_getline(char **linep, size_t *linecapp, FILE *fp)
         assert(ret == 0); /* no good way to recover */
         return ssz;
 }
+#endif
