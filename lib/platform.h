@@ -179,6 +179,7 @@
 
 #if defined(_MSC_VER)
 #define _Atomic
+#define atomic_uint unsigned int
 #endif
 
 #if !defined(__BEGIN_EXTERN_C)
