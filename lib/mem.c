@@ -1,6 +1,8 @@
 #include <assert.h>
 #include <errno.h>
+#if !defined(_MSC_VER)
 #include <stdatomic.h>
+#endif
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
