@@ -1,4 +1,6 @@
+#if !defined(_MSC_VER)
 #include <stdatomic.h>
+#endif
 #include <stdbool.h>
 #include <stdint.h>
 
