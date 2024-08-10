@@ -38,9 +38,9 @@ cconv_deref_func_ptr(struct exec_context *ctx, const struct tableinst *t,
                      const struct funcinst **fip)
 {
         if (t == NULL) {
-                return trap_with_id(ctx,
-                                    TRAP_INDIRECT_FUNCTION_TABLE_NOT_FOUND,
-                                    "__indirect_function_table is not found");
+                return trap_with_id(
+                        ctx, TRAP_INDIRECT_FUNCTION_TABLE_NOT_FOUND,
+                        "no suitable table for indirect function table");
         }
         assert(t->type->et == TYPE_funcref);
         const struct funcinst *func;
