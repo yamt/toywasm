@@ -124,6 +124,13 @@ wasi_threads_instance_destroy(struct wasi_threads_instance *inst)
 }
 
 void
+wasi_threads_instance_set_memory(struct wasi_threads_instance *inst,
+                                 struct meminst *mem)
+{
+        inst->hi.memory = mem;
+}
+
+void
 wasi_threads_setup_exec_context(struct wasi_threads_instance *wasi_threads,
                                 struct exec_context *ctx)
 {
@@ -547,7 +554,8 @@ wasi_thread_spawn(struct exec_context *ctx, struct host_instance *hi,
                 le32_encode(&r.u.tid, tid);
         }
         HOST_FUNC_FREE_CONVERTED_PARAMS();
-        return host_func_copyout(ctx, &r, retp, sizeof(r), WASI_U32_ALIGN);
+        return host_func_copyout(ctx, host_func_memory(&wasi->hi), &r, retp,
+                                 sizeof(r), WASI_U32_ALIGN);
 }
 
 static int

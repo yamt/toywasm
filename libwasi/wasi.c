@@ -184,7 +184,7 @@ wasi_instance_create(struct mem_context *mctx,
 void
 wasi_instance_set_memory(struct wasi_instance *inst, struct meminst *mem)
 {
-        inst->memory = mem;
+        wasi_memory(inst) = mem;
 }
 
 void

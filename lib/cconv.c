@@ -3,24 +3,27 @@
  * a part of core wasm.
  */
 
+#include <assert.h>
+
 #include "cconv.h"
 #include "exec.h"
 #include "instance.h"
 #include "module.h"
 #include "type.h"
 
-static const struct name name_func_table =
-        NAME_FROM_CSTR_LITERAL("__indirect_function_table");
-
 /*
- * the export name "memory" is defined by wasi.
+ * the export name "memory" and "__indirect_function_table" are
+ * defined by wasi.
  * https://github.com/WebAssembly/WASI/blob/main/legacy/README.md
- * it's widely used for non-wasi interfaces as well.
+ * they are widely used for non-wasi interfaces as well.
  *
  * Note: some runtimes, including old versions of toywasm, assume
  * the memidx 0 even for wasi. it would end up with some
  * incompatibilities with multi-memory proposal.
  */
+
+static const struct name name_func_table =
+        NAME_FROM_CSTR_LITERAL("__indirect_function_table");
 static const struct name name_default_memory =
         NAME_FROM_CSTR_LITERAL("memory");
 
@@ -30,30 +33,18 @@ static const struct name name_default_memory =
  * raise a trap on an error.
  */
 int
-cconv_deref_func_ptr(struct exec_context *ctx, const struct instance *inst,
+cconv_deref_func_ptr(struct exec_context *ctx, const struct tableinst *t,
                      uint32_t wasmfuncptr, const struct functype *ft,
                      const struct funcinst **fip)
 {
-        const struct module *m = inst->module;
-        uint32_t tableidx;
-        int ret;
-        /*
-         * XXX searching exports on each call can be too slow.
-         */
-        ret = module_find_export(m, &name_func_table, EXTERNTYPE_TABLE,
-                                 &tableidx);
-        if (ret != 0) {
-do_trap:
+        if (t == NULL) {
                 return trap_with_id(ctx,
                                     TRAP_INDIRECT_FUNCTION_TABLE_NOT_FOUND,
                                     "__indirect_function_table is not found");
         }
-        const struct tableinst *t = VEC_ELEM(inst->tables, tableidx);
-        if (t->type->et != TYPE_funcref) {
-                goto do_trap;
-        }
+        assert(t->type->et == TYPE_funcref);
         const struct funcinst *func;
-        ret = table_get_func(ctx, t, wasmfuncptr, ft, &func);
+        int ret = table_get_func(ctx, t, wasmfuncptr, ft, &func);
         if (ret != 0) {
                 /* Note: table_get_func raises a trap inside */
                 return ret;
@@ -63,18 +54,31 @@ do_trap:
 }
 
 struct meminst *
-cconv_default_memory(const struct instance *inst)
+cconv_memory(const struct instance *inst)
 {
         const struct module *m = inst->module;
         uint32_t memidx;
-        int ret;
-        /*
-         * XXX searching exports on each call can be too slow.
-         */
-        ret = module_find_export(m, &name_default_memory, EXTERNTYPE_MEMORY,
-                                 &memidx);
+        int ret = module_find_export(m, &name_default_memory,
+                                     EXTERNTYPE_MEMORY, &memidx);
         if (ret != 0) {
                 return NULL;
         }
-		return VEC_ELEM(inst->mems, memidx);
+        return VEC_ELEM(inst->mems, memidx);
+}
+
+struct tableinst *
+cconv_func_table(const struct instance *inst)
+{
+        const struct module *m = inst->module;
+        uint32_t tableidx;
+        int ret = module_find_export(m, &name_func_table, EXTERNTYPE_TABLE,
+                                     &tableidx);
+        if (ret != 0) {
+                return NULL;
+        }
+        struct tableinst *t = VEC_ELEM(inst->tables, tableidx);
+        if (t->type->et != TYPE_funcref) {
+                return NULL;
+        }
+        return t;
 }
