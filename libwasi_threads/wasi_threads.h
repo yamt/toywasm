@@ -4,6 +4,7 @@
 
 struct wasi_threads_instance;
 struct import_object;
+struct meminst;
 struct sched;
 struct exec_context;
 struct trap_info;
@@ -13,6 +14,9 @@ __BEGIN_EXTERN_C
 void wasi_threads_instance_destroy(struct wasi_threads_instance *inst);
 int wasi_threads_instance_create(struct mem_context *mctx,
                                  struct wasi_threads_instance **instp);
+
+void wasi_threads_instance_set_memory(struct wasi_threads_instance *inst,
+                                      struct meminst *mem);
 
 /*
  * wasi_threads_instance_set_thread_spawn_args: set wasi-threads parameters

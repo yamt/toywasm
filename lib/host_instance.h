@@ -63,8 +63,12 @@ struct host_func {
 #endif
 
 struct host_instance {
-        int dummy;
+        struct meminst *memory;
+        struct tableinst *func_table;
 };
+
+#define host_func_memory(hi) (hi)->memory
+#define host_func_func_table(hi) (hi)->func_table
 
 struct host_module {
         const struct name *module_name;

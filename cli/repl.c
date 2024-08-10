@@ -589,6 +589,21 @@ fail:
         return ret;
 }
 
+static void
+set_memory(struct repl_state *state, struct meminst *mem)
+{
+#if defined(TOYWASM_ENABLE_WASI)
+        if (state->wasi != NULL) {
+                wasi_instance_set_memory(state->wasi, mem);
+        }
+#if defined(TOYWASM_ENABLE_WASI_THREADS)
+        if (state->wasi_threads != NULL) {
+                wasi_threads_instance_set_memory(state->wasi_threads, mem);
+        }
+#endif
+#endif
+}
+
 static int
 repl_load_from_buf(struct repl_state *state, const char *modname,
                    struct repl_module_state *mod, bool trap_ok)
@@ -681,11 +696,7 @@ repl_load_from_buf(struct repl_state *state, const char *modname,
                 report_clear(&report);
                 goto fail;
         }
-#if defined(TOYWASM_ENABLE_WASI)
-        if (state->wasi != NULL) {
-                wasi_instance_set_memory(state->wasi, cconv_default_memory(mod->inst));
-        }
-#endif
+        set_memory(state, cconv_memory(mod->inst));
         ret = repl_exec_init(state, mod, trap_ok);
         if (ret != 0) {
                 xlog_printf("repl_exec_init failed\n");
