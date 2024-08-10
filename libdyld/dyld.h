@@ -1,5 +1,6 @@
 #include <stdint.h>
 
+#include "host_instance.h"
 #include "list.h"
 #include "platform.h"
 #include "toywasm_config.h"
@@ -86,11 +87,16 @@ __BEGIN_EXTERN_C
 
 struct import_object;
 struct mem_context;
+struct meminst;
+struct tableinst;
 
 void dyld_init(struct dyld *d, struct mem_context *mctx);
 void dyld_clear(struct dyld *d);
 int dyld_load(struct dyld *d, const char *filename);
+int dyld_execute_init_funcs(struct dyld *d);
 struct instance *dyld_main_object_instance(struct dyld *d);
+struct meminst *dyld_memory(struct dyld *d);
+struct tableinst *dyld_func_table(struct dyld *d);
 void dyld_options_set_defaults(struct dyld_options *opts);
 int import_object_create_for_dyld(struct mem_context *mctx, struct dyld *d,
                                   struct import_object **impp);

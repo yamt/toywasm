@@ -744,6 +744,12 @@ toywasm_repl_load(struct repl_state *state, const char *modname,
                 if (ret != 0) {
                         return ret;
                 }
+                set_memory(state, dyld_memory(d));
+                ret = dyld_execute_init_funcs(d);
+                if (ret != 0) {
+                        dyld_clear(d);
+                        return ret;
+                }
                 state->modules.lsize++;
                 return 0;
         }
