@@ -3,6 +3,12 @@
 
 #include "platform.h"
 
+#if !defined(CLOCK_REALTIME)
+#define CLOCK_REALTIME 1
+#define CLOCK_MONOTONIC 2
+typedef int clockid_t;
+#endif
+
 struct timespec;
 
 __BEGIN_EXTERN_C
