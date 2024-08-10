@@ -1,4 +1,4 @@
-#if !defined(_MSC_VER)
+#if !defined(__STDC_NO_ATOMICS__)
 #include <stdatomic.h>
 #endif
 #include <stdbool.h>
