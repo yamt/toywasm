@@ -354,6 +354,6 @@ int check_interrupt_interval_ms(struct exec_context *ctx);
 int vtrap(struct exec_context *ctx, enum trapid id, const char *fmt,
           va_list ap);
 int trap_with_id(struct exec_context *ctx, enum trapid id, const char *fmt,
-                 ...) __attribute__((__format__(__printf__, 3, 4)));
+                 ...) __printflike(3, 4);
 
 __END_EXTERN_C

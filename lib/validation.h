@@ -88,7 +88,7 @@ int pop_ctrlframe(uint32_t pc, bool is_else, struct ctrlframe *cframe,
 void mark_unreachable(struct validation_context *ctx);
 const struct resulttype *label_types(const struct ctrlframe *cframe);
 int validation_failure(struct validation_context *ctx, const char *fmt, ...)
-        __attribute__((__format__(__printf__, 2, 3)));
+        __printflike(2, 3);
 struct resulttype *returntype(struct validation_context *ctx);
 void validation_context_init(struct validation_context *ctx);
 void validation_context_reuse(struct validation_context *ctx);
