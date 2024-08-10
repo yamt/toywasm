@@ -317,10 +317,12 @@ set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -fomit-frame-pointer")
 #set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Xclang -fmerge-functions")
 #set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -mllvm -mergefunc-use-aliases")
 
-if (NOT CMAKE_BUILD_TYPE MATCHES "Debug")
+if(NOT CMAKE_BUILD_TYPE MATCHES "Debug")
+if(CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_COMPILER_ID STREQUAL GNU)
 # Note: Release build disables assertions and thus yields a lot of
 # used variables. We are not interested in fixing them.
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unknown-warning-option -Wno-unused-but-set-variable -Wno-unused-variable -Wno-return-type")
+endif()
 endif()
 
 if(CMAKE_C_COMPILER_ID MATCHES "Clang")
