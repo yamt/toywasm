@@ -144,6 +144,14 @@
 #endif
 #endif /* !defined(__noinline) */
 
+#if !defined(__printflike)
+#if __has_attribute(__format__)
+#define __printflike(a, b) __attribute__((__format__(__printf__, a, b)))
+#else
+#define __printflike(a, b)
+#endif
+#endif /* !defined(__printflike) */
+
 #if __has_builtin(__builtin_add_overflow)
 #define ADD_U32_OVERFLOW(a, b, c) __builtin_add_overflow(a, b, c)
 #else
