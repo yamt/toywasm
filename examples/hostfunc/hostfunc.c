@@ -20,7 +20,8 @@ print_backtrace(const char *func, const struct exec_context *ctx)
 }
 
 static int
-load(struct exec_context *ctx, uint32_t pp, uint32_t *resultp)
+load(struct exec_context *ctx, struct host_instance *hi, uint32_t pp,
+     uint32_t *resultp)
 {
         int host_ret;
         uint32_t le32;
@@ -29,19 +30,21 @@ load(struct exec_context *ctx, uint32_t pp, uint32_t *resultp)
          * *resultp = *(*pp)++
          */
 
-        host_ret = host_func_copyin(ctx, &le32, pp, 4, 4);
+        host_ret =
+                host_func_copyin(ctx, host_func_memory(hi), &le32, pp, 4, 4);
         if (host_ret != 0) {
                 goto fail;
         }
         uint32_t p = le32_to_host(le32);
-        host_ret = host_func_copyin(ctx, &le32, p, 4, 4);
+        host_ret = host_func_copyin(ctx, host_func_memory(hi), &le32, p, 4, 4);
         if (host_ret != 0) {
                 goto fail;
         }
         uint32_t result = le32_to_host(le32);
         p += 4;
         le32 = host_to_le32(p);
-        host_ret = host_func_copyout(ctx, &le32, pp, 4, 4);
+        host_ret =
+                host_func_copyout(ctx, host_func_memory(hi), &le32, pp, 4, 4);
         if (host_ret != 0) {
                 goto fail;
         }
@@ -51,18 +54,18 @@ fail:
 }
 
 static int
-load_func(struct exec_context *ctx, const struct functype *ft, uint32_t pp,
-          const struct funcinst **fip)
+load_func(struct exec_context *ctx, struct host_instance *hi,
+          const struct functype *ft, uint32_t pp, const struct funcinst **fip)
 {
         int host_ret;
         uint32_t funcptr;
-        host_ret = load(ctx, pp, &funcptr);
+        host_ret = load(ctx, hi, pp, &funcptr);
         if (host_ret != 0) {
                 goto fail;
         }
         const struct funcinst *func;
-        host_ret =
-                cconv_deref_func_ptr(ctx, ctx->instance, funcptr, ft, &func);
+        host_ret = cconv_deref_func_ptr(ctx, host_func_func_table(hi), funcptr,
+                                        ft, &func);
         if (host_ret != 0) {
                 goto fail;
         }
@@ -83,7 +86,7 @@ my_host_inst_load(struct exec_context *ctx, struct host_instance *hi,
         print_backtrace(__func__, ctx);
 
         uint32_t result;
-        host_ret = load(ctx, pp, &result);
+        host_ret = load(ctx, hi, pp, &result);
         if (host_ret == 0) {
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32, result);
         }
@@ -103,7 +106,7 @@ my_host_inst_load_call(struct exec_context *ctx, struct host_instance *hi,
         print_backtrace(__func__, ctx);
 
         const struct funcinst *func;
-        host_ret = load_func(ctx, ft, pp, &func);
+        host_ret = load_func(ctx, hi, ft, pp, &func);
         if (host_ret != 0) {
                 goto fail;
         }
@@ -182,7 +185,7 @@ my_host_inst_load_call_add(struct exec_context *ctx, struct host_instance *hi,
                  * ours. (ft)
                  */
                 const struct funcinst *func;
-                host_ret = load_func(ctx, ft, pp, &func);
+                host_ret = load_func(ctx, hi, ft, pp, &func);
                 if (host_ret != 0) {
                         goto fail;
                 }

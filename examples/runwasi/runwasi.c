@@ -1,3 +1,4 @@
+#include <toywasm/cconv.h>
 #include <toywasm/exec_context.h>
 #include <toywasm/fileio.h>
 #include <toywasm/instance.h>
@@ -11,11 +12,14 @@
 #include "runwasi.h"
 
 int
-runwasi_module(struct mem_context *mctx, const struct module *m,
-               unsigned int ndirs, char **dirs, unsigned int nenvs,
-               const char *const *envs, int argc, const char *const *argv,
-               const int stdio_fds[3], struct import_object *base_imports,
-               uint32_t *wasi_exit_code_p)
+runwasi_module(
+        struct mem_context *mctx, const struct module *m, unsigned int ndirs,
+        char **dirs, unsigned int nenvs, const char *const *envs, int argc,
+        const char *const *argv, const int stdio_fds[3],
+        struct import_object *base_imports,
+        void (*set_host_instance_resources)(void *hi_arg, struct meminst *mem,
+                                            struct tableinst *func_table),
+        void *hi_arg, uint32_t *wasi_exit_code_p)
 {
         struct wasi_instance *wasi = NULL;
         struct import_object *wasi_import_object = NULL;
@@ -93,6 +97,13 @@ runwasi_module(struct mem_context *mctx, const struct module *m,
         }
         report_clear(&report);
 
+        struct meminst *mem = cconv_memory(inst);
+        struct tableinst *func_table = cconv_func_table(inst);
+        wasi_instance_set_memory(wasi, mem);
+        if (set_host_instance_resources != NULL) {
+                set_host_instance_resources(hi_arg, mem, func_table);
+        }
+
         /*
          * execute the module
          */
@@ -140,7 +151,10 @@ int
 runwasi(struct mem_context *mctx, const char *filename, unsigned int ndirs,
         char **dirs, unsigned int nenvs, const char *const *envs, int argc,
         const char *const *argv, const int stdio_fds[3],
-        struct import_object *base_imports, uint32_t *wasi_exit_code_p)
+        struct import_object *base_imports,
+        void (*set_host_instance_resources)(void *hi_arg, struct meminst *mem,
+                                            struct tableinst *func_table),
+        void *hi_arg, uint32_t *wasi_exit_code_p)
 {
         struct module *m = NULL;
         int ret;
@@ -167,7 +181,9 @@ runwasi(struct mem_context *mctx, const char *filename, unsigned int ndirs,
         load_context_clear(&lctx);
 
         ret = runwasi_module(mctx, m, ndirs, dirs, nenvs, envs, argc, argv,
-                             stdio_fds, base_imports, wasi_exit_code_p);
+                             stdio_fds, base_imports,
+                             set_host_instance_resources, hi_arg,
+                             wasi_exit_code_p);
 
 fail:
         if (m != NULL) {

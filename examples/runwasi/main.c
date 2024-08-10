@@ -37,8 +37,8 @@ main(int argc, char **argv)
         mem_context_init(&mctx);
         ret = runwasi(&mctx, a->filename, a->ndirs, a->dirs, a->nenvs,
                       (const char *const *)a->envs, a->argc,
-                      (const char *const *)a->argv, stdio_fds, NULL,
-                      &wasi_exit_code);
+                      (const char *const *)a->argv, stdio_fds, NULL, NULL,
+                      NULL, &wasi_exit_code);
         mem_context_clear(&mctx);
         free(a->dirs);
         free(a->envs);
