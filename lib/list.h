@@ -62,7 +62,7 @@ __END_EXTERN_C
 #if defined(toywasm_typeof)
 #define CHECK_TYPE(a, b)                                                      \
         do {                                                                  \
-                __attribute__((__unused__)) toywasm_typeof(a) *__dummy = &b;  \
+                __unused toywasm_typeof(a) *__dummy = &b;                     \
         } while (0)
 #else
 #define CHECK_TYPE(a, b)

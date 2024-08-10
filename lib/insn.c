@@ -569,7 +569,7 @@ schedule_exception(struct exec_context *ectx)
 #define INSN_IMPL(NAME)                                                       \
         static int process_##NAME(const uint8_t **pp, const uint8_t *ep,      \
                                   struct context *ctx)
-#define LOAD_PC const uint8_t *p __attribute__((__unused__)) = *pp
+#define LOAD_PC const uint8_t *p __unused = *pp
 #define SAVE_PC *pp = p
 #define RELOAD_PC
 #define SAVE_STACK_PTR
@@ -620,7 +620,7 @@ schedule_exception(struct exec_context *ectx)
 #define INSN_IMPL(NAME)                                                       \
         static int fetch_exec_##NAME(const uint8_t *p, struct cell *stack,    \
                                      struct exec_context *ctx)
-#define LOAD_PC const uint8_t *p0 __attribute__((__unused__)) = p
+#define LOAD_PC const uint8_t *p0 __unused = p
 #define SAVE_PC
 #define RELOAD_PC p = ctx->p
 #define SAVE_STACK_PTR ctx->stack.lsize = stack - ctx->stack.p
@@ -699,7 +699,7 @@ schedule_exception(struct exec_context *ectx)
                                    struct validation_context *ctx)
 #define LOAD_PC                                                               \
         xassert(ep != NULL);                                                  \
-        const uint8_t *p0 __attribute__((__unused__)) = p
+        const uint8_t *p0 __unused = p
 #define SAVE_PC
 #define RELOAD_PC
 #define SAVE_STACK_PTR
