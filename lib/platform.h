@@ -152,6 +152,14 @@
 #endif
 #endif /* !defined(__printflike) */
 
+#if !defined(__unused)
+#if __has_attribute(__unused__)
+#define __unused __attribute__((__unused__))
+#else
+#define __unused
+#endif
+#endif /* !defined(__unused) */
+
 #if __has_builtin(__builtin_add_overflow)
 #define ADD_U32_OVERFLOW(a, b, c) __builtin_add_overflow(a, b, c)
 #else
