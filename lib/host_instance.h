@@ -62,6 +62,10 @@ struct host_func {
         } while (0)
 #endif
 
+/*
+ * memory and func_table are only relevant to host functions
+ * following the C pointer conventions. (eg. wasip1)
+ */
 struct host_instance {
         struct meminst *memory;
         struct tableinst *func_table;
