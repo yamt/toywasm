@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include <time.h>
 
+#include "timeutil.h"
+
 /*
  * time_t overflow check in portable code is combersome because time_t
  * can be any integer types (posix) or even floating-point numeric types. (C)
