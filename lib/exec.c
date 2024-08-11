@@ -1183,7 +1183,13 @@ check_interrupt_interval_ms(struct exec_context *ctx)
 #define CHECK_INTERVAL_DEFAULT 1000
 #define CHECK_INTERVAL_MIN 1
 
-#if !defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION)
+#if !defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION) && !defined(_MSC_VER)
+#define ADJUST_CHECK_INTERVAL
+#else
+#undef ADJUST_CHECK_INTERVAL
+#endif
+
+#if defined(ADJUST_CHECK_INTERVAL)
 /*
  * the interpreter main loop calls check_interrupt() after
  * ctx->check_interval iteretations. however, how long an iteration
@@ -1219,7 +1225,7 @@ adjust_check_interval(struct exec_context *ctx, const struct timespec *now,
         xlog_trace("check_interval %" PRIu32, check_interval);
         ctx->check_interval = check_interval;
 }
-#endif /* !defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION) */
+#endif /* defined(ADJUST_CHECK_INTERVAL) */
 
 /*
  * REVISIT: probably it's cleaner to integrate into frame_exit
@@ -1262,7 +1268,7 @@ exec_expr(uint32_t funcidx, const struct expr *expr,
 int
 exec_expr_continue(struct exec_context *ctx)
 {
-#if !defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION)
+#if defined(ADJUST_CHECK_INTERVAL)
         struct timespec last;
         bool has_last = false;
 #endif
@@ -1345,7 +1351,7 @@ exec_expr_continue(struct exec_context *ctx)
                 }
                 n--;
                 if (__predict_false(n == 0)) {
-#if !defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION)
+#if defined(ADJUST_CHECK_INTERVAL)
                         struct timespec now;
                         ret = timespec_now(CLOCK_MONOTONIC, &now);
                         if (ret != 0) {
