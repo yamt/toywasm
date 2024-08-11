@@ -2,6 +2,7 @@
 #define _DARWIN_C_SOURCE /* vasprintf */
 #define _NETBSD_SOURCE   /* vasprintf */
 
+#include <assert.h>
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -14,7 +15,9 @@
 int
 vasprintf(char **resultp, const char *fmt, va_list ap)
 {
-        int ret = vsnprintf(NULL, 0, fmt, ap);
+        int ret;
+
+        ret = vsnprintf(NULL, 0, fmt, ap);
         if (ret < 0) {
                 return ret;
         }
@@ -23,7 +26,7 @@ vasprintf(char **resultp, const char *fmt, va_list ap)
         if (p == NULL) {
                 return -1;
         }
-        int ret = vsnprintf(p, bufsz, fmt, ap);
+        ret = vsnprintf(p, bufsz, fmt, ap);
         if (ret < 0) {
                 free(p);
                 return ret;
