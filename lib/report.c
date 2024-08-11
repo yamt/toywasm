@@ -10,6 +10,30 @@
 #include "report.h"
 #include "xlog.h"
 
+#if defined(_MSC_VER)
+int
+vasprintf(char **resultp, const char *fmt, va_list ap)
+{
+        int ret = vsnprintf(NULL, 0, fmt, ap);
+        if (ret < 0) {
+                return ret;
+        }
+        size_t bufsz = ret + 1; /* +1 for the terminating NUL */
+        char *p = malloc(bufsz);
+        if (p == NULL) {
+                return -1;
+        }
+        int ret = vsnprintf(p, bufsz, fmt, ap);
+        if (ret < 0) {
+                free(p);
+                return ret;
+        }
+        assert(ret + 1 == bufsz);
+        *resultp = p;
+        return ret;
+}
+#endif
+
 void
 vreport(struct report *r, const char *fmt, va_list ap)
 {
