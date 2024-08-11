@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include <toywasm/exec_context.h>
@@ -35,11 +36,13 @@ main(int argc, char **argv)
         /*
          * load a module
          */
+        fprintf(stderr, "reading a file %s...\n", filename);
         ret = map_file(filename, (void **)&p, &sz);
         if (ret != 0) {
                 xlog_error("map_file failed with %d", ret);
                 goto fail;
         }
+        fprintf(stderr, "reading the module...\n");
         struct load_context lctx;
         load_context_init(&lctx, mctx);
         ret = module_create(&m, p, p + sz, &lctx);
@@ -54,6 +57,8 @@ main(int argc, char **argv)
         /*
          * find the entry point
          */
+        fprintf(stderr, "looking for the exported function %s...\n",
+                func_name);
         uint32_t funcidx;
         struct name name;
         set_name_cstr(&name, func_name);
@@ -73,6 +78,7 @@ main(int argc, char **argv)
         /*
          * instantiate the module
          */
+        fprintf(stderr, "instantiating the modules...\n");
         struct report report;
         report_init(&report);
         ret = instance_create(mctx, m, &inst, NULL, &report);
@@ -87,6 +93,7 @@ main(int argc, char **argv)
         /*
          * execute the module
          */
+        fprintf(stderr, "executing the function...\n");
         struct exec_context ectx;
         exec_context_init(&ectx, inst, mctx);
         ret = instance_execute_func(&ectx, funcidx, pt, rt);
@@ -103,11 +110,13 @@ main(int argc, char **argv)
                 goto fail;
         }
         exec_context_clear(&ectx);
+        fprintf(stderr, "successfully executed the function!\n");
         ret = 0;
 fail:
         /*
          * clean up
          */
+        fprintf(stderr, "cleaning up...\n");
         if (inst != NULL) {
                 instance_destroy(inst);
         }
@@ -121,4 +130,5 @@ fail:
         if (ret != 0) {
                 exit(1);
         }
+        exit(0);
 }
