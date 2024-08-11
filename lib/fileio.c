@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <sys/stat.h>
 #if defined(_MSC_VER)
-#include <windows.h>
+#include <io.h>
 #define open _open
 #define O_RDONLY _O_RDONLY
 #define O_BINARY _O_BINARY
