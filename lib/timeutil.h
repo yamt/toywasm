@@ -19,6 +19,9 @@ int timespec_add(const struct timespec *a, const struct timespec *b,
 void timespec_sub(const struct timespec *a, const struct timespec *b,
                   struct timespec *c);
 int timespec_from_ns(struct timespec *a, uint64_t ns);
+uint64_t timespec_to_ms(const struct timespec *tv);
+
+#if !defined(_MSC_VER)
 int timespec_now(clockid_t id, struct timespec *a);
 
 int abstime_from_reltime_ns(clockid_t id, struct timespec *abstime,
@@ -30,7 +33,7 @@ int abstime_to_reltime_ms_roundup(clockid_t id, const struct timespec *abstime,
                                   int *reltime_ms);
 int convert_timespec(clockid_t from_id, clockid_t to_id,
                      const struct timespec *from_ts, struct timespec *result);
-uint64_t timespec_to_ms(const struct timespec *tv);
 int timespec_sleep(clockid_t id, const struct timespec *absto);
+#endif
 
 __END_EXTERN_C
