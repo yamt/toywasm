@@ -158,9 +158,9 @@ union v128 {
         double f64[2];
 };
 
-ctassert(sizeof(float) == 4, "float");
-ctassert(sizeof(double) == 8, "double");
-ctassert(sizeof(union v128) == 16, "v128");
+ctassert(sizeof(float) == 4);
+ctassert(sizeof(double) == 8);
+ctassert(sizeof(union v128) == 16);
 
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
 #if !defined(TOYWASM_USE_SMALL_CELLS)
@@ -244,8 +244,7 @@ struct val {
  * in that case, the last 4 byte of the structure is just an unused padding.
  */
 ctassert(sizeof(struct val) == VAL_NCELLS * 4 ||
-                 sizeof(struct val) == (VAL_NCELLS + 1) * 4,
-         "struct val");
+         sizeof(struct val) == (VAL_NCELLS + 1) * 4);
 #endif
 
 struct localchunk {
