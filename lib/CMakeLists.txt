@@ -128,7 +128,9 @@ foreach(F IN LISTS SANITIZER_FLAGS)
 endforeach()
 set_property(TARGET toywasm-lib-core PROPERTY PUBLIC_HEADER ${lib_core_headers})
 if(TOYWASM_USE_SHORT_ENUMS)
+if(CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_COMPILER_ID STREQUAL GNU)
 target_compile_options(toywasm-lib-core PUBLIC "-fshort-enums")
+endif()
 endif()
 
 # random things to experiment
