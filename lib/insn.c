@@ -238,7 +238,17 @@ clz(uint32_t v)
         if (v == 0) {
                 return 32;
         }
+#if __has_builtin(__builtin_clz)
         return __builtin_clz(v);
+#else
+        uint32_t cnt = 0;
+        uint32_t u = v;
+        while ((u & 0x80000000) == 0) {
+                cnt++;
+                u << 1;
+        }
+        return cnt;
+#endif
 }
 
 static uint32_t
@@ -247,7 +257,17 @@ ctz(uint32_t v)
         if (v == 0) {
                 return 32;
         }
+#if __has_builtin(__builtin_ctz)
         return __builtin_ctz(v);
+#else
+        uint32_t cnt = 0;
+        uint32_t u = v;
+        while ((u & 1) == 0) {
+                cnt++;
+                u >>= 1;
+        }
+        return cnt;
+#endif
 }
 
 static uint32_t
