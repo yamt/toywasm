@@ -13,6 +13,26 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: cmake configure
+      run: |
+        cmake -B build -DBUILD_TESTING=OFF -DTOYWASM_BUILD_CLI=OFF -DTOYWASM_BUILD_UNITTEST=OFF -DTOYWASM_ENABLE_WASI=OFF
+
+    - name: cmake -L
+      run: |
+        cmake -B build -L
+
+    - name: Build
+      run: cmake --build build
+
   build:
     env:
       CC: ${{matrix.compiler}}
