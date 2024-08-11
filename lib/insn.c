@@ -253,7 +253,17 @@ ctz(uint32_t v)
 static uint32_t
 wasm_popcount(uint32_t v)
 {
+#if __has_builtin(__builtin_popcount)
         return __builtin_popcount(v);
+#else
+        uint32_t cnt = 0;
+        uint32_t u = v;
+        while (u != 0) {
+                cnt++;
+                u &= u - 1;
+        }
+        return cnt;
+#endif
 }
 
 static uint64_t
