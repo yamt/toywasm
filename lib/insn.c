@@ -235,9 +235,6 @@ wasm_fmax(double a, double b)
 static uint32_t
 clz(uint32_t v)
 {
-        if (v == 0) {
-                return 32;
-        }
 #if __has_builtin(__builtin_clz)
         return __builtin_clz(v);
 #else
@@ -245,7 +242,7 @@ clz(uint32_t v)
         uint32_t u = v;
         while ((u & 0x80000000) == 0) {
                 cnt++;
-                u << 1;
+                u <<= 1;
         }
         return cnt;
 #endif
@@ -254,9 +251,6 @@ clz(uint32_t v)
 static uint32_t
 ctz(uint32_t v)
 {
-        if (v == 0) {
-                return 32;
-        }
 #if __has_builtin(__builtin_ctz)
         return __builtin_ctz(v);
 #else
@@ -268,6 +262,24 @@ ctz(uint32_t v)
         }
         return cnt;
 #endif
+}
+
+static uint32_t
+wasm_clz(uint32_t v)
+{
+        if (v == 0) {
+                return 32;
+        }
+        return clz(v);
+}
+
+static uint32_t
+wasm_ctz(uint32_t v)
+{
+        if (v == 0) {
+                return 32;
+        }
+        return ctz(v);
 }
 
 static uint32_t
@@ -287,29 +299,29 @@ wasm_popcount(uint32_t v)
 }
 
 static uint64_t
-clz64(uint64_t v)
+wasm_clz64(uint64_t v)
 {
         if (v == 0) {
                 return 64;
         }
         uint32_t high = v >> 32;
         if (high == 0) {
-                return 32 + __builtin_clz(v);
+                return 32 + clz(v);
         }
-        return __builtin_clz(high);
+        return clz(high);
 }
 
 static uint64_t
-ctz64(uint64_t v)
+wasm_ctz64(uint64_t v)
 {
         if (v == 0) {
                 return 64;
         }
         uint32_t low = (uint32_t)v;
         if (low == 0) {
-                return 32 + __builtin_ctz((uint32_t)(v >> 32));
+                return 32 + ctz((uint32_t)(v >> 32));
         }
-        return __builtin_ctz(low);
+        return ctz(low);
 }
 
 static uint64_t
