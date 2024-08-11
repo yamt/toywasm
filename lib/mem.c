@@ -3,6 +3,7 @@
 #if !defined(__STDC_NO_ATOMICS__)
 #include <stdatomic.h>
 #endif
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,6 +13,24 @@
 #endif
 
 #include "mem.h"
+
+#if defined(__STDC_NO_ATOMICS__)
+static size_t
+atomic_fetch_sub(size_t *p, size_t diff)
+{
+        size_t ov = *p;
+        *p -= diff;
+        return ov;
+}
+
+static bool
+atomic_compare_exchange_weak(size_t *p, size_t *ov, size_t nv)
+{
+        assert(*p == *ov);
+        *p = nv;
+        return true;
+}
+#endif
 
 #if defined(TOYWASM_ENABLE_HEAP_TRACKING)
 static void
