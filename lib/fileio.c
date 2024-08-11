@@ -10,6 +10,7 @@
 #define O_BINARY _O_BINARY
 #define read _read
 #define close _close
+typedef int ssize_t;
 #else
 #include <unistd.h>
 #define O_BINARY 0
