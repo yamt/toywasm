@@ -15,6 +15,7 @@ int
 main(int argc, char **argv)
 {
         uint8_t *p = NULL;
+        size_t sz = 0; /* MSVC C4701 */
         struct module *m = NULL;
         struct instance *inst = NULL;
         int ret;
@@ -34,7 +35,6 @@ main(int argc, char **argv)
         /*
          * load a module
          */
-        size_t sz;
         ret = map_file(filename, (void **)&p, &sz);
         if (ret != 0) {
                 xlog_error("map_file failed with %d", ret);
