@@ -4,6 +4,10 @@ include(../../cmake/LLVM.cmake)
 
 project(run LANGUAGES C)
 
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED YES)
+set(CMAKE_C_EXTENSIONS NO)
+
 if(CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_COMPILER_ID STREQUAL GNU)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wvla -Werror")
 endif()
