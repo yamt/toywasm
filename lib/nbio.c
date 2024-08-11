@@ -5,15 +5,15 @@
 #include <assert.h>
 #include <errno.h>
 #include <limits.h>
-#if !defined(_MSC_VER)
-#include <fcntl.h>
-#include <poll.h>
-#endif
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#if !defined(_MSC_VER)
+#include <fcntl.h>
+#include <poll.h>
 #include <unistd.h>
+#endif
 
 #include "nbio.h"
 
