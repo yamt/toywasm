@@ -24,8 +24,10 @@ int xlog_tracing = 0;
 /*
  * NuttX: https://github.com/apache/incubator-nuttx/pull/6152
  * WASI: https://github.com/WebAssembly/wasi-libc/pull/362
+ *
+ * windows doesn't seem to hawe flockfile either.
  */
-#if defined(__wasi__) || defined(__NuttX__)
+#if defined(__wasi__) || defined(__NuttX__) || defined(_MSC_VER)
 #define flockfile(f)
 #define funlockfile(f)
 #endif
