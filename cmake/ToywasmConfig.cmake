@@ -303,12 +303,16 @@ if(CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_COMPILER_ID STREQUAL GNU)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wvla -Werror")
 endif()
 if(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
+# C4018: '>': signed/unsigned mismatch
+# C4061: enumerator 'TYPE_ANYREF' in switch of enum 'valtype' is not explicitly handled by a case label
 # C4100: unreferenced formal parameter
 # C4127: conditional expression is constant
 # C4189: local variable is initialized but not referenced
 # C4244: '=': conversion from 'float' to 'uint32_t', possible loss of data
 # C4245: '=': conversion from 'int' to 'uint32_t', signed/unsigned mismatch
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Wall /WX /wd4100 /wd4127 /wd4189 /wd4244 /wd4245")
+# C4296: '>': expression is always false
+# C4820: 'exec_context': '7' bytes padding added after data member 'fast'
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Wall /WX /wd4018 /wd4061 /wd4100 /wd4127 /wd4189 /wd4244 /wd4245 /wd4296 /wd4820")
 endif()
 if(CMAKE_C_COMPILER_ID STREQUAL GNU)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unknown-pragmas")
