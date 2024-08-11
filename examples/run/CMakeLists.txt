@@ -22,4 +22,4 @@ set(sources
 )
 
 add_executable(run ${sources})
-target_link_libraries(run toywasm-lib-core m)
+target_link_libraries(run toywasm-lib-core)
