@@ -1,15 +1,19 @@
-#if defined(_MSC_VER)
-/*
- * REVISIT: should use _open etc?
- */
-#else
-
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stddef.h>
 #include <sys/stat.h>
+#if defined(_MSC_VER)
+#include <windows.h>
+#define open _open
+#define O_RDONLY _O_RDONLY
+#define O_BINARY _O_BINARY
+#define read _read
+#define close _close
+#else
 #include <unistd.h>
+#define O_BINARY 0
+#endif
 
 #include "fileio.h"
 #include "xlog.h"
@@ -21,7 +25,7 @@
  *
  * NuttX doesn't have working mmap.
  */
-#if defined(__wasi__) || defined(__NuttX__)
+#if defined(__wasi__) || defined(__NuttX__) || defined(_MSC_VER)
 
 #include <stdlib.h>
 
@@ -35,7 +39,7 @@ map_file(const char *path, void **pp, size_t *sizep)
         int ret;
 
         xlog_trace("opening %s", path);
-        fd = open(path, O_RDONLY);
+        fd = open(path, O_BINARY | O_RDONLY);
         if (fd == -1) {
                 ret = errno;
                 assert(ret != 0);
@@ -148,4 +152,3 @@ unmap_file(void *p, size_t sz)
 }
 
 #endif
-#endif /* _MSC_VER */
