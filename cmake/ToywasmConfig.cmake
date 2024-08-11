@@ -302,6 +302,14 @@ endif()
 if(CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_COMPILER_ID STREQUAL GNU)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wvla -Werror")
 endif()
+if(CMAKE_C_COMPILER_ID STREQUAL "MSVs")
+# C4100: unreferenced formal parameter
+# C4127: conditional expression is constant
+# C4189: local variable is initialized but not referenced
+# C4244: '=': conversion from 'float' to 'uint32_t', possible loss of data
+# C4245: '=': conversion from 'int' to 'uint32_t', signed/unsigned mismatch
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Wall /WX /wd4100 /wd4127 /wd4189 /wd4244 /wd4245")
+endif()
 if(CMAKE_C_COMPILER_ID STREQUAL GNU)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unknown-pragmas")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-maybe-uninitialized")
