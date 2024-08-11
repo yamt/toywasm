@@ -315,9 +315,11 @@ if(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
 # C4245: '=': conversion from 'int' to 'uint32_t', signed/unsigned mismatch
 # C4267: '=': conversion from 'size_t' to 'int', possible loss of data
 # C4296: '>': expression is always false
+# C4310: cast truncates constant value
+# C4388: '==': '==': signed/unsigned mismatch
 # C4389: '==': signed/unsigned mismatch
 # C4820: 'exec_context': '7' bytes padding added after data member 'fast'
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Wall /WX /wd4018 /wd4061 /wd4100 /wd4127 /wd4146 /wd4189 /wd4206 /wd4242 /wd4244 /wd4245 /wd4267 /wd4296 /wd4389 /wd4820")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Wall /WX /wd4018 /wd4061 /wd4100 /wd4127 /wd4146 /wd4189 /wd4206 /wd4242 /wd4244 /wd4245 /wd4267 /wd4296 /wd4310 /wd4388 /wd4389 /wd4820")
 endif()
 if(CMAKE_C_COMPILER_ID STREQUAL GNU)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unknown-pragmas")
