@@ -38,7 +38,7 @@ jobs:
 
     - name: Test examples/run
       run: |
-        cmake -B build
+        cmake -B build -DCMAKE_PREFIX_PATH=${{github.workspace}}/dist
         cmake --build build
         ./build/run ${{github.workspace}}/wat/fib.wasm test-all
       working-directory: ${{github.workspace}}/examples/run
