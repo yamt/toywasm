@@ -24,7 +24,7 @@ jobs:
 
     - name: cmake configure
       run: |
-        cmake -B build -DBUILD_TESTING=OFF -DTOYWASM_BUILD_CLI=OFF -DTOYWASM_BUILD_UNITTEST=OFF -DTOYWASM_ENABLE_WASI=OFF
+        cmake -B build -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/dist -DBUILD_TESTING=OFF -DTOYWASM_BUILD_CLI=OFF -DTOYWASM_BUILD_UNITTEST=OFF -DTOYWASM_ENABLE_WASI=OFF
 
     - name: cmake -L
       run: |
@@ -32,6 +32,16 @@ jobs:
 
     - name: Build
       run: cmake --build build
+
+    - name: Install
+      run: cmake --build build --target install
+
+    - name: Test examples/run
+      run: |
+        cmake -B build
+        cmake --build build
+        ./build/run ${{github.workspace}}/wat/fib.wasm test-all
+      working-directory: ${{github.workspace}}/examples/run
 
   build:
     env:
