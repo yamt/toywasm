@@ -383,8 +383,8 @@ CMPOP(i64_le_u, 64, uint64_t, <=)
 CMPOP(i64_ge_s, 64, int64_t, >=)
 CMPOP(i64_ge_u, 64, uint64_t, >=)
 
-BITCOUNTOP(i32_clz, i32, clz)
-BITCOUNTOP(i32_ctz, i32, ctz)
+BITCOUNTOP(i32_clz, i32, wasm_clz)
+BITCOUNTOP(i32_ctz, i32, wasm_ctz)
 BITCOUNTOP(i32_popcnt, i32, wasm_popcount)
 
 BINOP(i32_add, i, 32, ADD)
@@ -406,8 +406,8 @@ BINOP(i32_shr_u, i, 32, SHR_U)
 BINOP(i32_rotl, i, 32, ROTL)
 BINOP(i32_rotr, i, 32, ROTR)
 
-BITCOUNTOP(i64_clz, i64, clz64)
-BITCOUNTOP(i64_ctz, i64, ctz64)
+BITCOUNTOP(i64_clz, i64, wasm_clz64)
+BITCOUNTOP(i64_ctz, i64, wasm_ctz64)
 BITCOUNTOP(i64_popcnt, i64, wasm_popcount64)
 
 BINOP(i64_add, i, 64, ADD)
