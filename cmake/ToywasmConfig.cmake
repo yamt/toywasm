@@ -307,12 +307,17 @@ if(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
 # C4061: enumerator 'TYPE_ANYREF' in switch of enum 'valtype' is not explicitly handled by a case label
 # C4100: unreferenced formal parameter
 # C4127: conditional expression is constant
+# C4146: unary minus operator applied to unsigned type, result still unsigned
 # C4189: local variable is initialized but not referenced
+# C4206: nonstandard extension used: translation unit is empty
+# C4242: 'return': conversion from '__int64' to 'uint32_t', possible loss of data
 # C4244: '=': conversion from 'float' to 'uint32_t', possible loss of data
 # C4245: '=': conversion from 'int' to 'uint32_t', signed/unsigned mismatch
+# C4267: '=': conversion from 'size_t' to 'int', possible loss of data
 # C4296: '>': expression is always false
+# C4389: '==': signed/unsigned mismatch
 # C4820: 'exec_context': '7' bytes padding added after data member 'fast'
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Wall /WX /wd4018 /wd4061 /wd4100 /wd4127 /wd4189 /wd4244 /wd4245 /wd4296 /wd4820")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Wall /WX /wd4018 /wd4061 /wd4100 /wd4127 /wd4146 /wd4189 /wd4206 /wd4242 /wd4244 /wd4245 /wd4267 /wd4296 /wd4389 /wd4820")
 endif()
 if(CMAKE_C_COMPILER_ID STREQUAL GNU)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unknown-pragmas")
