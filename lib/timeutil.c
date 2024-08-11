@@ -111,6 +111,21 @@ timespec_from_ns(struct timespec *a, uint64_t ns)
         return 0;
 }
 
+uint64_t
+timespec_to_ms(const struct timespec *tv)
+{
+        if (UINT64_MAX / 1000 < (uint64_t)tv->tv_sec) {
+                return UINT64_MAX;
+        }
+        uint64_t ms1 = (uint64_t)tv->tv_sec * 1000;
+        uint64_t ms2 = tv->tv_nsec / 1000000;
+        if (UINT64_MAX - ms1 < ms2) {
+                return UINT64_MAX;
+        }
+        return ms1 + ms2;
+}
+
+#if !defined(_MSC_VER)
 int
 timespec_now(clockid_t id, struct timespec *a)
 {
@@ -223,20 +238,6 @@ fail:
         return ret;
 }
 
-uint64_t
-timespec_to_ms(const struct timespec *tv)
-{
-        if (UINT64_MAX / 1000 < (uint64_t)tv->tv_sec) {
-                return UINT64_MAX;
-        }
-        uint64_t ms1 = (uint64_t)tv->tv_sec * 1000;
-        uint64_t ms2 = tv->tv_nsec / 1000000;
-        if (UINT64_MAX - ms1 < ms2) {
-                return UINT64_MAX;
-        }
-        return ms1 + ms2;
-}
-
 /*
  * this should be similar to pthread_cond_timedwait with
  * a condvar which is never signalled.
@@ -266,3 +267,4 @@ timespec_sleep(clockid_t id, const struct timespec *absto)
                 }
         }
 }
+#endif
