@@ -302,7 +302,7 @@ endif()
 if(CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_COMPILER_ID STREQUAL GNU)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wvla -Werror")
 endif()
-if(CMAKE_C_COMPILER_ID STREQUAL "MSVs")
+if(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
 # C4100: unreferenced formal parameter
 # C4127: conditional expression is constant
 # C4189: local variable is initialized but not referenced
@@ -411,6 +411,7 @@ message(STATUS "CMAKE_AR: ${CMAKE_AR}")
 message(STATUS "CMAKE_C_COMPILER_AR: ${CMAKE_C_COMPILER_AR}")
 message(STATUS "CMAKE_RANLIB: ${CMAKE_RANLIB}")
 message(STATUS "CMAKE_C_COMPILER_RANLIB: ${CMAKE_C_COMPILER_RANLIB}")
+message(STATUS "CMAKE_C_FLAGS ${CMAKE_C_FLAGS}")
 message(STATUS "BUILD_TESTING: ${BUILD_TESTING}")
 message(STATUS "USE_IPO: ${USE_IPO}")
 message(STATUS "USE_ASAN: ${USE_ASAN}")
