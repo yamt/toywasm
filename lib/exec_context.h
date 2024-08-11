@@ -1,4 +1,4 @@
-#if !defined(__STDC_NO_ATOMICS__)
+#if __STDC_VERSION__ >= 201112L && !defined(__STDC_NO_ATOMICS__)
 #include <stdatomic.h>
 #endif
 #include <stdbool.h>

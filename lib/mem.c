@@ -1,6 +1,6 @@
 #include <assert.h>
 #include <errno.h>
-#if !defined(__STDC_NO_ATOMICS__)
+#if __STDC_VERSION__ >= 201112L && !defined(__STDC_NO_ATOMICS__)
 #include <stdatomic.h>
 #endif
 #include <stdbool.h>
@@ -14,7 +14,7 @@
 
 #include "mem.h"
 
-#if defined(__STDC_NO_ATOMICS__)
+#if __STDC_VERSION__ < 201112L || defined(__STDC_NO_ATOMICS__)
 static size_t
 atomic_fetch_sub(size_t *p, size_t diff)
 {
