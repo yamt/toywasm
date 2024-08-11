@@ -35,14 +35,14 @@
  *
  * Note: on i386, alignof(uint64_t) == 4.
  */
-ctassert(sizeof(_Atomic uint8_t) == sizeof(uint8_t), "atomic 8 size");
-ctassert(sizeof(_Atomic uint16_t) == sizeof(uint16_t), "atomic 16 size");
-ctassert(sizeof(_Atomic uint32_t) == sizeof(uint32_t), "atomic 32 size");
-ctassert(sizeof(_Atomic uint64_t) == sizeof(uint64_t), "atomic 64 size");
-ctassert(alignof(_Atomic uint8_t) <= 1, "atomic 8 align");
-ctassert(alignof(_Atomic uint16_t) <= 2, "atomic 16 align");
-ctassert(alignof(_Atomic uint32_t) <= 4, "atomic 32 align");
-ctassert(alignof(_Atomic uint64_t) <= 8, "atomic 64 align");
+ctassert(sizeof(_Atomic uint8_t) == sizeof(uint8_t));
+ctassert(sizeof(_Atomic uint16_t) == sizeof(uint16_t));
+ctassert(sizeof(_Atomic uint32_t) == sizeof(uint32_t));
+ctassert(sizeof(_Atomic uint64_t) == sizeof(uint64_t));
+ctassert(alignof(_Atomic uint8_t) <= 1);
+ctassert(alignof(_Atomic uint16_t) <= 2);
+ctassert(alignof(_Atomic uint32_t) <= 4);
+ctassert(alignof(_Atomic uint64_t) <= 8);
 
 void
 frame_clear(struct funcframe *frame)
