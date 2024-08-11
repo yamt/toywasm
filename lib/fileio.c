@@ -1,3 +1,9 @@
+#if defined(_MSC_VER)
+/*
+ * REVISIT: should use _open etc?
+ */
+#else
+
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -142,3 +148,4 @@ unmap_file(void *p, size_t sz)
 }
 
 #endif
+#endif /* _MSC_VER */
