@@ -305,6 +305,7 @@ endif()
 if(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
 # C4018: '>': signed/unsigned mismatch
 # C4061: enumerator 'TYPE_ANYREF' in switch of enum 'valtype' is not explicitly handled by a case label
+# C4065: switch statement contains 'default' but no 'case' labels
 # C4100: unreferenced formal parameter
 # C4127: conditional expression is constant
 # C4146: unary minus operator applied to unsigned type, result still unsigned
@@ -320,7 +321,7 @@ if(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
 # C4389: '==': signed/unsigned mismatch
 # C4820: 'exec_context': '7' bytes padding added after data member 'fast'
 # C4996: '_open': This function or variable may be unsafe. Consider using _sopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Wall /WX /wd4018 /wd4061 /wd4100 /wd4127 /wd4146 /wd4189 /wd4206 /wd4242 /wd4244 /wd4245 /wd4267 /wd4296 /wd4310 /wd4388 /wd4389 /wd4820 /wd4996")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Wall /WX /wd4018 /wd4061 /wd4065 /wd4100 /wd4127 /wd4146 /wd4189 /wd4206 /wd4242 /wd4244 /wd4245 /wd4267 /wd4296 /wd4310 /wd4388 /wd4389 /wd4820 /wd4996")
 # C4701: potentially uninitialized local variable 'gt' used
 # C4703: potentially uninitialized local pointer variable 'p' used
 # C4710: 'fabsf': function not inlined
