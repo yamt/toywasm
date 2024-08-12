@@ -27,7 +27,7 @@ int xlog_tracing = 0;
  *
  * windows doesn't seem to hawe flockfile either.
  */
-#if defined(__wasi__) || defined(__NuttX__) || defined(_MSC_VER)
+#if defined(__wasi__) || defined(__NuttX__) || defined(_WIN32)
 #define flockfile(f)
 #define funlockfile(f)
 #endif
@@ -35,7 +35,7 @@ int xlog_tracing = 0;
 void
 xlog_vprintf(const char *fmt, va_list ap)
 {
-#if defined(_MSC_VER)
+#if defined(_WIN32)
         flockfile(stderr);
         nbio_vfprintf(stderr, fmt, ap);
         funlockfile(stderr);

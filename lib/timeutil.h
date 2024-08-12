@@ -21,7 +21,7 @@ void timespec_sub(const struct timespec *a, const struct timespec *b,
 int timespec_from_ns(struct timespec *a, uint64_t ns);
 uint64_t timespec_to_ms(const struct timespec *tv);
 
-#if !defined(_MSC_VER)
+#if !defined(_WIN32)
 int timespec_now(clockid_t id, struct timespec *a);
 
 int abstime_from_reltime_ns(clockid_t id, struct timespec *abstime,

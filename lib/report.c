@@ -11,7 +11,7 @@
 #include "report.h"
 #include "xlog.h"
 
-#if defined(_MSC_VER)
+#if defined(_WIN32)
 int
 vasprintf(char **resultp, const char *fmt, va_list ap)
 {

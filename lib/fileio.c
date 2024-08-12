@@ -3,7 +3,7 @@
 #include <fcntl.h>
 #include <stddef.h>
 #include <sys/stat.h>
-#if defined(_MSC_VER)
+#if defined(_WIN32)
 #include <io.h>
 #define open _open
 #define O_RDONLY _O_RDONLY
@@ -26,7 +26,7 @@ typedef int ssize_t;
  *
  * NuttX doesn't have working mmap.
  */
-#if defined(__wasi__) || defined(__NuttX__) || defined(_MSC_VER)
+#if defined(__wasi__) || defined(__NuttX__) || defined(_WIN32)
 
 #include <stdlib.h>
 
