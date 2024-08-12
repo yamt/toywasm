@@ -1506,7 +1506,7 @@ exec_const_expr(const struct expr *expr, enum valtype type, struct val *result,
          * note that a const expr can't have a loop.
          */
         while (IS_RESTARTABLE(ret)) {
-                xlog_trace("%s: restarting execution of a const expr\n",
+                xlog_trace("%s: restarting execution of a const expr",
                            __func__);
                 ret = exec_expr_continue(ctx);
         }
