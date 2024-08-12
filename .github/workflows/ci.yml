@@ -44,5 +44,5 @@ jobs:
 
     - name: Run examples/run
       run: |
-        .\build\Debug\run.exe ${{github.workspace}}/wat/fib.wasm test-all
+        .\build\Debug\run.exe ./wasm/fib.wasm test-all
       working-directory: ${{github.workspace}}/examples/run
