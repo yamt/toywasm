@@ -9,7 +9,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-#if !defined(_MSC_VER)
+#if !defined(_WIN32)
 #include <fcntl.h>
 #include <poll.h>
 #include <unistd.h>
@@ -26,7 +26,7 @@
 #define funlockfile(f)
 #endif
 
-#if !defined(_MSC_VER)
+#if !defined(_WIN32)
 int
 set_nonblocking(int fd, bool nonblocking, bool *orig)
 {
@@ -60,7 +60,7 @@ is_again(int error)
 int
 nbio_vfprintf(FILE *fp, const char *fmt, va_list ap)
 {
-#if defined(_MSC_VER)
+#if defined(_WIN32)
         return vfprintf(fp, fmt, ap);
 #else
         /*
@@ -145,7 +145,7 @@ nbio_printf(const char *fmt, ...)
         return ret;
 }
 
-#if !defined(_MSC_VER)
+#if !defined(_WIN32)
 ssize_t
 nbio_getline(char **linep, size_t *linecapp, FILE *fp)
 {

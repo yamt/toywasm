@@ -125,7 +125,7 @@ timespec_to_ms(const struct timespec *tv)
         return ms1 + ms2;
 }
 
-#if !defined(_MSC_VER)
+#if !defined(_WIN32)
 int
 timespec_now(clockid_t id, struct timespec *a)
 {

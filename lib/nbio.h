@@ -22,7 +22,7 @@ __BEGIN_EXTERN_C
 int nbio_vfprintf(FILE *fp, const char *fmt, va_list ap);
 int nbio_fprintf(FILE *fp, const char *fmt, ...) __printflike(2, 3);
 int nbio_printf(const char *fmt, ...) __printflike(1, 2);
-#if !defined(_MSC_VER)
+#if !defined(_WIN32)
 ssize_t nbio_getline(char **linep, size_t *linecapp, FILE *fp);
 int set_nonblocking(int fd, bool nonblocking, bool *orig);
 bool is_again(int error);
