@@ -24,7 +24,7 @@ jobs:
 
     - name: cmake configure
       run: |
-        cmake -B build -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/dist -DBUILD_TESTING=OFF -DTOYWASM_BUILD_CLI=OFF -DTOYWASM_BUILD_UNITTEST=OFF -DTOYWASM_ENABLE_WASI=OFF
+        cmake -B build -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/dist -DBUILD_TESTING=OFF -DTOYWASM_BUILD_CLI=OFF -DTOYWASM_BUILD_UNITTEST=OFF -DTOYWASM_ENABLE_WASI=OFF -DTOYWASM_ENABLE_TRACING=ON -DTOYWASM_ENABLE_TRACING_INSN=ON
 
     - name: cmake -L
       run: |
