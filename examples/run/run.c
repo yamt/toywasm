@@ -23,7 +23,7 @@ main(int argc, char **argv)
         int ret;
 
 #if defined(TOYWASM_ENABLE_TRACING)
-        xlog_tracing = 5;
+        xlog_tracing = 1;
 #endif
 
         struct mem_context mctx0;
