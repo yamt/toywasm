@@ -348,9 +348,7 @@ instance_create(struct mem_context *mctx, const struct module *m,
         struct instance *inst;
         int ret;
 
-		fprintf(stderr, "calling instance_create_no_init\n");
         ret = instance_create_no_init(mctx, m, &inst, imports, report);
-		fprintf(stderr, "instance_create_no_init returned %d\n", ret);
         if (ret != 0) {
                 return ret;
         }
@@ -360,11 +358,8 @@ instance_create(struct mem_context *mctx, const struct module *m,
         ctx = &ctx0;
         exec_context_init(ctx, inst, mctx);
         ctx->report = report;
-		fprintf(stderr, "calling instance_execute_init\n");
         ret = instance_execute_init(ctx);
-		fprintf(stderr, "instance_execute_handle_restart\n");
         ret = instance_execute_handle_restart(ctx, ret);
-		fprintf(stderr, "result %d\n", ret);
         exec_context_clear(ctx);
         if (ret != 0) {
                 instance_destroy(inst);
@@ -600,7 +595,7 @@ instance_execute_init(struct exec_context *ctx)
         uint32_t i;
         int ret;
 
-		fprintf(stderr, "initializing globals\n");
+        xlog_trace("%s: initializing globals", __func__);
         for (i = 0; i < m->nglobals; i++) {
                 struct globalinst *ginst =
                         VEC_ELEM(inst->globals, m->nimportedglobals + i);
@@ -612,7 +607,7 @@ instance_execute_init(struct exec_context *ctx)
                 xlog_trace("global [%" PRIu32 "] initialized to %016" PRIx64,
                            m->nimportedglobals + i, ginst->val.u.i64);
         }
-		fprintf(stderr, "initializing data segments\n");
+        xlog_trace("%s: initializing table segments", __func__);
         for (i = 0; i < m->nelems; i++) {
                 const struct element *elem = &m->elems[i];
                 if (elem->mode == ELEM_MODE_ACTIVE) {
@@ -633,32 +628,26 @@ instance_execute_init(struct exec_context *ctx)
                         elem_drop(ctx, i);
                 }
         }
-		fprintf(stderr, "initializing data segments\n");
+        xlog_trace("%s: initializing data segments", __func__);
         for (i = 0; i < m->ndatas; i++) {
-		fprintf(stderr, "data segment %u/%u\n", (int)i, (int)m->ndatas);
                 const struct data *d = &m->datas[i];
                 if (d->mode != DATA_MODE_ACTIVE) {
-		fprintf(stderr, "skip segment %u\n", (int)i);
                         continue;
                 }
                 struct val val;
-		fprintf(stderr, "calling exec_const_expr\n");
                 ret = exec_const_expr(&d->offset, TYPE_i32, &val, ctx);
-		fprintf(stderr, "exec_const_expr returned %d\n", ret);
                 if (ret != 0) {
                         goto fail;
                 }
                 uint32_t offset = val.u.i32;
-		fprintf(stderr, "calling memory_init\n");
                 ret = memory_init(ctx, d->memory, i, offset, 0, d->init_size);
-		fprintf(stderr, "memory_init returned %d\n", ret);
                 if (ret != 0) {
                         goto fail;
                 }
                 data_drop(ctx, i);
         }
         if (m->has_start) {
-                fprintf(stderr, "calling start function\n");
+                xlog_trace("%s: calling start function", __func__);
                 assert(m->start < m->nimportedfuncs + m->nfuncs);
                 struct funcinst *finst = VEC_ELEM(inst->funcs, m->start);
                 return invoke(finst, NULL, NULL, ctx);
