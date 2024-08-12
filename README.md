@@ -75,6 +75,7 @@ It includes
 |Ubuntu/armhf            |[Disabled]       |32-bit                       |
 |Ubuntu/s390x            |[Disabled]       |Big endian                   |
 |Ubuntu/riscv64          |Yes (on qemu)    |                             |
+|Windows/X64             |Yes              |Core wasm only               |
 |wasm32-wasi-threads     |No               |Occasionally tested manually |
 |NuttX/esp32             |No               |Occasionally tested manually |
 |NuttX/sim on macOS/amd64|No               |Occasionally tested manually |
