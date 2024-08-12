@@ -640,12 +640,16 @@ instance_execute_init(struct exec_context *ctx)
                         continue;
                 }
                 struct val val;
+		fprintf(stderr, "calling exec_const_expr\n");
                 ret = exec_const_expr(&d->offset, TYPE_i32, &val, ctx);
+		fprintf(stderr, "exec_const_expr returned %d\n", ret);
                 if (ret != 0) {
                         goto fail;
                 }
                 uint32_t offset = val.u.i32;
+		fprintf(stderr, "calling memory_init\n");
                 ret = memory_init(ctx, d->memory, i, offset, 0, d->init_size);
+		fprintf(stderr, "memory_init returned %d\n", ret);
                 if (ret != 0) {
                         goto fail;
                 }
