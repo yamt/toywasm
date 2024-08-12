@@ -635,8 +635,10 @@ instance_execute_init(struct exec_context *ctx)
         }
 		fprintf(stderr, "initializing data segments\n");
         for (i = 0; i < m->ndatas; i++) {
+		fprintf(stderr, "data segment %u/%u\n", (int)i, (int)m->ndatas);
                 const struct data *d = &m->datas[i];
                 if (d->mode != DATA_MODE_ACTIVE) {
+		fprintf(stderr, "skip segment %u\n", (int)i);
                         continue;
                 }
                 struct val val;
