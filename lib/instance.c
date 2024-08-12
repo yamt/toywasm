@@ -600,6 +600,7 @@ instance_execute_init(struct exec_context *ctx)
         uint32_t i;
         int ret;
 
+		fprintf(stderr, "initializing globals\n");
         for (i = 0; i < m->nglobals; i++) {
                 struct globalinst *ginst =
                         VEC_ELEM(inst->globals, m->nimportedglobals + i);
@@ -611,6 +612,7 @@ instance_execute_init(struct exec_context *ctx)
                 xlog_trace("global [%" PRIu32 "] initialized to %016" PRIx64,
                            m->nimportedglobals + i, ginst->val.u.i64);
         }
+		fprintf(stderr, "initializing data segments\n");
         for (i = 0; i < m->nelems; i++) {
                 const struct element *elem = &m->elems[i];
                 if (elem->mode == ELEM_MODE_ACTIVE) {
@@ -631,6 +633,7 @@ instance_execute_init(struct exec_context *ctx)
                         elem_drop(ctx, i);
                 }
         }
+		fprintf(stderr, "initializing data segments\n");
         for (i = 0; i < m->ndatas; i++) {
                 const struct data *d = &m->datas[i];
                 if (d->mode != DATA_MODE_ACTIVE) {
@@ -649,6 +652,7 @@ instance_execute_init(struct exec_context *ctx)
                 data_drop(ctx, i);
         }
         if (m->has_start) {
+                fprintf(stderr, "calling start function\n");
                 assert(m->start < m->nimportedfuncs + m->nfuncs);
                 struct funcinst *finst = VEC_ELEM(inst->funcs, m->start);
                 return invoke(finst, NULL, NULL, ctx);
