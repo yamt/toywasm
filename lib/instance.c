@@ -348,7 +348,9 @@ instance_create(struct mem_context *mctx, const struct module *m,
         struct instance *inst;
         int ret;
 
+		fprintf(stderr, "calling instance_create_no_init\n");
         ret = instance_create_no_init(mctx, m, &inst, imports, report);
+		fprintf(stderr, "instance_create_no_init returned %d\n", ret);
         if (ret != 0) {
                 return ret;
         }
@@ -358,8 +360,11 @@ instance_create(struct mem_context *mctx, const struct module *m,
         ctx = &ctx0;
         exec_context_init(ctx, inst, mctx);
         ctx->report = report;
+		fprintf(stderr, "calling instance_execute_init\n");
         ret = instance_execute_init(ctx);
+		fprintf(stderr, "instance_execute_handle_restart\n");
         ret = instance_execute_handle_restart(ctx, ret);
+		fprintf(stderr, "result %d\n", ret);
         exec_context_clear(ctx);
         if (ret != 0) {
                 instance_destroy(inst);
