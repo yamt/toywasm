@@ -24,7 +24,7 @@
 #define __predict_false(x) __builtin_expect(x, 0)
 #else
 #define __predict_true(x) (x)
-#define __predict_false(x) (!(x))
+#define __predict_false(x) (x)
 #endif
 #endif /* !defined(__predict_true) */
 
