@@ -9,6 +9,7 @@
 #include <toywasm/mem.h>
 #include <toywasm/module.h>
 #include <toywasm/report.h>
+#include <toywasm/toywasm_config.h>
 #include <toywasm/type.h>
 #include <toywasm/xlog.h>
 
@@ -20,6 +21,10 @@ main(int argc, char **argv)
         struct module *m = NULL;
         struct instance *inst = NULL;
         int ret;
+
+#if defined(TOYWASM_ENABLE_TRACING)
+        xlog_tracing = 5;
+#endif
 
         struct mem_context mctx0;
         struct mem_context *mctx = &mctx0;
