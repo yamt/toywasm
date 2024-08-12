@@ -743,7 +743,7 @@ instance_execute_handle_restart_once(struct exec_context *ctx, int exec_ret)
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
                 suspend_parked(ctx->cluster);
 #endif
-                xlog_trace("%s: restarting execution\n", __func__);
+                xlog_trace("%s: restarting execution", __func__);
 #if defined(TOYWASM_USE_USER_SCHED)
                 struct sched *sched = ctx->sched;
                 if (sched != NULL) {

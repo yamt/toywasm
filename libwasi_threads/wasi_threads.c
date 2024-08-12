@@ -399,7 +399,7 @@ runner(void *vp)
         ret = exec_thread_start_func(ctx, arg);
         while (IS_RESTARTABLE(ret)) {
                 suspend_parked(ctx->cluster);
-                xlog_trace("%s: restarting execution\n", __func__);
+                xlog_trace("%s: restarting execution", __func__);
                 ret = instance_execute_continue(ctx);
         }
         done_thread_start_func(ctx, arg, ret);
