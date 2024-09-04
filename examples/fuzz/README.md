@@ -18,6 +18,19 @@ A [libFuzzer] target, which instantiates a wasm module with toywasm.
 ./run.sh
 ```
 
+Or, maybe:
+
+```shell
+./run.sh -jobs=6
+```
+
+### A note for macOS
+
+On macOS, you might want to suppress some LSAN complaints on
+system libraries.  See [lsan.supp].
+
+[lsan.supp]: ../../test/lsan.supp
+
 ## Run with seeding with wasm-tools
 
 ```shell
