@@ -68,7 +68,7 @@ memory_instance_getptr2(struct meminst *meminst, uint32_t ptr, uint32_t offset,
                 }
                 goto success;
         }
-        uint32_t last_byte = ea + (size - 1);
+        uint32_t last_byte;
         if (ADD_U32_OVERFLOW(ea, size - 1, &last_byte)) {
                 goto do_trap;
         }
