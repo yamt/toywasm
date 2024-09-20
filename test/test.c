@@ -653,6 +653,18 @@ test_list(void **state)
         assert_null(LIST_FIRST(&h));
         assert_null(LIST_LAST(&h, struct item, entry));
 
+        memset(&item, 0, sizeof(item));
+        LIST_INSERT_HEAD(&h, &item, entry);
+        assert_false(LIST_EMPTY(&h));
+        assert_ptr_equal(LIST_FIRST(&h), &item);
+        assert_ptr_equal(LIST_LAST(&h, struct item, entry), &item);
+        assert_null(LIST_NEXT(&item, entry));
+        assert_null(LIST_PREV(&item, &h, struct item, entry));
+        LIST_REMOVE(&h, &item, entry);
+        assert_true(LIST_EMPTY(&h));
+        assert_null(LIST_FIRST(&h));
+        assert_null(LIST_LAST(&h, struct item, entry));
+
         struct item items[10];
         int i;
         for (i = 0; i < 10; i++) {
