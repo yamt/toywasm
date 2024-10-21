@@ -768,6 +768,104 @@ test_list(void **state)
 }
 
 void
+test_list2(void **state)
+{
+        struct item {
+                void *dummy1;
+                LIST_ENTRY(struct item) entry;
+                int dummy2;
+        };
+
+        LIST_HEAD(struct item) h0;
+        LIST_HEAD(struct item) h1;
+        LIST_HEAD(struct item) h2;
+        LIST_HEAD(struct item) hempty;
+
+        struct item i1;
+        struct item i2;
+        struct item i3;
+        struct item i4;
+        struct item i5;
+        struct item i6;
+
+        /* test LIST_SPLICE_TAIL */
+
+        LIST_HEAD_INIT(&h0);
+
+        LIST_HEAD_INIT(&h1);
+        LIST_INSERT_TAIL(&h1, &i1, entry);
+        LIST_INSERT_TAIL(&h1, &i2, entry);
+        LIST_INSERT_TAIL(&h1, &i3, entry);
+
+        LIST_HEAD_INIT(&h2);
+        LIST_INSERT_HEAD(&h2, &i6, entry);
+        LIST_INSERT_HEAD(&h2, &i5, entry);
+        LIST_INSERT_HEAD(&h2, &i4, entry);
+
+        LIST_HEAD_INIT(&hempty);
+        LIST_SPLICE_TAIL(&h0, &hempty, entry);
+        LIST_SPLICE_TAIL(&h0, &h1, entry);
+        LIST_HEAD_INIT(&hempty);
+        LIST_SPLICE_TAIL(&h0, &hempty, entry);
+        LIST_SPLICE_TAIL(&h0, &h2, entry);
+        LIST_HEAD_INIT(&hempty);
+        LIST_SPLICE_TAIL(&h0, &hempty, entry);
+
+        assert_ptr_equal(LIST_FIRST(&h0), &i1);
+        assert_ptr_equal(LIST_NEXT(&i1, entry), &i2);
+        assert_ptr_equal(LIST_NEXT(&i2, entry), &i3);
+        assert_ptr_equal(LIST_NEXT(&i3, entry), &i4);
+        assert_ptr_equal(LIST_NEXT(&i4, entry), &i5);
+        assert_ptr_equal(LIST_NEXT(&i5, entry), &i6);
+        assert_null(LIST_NEXT(&i6, entry));
+        assert_ptr_equal(LIST_LAST(&h0, struct item, entry), &i6);
+        assert_ptr_equal(LIST_PREV(&i6, &h0, struct item, entry), &i5);
+        assert_ptr_equal(LIST_PREV(&i5, &h0, struct item, entry), &i4);
+        assert_ptr_equal(LIST_PREV(&i4, &h0, struct item, entry), &i3);
+        assert_ptr_equal(LIST_PREV(&i3, &h0, struct item, entry), &i2);
+        assert_ptr_equal(LIST_PREV(&i2, &h0, struct item, entry), &i1);
+        assert_null(LIST_PREV(&i1, &h0, struct item, entry));
+
+        /* test LIST_SPLICE_HEAD */
+
+        LIST_HEAD_INIT(&h0);
+
+        LIST_HEAD_INIT(&h1);
+        LIST_INSERT_TAIL(&h1, &i1, entry);
+        LIST_INSERT_TAIL(&h1, &i2, entry);
+        LIST_INSERT_TAIL(&h1, &i3, entry);
+
+        LIST_HEAD_INIT(&h2);
+        LIST_INSERT_HEAD(&h2, &i6, entry);
+        LIST_INSERT_HEAD(&h2, &i5, entry);
+        LIST_INSERT_HEAD(&h2, &i4, entry);
+
+        LIST_HEAD_INIT(&hempty);
+        LIST_SPLICE_HEAD(&h0, &hempty, entry);
+        LIST_SPLICE_HEAD(&h0, &h1, entry);
+        LIST_HEAD_INIT(&hempty);
+        LIST_SPLICE_HEAD(&h0, &hempty, entry);
+        LIST_SPLICE_HEAD(&h0, &h2, entry);
+        LIST_HEAD_INIT(&hempty);
+        LIST_SPLICE_HEAD(&h0, &hempty, entry);
+
+        assert_ptr_equal(LIST_FIRST(&h0), &i4);
+        assert_ptr_equal(LIST_NEXT(&i4, entry), &i5);
+        assert_ptr_equal(LIST_NEXT(&i5, entry), &i6);
+        assert_ptr_equal(LIST_NEXT(&i6, entry), &i1);
+        assert_ptr_equal(LIST_NEXT(&i1, entry), &i2);
+        assert_ptr_equal(LIST_NEXT(&i2, entry), &i3);
+        assert_null(LIST_NEXT(&i3, entry));
+        assert_ptr_equal(LIST_LAST(&h0, struct item, entry), &i3);
+        assert_ptr_equal(LIST_PREV(&i3, &h0, struct item, entry), &i2);
+        assert_ptr_equal(LIST_PREV(&i2, &h0, struct item, entry), &i1);
+        assert_ptr_equal(LIST_PREV(&i1, &h0, struct item, entry), &i6);
+        assert_ptr_equal(LIST_PREV(&i6, &h0, struct item, entry), &i5);
+        assert_ptr_equal(LIST_PREV(&i5, &h0, struct item, entry), &i4);
+        assert_null(LIST_PREV(&i4, &h0, struct item, entry));
+}
+
+void
 test_xstrnstr(void **state)
 {
         const char *abcd = "abcd";
@@ -824,6 +922,7 @@ main(int argc, char **argv)
                 cmocka_unit_test(test_timeutil),
                 cmocka_unit_test(test_timeutil_int64),
                 cmocka_unit_test(test_list),
+                cmocka_unit_test(test_list2),
                 cmocka_unit_test(test_xstrnstr),
         };
         return cmocka_run_group_tests(tests, NULL, NULL);
