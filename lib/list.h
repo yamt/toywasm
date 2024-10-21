@@ -116,4 +116,37 @@ __END_EXTERN_C
         list_head_init((struct list_head *)(HEAD));                           \
         CHECK_TYPE(&(HEAD)->first, (HEAD)->tailnextp)
 
+/*
+ * LIST_SPLICE_TAIL/LIST_SPLICE_HEAD
+ *
+ * move all items on the SRC list to the TAIL/HEAD of the DST list.
+ * O(1) regardless of the number of items to move.
+ * this leaves the SRC list in an inconsistent state. it's up to
+ * the user to do LIST_HEAD_INIT(SRC) if necessary.
+ */
+
+#define LIST_SPLICE_TAIL(DST, SRC, NAME)                                      \
+        do {                                                                  \
+                if (!LIST_EMPTY(SRC)) {                                       \
+                        (SRC)->first->NAME.prevnextp = (DST)->tailnextp;      \
+                        *(DST)->tailnextp = (SRC)->first;                     \
+                        (DST)->tailnextp = (SRC)->tailnextp;                  \
+                }                                                             \
+        } while (0)
+
+#define LIST_SPLICE_HEAD(DST, SRC, NAME)                                      \
+        do {                                                                  \
+                if (!LIST_EMPTY(SRC)) {                                       \
+                        if (LIST_EMPTY(DST)) {                                \
+                                (DST)->tailnextp = (SRC)->tailnextp;          \
+                        } else {                                              \
+                                (DST)->first->NAME.prevnextp =                \
+                                        (SRC)->tailnextp;                     \
+                                *(SRC)->tailnextp = (DST)->first;             \
+                        }                                                     \
+                        (DST)->first = (SRC)->first;                          \
+                        (DST)->first->NAME.prevnextp = &(DST)->first;         \
+                }                                                             \
+        } while (0)
+
 #endif /* !defined(_TOYWASM_LIST_H) */
