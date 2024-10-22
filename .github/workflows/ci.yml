@@ -426,7 +426,7 @@ jobs:
         ARCH: ${{matrix.arch}}
         EXTRA_CMAKE_OPTIONS: -G Ninja ${{env.extra_cmake_options}} -DTOYWASM_TARBALL_SUFFIX=-${{matrix.name}}
       run: |
-        sudo ./cross/setup-focal-proposed.sh
+        sudo ./cross/setup-apt-llvm-org.sh
         sudo -E ./cross/cross-setup.sh
         sudo ./cross/setup-alternatives.sh
         ./cross/cross-cmake-configure.sh
