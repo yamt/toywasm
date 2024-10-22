@@ -410,8 +410,8 @@ jobs:
       # for cross build, cross-setup.sh takes care of the toolchain
       if: matrix.os == 'ubuntu-20.04' && matrix.arch == 'native'
       run: |
-        sudo ./cross/setup-focal-proposed.sh
-        sudo apt-get update && sudo apt-get install -y clang-13 lld-13
+        sudo ./cross/setup-apt-llvm-org.sh
+        sudo apt-get update && sudo apt-get install -y clang-18 lld-18
         sudo ./cross/setup-alternatives.sh
 
     - name: Fix sources.list (cross)
