@@ -11,7 +11,7 @@ Our github CI jobs also use these scripts.
 
 Expected usage:
 ```
-./cross/setup-focal-proposed.sh
+./cross/setup-apt-llvm-org.sh
 export ARCH=arm64
 ./cross/cross-setup.sh
 ./cross/setup-alternatives.sh
