@@ -215,22 +215,13 @@ if (CMAKE_C_COMPILER_ID MATCHES "Clang")
 # lld doesn't seem to support s390
 # ld.lld: error: unknown emulation: elf64_s390
 # https://github.com/llvm/llvm-project/blob/93b7bdcda7072581ef3f5ceaae8c4f0d549a0845/lld/ELF/Driver.cpp#L142-L166
-#
-# lld doesn't seem to support riscv relaxizations
-# ld.lld: error: /usr/bin/../lib/gcc-cross/riscv64-linux-gnu/9/../../../../riscv64-linux-gnu/lib/crt1.o:(.text+0x0): relocation R_RISCV_ALIGN requires unimplemented linker relaxation; recompile with -mno-relax
-if(NOT TRIPLET MATCHES "s390" AND NOT TRIPLET MATCHES "riscv64")
+if(NOT TRIPLET MATCHES "s390")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=lld")
 else()
 set(USE_IPO OFF)
 endif()
 endif()
 endif()
-
-# clang-13 on ubuntu/focal:
-# ld.lld: error: lto.tmp: cannot link object files with different floating-point ABI
-#if(TRIPLET MATCHES "riscv64")
-#set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-plugin-opt=-target-abi=lp64d")
-#endif()
 
 if(TRIPLET MATCHES "i386")
 # x87 doesn't preserve sNaN as IEEE 754 and wasm expect.
@@ -337,6 +328,20 @@ endif()
 # GCC 11 seems ok.
 if(CMAKE_C_COMPILER_ID STREQUAL GNU)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-builtin")
+endif()
+# Clang 18's builtin ceil() etc seems to propagate sNaN as it is.
+# (ubuntu/focal, riscv64, on qemu)
+if(CMAKE_C_COMPILER_ID STREQUAL Clang)
+if(TRIPLET MATCHES "riscv64")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-builtin-floor")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-builtin-floorf")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-builtin-ceil")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-builtin-ceilf")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-builtin-trunc")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-builtin-truncf")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-builtin-rint")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-builtin-rintf")
+endif()
 endif()
 
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -fomit-frame-pointer")
