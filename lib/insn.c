@@ -178,7 +178,7 @@ get_func_indirect(struct exec_context *ectx, uint32_t tableidx,
 
 /*
  * WASM float min/max follow IEEE 754-2019 minimum/maximum
- * semantics:
+ * semantics, which are different from C fmin/fmax functions:
  *
  * - If either operand is a NaN (Note: can be an sNaN), returns a qNaN.
  * - -0.0 < +0.0
