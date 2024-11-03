@@ -8,7 +8,7 @@ set -e
 # To build with wasi-threads enabled, not backed by pthread
 #    EXTRA_CMAKE_OPTIONS="-DTOYWASM_ENABLE_WASM_THREADS=ON -DTOYWASM_ENABLE_WASI_THREADS=ON -DTOYWASM_USE_USER_SCHED=ON" ./build-wasm32-wasi.sh
 
-MAJOR=${WASI_SDK_MAJOR:-23}
+MAJOR=${WASI_SDK_MAJOR:-24}
 MINOR=${WASI_SDK_MINOR:-0}
 WASI_SDK_DIR=${WASI_SDK_DIR:-$(pwd)/.wasi-sdk-${MAJOR}.${MINOR}}
 CMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE:-${WASI_SDK_DIR}/share/cmake/wasi-sdk.cmake}
