@@ -20,7 +20,7 @@
  *   so that the thread have a chances to check reschedule requests
  *   frequently enough.
  *
- * - no real i/o wait. when a thread want to block on an i/o event, it just
+ * - no real i/o wait. when a thread wants to block on an i/o event, it just
  *   yields the cpu to other threads. when the thread is scheduled next time,
  *   it simply polls the event again. an ideal scheduler implementation
  *   would have a list of event sources to poll on instead.
