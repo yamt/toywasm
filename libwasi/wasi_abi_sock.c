@@ -4,6 +4,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <fcntl.h> /* for TOYWASM_OLD_WASI_LIBC check below */
 #include <inttypes.h>
 #include <limits.h>
 #include <stdlib.h>
