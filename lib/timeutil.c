@@ -160,6 +160,7 @@ abstime_from_reltime_ns(clockid_t id, struct timespec *abstime,
 fail:
         return ret;
 }
+
 int
 abstime_from_reltime_ms(clockid_t id, struct timespec *abstime, int reltime_ms)
 {
@@ -267,4 +268,4 @@ timespec_sleep(clockid_t id, const struct timespec *absto)
                 }
         }
 }
-#endif
+#endif /* !defined(_WIN32) */
