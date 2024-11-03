@@ -34,6 +34,6 @@ int abstime_to_reltime_ms_roundup(clockid_t id, const struct timespec *abstime,
 int convert_timespec(clockid_t from_id, clockid_t to_id,
                      const struct timespec *from_ts, struct timespec *result);
 int timespec_sleep(clockid_t id, const struct timespec *absto);
-#endif
+#endif /* !defined(_WIN32) */
 
 __END_EXTERN_C
