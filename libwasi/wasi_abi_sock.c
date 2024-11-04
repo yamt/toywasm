@@ -43,7 +43,11 @@ wasi_sock_accept(struct exec_context *ctx, struct host_instance *hi,
         int hostchildfd = -1;
         int host_ret = 0;
         int ret;
-
+#if !defined(TOYWASM_OLD_WASI_LIBC)
+        struct sockaddr_storage ss;
+        struct sockaddr *sa = (void *)&ss;
+        socklen_t salen;
+#endif
         /*
          * non-zero fdflags is used by accept4.
          *
@@ -72,9 +76,6 @@ retry:
         errno = ENOSYS;
         hostchildfd = -1;
 #else
-        struct sockaddr_storage ss;
-        struct sockaddr *sa = (void *)&ss;
-        socklen_t salen;
         hostchildfd = accept(hostfd, sa, &salen);
 #endif
         if (hostchildfd < 0) {
