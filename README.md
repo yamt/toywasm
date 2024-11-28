@@ -115,6 +115,8 @@ Options:
 	--wasi-dir HOST_DIR[::GUEST_DIR]
 	--wasi-env NAME=VAR
 	--wasi-littlefs-dir LITTLEFS_IMAGE_PATH::LFS_DIR[::GUEST_DIR]
+	--wasi-littlefs-block-size BLOCK_SIZE
+	--wasi-littlefs-disk-version DISK_VERSION
 Examples:
 	Run a wasi module
 		toywasm --wasi module
