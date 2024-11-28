@@ -381,7 +381,8 @@ toywasm_repl_set_wasi_prestat_littlefs(struct repl_state *state,
                 return ret;
         }
         struct wasi_vfs *vfs;
-        ret = wasi_instance_prestat_add_littlefs(state->wasi, path, &vfs);
+        ret = wasi_instance_prestat_add_littlefs(
+                state->wasi, path, &state->opts.wasi_littlefs_mount_cfg, &vfs);
         if (ret != 0) {
                 return ret;
         }
@@ -1490,6 +1491,10 @@ repl_options_init(struct repl_options *opts)
         exec_options_set_defaults(&opts->exec_options);
 #if defined(TOYWASM_ENABLE_DYLD)
         dyld_options_set_defaults(&opts->dyld_options);
+#endif
+#if defined(TOYWASM_ENABLE_WASI_LITTLEFS)
+        memset(&opts->wasi_littlefs_mount_cfg, 0,
+               sizeof(opts->wasi_littlefs_mount_cfg));
 #endif
 }
 

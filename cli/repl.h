@@ -4,6 +4,9 @@
 #if defined(TOYWASM_ENABLE_DYLD)
 #include "dyld.h"
 #endif
+#if defined(TOYWASM_ENABLE_WASI_LITTLEFS)
+#include "wasi_littlefs.h"
+#endif
 #include "options.h"
 #include "type.h"
 
@@ -18,6 +21,9 @@ struct repl_options {
 #endif
         struct load_options load_options;
         struct exec_options exec_options;
+#if defined(TOYWASM_ENABLE_WASI_LITTLEFS)
+        struct wasi_littlefs_mount_cfg wasi_littlefs_mount_cfg;
+#endif
 };
 
 struct repl_module_state {

@@ -14,6 +14,7 @@
 
 #include "nbio.h"
 #include "util.h"
+#include "wasi_littlefs.h"
 #include "wasi_littlefs_impl.h"
 #include "wasi_littlefs_mount.h"
 #include "wasi_vfs_impl_littlefs.h"
@@ -97,7 +98,9 @@ wasi_lfs_fs_unlock(const struct lfs_config *cfg) RELEASES(MUTEX(cfg))
 }
 
 int
-wasi_littlefs_mount_file(const char *path, struct wasi_vfs **vfsp)
+wasi_littlefs_mount_file(const char *path,
+                         const struct wasi_littlefs_mount_cfg *cfg,
+                         struct wasi_vfs **vfsp)
 {
         struct wasi_vfs_lfs *vfs_lfs = NULL;
         int ret;
@@ -123,7 +126,10 @@ wasi_littlefs_mount_file(const char *path, struct wasi_vfs **vfsp)
          * size by scanning the filesystem image.
          * for now, we simply hardcode a value.
          */
-        lfs_size_t block_size = 4096;
+        lfs_size_t block_size = cfg->block_size;
+        if (block_size == 0) {
+                block_size = 4096;
+        }
 
         /*
          * Note: read/prog sizes themselves do not affect the filesystem
@@ -169,6 +175,7 @@ wasi_littlefs_mount_file(const char *path, struct wasi_vfs **vfsp)
         lfs_config->prog_size = prog_size;
         lfs_config->block_size = block_size;
         lfs_config->block_count = block_count;
+        lfs_config->disk_version = cfg->disk_version;
 
         /*
          * disable block-level wear-leveling because there is little point

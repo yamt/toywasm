@@ -58,6 +58,8 @@ enum longopt {
 #endif
 #if defined(TOYWASM_ENABLE_WASI_LITTLEFS)
         opt_wasi_littlefs_dir,
+        opt_wasi_littlefs_block_size,
+        opt_wasi_littlefs_disk_version,
 #endif
 };
 
@@ -223,6 +225,18 @@ static const struct option longopts[] = {
                 NULL,
                 opt_wasi_littlefs_dir,
         },
+        {
+                "wasi-littlefs-block-size",
+                required_argument,
+                NULL,
+                opt_wasi_littlefs_block_size,
+        },
+        {
+                "wasi-littlefs-disk-version",
+                required_argument,
+                NULL,
+                opt_wasi_littlefs_disk_version,
+        },
 #endif
         {
                 NULL,
@@ -245,6 +259,8 @@ static const char *opt_metavars[] = {
 #endif
 #if defined(TOYWASM_ENABLE_WASI_LITTLEFS)
         [opt_wasi_littlefs_dir] = "LITTLEFS_IMAGE_PATH::LFS_DIR[::GUEST_DIR]",
+        [opt_wasi_littlefs_block_size] = "BLOCK_SIZE",
+        [opt_wasi_littlefs_disk_version] = "DISK_VERSION",
 #endif
         [opt_timeout] = "TIMEOUT_MS",
 #if defined(TOYWASM_ENABLE_TRACING)
@@ -529,6 +545,22 @@ main(int argc, char *const *argv)
                                 xlog_error(
                                         "failed to add preopen '%s' error %d",
                                         optarg, ret);
+                                goto fail;
+                        }
+                        break;
+                case opt_wasi_littlefs_block_size:
+                        ret = str_to_u32(
+                                optarg, 0,
+                                &opts->wasi_littlefs_mount_cfg.block_size);
+                        if (ret != 0) {
+                                goto fail;
+                        }
+                        break;
+                case opt_wasi_littlefs_disk_version:
+                        ret = str_to_u32(
+                                optarg, 0,
+                                &opts->wasi_littlefs_mount_cfg.disk_version);
+                        if (ret != 0) {
                                 goto fail;
                         }
                         break;
