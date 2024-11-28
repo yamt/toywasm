@@ -21,7 +21,9 @@
 
 int
 wasi_instance_prestat_add_littlefs(struct wasi_instance *wasi,
-                                   const char *path, struct wasi_vfs **vfsp)
+                                   const char *path,
+                                   const struct wasi_littlefs_mount_cfg *cfg,
+                                   struct wasi_vfs **vfsp)
 {
         struct wasi_vfs *vfs = NULL;
         char *image_path = NULL;
@@ -40,7 +42,7 @@ wasi_instance_prestat_add_littlefs(struct wasi_instance *wasi,
                 goto fail;
         }
         mapdir_string = coloncolon + 2;
-        ret = wasi_littlefs_mount_file(image_path, &vfs);
+        ret = wasi_littlefs_mount_file(image_path, cfg, &vfs);
         free(image_path);
         if (ret != 0) {
                 goto fail;

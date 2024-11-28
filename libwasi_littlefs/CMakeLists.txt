@@ -54,7 +54,9 @@ target_include_directories(toywasm-lib-wasi-littlefs
                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
                            $<INSTALL_INTERFACE:include>
                            PRIVATE ${TOYWASM_LITTLEFS_SOURCE_DIR})
-target_compile_definitions(toywasm-lib-wasi-littlefs PRIVATE ${TOYWASM_LITTLEFS_PREFIX_UPPER}_THREADSAFE)
+target_compile_definitions(toywasm-lib-wasi-littlefs PRIVATE
+		${TOYWASM_LITTLEFS_PREFIX_UPPER}_THREADSAFE
+		${TOYWASM_LITTLEFS_PREFIX_UPPER}_MULTIVERSION)
 if (NOT CMAKE_BUILD_TYPE MATCHES Debug)
     target_compile_definitions(toywasm-lib-wasi-littlefs PRIVATE ${TOYWASM_LITTLEFS_PREFIX_UPPER}_NO_DEBUG ${TOYWASM_LITTLEFS_PREFIX_UPPER}_NO_ASSERT)
 endif()
