@@ -391,12 +391,14 @@ struct name {
 
 #define NAME_FROM_CSTR_LITERAL(C)                                             \
         {                                                                     \
-                .nbytes = sizeof(C) - 1, .data = C,                           \
+                .nbytes = sizeof(C) - 1,                                      \
+                .data = C,                                                    \
         }
 
 #define NAME_FROM_CSTR(C)                                                     \
         {                                                                     \
-                .nbytes = strlen(C), .data = C,                               \
+                .nbytes = strlen(C),                                          \
+                .data = C,                                                    \
         }
 
 struct import {

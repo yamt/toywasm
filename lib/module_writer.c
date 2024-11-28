@@ -617,7 +617,8 @@ write_section(struct writer *w, uint8_t id,
 
 #define SECTION(n)                                                            \
         {                                                                     \
-                .id = SECTION_ID_##n, .write = write_##n##_section,           \
+                .id = SECTION_ID_##n,                                         \
+                .write = write_##n##_section,                                 \
         }
 
 const static struct section {
