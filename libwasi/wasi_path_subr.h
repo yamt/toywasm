@@ -7,7 +7,8 @@ struct path_info {
 
 #define PATH_INITIALIZER                                                      \
         {                                                                     \
-                NULL, NULL,                                                   \
+                NULL,                                                         \
+                NULL,                                                         \
         }
 
 struct exec_context;

@@ -1958,7 +1958,8 @@ enum dylink_subsection_type {
 
 #define DYLINK_TYPE(NAME)                                                     \
         {                                                                     \
-                .type = WASM_dylink_##NAME, .name = #NAME,                    \
+                .type = WASM_dylink_##NAME,                                   \
+                .name = #NAME,                                                \
                 .read = read_dylink_##NAME,                                   \
         }
 
