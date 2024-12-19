@@ -4,6 +4,7 @@ if(NOT CMAKE_TOOLCHAIN_FILE)
 #
 # Don't prefer homebrew clang on the CI because we want
 # to produce universal binaries there.
+# cf. https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/store-information-in-variables#default-environment-variables
 if(NOT DEFINED ENV{CI})
 if(NOT DEFINED CUSTOM_LLVM_HOME)
 # Note: The recent macOS SDKs (eg. math.h from macOS SDK 15) assume that
