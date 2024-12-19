@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   build-windows:
-    runs-on: windows-latest
+    runs-on: windows-2019
 
     steps:
 
@@ -54,7 +54,7 @@ jobs:
       fail-fast: false
       matrix:
         name: [noname]
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-20.04, macos-13]
         compiler: [clang, gcc]
         arch: [native]
         BUILD_TYPE: [Release, Debug]
@@ -70,7 +70,7 @@ jobs:
         TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: [ON, OFF]
         exclude:
           # I haven't used gcc for macos
-          - os: macos-latest
+          - os: macos-13
             compiler: gcc
           # tailcall doesn't make sense w/o separate execute
           - TOYWASM_USE_SEPARATE_EXECUTE: OFF
@@ -100,7 +100,7 @@ jobs:
             TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: ON
           - MISC_FEATURES: OFF
             TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: ON
-          - os: ubuntu-latest
+          - os: ubuntu-20.04
             compiler: clang
           - BUILD_TYPE: Release
         # how include works is not intuitive to me:
@@ -152,8 +152,8 @@ jobs:
             TOYWASM_ENABLE_WASI_LITTLEFS: ON
             TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: ON
             TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: ON
-          - name: macos-11.0
-            os: macos-latest
+          - name: macos-13.0
+            os: macos-13
             compiler: clang
             arch: native
             BUILD_TYPE: Release
@@ -167,8 +167,8 @@ jobs:
             TOYWASM_ENABLE_WASI_THREADS: OFF
             TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: OFF
             TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: OFF
-          - name: full-macos-11.0
-            os: macos-latest
+          - name: full-macos-13.0
+            os: macos-13
             compiler: clang
             arch: native
             BUILD_TYPE: Release
@@ -374,9 +374,9 @@ jobs:
       if: startsWith(matrix.os, 'ubuntu-')
       run: sudo apt-get update && sudo apt-get install -y pax virtualenv ninja-build
 
-    - name: Install dependencies (ubuntu-latest native)
+    - name: Install dependencies (ubuntu-20.04 native)
       # for cross build, cross-setup.sh takes care of the toolchain
-      if: matrix.os == 'ubuntu-latest' && matrix.arch == 'native'
+      if: matrix.os == 'ubuntu-20.04' && matrix.arch == 'native'
       run: sudo apt-get update && sudo apt-get install -y clang lld llvm-dev
 
     # Note: jansson is for examples/callgraph
@@ -556,7 +556,7 @@ jobs:
       fail-fast: false
       matrix:
         name: [wasm32-wasi, full-wasm32-wasi]
-        os: [ubuntu-latest, macos-13]
+        os: [ubuntu-20.04, macos-13]
         compiler: [clang]
         include:
           - name: full-wasm32-wasi
@@ -651,7 +651,7 @@ jobs:
   release:
     if: github.event_name != 'pull_request'
     needs: [build, wasm-on-wasm]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/download-artifact@v3
       with:
