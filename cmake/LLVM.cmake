@@ -1,12 +1,17 @@
 if(NOT CMAKE_TOOLCHAIN_FILE)
 # Prefer the homebrew version because xcode clang doesn't have detect_leaks
 # Note: CMAKE_SYSTEM_NAME is not available yet.
+#
+# Don't prefer homebrew clang on the CI because we want
+# to produce universal binaries there.
+if(NOT DEFINED ENV{CI})
 if(NOT DEFINED CUSTOM_LLVM_HOME)
 # Note: The recent macOS SDKs (eg. math.h from macOS SDK 15) assume that
 # _Float16 is available. In case of x86, it's only available for the
 # recent versions of the ABI. In case of LLVM, the support has been added
 # for LLVM>=15.
 set(CUSTOM_LLVM_HOME /usr/local/opt/llvm@15)
+endif()
 endif()
 endif()
 
