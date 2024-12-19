@@ -556,7 +556,7 @@ jobs:
       fail-fast: false
       matrix:
         name: [wasm32-wasi, full-wasm32-wasi]
-        os: [ubuntu-latest, macos-12]
+        os: [ubuntu-latest, macos-13]
         compiler: [clang]
         include:
           - name: full-wasm32-wasi
