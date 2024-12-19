@@ -374,9 +374,9 @@ jobs:
       if: startsWith(matrix.os, 'ubuntu-')
       run: sudo apt-get update && sudo apt-get install -y pax virtualenv ninja-build
 
-    - name: Install dependencies (ubuntu-20.04 native)
+    - name: Install dependencies (ubuntu native)
       # for cross build, cross-setup.sh takes care of the toolchain
-      if: matrix.os == 'ubuntu-20.04' && matrix.arch == 'native'
+      if: startsWith(matrix.os, 'ubuntu-') && matrix.arch == 'native'
       run: sudo apt-get update && sudo apt-get install -y clang lld llvm-dev
 
     # Note: jansson is for examples/callgraph
@@ -406,9 +406,9 @@ jobs:
         ref: v2.9.0
         fetch-depth: 0
 
-    - name: Install dependencies (ubuntu/focal native)
+    - name: Install dependencies (ubuntu native)
       # for cross build, cross-setup.sh takes care of the toolchain
-      if: matrix.os == 'ubuntu-20.04' && matrix.arch == 'native'
+      if: startsWith(matrix.os, 'ubuntu-') && matrix.arch == 'native'
       run: |
         sudo ./cross/setup-apt-llvm-org.sh
         sudo apt-get update && sudo apt-get install -y clang-18 lld-18
