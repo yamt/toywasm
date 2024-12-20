@@ -8,5 +8,5 @@ ConstructorInitializerIndentWidth: 8
 AlwaysBreakAfterReturnType: TopLevelDefinitions
 BreakBeforeBraces: Linux
 IndentGotoLabels: false
-ForEachMacros: ["ARRAY_FOREACH", "LIST_FOREACH", "LIST_FOREACH_REVERSE", "VEC_FOREACH", "VEC_FOREACH_IDX"]
+ForEachMacros: ["ARRAY_FOREACH", "LIST_FOREACH", "LIST_FOREACH_REVERSE", "SLIST_FOREACH", "VEC_FOREACH", "VEC_FOREACH_IDX"]
 SpaceBeforeParens: ControlStatementsExceptControlMacros
