@@ -12,6 +12,7 @@
 #include "leb128.h"
 #include "list.h"
 #include "mem.h"
+#include "slist.h"
 #include "timeutil.h"
 #include "type.h"
 #include "util.h"
@@ -866,6 +867,272 @@ test_list2(void **state)
 }
 
 void
+test_slist(void **state)
+{
+        struct item {
+                void *dummy1;
+                SLIST_ENTRY(struct item) entry;
+                int dummy2;
+        };
+        SLIST_HEAD(struct item) h;
+
+        SLIST_HEAD_INIT(&h);
+        assert_true(SLIST_EMPTY(&h));
+        assert_null(SLIST_FIRST(&h));
+        assert_null(SLIST_LAST(&h, struct item, entry));
+
+        struct item item;
+        SLIST_INSERT_TAIL(&h, &item, entry);
+        assert_false(SLIST_EMPTY(&h));
+        assert_ptr_equal(SLIST_FIRST(&h), &item);
+        assert_ptr_equal(SLIST_LAST(&h, struct item, entry), &item);
+        assert_null(SLIST_NEXT(&item, entry));
+#if 0
+        assert_null(SLIST_PREV(&item, &h, struct item, entry));
+#endif
+        SLIST_REMOVE(&h, (struct item *)NULL, &item, entry);
+        assert_true(SLIST_EMPTY(&h));
+        assert_null(SLIST_FIRST(&h));
+        assert_null(SLIST_LAST(&h, struct item, entry));
+
+        memset(&item, 0, sizeof(item));
+        SLIST_INSERT_HEAD(&h, &item, entry);
+        assert_false(SLIST_EMPTY(&h));
+        assert_ptr_equal(SLIST_FIRST(&h), &item);
+        assert_ptr_equal(SLIST_LAST(&h, struct item, entry), &item);
+        assert_null(SLIST_NEXT(&item, entry));
+#if 0
+        assert_null(SLIST_PREV(&item, &h, struct item, entry));
+#endif
+        SLIST_REMOVE(&h, (struct item *)NULL, &item, entry);
+        assert_true(SLIST_EMPTY(&h));
+        assert_null(SLIST_FIRST(&h));
+        assert_null(SLIST_LAST(&h, struct item, entry));
+
+        struct item items[10];
+        int i;
+        for (i = 0; i < 10; i++) {
+                SLIST_INSERT_TAIL(&h, &items[i], entry);
+                assert_false(SLIST_EMPTY(&h));
+                assert_null(SLIST_NEXT(&items[i], entry));
+                assert_ptr_equal(SLIST_LAST(&h, struct item, entry),
+                                 &items[i]);
+                if (i == 0) {
+#if 0
+                        assert_null(
+                                SLIST_PREV(&items[i], &h, struct item, entry));
+#endif
+                } else {
+#if 0
+                        assert_ptr_equal(
+                                SLIST_PREV(&items[i], &h, struct item, entry),
+                                &items[i - 1]);
+#endif
+                        assert_ptr_equal(SLIST_NEXT(&items[i - 1], entry),
+                                         &items[i]);
+                }
+        }
+        assert_ptr_equal(SLIST_FIRST(&h), &items[0]);
+
+        struct item *it;
+        i = 0;
+        SLIST_FOREACH(it, &h, entry) {
+                assert_int_equal(it - items, i);
+                i++;
+        }
+        i = 0;
+#if 0
+        SLIST_FOREACH_REVERSE(it, &h, struct item, entry) {
+                assert_int_equal(it - items, 9 - i);
+                i++;
+        }
+#endif
+
+        SLIST_REMOVE(&h, (struct item *)NULL, &items[0], entry);
+        SLIST_REMOVE(&h, &items[1], &items[2], entry);
+        SLIST_REMOVE(&h, &items[3], &items[4], entry);
+        SLIST_REMOVE(&h, &items[7], &items[8], entry);
+        SLIST_REMOVE(&h, &items[5], &items[6], entry);
+
+        i = 0;
+        SLIST_FOREACH(it, &h, entry) {
+                assert_int_equal(it - items, i * 2 + 1);
+                i++;
+        }
+        assert_int_equal(i, 5);
+#if 0
+        i = 0;
+        SLIST_FOREACH_REVERSE(it, &h, struct item, entry) {
+                assert_int_equal(it - items, (4 - i) * 2 + 1);
+                i++;
+        }
+        assert_int_equal(i, 5);
+#endif
+
+        i = 0;
+        while ((it = SLIST_FIRST(&h)) != NULL) {
+                assert_int_equal(it - items, i * 2 + 1);
+                i++;
+                SLIST_REMOVE(&h, (struct item *)NULL, it, entry);
+        }
+        assert_int_equal(i, 5);
+        assert_true(SLIST_EMPTY(&h));
+        assert_null(SLIST_FIRST(&h));
+        assert_null(SLIST_LAST(&h, struct item, entry));
+
+        for (i = 0; i < 10; i++) {
+                SLIST_INSERT_HEAD(&h, &items[i], entry);
+                assert_false(SLIST_EMPTY(&h));
+#if 0
+                assert_null(SLIST_PREV(&items[i], &h, struct item, entry));
+#endif
+                assert_ptr_equal(SLIST_FIRST(&h), &items[i]);
+                if (i == 0) {
+                        assert_null(SLIST_NEXT(&items[i], entry));
+                } else {
+                        assert_ptr_equal(SLIST_NEXT(&items[i], entry),
+                                         &items[i - 1]);
+#if 0
+                        assert_ptr_equal(SLIST_PREV(&items[i - 1], &h,
+                                                   struct item, entry),
+                                         &items[i]);
+#endif
+                }
+        }
+        assert_ptr_equal(SLIST_LAST(&h, struct item, entry), &items[0]);
+
+        i = 0;
+        SLIST_FOREACH(it, &h, entry) {
+                assert_int_equal(it - items, 9 - i);
+                i++;
+        }
+#if 0
+        i = 0;
+        SLIST_FOREACH_REVERSE(it, &h, struct item, entry) {
+                assert_int_equal(it - items, i);
+                i++;
+        }
+#endif
+
+        i = 0;
+        while ((it = SLIST_LAST(&h, struct item, entry)) != NULL) {
+                assert_int_equal(it - items, i);
+                i++;
+                struct item *prev = NULL;
+                if (it - items < 9) {
+                        prev = it + 1;
+                }
+                SLIST_REMOVE(&h, prev, it, entry);
+        }
+        assert_int_equal(i, 10);
+        assert_true(SLIST_EMPTY(&h));
+        assert_null(SLIST_FIRST(&h));
+        assert_null(SLIST_LAST(&h, struct item, entry));
+}
+
+void
+test_slist2(void **state)
+{
+        struct item {
+                void *dummy1;
+                SLIST_ENTRY(struct item) entry;
+                int dummy2;
+        };
+
+        SLIST_HEAD(struct item) h0;
+        SLIST_HEAD(struct item) h1;
+        SLIST_HEAD(struct item) h2;
+        SLIST_HEAD(struct item) hempty;
+
+        struct item i1;
+        struct item i2;
+        struct item i3;
+        struct item i4;
+        struct item i5;
+        struct item i6;
+
+        /* test SLIST_SPLICE_TAIL */
+
+        SLIST_HEAD_INIT(&h0);
+
+        SLIST_HEAD_INIT(&h1);
+        SLIST_INSERT_TAIL(&h1, &i1, entry);
+        SLIST_INSERT_TAIL(&h1, &i2, entry);
+        SLIST_INSERT_TAIL(&h1, &i3, entry);
+
+        SLIST_HEAD_INIT(&h2);
+        SLIST_INSERT_HEAD(&h2, &i6, entry);
+        SLIST_INSERT_HEAD(&h2, &i5, entry);
+        SLIST_INSERT_HEAD(&h2, &i4, entry);
+
+        SLIST_HEAD_INIT(&hempty);
+        SLIST_SPLICE_TAIL(&h0, &hempty, entry);
+        SLIST_SPLICE_TAIL(&h0, &h1, entry);
+        SLIST_HEAD_INIT(&hempty);
+        SLIST_SPLICE_TAIL(&h0, &hempty, entry);
+        SLIST_SPLICE_TAIL(&h0, &h2, entry);
+        SLIST_HEAD_INIT(&hempty);
+        SLIST_SPLICE_TAIL(&h0, &hempty, entry);
+
+        assert_ptr_equal(SLIST_FIRST(&h0), &i1);
+        assert_ptr_equal(SLIST_NEXT(&i1, entry), &i2);
+        assert_ptr_equal(SLIST_NEXT(&i2, entry), &i3);
+        assert_ptr_equal(SLIST_NEXT(&i3, entry), &i4);
+        assert_ptr_equal(SLIST_NEXT(&i4, entry), &i5);
+        assert_ptr_equal(SLIST_NEXT(&i5, entry), &i6);
+        assert_null(SLIST_NEXT(&i6, entry));
+        assert_ptr_equal(SLIST_LAST(&h0, struct item, entry), &i6);
+#if 0
+        assert_ptr_equal(SLIST_PREV(&i6, &h0, struct item, entry), &i5);
+        assert_ptr_equal(SLIST_PREV(&i5, &h0, struct item, entry), &i4);
+        assert_ptr_equal(SLIST_PREV(&i4, &h0, struct item, entry), &i3);
+        assert_ptr_equal(SLIST_PREV(&i3, &h0, struct item, entry), &i2);
+        assert_ptr_equal(SLIST_PREV(&i2, &h0, struct item, entry), &i1);
+        assert_null(SLIST_PREV(&i1, &h0, struct item, entry));
+#endif
+
+        /* test SLIST_SPLICE_HEAD */
+
+        SLIST_HEAD_INIT(&h0);
+
+        SLIST_HEAD_INIT(&h1);
+        SLIST_INSERT_TAIL(&h1, &i1, entry);
+        SLIST_INSERT_TAIL(&h1, &i2, entry);
+        SLIST_INSERT_TAIL(&h1, &i3, entry);
+
+        SLIST_HEAD_INIT(&h2);
+        SLIST_INSERT_HEAD(&h2, &i6, entry);
+        SLIST_INSERT_HEAD(&h2, &i5, entry);
+        SLIST_INSERT_HEAD(&h2, &i4, entry);
+
+        SLIST_HEAD_INIT(&hempty);
+        SLIST_SPLICE_HEAD(&h0, &hempty, entry);
+        SLIST_SPLICE_HEAD(&h0, &h1, entry);
+        SLIST_HEAD_INIT(&hempty);
+        SLIST_SPLICE_HEAD(&h0, &hempty, entry);
+        SLIST_SPLICE_HEAD(&h0, &h2, entry);
+        SLIST_HEAD_INIT(&hempty);
+        SLIST_SPLICE_HEAD(&h0, &hempty, entry);
+
+        assert_ptr_equal(SLIST_FIRST(&h0), &i4);
+        assert_ptr_equal(SLIST_NEXT(&i4, entry), &i5);
+        assert_ptr_equal(SLIST_NEXT(&i5, entry), &i6);
+        assert_ptr_equal(SLIST_NEXT(&i6, entry), &i1);
+        assert_ptr_equal(SLIST_NEXT(&i1, entry), &i2);
+        assert_ptr_equal(SLIST_NEXT(&i2, entry), &i3);
+        assert_null(SLIST_NEXT(&i3, entry));
+#if 0
+        assert_ptr_equal(SLIST_LAST(&h0, struct item, entry), &i3);
+        assert_ptr_equal(SLIST_PREV(&i3, &h0, struct item, entry), &i2);
+        assert_ptr_equal(SLIST_PREV(&i2, &h0, struct item, entry), &i1);
+        assert_ptr_equal(SLIST_PREV(&i1, &h0, struct item, entry), &i6);
+        assert_ptr_equal(SLIST_PREV(&i6, &h0, struct item, entry), &i5);
+        assert_ptr_equal(SLIST_PREV(&i5, &h0, struct item, entry), &i4);
+        assert_null(SLIST_PREV(&i4, &h0, struct item, entry));
+#endif
+}
+
+void
 test_xstrnstr(void **state)
 {
         const char *abcd = "abcd";
@@ -923,6 +1190,8 @@ main(int argc, char **argv)
                 cmocka_unit_test(test_timeutil_int64),
                 cmocka_unit_test(test_list),
                 cmocka_unit_test(test_list2),
+                cmocka_unit_test(test_slist),
+                cmocka_unit_test(test_slist2),
                 cmocka_unit_test(test_xstrnstr),
         };
         return cmocka_run_group_tests(tests, NULL, NULL);
