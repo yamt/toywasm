@@ -182,8 +182,8 @@ dyld_dlfcn_resolve_symbol(struct exec_context *ctx, struct host_instance *hi,
          * libraries as well.
          */
         uint32_t addr;
-        ret = dyld_resolve_symbol_in_obj(LIST_FIRST(&d->objs), dobj->obj, type,
-                                         &name, &addr);
+        ret = dyld_resolve_symbol_in_obj(SLIST_FIRST(&d->objs), dobj->obj,
+                                         type, &name, &addr);
         if (ret != 0) {
                 xlog_trace("dyld: dyld:resolve_symbol dyld_resolve_symbol "
                            "failed for %.*s with %d",

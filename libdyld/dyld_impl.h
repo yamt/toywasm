@@ -1,7 +1,7 @@
 #include <stdbool.h>
 
-#include "list.h"
 #include "mem.h"
+#include "slist.h"
 #include "type.h"
 
 struct dyld;
@@ -45,11 +45,11 @@ struct dyld_object {
         struct mem_context instance_mctx;
 
         struct dyld *dyld;
-        LIST_ENTRY(struct dyld_object) q;
+        SLIST_ENTRY(struct dyld_object) q;
 
         /* for tsort */
         bool visited;
-        LIST_ENTRY(struct dyld_object) tq;
+        SLIST_ENTRY(struct dyld_object) tq;
 };
 
 struct dyld_dynamic_object {

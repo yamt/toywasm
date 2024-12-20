@@ -1,8 +1,8 @@
 #include <stdint.h>
 
 #include "host_instance.h"
-#include "list.h"
 #include "platform.h"
+#include "slist.h"
 #include "toywasm_config.h"
 #include "type.h"
 #include "vec.h"
@@ -72,7 +72,7 @@ struct dyld {
                 } pie;
         } u;
 
-        LIST_HEAD(struct dyld_object) objs;
+        SLIST_HEAD(struct dyld_object) objs;
 
         struct dyld_options opts;
 

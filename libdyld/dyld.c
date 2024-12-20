@@ -26,10 +26,10 @@
 #include "exec_context.h"
 #include "fileio.h"
 #include "instance.h"
-#include "list.h"
 #include "load_context.h"
 #include "mem.h"
 #include "module.h"
+#include "slist.h"
 #include "type.h"
 #include "util.h"
 #include "xlog.h"
@@ -250,7 +250,7 @@ static bool
 is_main_object(struct dyld_object *obj)
 {
         struct dyld *dyld = obj->dyld;
-        return LIST_FIRST(&dyld->objs) == obj;
+        return SLIST_FIRST(&dyld->objs) == obj;
 }
 
 void
@@ -268,7 +268,7 @@ void
 dyld_init(struct dyld *d, struct mem_context *mctx)
 {
         memset(d, 0, sizeof(*d));
-        LIST_HEAD_INIT(&d->objs);
+        SLIST_HEAD_INIT(&d->objs);
         d->table_base = 0;
         d->memory_base = 0;
         dyld_options_set_defaults(&d->opts);
@@ -279,7 +279,7 @@ static struct dyld_object *
 dyld_find_object_by_name(struct dyld *d, const struct name *name)
 {
         struct dyld_object *obj;
-        LIST_FOREACH(obj, &d->objs, q) {
+        SLIST_FOREACH(obj, &d->objs, q) {
                 if (is_main_object(obj)) {
                         continue;
                 }
@@ -338,7 +338,7 @@ dyld_load_needed_objects(struct dyld *d, struct dyld_object *start)
          */
         int ret = 0;
         struct dyld_object *obj;
-        for (obj = start; obj != NULL; obj = LIST_NEXT(obj, q)) {
+        for (obj = start; obj != NULL; obj = SLIST_NEXT(obj, q)) {
                 const struct dylink_needs *needs = &obj->module->dylink->needs;
                 uint32_t i;
                 for (i = 0; i < needs->count; i++) {
@@ -732,7 +732,7 @@ dyld_execute_obj_init_func(struct dyld_object *obj, const struct name *names,
         return 0;
 }
 
-LIST_HEAD_NAMED(struct dyld_object, tsort_list);
+SLIST_HEAD_NAMED(struct dyld_object, tsort_list);
 
 static void
 tsort_visit(struct dyld_object *obj, struct tsort_list *list)
@@ -752,7 +752,7 @@ tsort_visit(struct dyld_object *obj, struct tsort_list *list)
                 assert(needed_obj != NULL);
                 tsort_visit(needed_obj, list);
         }
-        LIST_INSERT_TAIL(list, obj, tq);
+        SLIST_INSERT_TAIL(list, obj, tq);
 }
 
 int
@@ -760,23 +760,23 @@ dyld_execute_all_init_funcs(struct dyld *d, struct dyld_object *start)
 {
         /* topological sort */
         struct tsort_list list;
-        LIST_HEAD_INIT(&list);
+        SLIST_HEAD_INIT(&list);
         struct dyld_object *obj;
-        for (obj = start; obj != NULL; obj = LIST_NEXT(obj, q)) {
+        for (obj = start; obj != NULL; obj = SLIST_NEXT(obj, q)) {
                 assert(!obj->visited);
         }
-        for (obj = start; obj != NULL; obj = LIST_NEXT(obj, q)) {
+        for (obj = start; obj != NULL; obj = SLIST_NEXT(obj, q)) {
                 tsort_visit(obj, &list);
         }
 
-        LIST_FOREACH(obj, &list, tq) {
+        SLIST_FOREACH(obj, &list, tq) {
                 int ret = dyld_execute_obj_init_func(obj, reloc_funcs,
                                                      ARRAYCOUNT(reloc_funcs));
                 if (ret != 0) {
                         return ret;
                 }
         }
-        LIST_FOREACH(obj, &list, tq) {
+        SLIST_FOREACH(obj, &list, tq) {
                 int ret = dyld_execute_obj_init_func(obj, ctor_funcs,
                                                      ARRAYCOUNT(ctor_funcs));
                 if (ret != 0) {
@@ -838,7 +838,7 @@ dyld_load_object_from_file(struct dyld *d, const struct name *name,
          * otherwise, it's probably non-pie.
          */
         bool pie_or_lib;
-        if (LIST_EMPTY(&d->objs)) {
+        if (SLIST_EMPTY(&d->objs)) {
                 /* the main module */
                 d->pie = pie_or_lib = module_imports_env_memory(obj->module);
                 if (d->pie) {
@@ -900,7 +900,7 @@ dyld_load_object_from_file(struct dyld *d, const struct name *name,
         if (ret != 0) {
                 goto fail;
         }
-        LIST_INSERT_TAIL(&d->objs, obj, q);
+        SLIST_INSERT_TAIL(&d->objs, obj, q);
         xlog_trace("dyld: %.*s loaded", CSTR(name));
         if (objp != NULL) {
                 *objp = obj;
@@ -1210,7 +1210,7 @@ dyld_resolve_symbol(struct dyld_object *refobj, enum symtype symtype,
 {
         struct dyld *d = refobj->dyld;
         struct dyld_object *obj;
-        LIST_FOREACH(obj, &d->objs, q) {
+        SLIST_FOREACH(obj, &d->objs, q) {
                 int ret = dyld_resolve_symbol_in_obj(refobj, obj, symtype, sym,
                                                      resultp);
                 if (ret == 0) {
@@ -1263,7 +1263,7 @@ static int
 dyld_resolve_all_got_symbols(struct dyld *d, struct dyld_object *start)
 {
         struct dyld_object *obj;
-        for (obj = start; obj != NULL; obj = LIST_NEXT(obj, q)) {
+        for (obj = start; obj != NULL; obj = SLIST_NEXT(obj, q)) {
                 int ret = dyld_resolve_got_symbols(obj);
                 if (ret != 0) {
                         return ret;
@@ -1302,7 +1302,7 @@ static int
 dyld_resolve_all_plt_symbols(struct dyld *d, struct dyld_object *start)
 {
         struct dyld_object *obj;
-        for (obj = start; obj != NULL; obj = LIST_NEXT(obj, q)) {
+        for (obj = start; obj != NULL; obj = SLIST_NEXT(obj, q)) {
                 int ret = dyld_resolve_plt_symbols(obj);
                 if (ret != 0) {
                         return ret;
@@ -1388,7 +1388,7 @@ fail:
 int
 dyld_execute_init_funcs(struct dyld *d)
 {
-        struct dyld_object *obj = LIST_FIRST(&d->objs);
+        struct dyld_object *obj = SLIST_FIRST(&d->objs);
         return dyld_execute_all_init_funcs(d, obj);
 }
 
@@ -1397,8 +1397,8 @@ dyld_clear(struct dyld *d)
 {
         struct mem_context *mctx = d->mctx;
         struct dyld_object *obj;
-        while ((obj = LIST_FIRST(&d->objs)) != NULL) {
-                LIST_REMOVE(&d->objs, obj, q);
+        while ((obj = SLIST_FIRST(&d->objs)) != NULL) {
+                SLIST_REMOVE(&d->objs, (struct dyld_object *)NULL, obj, q);
                 dyld_object_destroy(obj);
         }
         if (d->pie) {
@@ -1433,7 +1433,7 @@ dyld_clear(struct dyld *d)
 struct instance *
 dyld_main_object_instance(struct dyld *d)
 {
-        const struct dyld_object *obj = LIST_FIRST(&d->objs);
+        const struct dyld_object *obj = SLIST_FIRST(&d->objs);
         return obj->instance;
 }
 
