@@ -8,7 +8,7 @@ void
 dyld_print_stats(struct dyld *d)
 {
         struct dyld_object *obj;
-        LIST_FOREACH(obj, &d->objs, q) {
+        SLIST_FOREACH(obj, &d->objs, q) {
                 struct escaped_string e;
                 escape_name(&e, obj->name);
 
