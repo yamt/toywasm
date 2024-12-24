@@ -655,12 +655,12 @@ jobs:
     steps:
     - uses: actions/download-artifact@v3
       with:
-        name: macos-11.0
+        name: macos-13.0
         path: release_assets
 
     - uses: actions/download-artifact@v3
       with:
-        name: full-macos-11.0
+        name: full-macos-13.0
         path: release_assets
 
     - uses: actions/download-artifact@v3
