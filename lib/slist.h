@@ -28,6 +28,7 @@ __BEGIN_EXTERN_C
 void slist_head_init(struct slist_head *h);
 void slist_remove(struct slist_head *h, struct slist_entry *prev,
                   struct slist_entry *e);
+void slist_remove_head(struct slist_head *h, struct slist_entry *e);
 void slist_insert_tail(struct slist_head *h, void *elem,
                        struct slist_entry *e);
 void slist_insert_head(struct slist_head *h, void *elem,
@@ -90,6 +91,18 @@ __END_EXTERN_C
                      (struct slist_entry *)((PREV == NULL) ? NULL             \
                                                            : &(PREV)->NAME),  \
                      (struct slist_entry *)&(ELEM)->NAME)
+
+/*
+ * SLIST_REMOVE_HEAD(h, e, name) is an equivalent of
+ * SLIST_REMOVE(h, (TYPE *)NULL, e, name).
+ */
+#define SLIST_REMOVE_HEAD(HEAD, ELEM, NAME)                                   \
+        CHECK_TYPE(&(HEAD)->sh_first, (HEAD)->sh_tailnextp);                  \
+        CHECK_TYPE((HEAD)->sh_first, (ELEM)->NAME.se_next);                   \
+        ctassert(sizeof(*(HEAD)) == sizeof(struct slist_head));               \
+        ctassert(sizeof((ELEM)->NAME) == sizeof(struct slist_entry));         \
+        slist_remove_head((struct slist_head *)(HEAD),                        \
+                          (struct slist_entry *)&(ELEM)->NAME)
 
 #define SLIST_INSERT_TAIL(HEAD, ELEM, NAME)                                   \
         CHECK_TYPE(&(HEAD)->sh_first, (HEAD)->sh_tailnextp);                  \

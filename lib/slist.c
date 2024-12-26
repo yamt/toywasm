@@ -6,17 +6,24 @@
 #include "slist.h"
 
 void
+slist_remove_head(struct slist_head *h, struct slist_entry *e)
+{
+        assert(h->sh_first != NULL);
+        h->sh_first = e->se_next;
+        if (e->se_next == NULL) {
+                /* removing the only entry */
+                h->sh_tailnextp = &h->sh_first;
+        }
+}
+
+void
 slist_remove(struct slist_head *h, struct slist_entry *prev,
              struct slist_entry *e)
 {
         assert(h->sh_first != NULL);
         if (prev == NULL) {
                 /* removing the first entry */
-                h->sh_first = e->se_next;
-                if (e->se_next == NULL) {
-                        /* removing the only entry */
-                        h->sh_tailnextp = &h->sh_first;
-                }
+                slist_remove_head(h, e);
         } else {
                 prev->se_next = e->se_next;
                 if (h->sh_tailnextp == &e->se_next) {
