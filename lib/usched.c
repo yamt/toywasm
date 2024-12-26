@@ -39,7 +39,7 @@ sched_enqueue(struct sched *sched, struct exec_context *ctx)
 {
         xlog_trace("%s: enqueueing ctx %p", __func__, (void *)ctx);
         assert(sched == ctx->sched);
-        LIST_INSERT_TAIL(&sched->runq, ctx, rq);
+        SLIST_INSERT_TAIL(&sched->runq, ctx, rq);
 }
 
 #define RR_INTERVAL_MS 100
@@ -50,9 +50,9 @@ sched_run(struct sched *sched, struct exec_context *caller)
         struct runq *q = &sched->runq;
         struct exec_context *ctx;
 
-        while ((ctx = LIST_FIRST(q)) != NULL) {
+        while ((ctx = SLIST_FIRST(q)) != NULL) {
                 int ret;
-                LIST_REMOVE(q, ctx, rq);
+                SLIST_REMOVE_HEAD(q, ctx, rq);
                 xlog_trace("%s: running ctx %p", __func__, (void *)ctx);
                 ret = abstime_from_reltime_ms(
                         CLOCK_MONOTONIC, &sched->next_resched, RR_INTERVAL_MS);
@@ -71,7 +71,7 @@ sched_run(struct sched *sched, struct exec_context *caller)
                 if (IS_RESTARTABLE(ret) && ret != ETOYWASMUSERINTERRUPT) {
                         xlog_trace("%s: re-enqueueing ctx %p", __func__,
                                    (void *)ctx);
-                        LIST_INSERT_TAIL(q, ctx, rq);
+                        SLIST_INSERT_TAIL(q, ctx, rq);
                         continue;
                 }
                 xlog_trace("%s: finishing ctx %p", __func__, (void *)ctx);
@@ -87,7 +87,7 @@ sched_run(struct sched *sched, struct exec_context *caller)
 void
 sched_init(struct sched *sched)
 {
-        LIST_HEAD_INIT(&sched->runq);
+        SLIST_HEAD_INIT(&sched->runq);
 }
 
 void
@@ -102,7 +102,7 @@ sched_need_resched(struct sched *sched)
         int ret;
 
         /* if we are the only thread, no point to resched. */
-        if (LIST_FIRST(&sched->runq) == NULL) {
+        if (SLIST_FIRST(&sched->runq) == NULL) {
                 return false;
         }
 

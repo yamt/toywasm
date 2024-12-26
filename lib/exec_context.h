@@ -7,10 +7,10 @@
 
 #include "toywasm_config.h"
 
-#include "list.h"
 #include "options.h"
 #include "platform.h"
 #include "report.h"
+#include "slist.h"
 #include "vec.h"
 
 struct val;
@@ -279,7 +279,7 @@ struct exec_context {
 #if defined(TOYWASM_USE_USER_SCHED)
         /* scheduler */
         struct sched *sched;
-        LIST_ENTRY(struct exec_context) rq;
+        SLIST_ENTRY(struct exec_context) rq;
 #endif
 
         /* Trap */

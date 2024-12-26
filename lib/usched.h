@@ -1,13 +1,13 @@
 #include <stdbool.h>
 #include <time.h>
 
-#include "list.h"
 #include "platform.h"
+#include "slist.h"
 
 struct exec_context;
 
 struct sched {
-        LIST_HEAD_NAMED(struct exec_context, runq) runq;
+        SLIST_HEAD_NAMED(struct exec_context, runq) runq;
         struct timespec next_resched;
 };
 
