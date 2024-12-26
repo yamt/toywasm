@@ -890,7 +890,7 @@ test_slist(void **state)
 #if 0
         assert_null(SLIST_PREV(&item, &h, struct item, entry));
 #endif
-        SLIST_REMOVE(&h, (struct item *)NULL, &item, entry);
+        SLIST_REMOVE_HEAD(&h, &item, entry);
         assert_true(SLIST_EMPTY(&h));
         assert_null(SLIST_FIRST(&h));
         assert_null(SLIST_LAST(&h, struct item, entry));
@@ -904,7 +904,7 @@ test_slist(void **state)
 #if 0
         assert_null(SLIST_PREV(&item, &h, struct item, entry));
 #endif
-        SLIST_REMOVE(&h, (struct item *)NULL, &item, entry);
+        SLIST_REMOVE_HEAD(&h, &item, entry);
         assert_true(SLIST_EMPTY(&h));
         assert_null(SLIST_FIRST(&h));
         assert_null(SLIST_LAST(&h, struct item, entry));
@@ -948,7 +948,7 @@ test_slist(void **state)
         }
 #endif
 
-        SLIST_REMOVE(&h, (struct item *)NULL, &items[0], entry);
+        SLIST_REMOVE_HEAD(&h, &items[0], entry);
         SLIST_REMOVE(&h, &items[1], &items[2], entry);
         SLIST_REMOVE(&h, &items[3], &items[4], entry);
         SLIST_REMOVE(&h, &items[7], &items[8], entry);
@@ -973,7 +973,7 @@ test_slist(void **state)
         while ((it = SLIST_FIRST(&h)) != NULL) {
                 assert_int_equal(it - items, i * 2 + 1);
                 i++;
-                SLIST_REMOVE(&h, (struct item *)NULL, it, entry);
+                SLIST_REMOVE_HEAD(&h, it, entry);
         }
         assert_int_equal(i, 5);
         assert_true(SLIST_EMPTY(&h));
