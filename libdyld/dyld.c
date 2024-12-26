@@ -1398,7 +1398,7 @@ dyld_clear(struct dyld *d)
         struct mem_context *mctx = d->mctx;
         struct dyld_object *obj;
         while ((obj = SLIST_FIRST(&d->objs)) != NULL) {
-                SLIST_REMOVE(&d->objs, (struct dyld_object *)NULL, obj, q);
+                SLIST_REMOVE_HEAD(&d->objs, obj, q);
                 dyld_object_destroy(obj);
         }
         if (d->pie) {
