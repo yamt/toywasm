@@ -43,7 +43,7 @@ fetch_spec .spec-tail-call https://github.com/WebAssembly/tail-call 6f44ca27af41
 (cd .spec-tail-call && find test -name "return_call*.wast") | compile tail-call
 
 # https://github.com/WebAssembly/multi-memory/pull/46
-fetch_spec .spec-multi-memory https://github.com/WebAssembly/multi-memory 4f6b8f53ec11e59f5e38033db4199db18df83706
+fetch_spec .spec-multi-memory https://github.com/WebAssembly/multi-memory cf8b5aa27257311b8eac80ae83f4ba22ee308064
 (cd .spec-multi-memory && find test \
 -name "load.wast" -o \
 -name "store.wast" -o \
