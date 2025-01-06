@@ -32,7 +32,7 @@ compile()
 ${WAST2JSON} --version
 
 # Note: --no-check for https://github.com/WebAssembly/wabt/issues/2201
-fetch_spec .spec https://github.com/WebAssembly/spec b55d740054915ffc9089e709c99f3319ae6baabc
+fetch_spec .spec https://github.com/WebAssembly/spec f3a0e06235d2d84bb0f3b5014da4370613886965
 (cd ${SPEC_DIR} && find test -name "*.wast") | compile . --no-check
 
 fetch_spec .spec-threads https://github.com/WebAssembly/threads 09f2831349bf409187abb6f7868482a8079f2264
