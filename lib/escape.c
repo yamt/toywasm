@@ -76,11 +76,11 @@ escape_name(struct escaped_string *e, const struct name *n)
                         }
                 }
                 char *dp = e->escaped;
-                const char *dep = dp + lim;
+                const char *dsp = dp;
                 for (p = sp; p < ep; p++) {
                         char ch = *p;
                         if (need_escape(ch)) {
-                                if (dp + escaped_char_size > dep) {
+                                if (dp + escaped_char_size - dsp > lim) {
                                         break;
                                 }
                                 *dp++ = '\\';
@@ -88,13 +88,13 @@ escape_name(struct escaped_string *e, const struct name *n)
                                 *dp++ = oct(((uint8_t)ch >> 3) & 0x07);
                                 *dp++ = oct((uint8_t)ch & 0x07);
                         } else {
-                                if (dp + 1 > dep) {
+                                if (dp + 1 - dsp > lim) {
                                         break;
                                 }
                                 *dp++ = ch;
                         }
                 }
-                assert(dp <= dep);
+                assert(dp - dsp <= lim);
                 if (lim != INT_MAX) {
                         assert(e->escaped == e->small);
                         assert(dp + omitted_size <=
