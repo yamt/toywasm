@@ -45,7 +45,7 @@ oct(uint8_t v)
 void
 escape_name(struct escaped_string *e, const struct name *n)
 {
-        const size_t escaped_char_size = 4; /* strlen("\123") */
+        const size_t escaped_char_size = 4; /* strlen("\\123") */
         const size_t omitted_size = 2;      /* strlen("..") */
         const char *sp = n->data;
         const char *ep = sp + n->nbytes;
