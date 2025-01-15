@@ -174,6 +174,15 @@ int create_satisfying_shared_memories(struct mem_context *mctx,
                                       const struct module *module,
                                       struct import_object **imop);
 
+/*
+ * create_satisfying_functions:
+ *
+ * create dummy host functions to satisfy all function imports
+ * in the module.
+ *
+ * if the created host functions are actually called, they just trap.
+ * (TRAP_UNRESOLVED_IMPORTED_FUNC)
+ */
 int create_satisfying_functions(struct mem_context *mctx,
                                 const struct module *module,
                                 struct import_object **imop);
