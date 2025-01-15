@@ -16,8 +16,8 @@
  *   round-robin manner.
  *
  * - reschedule requests are based on periodic polling. (check_interrupt)
- *   because of that, long sleep request is divided into small intervals
- *   so that the thread have a chances to check reschedule requests
+ *   because of that, a long sleep request is divided into small intervals
+ *   so that the thread has a chances to check reschedule requests
  *   frequently enough.
  *
  * - no real i/o wait. when a thread wants to block on an i/o event, it just
