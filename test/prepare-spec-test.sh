@@ -57,9 +57,13 @@ fetch_spec .spec-extended-const https://github.com/WebAssembly/extended-const dd
 -name "data.wast" -o \
 -name "global.wast") | compile extended-const
 
-fetch_spec .spec-custom-page-sizes https://github.com/WebAssembly/custom-page-sizes 2c010a94986827679492e95246f1df2d857f2208
+# use my fork for
+# https://github.com/WebAssembly/custom-page-sizes/pull/34
+# https://github.com/WebAssembly/custom-page-sizes/pull/35
+fetch_spec .spec-custom-page-sizes https://github.com/yamt/custom-page-sizes 3fd9dfd0d5d81bd9c03f38a17b7597d9a83a7529
 (cd .spec-custom-page-sizes && find test \
--path "*/custom-page-sizes/*.wast") | compile custom-page-sizes
+-path "*/custom-page-sizes/*.wast" -a ! -name "memory_max_i64.wast") \
+| compile custom-page-sizes
 
 # REVISIT: wabt (wast2json) doesn't implement the latest exception-handling
 # yet. https://github.com/WebAssembly/wabt/issues/2348
