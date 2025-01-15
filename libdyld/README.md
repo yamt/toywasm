@@ -15,7 +15,7 @@ A runtime linker for [WebAssembly Dynamic Linking].
 # Portability notes
 
 While this library is implemented using the toywasm API directly,
-it should be straightforward to port it to other runtime API like
+it should be straightforward to port it to other runtime APIs like
 [wasm-c-api] except a few things listed below.
 
 ## dylink.0 custom section
@@ -41,8 +41,7 @@ interfere exceptions either. See [dyld_plt.c].
 The import/export API of [wasm-c-api] is a bit low-level and cumbersome
 to use.
 
-Also, the API to link host functions like WASI varies among
-runtimes.
+Also, the API to link host functions like WASI varies among runtimes.
 Eg. [wasmer-c-api-wasi], [wasmtime-c-api-wasi]
 
 [WebAssembly Dynamic Linking]: https://github.com/WebAssembly/tool-conventions/blob/main/DynamicLinking.md
