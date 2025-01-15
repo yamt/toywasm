@@ -184,6 +184,15 @@ set_tests_properties(toywasm-cli-exception-handling-test-disable-jump-table PROP
 set_tests_properties(toywasm-cli-exception-handling-test-disable-jump-table PROPERTIES LABELS "exception-handling")
 endif()
 
+if(TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES)
+add_test(NAME toywasm-cli-wasm3-spec-test-custom-page-sizes
+	COMMAND ./test/run-wasm3-spec-test-custom-page-sizes.sh --exec "${TOYWASM_CLI} --repl --repl-prompt=wasm3" --timeout 60 --spectest ${CMAKE_BINARY_DIR}/spectest.wasm
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+set_tests_properties(toywasm-cli-wasm3-spec-test-custom-page-sizes PROPERTIES ENVIRONMENT "${TEST_ENV}")
+set_tests_properties(toywasm-cli-wasm3-spec-test-custom-page-sizes PROPERTIES LABELS "spec;custom-page-sizes")
+endif()
+
 if(TOYWASM_ENABLE_WASI)
 add_test(NAME toywasm-cli-wasi-testsuite
 	COMMAND ./test/run-wasi-testsuite.sh
