@@ -537,14 +537,14 @@ jobs:
 
     - name: Upload artifacts
       if: matrix.name != 'noname'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ${{matrix.name}}
         path: ${{github.workspace}}/artifacts
 
     - name: Upload the build dir for post mortem investigation
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: builddir-${{github.run_id}}-${{strategy.job-index}}-${{matrix.name}}
         path: ${{env.builddir}}
@@ -636,14 +636,14 @@ jobs:
     - name: Upload artifacts
       # wasm binary is same among OSes. Only upload one of them.
       if: startsWith(matrix.os, 'ubuntu-')
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ${{matrix.name}}
         path: ${{github.workspace}}/artifacts
 
     - name: Upload the build dir for post mortem investigation
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: builddir-${{github.run_id}}-${{strategy.job-index}}-${{matrix.name}}
         path: ${{env.builddir}}
@@ -653,82 +653,82 @@ jobs:
     needs: [build, wasm-on-wasm]
     runs-on: ubuntu-20.04
     steps:
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
         name: macos-13.0
         path: release_assets
 
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
         name: full-macos-13.0
         path: release_assets
 
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
         name: ubuntu-20.04-amd64
         path: release_assets
 
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
         name: full-ubuntu-20.04-amd64
         path: release_assets
 
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
         name: ubuntu-20.04-i386
         path: release_assets
 
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
         name: ubuntu-20.04-arm64
         path: release_assets
 
-    #- uses: actions/download-artifact@v3
+    #- uses: actions/download-artifact@v4
     #  with:
     #    name: ubuntu-20.04-armhf
     #    path: release_assets
 
-    #- uses: actions/download-artifact@v3
+    #- uses: actions/download-artifact@v4
     #  with:
     #    name: ubuntu-20.04-s390x
     #    path: release_assets
 
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
         name: ubuntu-20.04-riscv64
         path: release_assets
 
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
         name: full-ubuntu-20.04-i386
         path: release_assets
 
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
         name: full-ubuntu-20.04-arm64
         path: release_assets
 
-    #- uses: actions/download-artifact@v3
+    #- uses: actions/download-artifact@v4
     #  with:
     #    name: full-ubuntu-20.04-armhf
     #    path: release_assets
 
-    #- uses: actions/download-artifact@v3
+    #- uses: actions/download-artifact@v4
     #  with:
     #    name: full-ubuntu-20.04-s390x
     #    path: release_assets
 
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
         name: full-ubuntu-20.04-riscv64
         path: release_assets
 
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
         name: wasm32-wasi
         path: release_assets
 
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
         name: full-wasm32-wasi
         path: release_assets
