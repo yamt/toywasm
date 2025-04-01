@@ -54,7 +54,3 @@ we don't bother to do so.
 * littlefs doesn't have symlinks.
 * littlefs doesn't have hardlinks.
 * In littlefs, opened files are snapshot of the files at the time of open.
-
-# Caveats
-
-Curretly, block size (4096) and other filesystem parameters are hardcoded.
