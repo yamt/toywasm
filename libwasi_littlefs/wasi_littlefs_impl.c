@@ -55,6 +55,19 @@ lfs_error_to_errno(enum lfs_error lfs_error)
         case LFS_ERR_NAMETOOLONG:
                 error = ENAMETOOLONG;
                 break;
+        default:
+                /*
+                 * while our own block layer implementation (wasi_lfs_bd_read
+                 * etc) always reports LFS_ERR_xxx errors as expected, it's
+                 * known there are a bit broken implementations out there,
+                 * which usually report raw negative host errno. we translate
+                 * them to EIO for safety. cf.
+                 * https://github.com/littlefs-project/littlefs/issues/946
+                 */
+                xlog_error("%s: converting unknown littlefs error %d to EIO",
+                           __func__, (int)lfs_error);
+                error = EIO;
+                break;
         }
         if (error != 0) {
                 /* note: lfs_err is negative integer */
