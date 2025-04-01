@@ -1,3 +1,5 @@
+#define _DARWIN_C_SOURCE /* malloc/malloc.h */
+
 #include <assert.h>
 #include <errno.h>
 #if __STDC_VERSION__ >= 201112L && !defined(__STDC_NO_ATOMICS__)
