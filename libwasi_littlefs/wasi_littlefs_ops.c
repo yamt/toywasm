@@ -10,6 +10,35 @@
 #include "wasi_vfs_types.h"
 #include "xlog.h"
 
+#define LOCK(lfs) wasi_lfs_fs_lock(lfs)
+#define UNLOCK(lfs) wasi_lfs_fs_unlock(lfs)
+
+void
+wasi_lfs_fs_lock(struct wasi_vfs_lfs *lfs) ACQUIRES(&lfs->lock)
+{
+        /*
+         * REVISIT: toywasm_mutex_lock is not really appropriate because
+         * toywasm_mutex_lock is a no-op unless TOYWASM_ENABLE_WASM_THREADS
+         * is enabled. consider the cases where a mounted filesystem
+         * (wasi_vfs_lfs) is shared among single-threaded instances.
+         */
+        toywasm_mutex_lock(&lfs->lock);
+#if !defined(NDEBUG)
+        assert(!lfs->locked);
+        lfs->locked = true;
+#endif
+}
+
+void
+wasi_lfs_fs_unlock(struct wasi_vfs_lfs *lfs) RELEASES(&lfs->lock)
+{
+#if !defined(NDEBUG)
+        assert(lfs->locked);
+        lfs->locked = false;
+#endif
+        toywasm_mutex_unlock(&lfs->lock);
+}
+
 __attribute__((unused)) static char *
 fdinfo_path(struct wasi_fdinfo *fdinfo)
 {
@@ -98,7 +127,9 @@ wasi_lfs_fd_ftruncate(struct wasi_fdinfo *fdinfo, wasi_off_t size)
         if (ret != 0) {
                 return ret;
         }
+        LOCK(lfs);
         ret = lfs_file_truncate(&lfs->lfs, file, size);
+        UNLOCK(lfs);
         return lfs_error_to_errno(ret);
 }
 
@@ -118,7 +149,9 @@ wasi_lfs_fd_writev(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
         if (ret != 0) {
                 goto fail;
         }
+        LOCK(lfs);
         lfs_ssize_t ssz = lfs_file_write(&lfs->lfs, file, buf, buflen);
+        UNLOCK(lfs);
         if (ssz < 0) {
                 ret = lfs_error_to_errno(ssz);
                 goto fail;
@@ -178,7 +211,9 @@ wasi_lfs_fd_readv(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
         if (ret != 0) {
                 goto fail;
         }
+        LOCK(lfs);
         lfs_ssize_t ssz = lfs_file_read(&lfs->lfs, file, buf, buflen);
+        UNLOCK(lfs);
         if (ssz < 0) {
                 ret = lfs_error_to_errno(ssz);
                 goto fail;
@@ -214,7 +249,9 @@ wasi_lfs_fd_fstat(struct wasi_fdinfo *fdinfo, struct wasi_filestat *stp)
                 if (ret != 0) {
                         return ret;
                 }
+                LOCK(lfs);
                 lfs_soff_t size = lfs_file_size(&lfs->lfs, file);
+                UNLOCK(lfs);
                 if (size < 0) {
                         return lfs_error_to_errno(size);
                 }
@@ -253,7 +290,9 @@ wasi_lfs_fd_lseek(struct wasi_fdinfo *fdinfo, wasi_off_t offset, int whence,
         default:
                 return EINVAL;
         }
+        LOCK(lfs);
         ret = lfs_file_seek(&lfs->lfs, file, offset, lfs_whence);
+        UNLOCK(lfs);
         if (ret < 0) {
                 return lfs_error_to_errno(ret);
         }
@@ -270,7 +309,9 @@ wasi_lfs_fd_fsync(struct wasi_fdinfo *fdinfo)
         if (ret == EISDIR) {
                 return 0;
         }
+        LOCK(lfs);
         ret = lfs_file_sync(&lfs->lfs, file);
+        UNLOCK(lfs);
         return lfs_error_to_errno(ret);
 }
 
@@ -291,17 +332,19 @@ wasi_lfs_fd_futimes(struct wasi_fdinfo *fdinfo, const struct utimes_args *args)
 int
 wasi_lfs_fd_close(struct wasi_fdinfo *fdinfo)
 {
-        struct wasi_vfs_lfs *vfs_lfs;
+        struct wasi_vfs_lfs *lfs;
         struct wasi_fdinfo_lfs *fdinfo_lfs;
-        fdinfo_to_lfs(fdinfo, &vfs_lfs, &fdinfo_lfs);
+        fdinfo_to_lfs(fdinfo, &lfs, &fdinfo_lfs);
         int ret;
+        LOCK(lfs);
         if (fdinfo_lfs->type == WASI_LFS_TYPE_FILE) {
-                ret = lfs_file_close(&vfs_lfs->lfs, &fdinfo_lfs->u.file);
+                ret = lfs_file_close(&lfs->lfs, &fdinfo_lfs->u.file);
         } else {
                 assert(fdinfo_lfs->type == WASI_LFS_TYPE_DIR);
-                ret = lfs_dir_close(&vfs_lfs->lfs, &fdinfo_lfs->u.dir.dir);
+                ret = lfs_dir_close(&lfs->lfs, &fdinfo_lfs->u.dir.dir);
         }
         fdinfo_lfs->type = WASI_LFS_TYPE_NONE;
+        UNLOCK(lfs);
         return lfs_error_to_errno(ret);
 }
 
@@ -314,7 +357,9 @@ wasi_lfs_dir_rewind(struct wasi_fdinfo *fdinfo)
         if (ret != 0) {
                 return ret;
         }
+        LOCK(lfs);
         ret = lfs_dir_rewind(&lfs->lfs, dir);
+        UNLOCK(lfs);
         return lfs_error_to_errno(ret);
 }
 
@@ -329,7 +374,9 @@ wasi_lfs_dir_seek(struct wasi_fdinfo *fdinfo, uint64_t offset)
         }
         xlog_trace("%s: path %s offset %" PRIu64, __func__,
                    fdinfo_path(fdinfo), offset);
+        LOCK(lfs);
         ret = lfs_dir_seek(&lfs->lfs, dir, offset);
+        UNLOCK(lfs);
         return lfs_error_to_errno(ret);
 }
 
@@ -347,17 +394,21 @@ wasi_lfs_dir_read(struct wasi_fdinfo *fdinfo, struct wasi_dirent *wde,
         xlog_trace("%s: path %s", __func__, fdinfo_path(fdinfo));
         lfs_dir_t *dir = &fdinfo_lfs->u.dir.dir;
         struct lfs_info *info = &fdinfo_lfs->u.dir.info;
+        LOCK(lfs);
         int ret = lfs_dir_read(&lfs->lfs, dir, info);
         if (ret < 0) {
+                UNLOCK(lfs);
                 return lfs_error_to_errno(ret);
         }
         if (ret == 0) {
+                UNLOCK(lfs);
                 xlog_trace("%s: path %s -> eod", __func__,
                            fdinfo_path(fdinfo));
                 *eod = true;
                 return 0;
         }
         lfs_soff_t off = lfs_dir_tell(&lfs->lfs, dir);
+        UNLOCK(lfs);
         if (off < 0) {
                 return lfs_error_to_errno(off);
         }
@@ -424,14 +475,18 @@ wasi_lfs_path_open(struct path_info *pi, const struct path_open_params *params,
         if ((params->wasmoflags & WASI_OFLAG_DIRECTORY) != 0) {
                 goto open_dir;
         }
+        LOCK(lfs);
         ret = lfs_file_open(&lfs->lfs, &fdinfo_lfs->u.file, pi->hostpath,
                             lfs_o_flags);
+        UNLOCK(lfs);
         if (ret == 0) {
                 fdinfo_lfs->type = WASI_LFS_TYPE_FILE;
         } else if (ret == LFS_ERR_ISDIR) {
 open_dir:
+                LOCK(lfs);
                 ret = lfs_dir_open(&lfs->lfs, &fdinfo_lfs->u.dir.dir,
                                    pi->hostpath);
+                UNLOCK(lfs);
                 if (ret == 0) {
                         fdinfo_lfs->type = WASI_LFS_TYPE_DIR;
                         fdinfo_lfs->user.path = pi->hostpath;
@@ -461,17 +516,20 @@ wasi_lfs_path_unlink(const struct path_info *pi)
         /*
          * lfs_remove removes directory too.
          * check file type by ourselves.
-         * XXX this check is racy.
          */
         struct lfs_info info;
+        LOCK(lfs);
         ret = lfs_stat(&lfs->lfs, pi->hostpath, &info);
         if (ret != 0) {
+                UNLOCK(lfs);
                 return lfs_error_to_errno(ret);
         }
         if (info.type != LFS_TYPE_REG) {
+                UNLOCK(lfs);
                 return EISDIR;
         }
         ret = lfs_remove(&lfs->lfs, pi->hostpath);
+        UNLOCK(lfs);
         return lfs_error_to_errno(ret);
 }
 
@@ -484,7 +542,9 @@ wasi_lfs_path_mkdir(const struct path_info *pi)
         if (ret != 0) {
                 return ret;
         }
+        LOCK(lfs);
         ret = lfs_mkdir(&lfs->lfs, pi->hostpath);
+        UNLOCK(lfs);
         return lfs_error_to_errno(ret);
 }
 
@@ -500,17 +560,20 @@ wasi_lfs_path_rmdir(const struct path_info *pi)
         /*
          * lfs_remove removes regular files too.
          * check file type by ourselves.
-         * XXX this check is racy.
          */
         struct lfs_info info;
+        LOCK(lfs);
         ret = lfs_stat(&lfs->lfs, pi->hostpath, &info);
         if (ret != 0) {
+                UNLOCK(lfs);
                 return lfs_error_to_errno(ret);
         }
         if (info.type != LFS_TYPE_DIR) {
+                UNLOCK(lfs);
                 return ENOTDIR;
         }
         ret = lfs_remove(&lfs->lfs, pi->hostpath);
+        UNLOCK(lfs);
         return lfs_error_to_errno(ret);
 }
 
@@ -548,7 +611,9 @@ wasi_lfs_path_rename(const struct path_info *pi1, const struct path_info *pi2)
         }
         struct wasi_vfs *vfs = wasi_fdinfo_vfs(pi1->dirfdinfo);
         struct wasi_vfs_lfs *lfs = wasi_vfs_to_lfs(vfs);
+        LOCK(lfs);
         int ret = lfs_rename(&lfs->lfs, pi1->hostpath, pi2->hostpath);
+        UNLOCK(lfs);
         return lfs_error_to_errno(ret);
 }
 
@@ -563,7 +628,9 @@ wasi_lfs_path_stat(const struct path_info *pi, struct wasi_filestat *stp)
                 return ret;
         }
         struct lfs_info info;
+        LOCK(lfs);
         ret = lfs_stat(&lfs->lfs, pi->hostpath, &info);
+        UNLOCK(lfs);
         if (ret != 0) {
                 xlog_trace("%s: lfs_stat on %s failed with %d", __func__,
                            pi->hostpath, ret);

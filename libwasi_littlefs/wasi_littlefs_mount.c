@@ -75,27 +75,17 @@ wasi_lfs_bd_sync(const struct lfs_config *cfg)
         return 0;
 }
 
+#if !defined(NDEBUG)
 #define MUTEX(cfg) (&((struct wasi_vfs_lfs *)(cfg)->context)->lock)
 
 static int
-wasi_lfs_fs_lock(const struct lfs_config *cfg) ACQUIRES(MUTEX(cfg))
+wasi_lfs_fs_assert_locked(const struct lfs_config *cfg)
 {
-        /*
-         * REVISIT: toywasm_mutex_lock is not really appropriate because
-         * toywasm_mutex_lock is a no-op unless TOYWASM_ENABLE_WASM_THREADS
-         * is enabled. consider the cases where a mounted filesystem
-         * (wasi_vfs_lfs) is shared among single-threaded instances.
-         */
-        toywasm_mutex_lock(MUTEX(cfg));
+        struct wasi_vfs_lfs *lfs = cfg->context;
+        assert(lfs->locked);
         return 0;
 }
-
-static int
-wasi_lfs_fs_unlock(const struct lfs_config *cfg) RELEASES(MUTEX(cfg))
-{
-        toywasm_mutex_unlock(MUTEX(cfg));
-        return 0;
-}
+#endif
 
 int
 wasi_littlefs_mount_file(const char *path,
@@ -169,8 +159,10 @@ wasi_littlefs_mount_file(const char *path,
         lfs_config->prog = wasi_lfs_bd_prog;
         lfs_config->erase = wasi_lfs_bd_erase;
         lfs_config->sync = wasi_lfs_bd_sync;
-        lfs_config->lock = wasi_lfs_fs_lock;
-        lfs_config->unlock = wasi_lfs_fs_unlock;
+#if !defined(NDEBUG)
+        lfs_config->lock = wasi_lfs_fs_assert_locked;
+        lfs_config->unlock = wasi_lfs_fs_assert_locked;
+#endif
         lfs_config->read_size = read_size;
         lfs_config->prog_size = prog_size;
         lfs_config->block_size = block_size;
@@ -191,7 +183,9 @@ wasi_littlefs_mount_file(const char *path,
          */
         lfs_config->lookahead_size = 8;
 
+        wasi_lfs_fs_lock(vfs_lfs);
         ret = lfs_mount(&vfs_lfs->lfs, lfs_config);
+        wasi_lfs_fs_unlock(vfs_lfs);
         if (ret != 0) {
                 xlog_error("lfs_mount failed with %d", ret);
                 ret = lfs_error_to_errno(ret);
@@ -224,7 +218,9 @@ wasi_littlefs_umount_file(struct wasi_vfs *vfs)
 {
         struct wasi_vfs_lfs *vfs_lfs = wasi_vfs_to_lfs(vfs);
         assert(vfs_lfs->fd != -1);
+        wasi_lfs_fs_lock(vfs_lfs);
         int ret = lfs_unmount(&vfs_lfs->lfs);
+        wasi_lfs_fs_unlock(vfs_lfs);
         if (ret != 0) {
                 xlog_trace("lfs_unmount failed with %d", ret);
                 return lfs_error_to_errno(ret);
