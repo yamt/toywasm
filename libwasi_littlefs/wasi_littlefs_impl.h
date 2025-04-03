@@ -35,6 +35,9 @@ struct wasi_vfs_lfs {
                 uint64_t bd_sync;
         } stat;
 #endif
+#if !defined(NDEBUG)
+        bool locked;
+#endif
 };
 
 #if defined(TOYWASM_ENABLE_LITTLEFS_STATS)
@@ -54,3 +57,5 @@ int lfs_error_to_errno(enum lfs_error lfs_error);
 struct wasi_fdinfo_lfs *wasi_fdinfo_to_lfs(struct wasi_fdinfo *fdinfo);
 struct wasi_vfs_lfs *wasi_vfs_to_lfs(struct wasi_vfs *vfs);
 int wasi_littlefs_umount_file(struct wasi_vfs *vfs);
+void wasi_lfs_fs_lock(struct wasi_vfs_lfs *lfs);
+void wasi_lfs_fs_unlock(struct wasi_vfs_lfs *lfs);
