@@ -1,14 +1,10 @@
 {
     "WASI C tests": {
-        "pwrite-with-access": "littlefs doesn't have pwrite",
-        "pwrite-with-append": "littlefs doesn't have pwrite",
-        "pread-with-access": "littlefs doesn't have pread",
         "stat-dev-ino": "littlefs doesn't have file id",
         "fdopendir-with-access": "littlefs doesn't have file id"
     },
     "WASI Rust tests": {
-        "file_pread_pwrite": "littlefs doesn't have pwrite",
-        "dir_fd_op_failures": "littlefs doesn't have pwrite",
+        "dir_fd_op_failures": "littlefs doesn't have fallocate",
         "file_allocate": "littlefs doesn't have fallocate",
         "fd_advise": "littlefs doesn't have fallocate",
         "symlink_loop": "littlefs doesn't have symlink",

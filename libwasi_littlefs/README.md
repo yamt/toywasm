@@ -49,7 +49,6 @@ we don't bother to do so.
 
 * littlefs doesn't have unique file-id suitable for WASI file "inode number".
 * littlefs doesn't have file timestamps.
-* littlefs doesn't have pread/pwrite.
 * littlefs doesn't have fallocate.
 * littlefs doesn't have symlinks.
 * littlefs doesn't have hardlinks.
