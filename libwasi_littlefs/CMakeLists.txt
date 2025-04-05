@@ -55,10 +55,12 @@ target_include_directories(toywasm-lib-wasi-littlefs
                            $<INSTALL_INTERFACE:include>
                            PRIVATE ${TOYWASM_LITTLEFS_SOURCE_DIR})
 target_compile_definitions(toywasm-lib-wasi-littlefs PRIVATE
-		${TOYWASM_LITTLEFS_PREFIX_UPPER}_THREADSAFE
 		${TOYWASM_LITTLEFS_PREFIX_UPPER}_MULTIVERSION)
 if (NOT CMAKE_BUILD_TYPE MATCHES Debug)
     target_compile_definitions(toywasm-lib-wasi-littlefs PRIVATE ${TOYWASM_LITTLEFS_PREFIX_UPPER}_NO_DEBUG ${TOYWASM_LITTLEFS_PREFIX_UPPER}_NO_ASSERT)
+else()
+target_compile_definitions(toywasm-lib-wasi-littlefs PRIVATE
+		${TOYWASM_LITTLEFS_PREFIX_UPPER}_THREADSAFE)
 endif()
 
 install(TARGETS toywasm-lib-wasi-littlefs
