@@ -20,6 +20,12 @@ endif()
 
 include(cmake/ToywasmConfig.cmake)
 
+# https://gitlab.kitware.com/cmake/cmake/-/issues/25202
+if (APPLE)
+  add_link_options("LINKER:-object_path_lto,$<TARGET_PROPERTY:NAME>_lto.o")
+  add_link_options("LINKER:-cache_path_lto,${CMAKE_BINARY_DIR}/LTOCache")
+endif ()
+
 add_subdirectory(lib)
 if(TOYWASM_ENABLE_WASI)
 add_subdirectory(libwasi)
