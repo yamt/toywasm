@@ -68,7 +68,7 @@ fdinfo_to_lfs_file(struct wasi_fdinfo *fdinfo, struct wasi_vfs_lfs **vfs_lfsp,
         if (fdinfo_lfs->type != WASI_LFS_TYPE_FILE) {
                 return EISDIR;
         }
-        *filep = &fdinfo_lfs->u.file;
+        *filep = &fdinfo_lfs->u.file.file;
         return 0;
 }
 
@@ -150,6 +150,17 @@ wasi_lfs_fd_writev(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
                 goto fail;
         }
         LOCK(lfs);
+        if (wasi_fdinfo_to_lfs(fdinfo)->u.file.append) {
+                /*
+                 * seek to the end of file.
+                 */
+                ret = lfs_file_seek(&lfs->lfs, file, 0, LFS_SEEK_END);
+                if (ret < 0) {
+                        UNLOCK(lfs);
+                        ret = lfs_error_to_errno(ret);
+                        goto fail;
+                }
+        }
         lfs_ssize_t ssz = lfs_file_write(&lfs->lfs, file, buf, buflen);
         UNLOCK(lfs);
         if (ssz < 0) {
@@ -167,12 +178,48 @@ int
 wasi_lfs_fd_pwritev(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
                     int iovcnt, wasi_off_t off, size_t *result)
 {
-        /*
-         * littlefs doesn't have pwrite.
-         * REVISIT: racy emulation is probably possible
-         */
-        xlog_error("%s: unimplemented", __func__);
-        return ENOTSUP;
+        struct wasi_vfs_lfs *lfs;
+        lfs_file_t *file;
+        int ret = fdinfo_to_lfs_file(fdinfo, &lfs, &file);
+        if (ret != 0) {
+                return ret;
+        }
+        void *buf = NULL;
+        size_t buflen;
+        ret = wasi_iovec_flatten(iov, iovcnt, &buf, &buflen);
+        if (ret != 0) {
+                goto fail;
+        }
+        LOCK(lfs);
+        lfs_soff_t origoff = lfs_file_tell(&lfs->lfs, file);
+        if (origoff < 0) {
+                UNLOCK(lfs);
+                ret = lfs_error_to_errno(origoff);
+                goto fail;
+        }
+        ret = lfs_file_seek(&lfs->lfs, file, off, LFS_SEEK_SET);
+        if (ret < 0) {
+                UNLOCK(lfs);
+                ret = lfs_error_to_errno(ret);
+                goto fail;
+        }
+        lfs_ssize_t ssz = lfs_file_write(&lfs->lfs, file, buf, buflen);
+        if (ssz < 0) {
+                UNLOCK(lfs);
+                ret = lfs_error_to_errno(ssz);
+                goto fail;
+        }
+        ret = lfs_file_seek(&lfs->lfs, file, origoff, LFS_SEEK_SET);
+        UNLOCK(lfs);
+        if (ret < 0) {
+                ret = lfs_error_to_errno(ret);
+                goto fail;
+        }
+        *result = ssz;
+        ret = 0;
+fail:
+        wasi_iovec_free_flattened_buffer(buf);
+        return ret;
 }
 
 int
@@ -186,7 +233,7 @@ wasi_lfs_fd_get_flags(struct wasi_fdinfo *fdinfo, uint16_t *result)
                 if (ret != 0) {
                         return ret;
                 }
-                if ((file->flags & LFS_O_APPEND) != 0) {
+                if (wasi_fdinfo_to_lfs(fdinfo)->u.file.append) {
                         flags |= WASI_FDFLAG_APPEND;
                 }
         }
@@ -230,12 +277,49 @@ int
 wasi_lfs_fd_preadv(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
                    int iovcnt, wasi_off_t off, size_t *result)
 {
-        /*
-         * littlefs doesn't have pread.
-         * REVISIT: racy emulation is probably possible
-         */
-        xlog_error("%s: unimplemented", __func__);
-        return ENOTSUP;
+        struct wasi_vfs_lfs *lfs;
+        lfs_file_t *file;
+        int ret = fdinfo_to_lfs_file(fdinfo, &lfs, &file);
+        if (ret != 0) {
+                return ret;
+        }
+        void *buf = NULL;
+        size_t buflen;
+        ret = wasi_iovec_flatten_uninitialized(iov, iovcnt, &buf, &buflen);
+        if (ret != 0) {
+                goto fail;
+        }
+        LOCK(lfs);
+        lfs_soff_t origoff = lfs_file_tell(&lfs->lfs, file);
+        if (origoff < 0) {
+                UNLOCK(lfs);
+                ret = lfs_error_to_errno(origoff);
+                goto fail;
+        }
+        ret = lfs_file_seek(&lfs->lfs, file, off, LFS_SEEK_SET);
+        if (ret < 0) {
+                UNLOCK(lfs);
+                ret = lfs_error_to_errno(ret);
+                goto fail;
+        }
+        lfs_ssize_t ssz = lfs_file_read(&lfs->lfs, file, buf, buflen);
+        if (ssz < 0) {
+                UNLOCK(lfs);
+                ret = lfs_error_to_errno(ssz);
+                goto fail;
+        }
+        ret = lfs_file_seek(&lfs->lfs, file, origoff, LFS_SEEK_SET);
+        UNLOCK(lfs);
+        if (ret < 0) {
+                ret = lfs_error_to_errno(ret);
+                goto fail;
+        }
+        wasi_iovec_commit_flattened_data(iov, iovcnt, buf, ssz);
+        *result = ssz;
+        ret = 0;
+fail:
+        wasi_iovec_free_flattened_buffer(buf);
+        return ret;
 }
 
 int
@@ -338,7 +422,7 @@ wasi_lfs_fd_close(struct wasi_fdinfo *fdinfo)
         int ret;
         LOCK(lfs);
         if (fdinfo_lfs->type == WASI_LFS_TYPE_FILE) {
-                ret = lfs_file_close(&lfs->lfs, &fdinfo_lfs->u.file);
+                ret = lfs_file_close(&lfs->lfs, &fdinfo_lfs->u.file.file);
         } else {
                 assert(fdinfo_lfs->type == WASI_LFS_TYPE_DIR);
                 ret = lfs_dir_close(&lfs->lfs, &fdinfo_lfs->u.dir.dir);
@@ -455,9 +539,6 @@ wasi_lfs_path_open(struct path_info *pi, const struct path_open_params *params,
         if ((params->wasmoflags & WASI_OFLAG_TRUNC) != 0) {
                 lfs_o_flags |= LFS_O_TRUNC;
         }
-        if ((params->fdflags & WASI_FDFLAG_APPEND) != 0) {
-                lfs_o_flags |= LFS_O_APPEND;
-        }
         switch (params->rights_base &
                 (WASI_RIGHT_FD_READ | WASI_RIGHT_FD_WRITE)) {
         case WASI_RIGHT_FD_READ:
@@ -476,11 +557,17 @@ wasi_lfs_path_open(struct path_info *pi, const struct path_open_params *params,
                 goto open_dir;
         }
         LOCK(lfs);
-        ret = lfs_file_open(&lfs->lfs, &fdinfo_lfs->u.file, pi->hostpath,
+        ret = lfs_file_open(&lfs->lfs, &fdinfo_lfs->u.file.file, pi->hostpath,
                             lfs_o_flags);
         UNLOCK(lfs);
         if (ret == 0) {
                 fdinfo_lfs->type = WASI_LFS_TYPE_FILE;
+                /*
+                 * note: we don't use LFS_O_APPEND because it makes
+                 * pwritev emulation impossible.
+                 */
+                fdinfo_lfs->u.file.append =
+                        (params->fdflags & WASI_FDFLAG_APPEND) != 0;
         } else if (ret == LFS_ERR_ISDIR) {
 open_dir:
                 LOCK(lfs);
