@@ -59,3 +59,25 @@ Eg. [wasmer-c-api-wasi], [wasmtime-c-api-wasi]
 [tail call]: https://github.com/WebAssembly/tail-call
 
 [exception-handling]: https://github.com/WebAssembly/exception-handling
+
+# Diagnostic
+
+If you see the error like the following when trying to load a PIE executable,
+please make sure your executable imports `env.memory` as specified in
+[WebAssembly Dynamic Linking].
+(eg. via `--import-memory` wasm-ld option.)
+
+```
+No entry for import env:__indirect_function_table
+```
+
+This error message is admittedly cryptic and probably needs some
+explanations. In short, it's the result of an attempt to load an PIE
+executable as a non-PIE executable.
+
+We support both of PIE and non-PIE executables.
+To determine if the executable is PIE or not, we make a guess by checking
+if the executable imports `env.memory` or not. If it does, we assume PIE.
+Otherwise, non-PIE.
+We provide `env.__indirect_function_table` and other resources only for
+PIE executables. (Non-PIE executables should provide them by exporting them.)
