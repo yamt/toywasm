@@ -733,6 +733,7 @@ void set_name_cstr(struct name *name, const char *cstr);
 void clear_name(struct name *name);
 
 uint32_t memtype_page_shift(const struct memtype *type);
+uint32_t memtype_page_size(const struct memtype *type);
 
 const uint8_t *expr_end(const struct expr *expr);
 
