@@ -253,8 +253,8 @@ frame_enter(struct exec_context *ctx, struct instance *inst, uint32_t funcidx,
 #endif
         cells_zero(locals + nparams, nlocals - nparams);
 
-        xlog_trace_insn("frame enter: maxlabels %u maxcells %u", ei->maxlabels,
-                        ei->maxcells);
+        xlog_trace_insn("frame enter: maxlabels %" PRIu32 " maxcells %" PRIu32,
+                        ei->maxlabels, ei->maxcells);
         uint32_t i;
         for (i = 0; i < nlocals; i++) {
                 if (i == nparams) {

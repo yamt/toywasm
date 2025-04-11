@@ -511,7 +511,8 @@ INSN_IMPL(call_indirect)
                         goto fail;
                 }
                 const struct functype *ft = &m->types[typeidx];
-                xlog_trace_insn("call_indirect (table %u type %u) %u %u",
+                xlog_trace_insn("call_indirect (table %" PRIu32
+                                " type %" PRIu32 ") %" PRIu32 " %" PRIu32,
                                 tableidx, typeidx, ft->parameter.ntypes,
                                 ft->result.ntypes);
                 ret = pop_valtypes(&ft->parameter, vctx);

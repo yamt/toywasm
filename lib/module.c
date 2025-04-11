@@ -1637,7 +1637,8 @@ read_code_section(const uint8_t **pp, const uint8_t *ep,
 
         uint32_t i;
         for (i = 0; i < m->nfuncs; i++) {
-                xlog_trace("func nlocals %u", m->funcs[i].localtype.nlocals);
+                xlog_trace("func nlocals %" PRIu32,
+                           m->funcs[i].localtype.nlocals);
         }
 
         *pp = p;
@@ -2214,7 +2215,7 @@ module_load_into(struct module *m, const uint8_t *p, const uint8_t *ep,
                 goto fail;
         }
         if (v != 1) { /* version */
-                report_error(&ctx->report, "wrong version: %u", v);
+                report_error(&ctx->report, "wrong version: %" PRIu32, v);
                 ret = EINVAL;
                 goto fail;
         }

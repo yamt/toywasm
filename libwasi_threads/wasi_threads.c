@@ -521,7 +521,7 @@ wasi_thread_spawn_old(struct exec_context *ctx, struct host_instance *hi,
                 xlog_trace("%s failed with %d", __func__, ret);
         } else {
                 result = tid;
-                xlog_trace("%s succeeded tid %u", __func__, tid);
+                xlog_trace("%s succeeded tid %" PRIu32, __func__, tid);
         }
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, result);
         HOST_FUNC_FREE_CONVERTED_PARAMS();
@@ -549,7 +549,7 @@ wasi_thread_spawn(struct exec_context *ctx, struct host_instance *hi,
                 /* EAGAIN is the only defined error for now. */
                 r.u.error = WASI_THREADS_ERROR_AGAIN;
         } else {
-                xlog_trace("%s succeeded tid %u", __func__, tid);
+                xlog_trace("%s succeeded tid %" PRIu32, __func__, tid);
                 r.is_error = 0;
                 le32_encode(&r.u.tid, tid);
         }

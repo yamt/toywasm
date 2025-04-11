@@ -782,6 +782,6 @@ instance_print_stats(const struct instance *inst)
                             " pages (min/max=%" PRIu32 "/%" PRIu32
                             " pagesize=%" PRIu32 ")\n",
                             i, mi->allocated, mi->size_in_pages, lim->min,
-                            lim->max, 1 << memtype_page_shift(mi->type));
+                            lim->max, memtype_page_size(mi->type));
         }
 }

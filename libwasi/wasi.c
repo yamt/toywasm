@@ -151,8 +151,8 @@ wasi_instance_populate_stdio_with_hostfd(struct wasi_instance *inst)
         for (i = 0; i < nfds; i++) {
                 ret = wasi_instance_add_hostfd(inst, i, i);
                 if (ret != 0) {
-                        xlog_error("wasi_instance_add_hostfd failed on fd %d "
-                                   "with %d",
+                        xlog_error("wasi_instance_add_hostfd failed on fd "
+                                   "%" PRIu32 "with %d",
                                    i, ret);
                         goto fail;
                 }

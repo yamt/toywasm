@@ -4,6 +4,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -73,7 +74,7 @@ wasi_copyin_and_convert_path(struct exec_context *ctx,
                 assert(ret > 0);
                 goto fail;
         }
-        xlog_trace("%s: wasifd %d wasmpath %s hostpath %s", __func__,
+        xlog_trace("%s: wasifd %" PRIu32 " wasmpath %s hostpath %s", __func__,
                    dirwasifd, wasmpath, hostpath);
         pi->hostpath = hostpath;
         pi->dirfdinfo = dirfdinfo;

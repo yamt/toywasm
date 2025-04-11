@@ -292,8 +292,7 @@ wasi_host_fd_close(struct wasi_fdinfo *fdinfo)
                 ret = close(hostfd);
                 ret = handle_errno(ret);
                 if (ret != 0) {
-                        xlog_trace("failed to close: host fd %" PRIu32
-                                   " with errno %d",
+                        xlog_trace("failed to close: host fd %d with errno %d",
                                    hostfd, ret);
                 }
         }
