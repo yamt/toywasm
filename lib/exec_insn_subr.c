@@ -131,7 +131,7 @@ memory_getptr2(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
                         " + %08" PRIx32 ", size %" PRIu32
                         ", meminst size %" PRIu32 ", pagesize %" PRIu32,
                         memidx, ptr, offset, size, meminst->size_in_pages,
-                        1 << memtype_page_shift(meminst->type));
+                        memtype_page_size(meminst->type));
                 assert(ret != 0);
         }
         return ret;
@@ -706,7 +706,7 @@ fail:
         }
         memory_atomic_unlock(lock);
         if (ret == 0) {
-                xlog_trace("%s: returning %d result %d", __func__, ret,
+                xlog_trace("%s: returning %d result %" PRIu32, __func__, ret,
                            *resultp);
         } else {
                 xlog_trace("%s: returning %d", __func__, ret);

@@ -219,7 +219,7 @@ host_func_getptr2(struct exec_context *ctx, struct meminst *mem, uint32_t ptr,
                         ", size %" PRIu32 ", meminst size %" PRIu32
                         ", pagesize %" PRIu32,
                         ptr, size, mem->size_in_pages,
-                        1 << memtype_page_shift(mem->type));
+                        memtype_page_size(mem->type));
         }
         return ret;
 }

@@ -63,7 +63,8 @@ wasi_sock_accept(struct exec_context *ctx, struct host_instance *hi,
          * cf. https://www.austingroupbugs.net/view.php?id=411)
          */
         if ((fdflags & ~WASI_FDFLAG_NONBLOCK) != 0) {
-                xlog_error("%s: unsupported fdflags %x", __func__, fdflags);
+                xlog_error("%s: unsupported fdflags %" PRIx32, __func__,
+                           fdflags);
                 ret = ENOTSUP;
                 goto fail;
         }

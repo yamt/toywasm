@@ -11,7 +11,7 @@
 
 #define VEC_PRINT_USAGE(name, vec)                                            \
         nbio_printf("%s %" PRIu32 " (%zu bytes)\n", (name), (vec)->psize,     \
-                    (vec)->psize * sizeof(*(vec)->p));
+                    (size_t)(vec)->psize * sizeof(*(vec)->p));
 
 #define STAT_PRINT(name)                                                      \
         nbio_printf("%23s %12" PRIu64 "\n", #name, ctx->stats.name);

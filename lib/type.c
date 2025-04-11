@@ -449,3 +449,9 @@ memtype_page_shift(const struct memtype *type)
         return WASM_PAGE_SHIFT;
 #endif
 }
+
+uint32_t
+memtype_page_size(const struct memtype *type)
+{
+        return UINT32_C(1) << memtype_page_shift(type);
+}
