@@ -50,6 +50,7 @@ struct read_naming_context {
         uint32_t lastidx;
 };
 
+WRONG_FUNC_TYPE
 static int
 read_naming(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
             struct naming *naming, void *vp)
