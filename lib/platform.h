@@ -160,6 +160,19 @@
 #endif
 #endif /* !defined(__unused) */
 
+/*
+ * Mark a function to be potentially called via a pointer with
+ * a wrong function type. This should not be used because it's
+ * an undefined behavior in C.
+ *
+ * Note: this attribute should be on the callee functions, not the caller.
+ */
+#if defined(__clang__)
+#define WRONG_FUNC_TYPE __attribute__((no_sanitize("function")))
+#else
+#define WRONG_FUNC_TYPE
+#endif
+
 #if __has_builtin(__builtin_add_overflow)
 #define ADD_U32_OVERFLOW(a, b, c) __builtin_add_overflow(a, b, c)
 #else
