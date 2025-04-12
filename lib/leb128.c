@@ -151,6 +151,7 @@ read_leb_i32(const uint8_t **pp, const uint8_t *ep, uint32_t *resultp)
         return 0;
 }
 
+WRONG_FUNC_TYPE
 int
 read_leb_u32(const uint8_t **pp, const uint8_t *ep, uint32_t *resultp)
 {

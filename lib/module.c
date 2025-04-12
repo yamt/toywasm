@@ -84,6 +84,7 @@ valtype_str(enum valtype vt)
 }
 #endif
 
+WRONG_FUNC_TYPE
 static int
 read_valtype(const uint8_t **pp, const uint8_t *ep, enum valtype *vt)
 {
@@ -232,6 +233,7 @@ clear_resulttype(struct mem_context *mctx, struct resulttype *rt)
 #endif
 }
 
+WRONG_FUNC_TYPE
 static int
 read_functype(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
               struct functype *ft, void *vp)
@@ -271,6 +273,7 @@ fail:
         return ret;
 }
 
+WRONG_FUNC_TYPE
 void
 clear_functype(struct mem_context *mctx, struct functype *ft)
 {
@@ -411,6 +414,7 @@ fail:
         return ret;
 }
 
+WRONG_FUNC_TYPE
 static int
 read_memtype(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
              struct memtype *mt, void *vctx)
@@ -569,6 +573,7 @@ clear_name(struct name *name)
 {
 }
 
+WRONG_FUNC_TYPE
 static int
 read_tabletype(const uint8_t **pp, const uint8_t *ep, struct tabletype *tt)
 {
@@ -594,6 +599,7 @@ fail:
 }
 
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+WRONG_FUNC_TYPE
 static int
 read_tagtype(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
              struct tagtype *tag, void *vctx)
@@ -786,6 +792,7 @@ fail:
         return ret;
 }
 
+WRONG_FUNC_TYPE
 static int
 read_import(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
             struct import *im, void *ctx)
@@ -813,6 +820,7 @@ fail:
         return ret;
 }
 
+WRONG_FUNC_TYPE
 static void
 clear_import(struct mem_context *mctx, struct import *im)
 {
@@ -820,6 +828,7 @@ clear_import(struct mem_context *mctx, struct import *im)
         clear_name(&im->name);
 }
 
+WRONG_FUNC_TYPE
 static int
 read_export(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
             struct wasm_export *ex, void *vctx)
@@ -844,6 +853,7 @@ fail:
         return ret;
 }
 
+WRONG_FUNC_TYPE
 static void
 clear_export(struct mem_context *mctx, struct wasm_export *ex)
 {
@@ -942,12 +952,14 @@ clear_expr_exec_info(struct mem_context *mctx, struct expr_exec_info *ei)
 #endif
 }
 
+WRONG_FUNC_TYPE
 static void
 clear_expr(struct mem_context *mctx, struct expr *expr)
 {
         clear_expr_exec_info(mctx, &expr->ei);
 }
 
+WRONG_FUNC_TYPE
 static void
 clear_func(struct mem_context *mctx, struct func *func)
 {
@@ -1079,6 +1091,7 @@ fail:
         return ret;
 }
 
+WRONG_FUNC_TYPE
 static int
 read_func(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
           struct func *func, void *vp)
@@ -1241,6 +1254,7 @@ fail:
         return ret;
 }
 
+WRONG_FUNC_TYPE
 static int
 read_global(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
             struct global *g, void *vctx)
@@ -1266,6 +1280,7 @@ fail:
         return ret;
 }
 
+WRONG_FUNC_TYPE
 static void
 clear_global(struct mem_context *mctx, struct global *g)
 {
@@ -1375,6 +1390,7 @@ read_element_init_expr(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
         return read_const_expr(pp, ep, e, elem->type, ctx->lctx);
 }
 
+WRONG_FUNC_TYPE
 static void
 clear_element(struct mem_context *mctx, struct element *elem)
 {
@@ -1396,6 +1412,7 @@ clear_element(struct mem_context *mctx, struct element *elem)
  * https://webassembly.github.io/spec/core/binary/modules.html#element-section
  * https://webassembly.github.io/spec/core/valid/modules.html#element-segments
  */
+WRONG_FUNC_TYPE
 static int
 read_element(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
              struct element *elem, void *vctx)
@@ -1656,6 +1673,7 @@ fail:
         return ret;
 }
 
+WRONG_FUNC_TYPE
 static int
 read_data(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
           struct data *data, void *vctx)
@@ -1718,6 +1736,7 @@ fail:
         return ret;
 }
 
+WRONG_FUNC_TYPE
 static void
 clear_data(struct mem_context *mctx, struct data *data)
 {
@@ -1777,6 +1796,7 @@ fail:
 }
 
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+WRONG_FUNC_TYPE
 static void
 clear_tagtype(struct mem_context *mctx, struct tagtype *tag)
 {
