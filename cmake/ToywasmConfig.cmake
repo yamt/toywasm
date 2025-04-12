@@ -384,7 +384,7 @@ endif()
 list(APPEND SANITIZER_FLAGS "-fno-sanitize=unsigned-integer-overflow")
 # implicit-integer-sign-change: we relies on it for a lot of opcodes.
 list(APPEND SANITIZER_FLAGS "-fno-sanitize=implicit-integer-sign-change")
-# we use NULL+0 in some places. often with VEC_NEXELEM.
+# we use NULL+0 in some places. often with VEC_NEXTELEM.
 list(APPEND SANITIZER_FLAGS "-fno-sanitize=pointer-overflow")
 endif()
 
