@@ -54,7 +54,7 @@ jobs:
       fail-fast: false
       matrix:
         name: [noname]
-        os: [ubuntu-20.04, macos-13]
+        os: [ubuntu-22.04, macos-13]
         compiler: [clang, gcc]
         arch: [native]
         BUILD_TYPE: [Release, Debug]
@@ -100,14 +100,14 @@ jobs:
             TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: ON
           - MISC_FEATURES: OFF
             TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: ON
-          - os: ubuntu-20.04
+          - os: ubuntu-22.04
             compiler: clang
           - BUILD_TYPE: Release
         # how include works is not intuitive to me:
         # https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs#expanding-or-adding-matrix-configurations
         include:
           - name: noname
-            os: ubuntu-20.04
+            os: ubuntu-22.04
             compiler: gcc
             arch: native
             BUILD_TYPE: Release
@@ -121,8 +121,8 @@ jobs:
             TOYWASM_ENABLE_WASI_THREADS: OFF
             TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: OFF
             TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: OFF
-          - name: ubuntu-20.04-amd64
-            os: ubuntu-20.04
+          - name: ubuntu-22.04-amd64
+            os: ubuntu-22.04
             compiler: clang
             arch: native
             BUILD_TYPE: Release
@@ -136,8 +136,8 @@ jobs:
             TOYWASM_ENABLE_WASI_THREADS: OFF
             TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: OFF
             TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: OFF
-          - name: full-ubuntu-20.04-amd64
-            os: ubuntu-20.04
+          - name: full-ubuntu-22.04-amd64
+            os: ubuntu-22.04
             compiler: clang
             arch: native
             BUILD_TYPE: Release
@@ -184,8 +184,8 @@ jobs:
             TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: ON
             TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: ON
 
-          - name: ubuntu-20.04-i386
-            os: ubuntu-20.04
+          - name: ubuntu-22.04-i386
+            os: ubuntu-22.04
             compiler: clang
             arch: i386
             BUILD_TYPE: Release
@@ -199,8 +199,8 @@ jobs:
             TOYWASM_ENABLE_WASI_THREADS: OFF
             TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: OFF
             TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: OFF
-          - name: ubuntu-20.04-arm64
-            os: ubuntu-20.04
+          - name: ubuntu-22.04-arm64
+            os: ubuntu-22.04
             compiler: clang
             arch: arm64
             BUILD_TYPE: Release
@@ -214,8 +214,8 @@ jobs:
             TOYWASM_ENABLE_WASI_THREADS: OFF
             TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: OFF
             TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: OFF
-          #- name: ubuntu-20.04-armhf
-          #  os: ubuntu-20.04
+          #- name: ubuntu-22.04-armhf
+          #  os: ubuntu-22.04
           #  compiler: clang
           #  arch: armhf
           #  BUILD_TYPE: Release
@@ -229,8 +229,8 @@ jobs:
           #  TOYWASM_ENABLE_WASI_THREADS: OFF
           #  TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: OFF
           #  TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: OFF
-          #- name: ubuntu-20.04-s390x
-          #  os: ubuntu-20.04
+          #- name: ubuntu-22.04-s390x
+          #  os: ubuntu-22.04
           #  compiler: clang
           #  arch: s390x
           #  BUILD_TYPE: Release
@@ -244,8 +244,8 @@ jobs:
           #  TOYWASM_ENABLE_WASI_THREADS: OFF
           #  TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: OFF
           #  TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: OFF
-          - name: ubuntu-20.04-riscv64
-            os: ubuntu-20.04
+          - name: ubuntu-22.04-riscv64
+            os: ubuntu-22.04
             compiler: clang
             arch: riscv64
             BUILD_TYPE: Release
@@ -260,8 +260,8 @@ jobs:
             TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: OFF
             TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: OFF
 
-          - name: full-ubuntu-20.04-i386
-            os: ubuntu-20.04
+          - name: full-ubuntu-22.04-i386
+            os: ubuntu-22.04
             compiler: clang
             arch: i386
             BUILD_TYPE: Release
@@ -276,8 +276,8 @@ jobs:
             TOYWASM_ENABLE_WASI_LITTLEFS: ON
             TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: ON
             TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: ON
-          - name: full-ubuntu-20.04-arm64
-            os: ubuntu-20.04
+          - name: full-ubuntu-22.04-arm64
+            os: ubuntu-22.04
             compiler: clang
             arch: arm64
             BUILD_TYPE: Release
@@ -291,8 +291,8 @@ jobs:
             TOYWASM_ENABLE_WASI_THREADS: ON
             TOYWASM_ENABLE_WASI_LITTLEFS: ON
             TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: ON
-          #- name: full-ubuntu-20.04-armhf
-          #  os: ubuntu-20.04
+          #- name: full-ubuntu-22.04-armhf
+          #  os: ubuntu-22.04
           #  compiler: clang
           #  arch: armhf
           #  BUILD_TYPE: Release
@@ -306,8 +306,8 @@ jobs:
           #  TOYWASM_ENABLE_WASI_THREADS: ON
           #  TOYWASM_ENABLE_WASI_LITTLEFS: ON
           #  TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: ON
-          #- name: full-ubuntu-20.04-s390x
-          #  os: ubuntu-20.04
+          #- name: full-ubuntu-22.04-s390x
+          #  os: ubuntu-22.04
           #  compiler: clang
           #  arch: s390x
           #  BUILD_TYPE: Release
@@ -322,8 +322,8 @@ jobs:
           #  TOYWASM_ENABLE_WASI_LITTLEFS: ON
           #  TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: ON
           #  TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: ON
-          - name: full-ubuntu-20.04-riscv64
-            os: ubuntu-20.04
+          - name: full-ubuntu-22.04-riscv64
+            os: ubuntu-22.04
             compiler: clang
             arch: riscv64
             BUILD_TYPE: Release
@@ -417,7 +417,7 @@ jobs:
     - name: Fix sources.list (cross)
       if: matrix.arch != 'native'
       run: |
-        curl -L -O https://raw.githubusercontent.com/yamt/garbage/master/myubuntu/apt/sources.list
+        curl -L -O https://raw.githubusercontent.com/yamt/garbage/master/myubuntu-jammy/apt/sources.list
         sudo cp sources.list /etc/apt/
 
     - name: cmake configure (cross)
@@ -556,7 +556,7 @@ jobs:
       fail-fast: false
       matrix:
         name: [wasm32-wasi, full-wasm32-wasi]
-        os: [ubuntu-20.04, macos-13]
+        os: [ubuntu-22.04, macos-13]
         compiler: [clang]
         include:
           - name: full-wasm32-wasi
@@ -651,7 +651,7 @@ jobs:
   release:
     if: github.event_name != 'pull_request'
     needs: [build, wasm-on-wasm]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - uses: actions/download-artifact@v4
       with:
@@ -665,62 +665,62 @@ jobs:
 
     - uses: actions/download-artifact@v4
       with:
-        name: ubuntu-20.04-amd64
+        name: ubuntu-22.04-amd64
         path: release_assets
 
     - uses: actions/download-artifact@v4
       with:
-        name: full-ubuntu-20.04-amd64
+        name: full-ubuntu-22.04-amd64
         path: release_assets
 
     - uses: actions/download-artifact@v4
       with:
-        name: ubuntu-20.04-i386
+        name: ubuntu-22.04-i386
         path: release_assets
 
     - uses: actions/download-artifact@v4
       with:
-        name: ubuntu-20.04-arm64
-        path: release_assets
-
-    #- uses: actions/download-artifact@v4
-    #  with:
-    #    name: ubuntu-20.04-armhf
-    #    path: release_assets
-
-    #- uses: actions/download-artifact@v4
-    #  with:
-    #    name: ubuntu-20.04-s390x
-    #    path: release_assets
-
-    - uses: actions/download-artifact@v4
-      with:
-        name: ubuntu-20.04-riscv64
-        path: release_assets
-
-    - uses: actions/download-artifact@v4
-      with:
-        name: full-ubuntu-20.04-i386
-        path: release_assets
-
-    - uses: actions/download-artifact@v4
-      with:
-        name: full-ubuntu-20.04-arm64
+        name: ubuntu-22.04-arm64
         path: release_assets
 
     #- uses: actions/download-artifact@v4
     #  with:
-    #    name: full-ubuntu-20.04-armhf
+    #    name: ubuntu-22.04-armhf
     #    path: release_assets
 
     #- uses: actions/download-artifact@v4
     #  with:
-    #    name: full-ubuntu-20.04-s390x
+    #    name: ubuntu-22.04-s390x
     #    path: release_assets
 
     - uses: actions/download-artifact@v4
       with:
-        name: full-ubuntu-20.04-riscv64
+        name: ubuntu-22.04-riscv64
+        path: release_assets
+
+    - uses: actions/download-artifact@v4
+      with:
+        name: full-ubuntu-22.04-i386
+        path: release_assets
+
+    - uses: actions/download-artifact@v4
+      with:
+        name: full-ubuntu-22.04-arm64
+        path: release_assets
+
+    #- uses: actions/download-artifact@v4
+    #  with:
+    #    name: full-ubuntu-22.04-armhf
+    #    path: release_assets
+
+    #- uses: actions/download-artifact@v4
+    #  with:
+    #    name: full-ubuntu-22.04-s390x
+    #    path: release_assets
+
+    - uses: actions/download-artifact@v4
+      with:
+        name: full-ubuntu-22.04-riscv64
         path: release_assets
 
     - uses: actions/download-artifact@v4
