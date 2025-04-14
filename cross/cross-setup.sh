@@ -2,7 +2,7 @@
 
 set -e
 
-LLVM_VERSION=18
+LLVM_VERSION=20
 
 dpkg --add-architecture ${ARCH}
 apt update

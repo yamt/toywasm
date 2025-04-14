@@ -2,7 +2,7 @@
 
 set -e
 
-LLVM_VERSION=${LLVM_VERSION:-18}
+LLVM_VERSION=${LLVM_VERSION:-20}
 ALT_PRIO=100
 
 COMMANDS=${1:-clang clang++ llvm-ar llvm-ranlib ld.lld lld}
