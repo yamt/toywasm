@@ -1,5 +1,5 @@
 This directory contains a few scripts to cross build toywasm
-on ubuntu-focal/amd64.
+on ubuntu-jammy/amd64.
 
 We avoid making this too toywasm-specific so that it can be
 useful to cross build other cmake-based software as well.
