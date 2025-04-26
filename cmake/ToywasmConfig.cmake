@@ -425,6 +425,18 @@ endif()
 list(APPEND TEST_ENV "ASAN_OPTIONS=detect_leaks=${ASAN_DETECT_LEAKS}:detect_stack_use_after_return=1")
 list(APPEND TEST_ENV "UBSAN_OPTIONS=print_stacktrace=1")
 
+if(CMAKE_C_COMPILER_TARGET MATCHES "wasm")
+if(CMAKE_C_COMPILER_ID MATCHES "Clang")
+# I don't like the automatic wasm-opt invocation for various reasons.
+# cf. https://github.com/llvm/llvm-project/issues/55781
+# note: although the --no-wasm-opt option has been introduced by clang 19,
+# it's broken.
+if(CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL 20.0.0)
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --no-wasm-opt")
+endif()
+endif()
+endif()
+
 message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 message(STATUS "CMAKE_SYSTEM_NAME: ${CMAKE_SYSTEM_NAME}")
 message(STATUS "CMAKE_C_COMPILER: ${CMAKE_C_COMPILER}")
