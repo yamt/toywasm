@@ -73,6 +73,15 @@ target_link_libraries(toywasm-cli toywasm-lib-core
     m)
 set_target_properties(toywasm-cli PROPERTIES OUTPUT_NAME toywasm)
 
+if(TOYWASM_USE_WASM_OPT)
+add_custom_command(TARGET toywasm-cli
+    POST_BUILD
+    # we prefer to keep the name section.
+    COMMAND ${WASM_OPT} -g -O3 --strip-dwarf -o toywasm toywasm)
+    # for smaller binary, maybe you can use "-Oz --strip".
+    # COMMAND ${WASM_OPT} -Oz --strip -o toywasm toywasm)
+endif()
+
 add_test(NAME toywasm-cli-simple-module COMMAND
 	${TOYWASM_CLI} --load=spectest.wasm "--invoke=print_i32 123"
 )

@@ -33,6 +33,9 @@ cmake_dependent_option(TOYWASM_FORCE_USE_TAILCALL
 # TOYWASM_USE_SIMD=ON -> use -msimd128 for wasm target
 option(TOYWASM_USE_SIMD "Use SIMD" OFF)
 
+# run wasm-opt on the produced toywasm executable
+option(TOYWASM_USE_WASM_OPT "Use wasm-opt" OFF)
+
 # toywasm uses a few enums like "enum valtype", for which 1 byte is enough.
 option(TOYWASM_USE_SHORT_ENUMS "Use -fshort-enum" ON)
 
@@ -435,6 +438,9 @@ if(CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL 20.0.0)
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --no-wasm-opt")
 endif()
 endif()
+if(NOT DEFINED WASM_OPT)
+find_program(WASM_OPT wasm-opt)
+endif()
 endif()
 
 message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
@@ -453,6 +459,9 @@ message(STATUS "USE_ASAN: ${USE_ASAN}")
 message(STATUS "USE_LSAN: ${USE_LSAN}")
 message(STATUS "USE_TSAN: ${USE_TSAN}")
 message(STATUS "USE_UBSAN: ${USE_UBSAN}")
+if(CMAKE_C_COMPILER_TARGET MATCHES "wasm")
+message(STATUS "WASM_OPT: ${WASM_OPT}")
+endif()
 
 find_package(Git REQUIRED)
 execute_process(
