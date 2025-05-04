@@ -2,7 +2,7 @@
 
 * stop large apps (firefox, docker, ...)
 
-* stop backup
+* disable automatic backup
 
   ```
   sudo tmutil disable
@@ -12,6 +12,12 @@
 
   ```
   sudo mdutil -a -i off
+  ```
+
+* show the current indexing status
+
+  ```
+  mdutil -a -s
   ```
 
 * `sync;sync;sync`
