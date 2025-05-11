@@ -57,10 +57,9 @@ fetch_spec .spec-extended-const https://github.com/WebAssembly/extended-const dd
 -name "data.wast" -o \
 -name "global.wast") | compile extended-const
 
-# use my fork for
-# https://github.com/WebAssembly/custom-page-sizes/pull/34
-# https://github.com/WebAssembly/custom-page-sizes/pull/35
-fetch_spec .spec-custom-page-sizes https://github.com/yamt/custom-page-sizes 3fd9dfd0d5d81bd9c03f38a17b7597d9a83a7529
+# note: edb9c5b5e1ba9895c206b009429fa8ed72b16a9e doesn't work with
+# the current wabt as of today
+fetch_spec .spec-custom-page-sizes https://github.com/WebAssembly/custom-page-sizes 2147a64be7b996ce15074ced6906363f02e94fdd
 (cd .spec-custom-page-sizes && find test \
 -path "*/custom-page-sizes/*.wast" -a ! -name "memory_max_i64.wast") \
 | compile custom-page-sizes
