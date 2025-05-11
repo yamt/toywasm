@@ -55,6 +55,7 @@ fetch_spec .spec-multi-memory https://github.com/WebAssembly/multi-memory cf8b5a
 fetch_spec .spec-extended-const https://github.com/WebAssembly/extended-const dd72ab9676e27d4c3fbf48030115e4ee64e05507
 (cd .spec-extended-const && find test \
 -name "data.wast" -o \
+-name "elem.wast" -o \
 -name "global.wast") | compile extended-const
 
 # note: edb9c5b5e1ba9895c206b009429fa8ed72b16a9e doesn't work with
