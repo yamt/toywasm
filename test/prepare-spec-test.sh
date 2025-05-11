@@ -52,7 +52,7 @@ fetch_spec .spec-multi-memory https://github.com/WebAssembly/multi-memory cf8b5a
 -path "*/multi-memory/*.wast" -a ! -name "memory_copy1.wast") \
 | compile multi-memory
 
-fetch_spec .spec-extended-const https://github.com/WebAssembly/extended-const dd72ab9676e27d4c3fbf48030115e4ee64e05507
+fetch_spec .spec-extended-const https://github.com/WebAssembly/extended-const 8d4f6aa2b00a8e7c0174410028625c6a176db8a1
 (cd .spec-extended-const && find test \
 -name "data.wast" -o \
 -name "elem.wast" -o \
