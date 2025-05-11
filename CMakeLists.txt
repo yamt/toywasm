@@ -46,10 +46,10 @@ if(NOT DEFINED ENV{TOYWASM_NATIVE})
 list(APPEND TEST_ENV "TOYWASM_NATIVE=${CMAKE_CURRENT_SOURCE_DIR}/build.native/toywasm")
 endif()
 if(NOT DEFINED ENV{TOYWASM_WASM})
-list(APPEND TEST_ENV "TOYWASM_WASM=${CMAKE_BINARY_DIR}/toywasm")
+list(APPEND TEST_ENV "TOYWASM_WASM=$<TARGET_FILE:toywasm-cli>")
 endif()
 else()
-set(TOYWASM_CLI "${CMAKE_BINARY_DIR}/toywasm")
+set(TOYWASM_CLI "$<TARGET_FILE:toywasm-cli>")
 endif()
 
 # for wasi-testsuite-adapter.py
