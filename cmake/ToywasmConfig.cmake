@@ -185,6 +185,11 @@ option(TOYWASM_ENABLE_COVERAGE "Enable coverage" OFF)
 option(TOYWASM_BUILD_UNITTEST "Build toywasm-test" ON)
 option(TOYWASM_BUILD_CLI "Build toywasm command" ON)
 
+# Extra CFLAGS. intended for -mcpu=xxx etc.
+# eg. -D TOYWASM_EXTRA_CFLAGS="-mfoo;-mbar"
+set(TOYWASM_EXTRA_CFLAGS "" CACHE STRING "Extra CFLAGS")
+add_compile_options(${TOYWASM_EXTRA_CFLAGS})
+
 if(TOYWASM_ENABLE_FUZZER)
 add_compile_options(-fsanitize=fuzzer-no-link)
 # https://llvm.org/docs/LibFuzzer.html#fuzzer-friendly-build-mode
