@@ -67,5 +67,6 @@ install(TARGETS toywasm-lib-wasi-littlefs
         EXPORT toywasm-lib-wasi-littlefs-config
         PUBLIC_HEADER DESTINATION include/toywasm)
 install(EXPORT toywasm-lib-wasi-littlefs-config
+        NAMESPACE toywasm::
         DESTINATION lib/cmake/toywasm-lib-wasi-littlefs)
 install(FILES ${TOYWASM_LITTLEFS_SOURCE_DIR}/LICENSE.md DESTINATION share/doc/toywasm/littlefs)

@@ -35,4 +35,5 @@ install(TARGETS toywasm-lib-dyld
         EXPORT toywasm-lib-dyld-config
         PUBLIC_HEADER DESTINATION include/toywasm)
 install(EXPORT toywasm-lib-dyld-config
+        NAMESPACE toywasm::
         DESTINATION lib/cmake/toywasm-lib-dyld)
