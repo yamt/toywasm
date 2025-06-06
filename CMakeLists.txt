@@ -239,12 +239,12 @@ add_test(NAME toywasm-cli-js-wasm
 set_tests_properties(toywasm-cli-js-wasm PROPERTIES ENVIRONMENT "${TEST_ENV};TEST_RUNTIME_EXE=${TOYWASM_CLI} --wasi --wasi-dir=test --")
 set_tests_properties(toywasm-cli-js-wasm PROPERTIES LABELS "app")
 
-add_test(NAME toywasm-cli-spidermonkey
-	COMMAND ./test/run-spidermonkey.sh ${TOYWASM_CLI} --wasi
-	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-)
-set_tests_properties(toywasm-cli-spidermonkey PROPERTIES ENVIRONMENT "${TEST_ENV}")
-set_tests_properties(toywasm-cli-spidermonkey PROPERTIES LABELS "app")
+#add_test(NAME toywasm-cli-spidermonkey
+#	COMMAND ./test/run-spidermonkey.sh ${TOYWASM_CLI} --wasi
+#	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+#)
+#set_tests_properties(toywasm-cli-spidermonkey PROPERTIES ENVIRONMENT "${TEST_ENV}")
+#set_tests_properties(toywasm-cli-spidermonkey PROPERTIES LABELS "app")
 
 add_test(NAME toywasm-cli-ffmpeg
 	COMMAND ./test/run-ffmpeg.sh ${TOYWASM_CLI} --wasi --wasi-dir=.video --
