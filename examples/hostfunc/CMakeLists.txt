@@ -19,5 +19,5 @@ set(sources
 )
 
 add_executable(hostfunc ${sources})
-target_link_libraries(hostfunc toywams::toywasm-lib-core toywasm::toywasm-lib-wasi m)
+target_link_libraries(hostfunc toywasm::toywasm-lib-core toywasm::toywasm-lib-wasi m)
 target_include_directories(hostfunc PRIVATE "../runwasi")
