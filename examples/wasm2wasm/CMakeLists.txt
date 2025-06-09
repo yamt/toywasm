@@ -13,4 +13,4 @@ set(app_sources
 )
 
 add_executable(wasm2wasm ${app_sources})
-target_link_libraries(wasm2wasm toywasm-lib-core m)
+target_link_libraries(wasm2wasm toywasm::toywasm-lib-core m)
