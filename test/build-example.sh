@@ -10,6 +10,5 @@ DIR=$(mktemp -d)
 gzip -cd ${TGZ} | (cd ${DIR} && pax -r)
 
 cd examples/${APP}
-mkdir -p ${BUILDDIR}
 cmake -B ${BUILDDIR} -DCMAKE_INSTALL_PREFIX=${DIR} .
 cmake --build ${BUILDDIR}
