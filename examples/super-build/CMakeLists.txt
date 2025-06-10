@@ -3,7 +3,7 @@
 
 cmake_minimum_required(VERSION 3.16)
 
-project(app LANGUAGES C)
+project(app LANGUAGES)
 
 set(toywasm_tmp_install ${CMAKE_CURRENT_BINARY_DIR}/install)
 
