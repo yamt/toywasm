@@ -309,6 +309,60 @@ wasi_vfs_path_lutimes(const struct path_info *pi,
 }
 
 int
+wasi_vfs_sock_fdinfo_alloc(struct wasi_fdinfo *fdinfo,
+                           struct wasi_fdinfo **fdinfop)
+{
+        const struct wasi_vfs_ops *ops = fdinfo_vfs_ops(fdinfo);
+        if (ops->sock_fdinfo_alloc == NULL) {
+                return ENOTSUP;
+        }
+        return ops->sock_fdinfo_alloc(fdinfo, fdinfop);
+}
+
+int
+wasi_vfs_sock_accept(struct wasi_fdinfo *fdinfo, uint16_t fdflags,
+                     struct wasi_fdinfo *fdinfo2)
+{
+        const struct wasi_vfs_ops *ops = fdinfo_vfs_ops(fdinfo);
+        if (ops->sock_accept == NULL) {
+                return ENOTSUP;
+        }
+        return ops->sock_accept(fdinfo, fdflags, fdinfo2);
+}
+
+int
+wasi_vfs_sock_recv(struct wasi_fdinfo *fdinfo, struct iovec *iov, int iovcnt,
+                   uint16_t riflags, uint16_t *roflagsp, size_t *result)
+{
+        const struct wasi_vfs_ops *ops = fdinfo_vfs_ops(fdinfo);
+        if (ops->sock_recv == NULL) {
+                return ENOTSUP;
+        }
+        return ops->sock_recv(fdinfo, iov, iovcnt, riflags, roflagsp, result);
+}
+
+int
+wasi_vfs_sock_send(struct wasi_fdinfo *fdinfo, struct iovec *iov, int iovcnt,
+                   uint16_t siflags, size_t *result)
+{
+        const struct wasi_vfs_ops *ops = fdinfo_vfs_ops(fdinfo);
+        if (ops->sock_send == NULL) {
+                return ENOTSUP;
+        }
+        return ops->sock_send(fdinfo, iov, iovcnt, siflags, result);
+}
+
+int
+wasi_vfs_sock_shutdown(struct wasi_fdinfo *fdinfo, uint16_t sdflags)
+{
+        const struct wasi_vfs_ops *ops = fdinfo_vfs_ops(fdinfo);
+        if (ops->sock_shutdown == NULL) {
+                return ENOTSUP;
+        }
+        return ops->sock_shutdown(fdinfo, sdflags);
+}
+
+int
 wasi_vfs_fs_umount(struct wasi_vfs *vfs)
 {
         const struct wasi_vfs_ops *ops = vfs->ops;

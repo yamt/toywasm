@@ -46,4 +46,14 @@ int wasi_vfs_path_utimes(const struct path_info *pi,
                          const struct utimes_args *args);
 int wasi_vfs_path_lutimes(const struct path_info *pi,
                           const struct utimes_args *args);
+int wasi_vfs_sock_fdinfo_alloc(struct wasi_fdinfo *fdinfo,
+                               struct wasi_fdinfo **fdinfop);
+int wasi_vfs_sock_accept(struct wasi_fdinfo *fdinfo, uint16_t fdflags,
+                         struct wasi_fdinfo *fdinfo2);
+int wasi_vfs_sock_recv(struct wasi_fdinfo *fdinfo, struct iovec *iov,
+                       int iovcnt, uint16_t riflags, uint16_t *roflagsp,
+                       size_t *result);
+int wasi_vfs_sock_send(struct wasi_fdinfo *fdinfo, struct iovec *iov,
+                       int iovcnt, uint16_t siflags, size_t *result);
+int wasi_vfs_sock_shutdown(struct wasi_fdinfo *fdinfo, uint16_t sdflags);
 int wasi_vfs_fs_umount(struct wasi_vfs *vfs);
