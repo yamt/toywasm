@@ -5,7 +5,7 @@ import sys
 re_name_str = '[a-z][_a-z0-9]*$'
 re_name = re.compile(re_name_str)
 
-re_path_info_str = f'struct path_info \*({re_name_str})'
+re_path_info_str = f'struct path_info \\*({re_name_str})'
 re_path_info = re.compile(re_path_info_str)
 
 filename = "wasi_vfs.def"
