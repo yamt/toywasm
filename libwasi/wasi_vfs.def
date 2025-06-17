@@ -1,49 +1,41 @@
-fd_fallocate(struct wasi_fdinfo *fdinfo, uint64_t offset,
-                           wasi_off_t len);
+fd_fallocate(struct wasi_fdinfo *fdinfo, uint64_t offset, wasi_off_t len);
 fd_ftruncate(struct wasi_fdinfo *fdinfo, wasi_off_t size);
-fd_writev(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
-                        int iovcnt, size_t *result);
-fd_pwritev(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
-                         int iovcnt, wasi_off_t off, size_t *result);
+fd_writev(struct wasi_fdinfo *fdinfo, const struct iovec *iov, int iovcnt,
+          size_t *result);
+fd_pwritev(struct wasi_fdinfo *fdinfo, const struct iovec *iov, int iovcnt,
+           wasi_off_t off, size_t *result);
 fd_get_flags(struct wasi_fdinfo *fdinfo, uint16_t *result);
-fd_readv(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
-                       int iovcnt, size_t *result);
-fd_preadv(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
-                        int iovcnt, wasi_off_t off, size_t *result);
+fd_readv(struct wasi_fdinfo *fdinfo, const struct iovec *iov, int iovcnt,
+         size_t *result);
+fd_preadv(struct wasi_fdinfo *fdinfo, const struct iovec *iov, int iovcnt,
+          wasi_off_t off, size_t *result);
 fd_fstat(struct wasi_fdinfo *fdinfo, struct wasi_filestat *stp);
-fd_lseek(struct wasi_fdinfo *fdinfo, wasi_off_t offset,
-                       int whence, wasi_off_t *result);
+fd_lseek(struct wasi_fdinfo *fdinfo, wasi_off_t offset, int whence,
+         wasi_off_t *result);
 fd_fsync(struct wasi_fdinfo *fdinfo);
 fd_fdatasync(struct wasi_fdinfo *fdinfo);
-fd_futimes(struct wasi_fdinfo *fdinfo,
-                         const struct utimes_args *args);
+fd_futimes(struct wasi_fdinfo *fdinfo, const struct utimes_args *args);
 fd_close(struct wasi_fdinfo *fdinfo);
 
 dir_rewind(struct wasi_fdinfo *fdinfo);
 dir_seek(struct wasi_fdinfo *fdinfo, uint64_t offset);
 dir_read(struct wasi_fdinfo *fdinfo, struct wasi_dirent *wde,
-                       const uint8_t **namep, bool *eod);
+         const uint8_t **namep, bool *eod);
 
 path_fdinfo_alloc(struct path_info *pi, struct wasi_fdinfo **fdinfop);
-path_open(struct path_info *pi,
-                        const struct path_open_params *params,
-                        struct wasi_fdinfo *fdinfo);
+path_open(struct path_info *pi, const struct path_open_params *params,
+          struct wasi_fdinfo *fdinfo);
 path_unlink(const struct path_info *pi);
 path_mkdir(const struct path_info *pi);
 path_rmdir(const struct path_info *pi);
 path_symlink(const char *target_buf, const struct path_info *pi);
-path_readlink(const struct path_info *pi, char *buf,
-                            size_t buflen, size_t *resultp);
-path_link(const struct path_info *pi1,
-                        const struct path_info *pi2);
-path_rename(const struct path_info *pi1,
-                          const struct path_info *pi2);
+path_readlink(const struct path_info *pi, char *buf, size_t buflen,
+              size_t *resultp);
+path_link(const struct path_info *pi1, const struct path_info *pi2);
+path_rename(const struct path_info *pi1, const struct path_info *pi2);
 path_stat(const struct path_info *pi, struct wasi_filestat *stp);
-path_lstat(const struct path_info *pi,
-                         struct wasi_filestat *stp);
-path_utimes(const struct path_info *pi,
-                          const struct utimes_args *args);
-path_lutimes(const struct path_info *pi,
-                           const struct utimes_args *args);
+path_lstat(const struct path_info *pi, struct wasi_filestat *stp);
+path_utimes(const struct path_info *pi, const struct utimes_args *args);
+path_lutimes(const struct path_info *pi, const struct utimes_args *args);
 
 fs_umount(struct wasi_vfs *vfs);
