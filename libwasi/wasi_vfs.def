@@ -38,4 +38,13 @@ path_lstat(const struct path_info *pi, struct wasi_filestat *stp);
 path_utimes(const struct path_info *pi, const struct utimes_args *args);
 path_lutimes(const struct path_info *pi, const struct utimes_args *args);
 
+sock_fdinfo_alloc(struct wasi_fdinfo *fdinfo, struct wasi_fdinfo **fdinfop);
+sock_accept(struct wasi_fdinfo *fdinfo, uint16_t fdflags,
+            struct wasi_fdinfo *fdinfo2);
+sock_recv(struct wasi_fdinfo *fdinfo, struct iovec *iov, int iovcnt,
+          uint16_t riflags, uint16_t *roflagsp, size_t *result);
+sock_send(struct wasi_fdinfo *fdinfo, struct iovec *iov, int iovcnt,
+          uint16_t siflags, size_t *result);
+sock_shutdown(struct wasi_fdinfo *fdinfo, uint16_t sdflags);
+
 fs_umount(struct wasi_vfs *vfs);
