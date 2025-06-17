@@ -72,7 +72,7 @@ def process(mode, out, prefix="wasi_vfs_", qual="static const"):
                     print("\t\treturn EXDEV;", file=out)
                     print("\t}", file=out)
                 print(f"\tconst struct wasi_vfs_ops *ops = path_vfs_ops({path_info_arg[0]});", file=out)
-            elif fn.startswith("fd_") or fn.startswith("dir_"):
+            elif fn.startswith("fd_") or fn.startswith("dir_") or fn.startswith("sock_"):
                 print(f"\tconst struct wasi_vfs_ops *ops = fdinfo_vfs_ops(fdinfo);", file=out)
             elif fn.startswith("fs_"):
                 print(f"\tconst struct wasi_vfs_ops *ops = vfs->ops;", file=out)
