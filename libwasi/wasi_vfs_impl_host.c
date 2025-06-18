@@ -4,6 +4,7 @@
 #include "wasi_host_dirent.h"
 #include "wasi_host_fdop.h"
 #include "wasi_host_pathop.h"
+#include "wasi_host_sockop.h"
 #include "wasi_impl.h"
 #include "wasi_vfs_ops.h"
 
@@ -37,6 +38,11 @@ static const struct wasi_vfs_ops wasi_host_ops = {
         .path_lstat = wasi_host_path_lstat,
         .path_utimes = wasi_host_path_utimes,
         .path_lutimes = wasi_host_path_lutimes,
+        .sock_fdinfo_alloc = wasi_host_sock_fdinfo_alloc,
+        .sock_accept = wasi_host_sock_accept,
+        .sock_recv = wasi_host_sock_recv,
+        .sock_send = wasi_host_sock_send,
+        .sock_shutdown = wasi_host_sock_shutdown,
 };
 
 struct wasi_vfs wasi_host_vfs = {
