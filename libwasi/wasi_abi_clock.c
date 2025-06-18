@@ -9,8 +9,6 @@
 #include "wasi_impl.h"
 #include "xlog.h"
 
-#include "wasi_hostfuncs.h"
-
 int
 wasi_clock_res_get(struct exec_context *ctx, struct host_instance *hi,
                    const struct functype *ft, const struct cell *params,
