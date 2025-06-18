@@ -17,6 +17,7 @@ set(lib_wasi_sources
 	"wasi_host_dirent.c"
 	"wasi_host_fdop.c"
 	"wasi_host_pathop.c"
+	"wasi_host_sockop.c"
 	"wasi_host_subr.c"
 	"wasi_path_subr.c"
 	"wasi_poll_subr.c"
