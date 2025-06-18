@@ -106,10 +106,8 @@ wasi_sock_recv(struct exec_context *ctx, struct host_instance *hi,
         uint32_t roflagsp = HOST_FUNC_PARAM(ft, params, 5, i32);
         struct iovec *hostiov = NULL;
         struct wasi_fdinfo *fdinfo = NULL;
-        int hostfd;
         int host_ret = 0;
         int ret;
-        int flags = 0;
         if ((riflags & ~(WASI_RIFLAG_RECV_PEEK | WASI_RIFLAG_RECV_WAITALL)) !=
             0) {
                 ret = EINVAL;
@@ -197,7 +195,6 @@ wasi_sock_send(struct exec_context *ctx, struct host_instance *hi,
         uint32_t retp = HOST_FUNC_PARAM(ft, params, 4, i32);
         struct iovec *hostiov = NULL;
         struct wasi_fdinfo *fdinfo = NULL;
-        int hostfd;
         int host_ret = 0;
         int ret;
         if (siflags != 0) {
@@ -257,7 +254,6 @@ wasi_sock_shutdown(struct exec_context *ctx, struct host_instance *hi,
         uint32_t wasifd = HOST_FUNC_PARAM(ft, params, 0, i32);
         uint32_t sdflags = HOST_FUNC_PARAM(ft, params, 1, i32);
         struct wasi_fdinfo *fdinfo = NULL;
-        int hostfd;
         int ret;
         ret = wasi_userfd_lookup(wasi, wasifd, &fdinfo);
         if (ret != 0) {
