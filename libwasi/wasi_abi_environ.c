@@ -7,8 +7,6 @@
 #include "wasi_impl.h"
 #include "xlog.h"
 
-#include "wasi_hostfuncs.h"
-
 static int
 args_environ_sizes_get(struct exec_context *ctx, struct wasi_instance *wasi,
                        const struct functype *ft, const struct cell *params,

@@ -6,8 +6,6 @@
 #include "endian.h"
 #include "wasi_impl.h"
 
-#include "wasi_hostfuncs.h"
-
 int
 wasi_sched_yield(struct exec_context *ctx, struct host_instance *hi,
                  const struct functype *ft, const struct cell *params,

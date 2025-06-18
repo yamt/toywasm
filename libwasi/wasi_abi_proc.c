@@ -6,8 +6,6 @@
 #include "exec_context.h"
 #include "wasi_impl.h"
 
-#include "wasi_hostfuncs.h"
-
 int
 wasi_proc_exit(struct exec_context *ctx, struct host_instance *hi,
                const struct functype *ft, const struct cell *params,

@@ -15,8 +15,6 @@
 #include "wasi_vfs_impl_host.h"
 #include "xlog.h"
 
-#include "wasi_hostfuncs.h"
-
 int
 wasi_fd_advise(struct exec_context *ctx, struct host_instance *hi,
                const struct functype *ft, const struct cell *params,
