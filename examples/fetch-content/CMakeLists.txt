@@ -1,7 +1,13 @@
 # An example to fetch toywasm release assets and link to it
 #
-# Note: as toywasm release assets are built with thin LTO,
+# Note: as toywasm release assets are built with thin LTO where available,
 # this only works with a compatible version of toolchain.
+#
+# it might be more user-friendly if we ship both of non-LTO libraries and
+# LTO libraries as WASI-SDK does.
+# at least for webassembly, we can place LTO libraries under a LLVM-version
+# dependent directory to avoid the compatibility issues.
+# cf. https://github.com/llvm/llvm-project/blob/f9fce4975bbad835deba6e639c21a62154dd8c14/clang/lib/Driver/ToolChains/WebAssembly.cpp#L233-L239
 
 cmake_minimum_required(VERSION 3.16)
 
