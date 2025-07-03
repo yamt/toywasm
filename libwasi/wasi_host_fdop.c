@@ -2,6 +2,7 @@
 #define _GNU_SOURCE
 #define _NETBSD_SOURCE
 
+#include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/uio.h>
@@ -207,6 +208,25 @@ wasi_host_fd_fstat(struct wasi_fdinfo *fdinfo, struct wasi_filestat *wstp)
                 return handle_errno(ret);
         }
         wasi_convert_filestat(&st, wstp);
+        if (S_ISSOCK(st.st_mode)) {
+                int type;
+                socklen_t typelen = sizeof(type);
+                ret = getsockopt(hostfd, SOL_SOCKET, SO_TYPE, &type, &typelen);
+                if (ret != 0) {
+                        return handle_errno(ret);
+                }
+                switch (type) {
+                case SOCK_STREAM:
+                        wstp->type = WASI_FILETYPE_SOCKET_STREAM;
+                        break;
+                case SOCK_DGRAM:
+                        wstp->type = WASI_FILETYPE_SOCKET_DGRAM;
+                        break;
+                default:
+                        wstp->type = WASI_FILETYPE_UNKNOWN;
+                        break;
+                }
+        }
         return 0;
 }
 
