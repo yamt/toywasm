@@ -530,6 +530,7 @@ fail:
         return ret;
 }
 
+WRONG_FUNC_TYPE
 int
 read_name(const uint8_t **pp, const uint8_t *ep, struct name *namep)
 {
@@ -1929,6 +1930,7 @@ fail:
         return ret;
 }
 
+WRONG_FUNC_TYPE
 static int
 read_import_info(const uint8_t **pp, const uint8_t *ep,
                  struct dylink_import_info *ii)
