@@ -56,6 +56,10 @@ static const struct name name_memory = NAME_FROM_CSTR_LITERAL("memory");
 
 static const struct name name_stack_pointer =
         NAME_FROM_CSTR_LITERAL("__stack_pointer");
+static const struct name name_stack_low =
+        NAME_FROM_CSTR_LITERAL("__stack_low");
+static const struct name name_stack_high =
+        NAME_FROM_CSTR_LITERAL("__stack_high");
 static const struct name name_heap_base =
         NAME_FROM_CSTR_LITERAL("__heap_base");
 static const struct name name_heap_end = NAME_FROM_CSTR_LITERAL("__heap_end");
@@ -72,9 +76,9 @@ static const struct name name_c_longjmp =
 static const struct name name_cpp_exception =
         NAME_FROM_CSTR_LITERAL("__cpp_exception");
 
-static const uint32_t num_shared_entries = 7;
+static const uint32_t num_shared_entries = 9;
 #else
-static const uint32_t num_shared_entries = 5;
+static const uint32_t num_shared_entries = 7;
 #endif
 
 /*
@@ -190,7 +194,9 @@ is_GOT_mem_import(const struct module *m, const struct import *im)
         }
         /* exclude linker-provided names */
         if (!compare_name(&im->name, &name_heap_base) ||
-            !compare_name(&im->name, &name_heap_end)) {
+            !compare_name(&im->name, &name_heap_end) ||
+            !compare_name(&im->name, &name_stack_low) ||
+            !compare_name(&im->name, &name_stack_high)) {
                 return false;
         }
         return true;
@@ -560,6 +566,8 @@ dyld_allocate_stack(struct dyld *d, uint32_t stack_size)
         if (ret != 0) {
                 return ret;
         }
+        global_set_i32(d->stack_low, base);
+        global_set_i32(d->stack_high, end);
         global_set_i32(d->stack_pointer, end);
         xlog_trace("dyld: stack allocated %08" PRIx32 " - %08" PRIx32, base,
                    end);
@@ -947,6 +955,10 @@ dyld_create_shared_resources(struct dyld *d)
 
                 d->stack_pointer = &d->u.pie.stack_pointer;
                 d->stack_pointer->type = &globaltype_i32_mut;
+                d->stack_low = &d->u.pie.stack_low;
+                d->stack_low->type = &globaltype_i32_mut;
+                d->stack_high = &d->u.pie.stack_high;
+                d->stack_high->type = &globaltype_i32_mut;
         }
 
         d->heap_base.type = &globaltype_i32_mut;
@@ -985,6 +997,18 @@ dyld_create_shared_resources(struct dyld *d)
         e->name = &name_stack_pointer;
         e->type = EXTERNTYPE_GLOBAL;
         e->u.global = d->stack_pointer;
+        e++;
+
+        e->module_name = &name_GOT_mem;
+        e->name = &name_stack_low;
+        e->type = EXTERNTYPE_GLOBAL;
+        e->u.global = d->stack_low;
+        e++;
+
+        e->module_name = &name_GOT_mem;
+        e->name = &name_stack_high;
+        e->type = EXTERNTYPE_GLOBAL;
+        e->u.global = d->stack_high;
         e++;
 
         e->module_name = &name_GOT_mem;
@@ -1091,6 +1115,16 @@ dyld_adopt_shared_resources(struct dyld *d, const struct dyld_object *obj)
 
         ret = find_global(obj, &name_stack_pointer, &globaltype_i32_mut,
                           &d->stack_pointer);
+        if (ret != 0) {
+                return ret;
+        }
+        ret = find_global(obj, &name_stack_low, &globaltype_i32_const,
+                          &d->stack_low);
+        if (ret != 0) {
+                return ret;
+        }
+        ret = find_global(obj, &name_stack_high, &globaltype_i32_const,
+                          &d->stack_high);
         if (ret != 0) {
                 return ret;
         }

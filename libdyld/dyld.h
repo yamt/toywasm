@@ -52,6 +52,8 @@ struct dyld {
         struct meminst *meminst;
         struct tableinst *tableinst;
         struct globalinst *stack_pointer;
+        struct globalinst *stack_low;
+        struct globalinst *stack_high;
         struct globalinst heap_base;
         struct globalinst heap_end;
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
@@ -69,6 +71,8 @@ struct dyld {
                         struct memtype mt;
                         struct tabletype tt;
                         struct globalinst stack_pointer;
+                        struct globalinst stack_low;
+                        struct globalinst stack_high;
                 } pie;
         } u;
 
