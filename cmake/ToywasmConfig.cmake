@@ -244,24 +244,29 @@ endif()
 if(TOYWASM_USE_SIMD)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msimd128")
 endif()
-endif()
+endif() # wasm
 
 if(NOT DEFINED USE_TSAN)
 # Off by default because it's incompatible with ASAN and LSAN
 set(USE_TSAN OFF)
 endif()
-# TOYWASM_ENABLE_WASM_THREADS might require pthread
-if(NOT TOYWASM_ENABLE_WASM_THREADS)
-set(TOYWASM_USE_USER_SCHED OFF)
-endif()
+
 if(TOYWASM_ENABLE_WASM_THREADS AND NOT TOYWASM_USE_USER_SCHED)
+# for non wasi-threads targets, wasi-sdk (>=26) provides a pthread stub,
+# which basically just returns an error on attempts to create threads.
+# while it's "compliant" enough to be found by cmake FindThreads, it's
+# useless for our purposes. use our user-level threading instead.
+if(CMAKE_C_COMPILER_TARGET MATCHES "wasi" AND NOT CMAKE_C_COMPILER_TARGET MATCHES "-threads")
+message(WARNING "Enabling TOYWASM_USE_USER_SCHED: wasi w/o threads")
+set(TOYWASM_USE_USER_SCHED ON CACHE BOOL "wasi w/o threads" FORCE)
+else() # wasi but not wasi-threads
 # https://cmake.org/cmake/help/latest/module/FindThreads.html
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 find_package(Threads)
 if (NOT THREADS_FOUND)
 message(WARNING "Enabling TOYWASM_USE_USER_SCHED because pthread was not found")
-set(TOYWASM_USE_USER_SCHED ON)
-else()
+set(TOYWASM_USE_USER_SCHED ON CACHE BOOL "no host pthread" FORCE)
+else() # NOT THREADS_FOUND
 if(CMAKE_C_COMPILER_TARGET MATCHES "wasm")
 # https://reviews.llvm.org/D130053
 # https://llvm.org/docs/LangRef.html#thread-local-storage-models
@@ -285,14 +290,15 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--max-memory=${WASM_MA
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--import-memory")
 # require LLVM >=16
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--export-memory")
-endif()
+endif() # wasm
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pthread")
 if(USE_TSAN)
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fsanitize=thread")
-endif()
-endif()
-endif()
+endif() # USE_TSAN
+endif() # NOT THREADS_FOUND
+endif() # wasi but not wasi-threads
+endif() # TOYWASM_ENABLE_WASM_THREADS AND NOT TOYWASM_USE_USER_SCHED
 
 # GCC doesn't seem to have a way to only allow statement expressions
 if(CMAKE_C_COMPILER_ID MATCHES "Clang")
@@ -453,6 +459,7 @@ message(STATUS "CMAKE_SYSTEM_NAME: ${CMAKE_SYSTEM_NAME}")
 message(STATUS "CMAKE_C_COMPILER: ${CMAKE_C_COMPILER}")
 message(STATUS "CMAKE_C_COMPILER_ID: ${CMAKE_C_COMPILER_ID}")
 message(STATUS "CMAKE_C_COMPILER_VERSION: ${CMAKE_C_COMPILER_VERSION}")
+message(STATUS "CMAKE_C_COMPILER_TARGET: ${CMAKE_C_COMPILER_TARGET}")
 message(STATUS "CMAKE_AR: ${CMAKE_AR}")
 message(STATUS "CMAKE_C_COMPILER_AR: ${CMAKE_C_COMPILER_AR}")
 message(STATUS "CMAKE_RANLIB: ${CMAKE_RANLIB}")
