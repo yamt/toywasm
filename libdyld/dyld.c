@@ -1375,6 +1375,16 @@ dyld_load(struct dyld *d, const char *filename)
                  * as "GOT.mem __heap_base" directly because they are
                  * different on mutability. Instead, we copy their values
                  * here.
+                 *
+                 * when wasm-ld synthesizes GOT.mem/GOT.func imports,
+                 * they are always mutable.
+                 * cf.
+                 * https://github.com/llvm/llvm-project/blob/a5ba6067d619b0dd5f7b660ff4658f9af43db556/lld/wasm/SyntheticSections.cpp#L294
+                 *
+                 * otoh, when wasm-ld exports DefinedData globals,
+                 * they are always immutable.
+                 * cf.
+                 * https://github.com/llvm/llvm-project/blob/a5ba6067d619b0dd5f7b660ff4658f9af43db556/lld/wasm/SyntheticSections.cpp#L548
                  */
                 global_set_i32(&d->heap_base, base);
                 global_set_i32(&d->heap_end, end);
