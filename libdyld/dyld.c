@@ -76,9 +76,9 @@ static const struct name name_c_longjmp =
 static const struct name name_cpp_exception =
         NAME_FROM_CSTR_LITERAL("__cpp_exception");
 
-static const uint32_t num_shared_entries = 9;
+static const uint32_t num_shared_entries_min = 7;
 #else
-static const uint32_t num_shared_entries = 7;
+static const uint32_t num_shared_entries_min = 5;
 #endif
 
 /*
@@ -973,6 +973,14 @@ dyld_create_shared_resources(struct dyld *d)
         d->cpp_exception.type = d->c_longjmp_ft;
 #endif
 
+        uint32_t num_shared_entries = num_shared_entries_min;
+        if (d->stack_low != NULL) {
+                num_shared_entries++;
+        }
+        if (d->stack_high != NULL) {
+                num_shared_entries++;
+        }
+
         struct import_object *imp;
         ret = import_object_alloc(d->mctx, num_shared_entries, &imp);
         if (ret != 0) {
@@ -999,17 +1007,21 @@ dyld_create_shared_resources(struct dyld *d)
         e->u.global = d->stack_pointer;
         e++;
 
-        e->module_name = &name_GOT_mem;
-        e->name = &name_stack_low;
-        e->type = EXTERNTYPE_GLOBAL;
-        e->u.global = d->stack_low;
-        e++;
+        if (d->stack_low != NULL) {
+                e->module_name = &name_GOT_mem;
+                e->name = &name_stack_low;
+                e->type = EXTERNTYPE_GLOBAL;
+                e->u.global = d->stack_low;
+                e++;
+        }
 
-        e->module_name = &name_GOT_mem;
-        e->name = &name_stack_high;
-        e->type = EXTERNTYPE_GLOBAL;
-        e->u.global = d->stack_high;
-        e++;
+        if (d->stack_high != NULL) {
+                e->module_name = &name_GOT_mem;
+                e->name = &name_stack_high;
+                e->type = EXTERNTYPE_GLOBAL;
+                e->u.global = d->stack_high;
+                e++;
+        }
 
         e->module_name = &name_GOT_mem;
         e->name = &name_heap_base;
@@ -1057,7 +1069,8 @@ fail:
 
 static int
 find_global(const struct dyld_object *obj, const struct name *name,
-            const struct globaltype *type, struct globalinst **gp)
+            const struct globaltype *type, struct globalinst **gp,
+            bool optional)
 {
         const struct module *m = obj->module;
         const struct instance *inst = obj->instance;
@@ -1066,12 +1079,18 @@ find_global(const struct dyld_object *obj, const struct name *name,
 
         ret = module_find_export(m, name, EXTERNTYPE_GLOBAL, &globalidx);
         if (ret != 0) {
+                if (optional) {
+                        return 0;
+                }
                 xlog_error("dyld: failed to find global %.*s in %.*s",
                            CSTR(name), CSTR(obj->name));
                 return ret;
         }
         struct globalinst *g = VEC_ELEM(inst->globals, globalidx);
         if (g->type->mut != type->mut || g->type->t != type->t) {
+                if (optional) {
+                        return 0;
+                }
                 xlog_error("dyld: unexpected type of global %.*s in %.*s",
                            CSTR(name), CSTR(obj->name));
                 return EINVAL;
@@ -1114,27 +1133,27 @@ dyld_adopt_shared_resources(struct dyld *d, const struct dyld_object *obj)
         d->table_base = d->tableinst->type->lim.min;
 
         ret = find_global(obj, &name_stack_pointer, &globaltype_i32_mut,
-                          &d->stack_pointer);
+                          &d->stack_pointer, false);
         if (ret != 0) {
                 return ret;
         }
         ret = find_global(obj, &name_stack_low, &globaltype_i32_const,
-                          &d->stack_low);
+                          &d->stack_low, true);
         if (ret != 0) {
                 return ret;
         }
         ret = find_global(obj, &name_stack_high, &globaltype_i32_const,
-                          &d->stack_high);
+                          &d->stack_high, true);
         if (ret != 0) {
                 return ret;
         }
         ret = find_global(obj, &name_heap_base, &globaltype_i32_const,
-                          &d->u.nonpie.heap_base);
+                          &d->u.nonpie.heap_base, false);
         if (ret != 0) {
                 return ret;
         }
         ret = find_global(obj, &name_heap_end, &globaltype_i32_const,
-                          &d->u.nonpie.heap_end);
+                          &d->u.nonpie.heap_end, false);
         if (ret != 0) {
                 return ret;
         }
