@@ -37,7 +37,9 @@
 static int dyld_load_object_from_file(struct dyld *d, const struct name *name,
                                       const char *filename,
                                       struct dyld_object **objp);
-static int dyld_create_shared_resources(struct dyld *d);
+static int dyld_create_shared_resources(struct dyld *d,
+                                        const struct memtype *imt);
+static int dyld_create_shared_import_objects(struct dyld *d);
 static int dyld_adopt_shared_resources(struct dyld *d,
                                        const struct dyld_object *obj);
 
@@ -237,13 +239,6 @@ static bool
 is_func_export(const struct module *m, const struct wasm_export *ex)
 {
         return ex->desc.type == EXTERNTYPE_FUNC;
-}
-
-static bool
-module_imports_env_memory(const struct module *m)
-{
-        /* todo: check name */
-        return m->nimportedmems > 0;
 }
 
 static bool
@@ -478,6 +473,24 @@ dyld_create_got(struct dyld *d, struct dyld_object *obj)
         return 0;
 fail:
         return ret;
+}
+
+static const struct memtype *
+import_memory_type(const struct module *m)
+{
+        uint32_t i;
+        for (i = 0; i < m->nimports; i++) {
+                const struct import *im = &m->imports[i];
+                if (im->desc.type != EXTERNTYPE_MEMORY) {
+                        continue;
+                }
+                if (compare_name(&im->module_name, &name_env) ||
+                    compare_name(&im->name, &name_memory)) {
+                        continue;
+                }
+                return &im->desc.u.memtype;
+        }
+        return NULL;
 }
 
 static int
@@ -840,9 +853,14 @@ dyld_load_object_from_file(struct dyld *d, const struct name *name,
         bool pie_or_lib;
         if (SLIST_EMPTY(&d->objs)) {
                 /* the main module */
-                d->pie = pie_or_lib = module_imports_env_memory(obj->module);
+                const struct memtype *mt = import_memory_type(obj->module);
+                d->pie = pie_or_lib = mt != NULL;
                 if (d->pie) {
-                        ret = dyld_create_shared_resources(d);
+                        ret = dyld_create_shared_resources(d, mt);
+                        if (ret != 0) {
+                                goto fail;
+                        }
+                        ret = dyld_create_shared_import_objects(d);
                         if (ret != 0) {
                                 goto fail;
                         }
@@ -891,7 +909,7 @@ dyld_load_object_from_file(struct dyld *d, const struct name *name,
                 if (ret != 0) {
                         goto fail;
                 }
-                ret = dyld_create_shared_resources(d);
+                ret = dyld_create_shared_import_objects(d);
                 if (ret != 0) {
                         goto fail;
                 }
@@ -913,41 +931,73 @@ fail:
         return ret;
 }
 
+/*
+ * calculate max value for memtype.
+ */
+static uint32_t
+memtype_max(uint64_t limit_in_bytes, uint32_t page_shift)
+{
+        assert(limit_in_bytes <= WASM_MAX_MEMORY_SIZE);
+        assert(limit_in_bytes >> page_shift << page_shift == limit_in_bytes);
+        if (limit_in_bytes == WASM_MAX_MEMORY_SIZE && page_shift == 0) {
+                /*
+                 * Note that:
+                 * - (WASM_MAX_MEMORY_SIZE >> 0) doesn't fit uint32_t.
+                 * - UINT32_MAX is a logical equivalent of no limit.
+                 */
+                return UINT32_MAX;
+        }
+        return limit_in_bytes >> page_shift;
+}
+
 static int
-dyld_create_shared_resources(struct dyld *d)
+dyld_create_shared_resources(struct dyld *d, const struct memtype *imt)
 {
         int ret;
 
-        if (d->pie) {
-                assert(d->table_base == 0);
-                d->table_base = 1; /* do not use the first one */
-                struct tabletype *tt = &d->u.pie.tt;
-                tt->et = TYPE_funcref;
-                tt->lim.min = d->table_base;
-                tt->lim.max = UINT32_MAX;
-                ret = table_instance_create(d->mctx, &d->tableinst, tt);
-                if (ret != 0) {
-                        goto fail;
-                }
+        assert(d->pie);
+        assert(imt != NULL);
 
-                assert(d->memory_base == 0);
-                struct memtype *mt = &d->u.pie.mt;
-                const uint32_t page_shift = WASM_PAGE_SHIFT;
-                const uint32_t page_size = 1 << page_shift;
-                mt->lim.min = howmany(d->memory_base, page_size);
-                mt->lim.max = WASM_MAX_MEMORY_SIZE >> page_shift;
-                mt->flags = 0;
-#if defined(TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES)
-                mt->page_shift = page_shift;
-#endif
-                ret = memory_instance_create(d->mctx, &d->meminst, mt);
-                if (ret != 0) {
-                        goto fail;
-                }
-
-                d->stack_pointer = &d->u.pie.stack_pointer;
-                d->stack_pointer->type = &globaltype_i32_mut;
+        assert(d->table_base == 0);
+        d->table_base = 1; /* do not use the first one */
+        struct tabletype *tt = &d->u.pie.tt;
+        tt->et = TYPE_funcref;
+        tt->lim.min = d->table_base;
+        tt->lim.max = UINT32_MAX;
+        ret = table_instance_create(d->mctx, &d->tableinst, tt);
+        if (ret != 0) {
+                goto fail;
         }
+        assert(d->memory_base == 0);
+#if defined(TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES)
+        const uint32_t page_shift = memtype_page_shift(imt);
+#else
+        const uint32_t page_shift = WASM_PAGE_SHIFT;
+#endif
+        struct memtype *mt = &d->u.pie.mt;
+        const uint32_t page_size = 1 << page_shift;
+        mt->lim.min = howmany(d->memory_base, page_size);
+        mt->lim.max = memtype_max(WASM_MAX_MEMORY_SIZE, page_shift);
+        mt->flags = 0;
+#if defined(TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES)
+        mt->page_shift = page_shift;
+#else
+#endif
+        ret = memory_instance_create(d->mctx, &d->meminst, mt);
+        if (ret != 0) {
+                goto fail;
+        }
+
+        d->stack_pointer = &d->u.pie.stack_pointer;
+        d->stack_pointer->type = &globaltype_i32_mut;
+fail:
+        return ret;
+}
+
+static int
+dyld_create_shared_import_objects(struct dyld *d)
+{
+        int ret;
 
         d->heap_base.type = &globaltype_i32_mut;
         d->heap_end.type = &globaltype_i32_mut;
