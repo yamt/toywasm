@@ -326,12 +326,16 @@ struct limits {
  */
 #define MEMTYPE_FLAG_SHARED 0x02
 #define MEMTYPE_FLAG_64 0x04
-#define MEMTYPE_FLAG_CUSTOM_PAGE_SIZE 0x08
+#define MEMTYPE_FLAG_CUSTOM_PAGE_SIZE 0x08 /* NOT in memtype->flags */
 
 struct memtype {
         struct limits lim;
         uint8_t flags; /* MEMTYPE_FLAGS_xxx */
 #if defined(TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES)
+        /*
+         * note: MEMTYPE_FLAG_CUSTOM_PAGE_SIZE is represented by page_shift.
+         * it is NOT stored in flags
+         */
         uint8_t page_shift;
 #endif
 };
