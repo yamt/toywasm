@@ -447,7 +447,8 @@ retry:
                 memory_unlock(mi);
                 return (uint32_t)-1; /* fail */
         }
-        assert(lim->max <= WASM_MAX_MEMORY_SIZE >> page_shift);
+        assert(page_shift == 0 ||
+               lim->max <= WASM_MAX_MEMORY_SIZE >> page_shift);
         if (new_size > lim->max) {
                 memory_unlock(mi);
                 return (uint32_t)-1; /* fail */
