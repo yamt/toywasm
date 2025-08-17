@@ -15,4 +15,5 @@ rm -rf ${BUILD_DIR}
 # Enable all features
 . ${TOPDIR}/all_features.sh
 export EXTRA_CMAKE_OPTIONS
+export CMAKE_POLICY_VERSION_MINIMUM=3.5
 ./build-wasm32-wasi.sh
