@@ -19,5 +19,5 @@ set(sources
 )
 
 add_executable(runwasi_cstruct ${sources})
-target_link_libraries(runwasi_cstruct toywasm-lib-core toywasm-lib-wasi m)
+target_link_libraries(runwasi_cstruct toywasm::toywasm-lib-core toywasm::toywasm-lib-wasi m)
 target_include_directories(runwasi_cstruct PRIVATE "../runwasi")
