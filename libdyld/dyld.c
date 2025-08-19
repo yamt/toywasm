@@ -689,7 +689,7 @@ dyld_execute_obj_init_func1(struct dyld_object *obj, const struct name *name)
         struct module *m = obj->module;
         uint32_t funcidx;
         int ret;
-        ret = module_find_export_func(m, name, &funcidx);
+        ret = module_find_export(m, name, EXTERNTYPE_FUNC, &funcidx);
         if (ret != 0) {
                 return ret;
         }

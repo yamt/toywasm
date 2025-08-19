@@ -67,9 +67,9 @@ main(int argc, char **argv)
         uint32_t funcidx;
         struct name name;
         set_name_cstr(&name, func_name);
-        ret = module_find_export_func(m, &name, &funcidx);
+        ret = module_find_export(m, &name, EXTERNTYPE_FUNC, &funcidx);
         if (ret != 0) {
-                xlog_error("module_find_export_func failed with %d", ret);
+                xlog_error("module_find_export failed with %d", ret);
                 goto fail;
         }
         const struct functype *ft = module_functype(m, funcidx);

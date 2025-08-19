@@ -107,13 +107,6 @@ module_find_export(const struct module *m, const struct name *name,
 #endif
 }
 
-int
-module_find_export_func(const struct module *m, const struct name *name,
-                        uint32_t *funcidxp)
-{
-        return module_find_export(m, name, EXTERNTYPE_FUNC, funcidxp);
-}
-
 const struct import *
 module_find_import(const struct module *m, enum externtype type, uint32_t idx)
 {

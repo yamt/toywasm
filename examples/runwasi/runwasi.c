@@ -31,9 +31,9 @@ runwasi_module(
          */
         uint32_t funcidx;
         struct name name = NAME_FROM_CSTR_LITERAL("_start");
-        ret = module_find_export_func(m, &name, &funcidx);
+        ret = module_find_export(m, &name, EXTERNTYPE_FUNC, &funcidx);
         if (ret != 0) {
-                xlog_error("module_find_export_func failed with %d", ret);
+                xlog_error("module_find_export failed with %d", ret);
                 goto fail;
         }
         const struct functype *ft = module_functype(m, funcidx);

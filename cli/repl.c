@@ -1212,10 +1212,11 @@ toywasm_repl_invoke(struct repl_state *state, const char *modname,
         assert(inst != NULL);
         assert(module != NULL);
         uint32_t funcidx;
-        ret = module_find_export_func(module, &funcname_name, &funcidx);
+        ret = module_find_export(module, &funcname_name, EXTERNTYPE_FUNC,
+                                 &funcidx);
         if (ret != 0) {
                 /* TODO should print the name w/o unescape */
-                xlog_error("module_find_export_func failed for %s", funcname);
+                xlog_error("module_find_export failed for %s", funcname);
                 goto fail;
         }
         const struct functype *ft = module_functype(module, funcidx);
