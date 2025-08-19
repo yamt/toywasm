@@ -190,7 +190,7 @@ wasi_threads_instance_set_thread_spawn_args(
         struct name funcname_name;
         funcname_name.data = funcname;
         funcname_name.nbytes = strlen(funcname);
-        ret = module_find_export_func(m, &funcname_name, &funcidx);
+        ret = module_find_export(m, &funcname_name, EXTERNTYPE_FUNC, &funcidx);
         if (ret != 0) {
                 xlog_trace("%s: start func not found %d", __func__, ret);
                 goto fail;
