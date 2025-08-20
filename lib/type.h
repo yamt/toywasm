@@ -707,8 +707,8 @@ int compare_name(const struct name *a, const struct name *b);
  *   funcinst_functype(VEC_ELEM(inst->funcs, idx))
  */
 
-const struct import *module_find_import(const struct module *m,
-                                        enum externtype type, uint32_t idx);
+const struct import *module_import(const struct module *m,
+                                   enum externtype type, uint32_t idx);
 const struct functype *module_functype(const struct module *m, uint32_t idx);
 const struct memtype *module_memtype(const struct module *m, uint32_t idx);
 const struct tabletype *module_tabletype(const struct module *m, uint32_t idx);

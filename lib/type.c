@@ -108,7 +108,7 @@ module_find_export(const struct module *m, const struct name *name,
 }
 
 const struct import *
-module_find_import(const struct module *m, enum externtype type, uint32_t idx)
+module_import(const struct module *m, enum externtype type, uint32_t idx)
 {
         /*
          * REVISIT: this is O(n) and can make some of users O(n^2).
@@ -129,10 +129,9 @@ module_find_import(const struct module *m, enum externtype type, uint32_t idx)
 }
 
 const struct importdesc *
-module_find_importdesc(const struct module *m, enum externtype type,
-                       uint32_t idx)
+module_importdesc(const struct module *m, enum externtype type, uint32_t idx)
 {
-        const struct import *im = module_find_import(m, type, idx);
+        const struct import *im = module_import(m, type, idx);
         assert(im != NULL);
         return &im->desc;
 }
@@ -142,8 +141,8 @@ module_functype(const struct module *m, uint32_t idx)
 {
         uint32_t functypeidx;
         if (idx < m->nimportedfuncs) {
-                functypeidx = module_find_importdesc(m, EXTERNTYPE_FUNC, idx)
-                                      ->u.typeidx;
+                functypeidx =
+                        module_importdesc(m, EXTERNTYPE_FUNC, idx)->u.typeidx;
         } else {
                 functypeidx = m->functypeidxes[idx - m->nimportedfuncs];
         }
@@ -155,7 +154,7 @@ const struct memtype *
 module_memtype(const struct module *m, uint32_t idx)
 {
         if (idx < m->nimportedmems) {
-                return &module_find_importdesc(m, EXTERNTYPE_MEMORY, idx)
+                return &module_importdesc(m, EXTERNTYPE_MEMORY, idx)
                                 ->u.memtype;
         }
         return &m->mems[idx - m->nimportedmems];
@@ -165,7 +164,7 @@ const struct tabletype *
 module_tabletype(const struct module *m, uint32_t idx)
 {
         if (idx < m->nimportedtables) {
-                return &module_find_importdesc(m, EXTERNTYPE_TABLE, idx)
+                return &module_importdesc(m, EXTERNTYPE_TABLE, idx)
                                 ->u.tabletype;
         }
         return &m->tables[idx - m->nimportedtables];
@@ -175,7 +174,7 @@ const struct globaltype *
 module_globaltype(const struct module *m, uint32_t idx)
 {
         if (idx < m->nimportedglobals) {
-                return &module_find_importdesc(m, EXTERNTYPE_GLOBAL, idx)
+                return &module_importdesc(m, EXTERNTYPE_GLOBAL, idx)
                                 ->u.globaltype;
         }
         return &m->globals[idx - m->nimportedglobals].type;
@@ -186,8 +185,7 @@ const struct tagtype *
 module_tagtype(const struct module *m, uint32_t idx)
 {
         if (idx < m->nimportedtags) {
-                return &module_find_importdesc(m, EXTERNTYPE_TAG, idx)
-                                ->u.tagtype;
+                return &module_importdesc(m, EXTERNTYPE_TAG, idx)->u.tagtype;
         }
         return &m->tags[idx - m->nimportedtags];
 }
