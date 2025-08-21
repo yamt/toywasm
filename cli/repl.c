@@ -572,6 +572,7 @@ repl_exec_init(struct repl_state *state, struct repl_module_state *mod,
                         assert(has_timeout);
                         int ret1 = check_timeout(&state->abstimeout);
                         if (ret1 != 0) {
+                                print_trace(ctx);
                                 ret = ret1;
                                 goto fail;
                         }
@@ -1142,6 +1143,7 @@ exec_func(struct exec_context *ctx, uint32_t funcidx,
                         assert(abstimeout != NULL);
                         int ret1 = check_timeout(abstimeout);
                         if (ret1 != 0) {
+                                print_trace(ctx);
                                 ret = ret1;
                                 goto fail;
                         }
