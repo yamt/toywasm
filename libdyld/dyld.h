@@ -41,6 +41,8 @@ struct dyld_options {
 #endif
 };
 
+#define NUM_LAYOUT_GLOBAL 2
+
 struct dyld {
         struct import_object *shared_import_obj;
 
@@ -52,8 +54,7 @@ struct dyld {
         struct meminst *meminst;
         struct tableinst *tableinst;
         struct globalinst *stack_pointer;
-        struct globalinst heap_base;
-        struct globalinst heap_end;
+        struct globalinst layout_globals[NUM_LAYOUT_GLOBAL]; /* mutable */
 #if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
         struct functype *c_longjmp_ft;
         struct taginst c_longjmp;
@@ -62,8 +63,8 @@ struct dyld {
 
         union {
                 struct {
-                        struct globalinst *heap_base;
-                        struct globalinst *heap_end;
+                        /* const */
+                        struct globalinst *layout_globals[NUM_LAYOUT_GLOBAL];
                 } nonpie;
                 struct {
                         struct memtype mt;
