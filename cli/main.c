@@ -316,7 +316,7 @@ print_usage(void)
 }
 
 int
-main(int argc, char *const *argv)
+main(int argc, char **argv)
 {
         struct mem_context mctx0, *mctx = &mctx0;
         struct mem_context modules_mctx0, *modules_mctx = &modules_mctx0;
@@ -586,13 +586,43 @@ main(int argc, char *const *argv)
                 }
                 goto success;
         }
+        const char *filename = argv[0];
 #if defined(TOYWASM_ENABLE_WASI)
+        /*
+         * sanitize the module filename before passing it to wasi to
+         * avoid leaking the information about the host path.
+         *
+         * note: unfortunately wasm runtime implementations out there
+         * are incompatible on this. this even causes incompatible
+         * behaviors with real applications. eg. cpython uses it to
+         * search associated files.
+         *
+         * as of writing this,
+         *
+         *   only use the basename or something along the line:
+         *     toywasm
+         *     wasmtime
+         *     wasmi_cli
+         *     wazero
+         *     wasm3
+         *
+         *   use the given path as it is:
+         *     wasmer
+         *     wasm-micro-runtime
+         */
+        char *slash = strrchr(argv[0], '/');
+        if (slash != NULL) {
+                if (slash[1] == 0) {
+                        xlog_error("module filename ends with a slash");
+                        goto fail;
+                }
+                argv[0] = slash + 1;
+        }
         ret = toywasm_repl_set_wasi_args(state, argc, (const char **)argv);
         if (ret != 0 && ret != EPROTO) {
                 goto fail;
         }
 #endif
-        const char *filename = argv[0];
         ret = toywasm_repl_load(state, NULL, filename, false);
         if (ret != 0) {
                 xlog_error("load failed");
