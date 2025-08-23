@@ -58,9 +58,6 @@ static const struct name name_memory = NAME_FROM_CSTR_LITERAL("memory");
 
 static const struct name name_stack_pointer =
         NAME_FROM_CSTR_LITERAL("__stack_pointer");
-static const struct name name_heap_base =
-        NAME_FROM_CSTR_LITERAL("__heap_base");
-static const struct name name_heap_end = NAME_FROM_CSTR_LITERAL("__heap_end");
 
 static const struct name name_main_object = NAME_FROM_CSTR_LITERAL("<main>");
 
@@ -83,15 +80,15 @@ static const uint32_t num_shared_entries = 5;
 #define LAYOUT_GLOBAL_HEAP_END 1
 
 static struct {
-        const struct name *name;
+        const struct name name;
 } layout_globals[NUM_LAYOUT_GLOBAL] = {
         [LAYOUT_GLOBAL_HEAP_BASE] =
                 {
-                        .name = &name_heap_base,
+                        .name = NAME_FROM_CSTR_LITERAL("__heap_base"),
                 },
         [LAYOUT_GLOBAL_HEAP_END] =
                 {
-                        .name = &name_heap_end,
+                        .name = NAME_FROM_CSTR_LITERAL("__heap_end"),
                 },
 };
 
@@ -209,7 +206,7 @@ is_GOT_mem_import(const struct module *m, const struct import *im)
         /* exclude linker-provided names */
         uint32_t i;
         for (i = 0; i < NUM_LAYOUT_GLOBAL; i++) {
-                if (!compare_name(&im->name, layout_globals[i].name)) {
+                if (!compare_name(&im->name, &layout_globals[i].name)) {
                         return false;
                 }
         }
@@ -1059,7 +1056,7 @@ dyld_create_shared_import_objects(struct dyld *d)
 
         for (i = 0; i < NUM_LAYOUT_GLOBAL; i++) {
                 e->module_name = &name_GOT_mem;
-                e->name = layout_globals[i].name;
+                e->name = &layout_globals[i].name;
                 e->type = EXTERNTYPE_GLOBAL;
                 e->u.global = &d->layout_globals[i];
                 e++;
@@ -1162,7 +1159,7 @@ dyld_adopt_shared_resources(struct dyld *d, const struct dyld_object *obj)
         }
         uint32_t i;
         for (i = 0; i < NUM_LAYOUT_GLOBAL; i++) {
-                ret = find_global(obj, layout_globals[i].name,
+                ret = find_global(obj, &layout_globals[i].name,
                                   &globaltype_i32_const,
                                   &d->u.nonpie.layout_globals[i]);
                 if (ret != 0) {
@@ -1454,7 +1451,7 @@ dyld_load(struct dyld *d, const char *filename)
                                 global_get_i32(d->u.nonpie.layout_globals[i]);
                         xlog_trace("dyld: global from the non-pie main "
                                    "module: %.*s = %08" PRIx32,
-                                   CSTR(layout_globals[i].name), v);
+                                   CSTR(&layout_globals[i].name), v);
                         global_set_i32(&d->layout_globals[i], v);
                 }
         }
