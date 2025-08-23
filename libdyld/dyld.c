@@ -71,13 +71,15 @@ static const struct name name_c_longjmp =
 static const struct name name_cpp_exception =
         NAME_FROM_CSTR_LITERAL("__cpp_exception");
 
-static const uint32_t num_shared_entries = 7;
+static const uint32_t num_shared_entries = 9;
 #else
-static const uint32_t num_shared_entries = 5;
+static const uint32_t num_shared_entries = 7;
 #endif
 
 #define LAYOUT_GLOBAL_HEAP_BASE 0
 #define LAYOUT_GLOBAL_HEAP_END 1
+#define LAYOUT_GLOBAL_STACK_LOW 2
+#define LAYOUT_GLOBAL_STACK_HIGH 3
 
 static struct {
         const struct name name;
@@ -89,6 +91,14 @@ static struct {
         [LAYOUT_GLOBAL_HEAP_END] =
                 {
                         .name = NAME_FROM_CSTR_LITERAL("__heap_end"),
+                },
+        [LAYOUT_GLOBAL_STACK_LOW] =
+                {
+                        .name = NAME_FROM_CSTR_LITERAL("__stack_low"),
+                },
+        [LAYOUT_GLOBAL_STACK_HIGH] =
+                {
+                        .name = NAME_FROM_CSTR_LITERAL("__stack_high"),
                 },
 };
 
@@ -588,6 +598,8 @@ dyld_allocate_stack(struct dyld *d, uint32_t stack_size)
         if (ret != 0) {
                 return ret;
         }
+        global_set_i32(&d->layout_globals[LAYOUT_GLOBAL_STACK_LOW], base);
+        global_set_i32(&d->layout_globals[LAYOUT_GLOBAL_STACK_HIGH], end);
         global_set_i32(d->stack_pointer, end);
         xlog_trace("dyld: stack allocated %08" PRIx32 " - %08" PRIx32, base,
                    end);

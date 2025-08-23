@@ -41,7 +41,7 @@ struct dyld_options {
 #endif
 };
 
-#define NUM_LAYOUT_GLOBAL 2
+#define NUM_LAYOUT_GLOBAL 4
 
 struct dyld {
         struct import_object *shared_import_obj;
