@@ -52,7 +52,7 @@ run "$(wasm3 --version|head -1)" wasm3 --dir .video --
 run "$(iwasm.fast --version|head -1) (fast interpreter)" iwasm.fast --dir=.video
 run "$(iwasm.classic --version|head -1) (classic interpreter)" iwasm.classic --dir=.video
 
-run "$(wasmedge --version) (interpreter)" wasmedge --dir .video --
+run "$(wasmedge --version|head -1) (interpreter)" wasmedge --dir .video --
 
 run "$(wasmi_cli --version)" wasmi_cli --dir .video --
 
