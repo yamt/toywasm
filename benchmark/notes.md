@@ -72,7 +72,7 @@ cp target/release/wasmi_cli ~/bin
 
 ```
 brew uninstall spdlog
-git checkout 0.13.5
+git checkout 0.15.0
 mkdir build
 cd build
 cmake \
@@ -82,6 +82,7 @@ cmake \
 -DWASMEDGE_BUILD_STATIC_LIB=ON \
 -DWASMEDGE_LINK_TOOLS_STATIC=ON \
 -DWASMEDGE_BUILD_PLUGINS=OFF \
+-DWASMEDGE_USE_LLVM=OFF \
 ..
 make
 cp ./tools/wasmedge/wasmedge ~/bin
