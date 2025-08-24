@@ -49,8 +49,8 @@ fi
 
 run "$(wasm3 --version|head -1)" wasm3 --dir .video --
 
-run "$(iwasm.fast --version) (fast interpreter)" iwasm.fast --dir=.video
-run "$(iwasm.classic --version) (classic interpreter)" iwasm.classic --dir=.video
+run "$(iwasm.fast --version|head -1) (fast interpreter)" iwasm.fast --dir=.video
+run "$(iwasm.classic --version|head -1) (classic interpreter)" iwasm.classic --dir=.video
 
 run "$(wasmedge --version) (interpreter)" wasmedge --dir .video --
 
@@ -69,7 +69,7 @@ echo "+++++++++++ JIT ++++++++++++++++++++"
 
 # Note: i needed to tweak these size options manually to run
 # this particular wasm binary
-run "$(iwasm.fast-jit --version) (fast jit)" iwasm.fast-jit --dir=.video --jit-codecache-size=100000000
+run "$(iwasm.fast-jit --version|head -1) (fast jit)" iwasm.fast-jit --dir=.video --jit-codecache-size=100000000
 
 run "$(wasmer --version)" wasmer run --mapdir .video::.video --
 run "$(wasmtime --version)" wasmtime run --mapdir .video::.video --
