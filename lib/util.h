@@ -23,4 +23,8 @@ int __must_check array_shrink(struct mem_context *ctx, void **p,
 
 #define HOWMANY(a, b) ((a + (b - 1)) / b)
 
+/*
+ * strnstr is a FreeBSD extension. xstrnstr is a wrapper of strnstr
+ * with a fallback implementation for other platforms.
+ */
 char *xstrnstr(const char *haystack, const char *needle, size_t len);
