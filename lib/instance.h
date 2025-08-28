@@ -35,7 +35,7 @@ int instance_create(struct mem_context *mctx, const struct module *m,
  * to deal with some of corner cases you can see in opam-2.0.0 linking.wast.
  * cf. https://github.com/WebAssembly/spec/issues/1530
  *
- * note than instance_execute_init can return a restartable error.
+ * note that instance_execute_init can return a restartable error.
  * see also: instance_execute_continue.
  */
 int instance_create_no_init(struct mem_context *mctx, const struct module *m,
@@ -57,12 +57,14 @@ int instance_execute_init(struct exec_context *ctx);
 void instance_destroy(struct instance *inst);
 
 /*
- * instance_execute_func:
+ * instance_execute_func: execute the function.
  *
- * execute the function.
+ * it's the caller's responsibility to push function parameters onto
+ * the stack before calling a function and pop the results from
+ * the stack afterwards.
  *
  * in addition to usual <errno.h> error numbers, this function can
- * return a few toywasm-specific errors.
+ * return a few toywasm-specific errors, including restartable errors.
  * see the comment on ETOYWASMxxx macros in exec_context.h.
  */
 int instance_execute_func(struct exec_context *ctx, uint32_t funcidx,
@@ -71,7 +73,8 @@ int instance_execute_func(struct exec_context *ctx, uint32_t funcidx,
 
 /*
  * instance_execute_func_nocheck is meant to be used where the caller
- * already knows the function type for sure.
+ * already knows the function type for sure. otherwise, it's same as
+ * instance_execute_func.
  */
 int instance_execute_func_nocheck(struct exec_context *ctx, uint32_t funcidx);
 
