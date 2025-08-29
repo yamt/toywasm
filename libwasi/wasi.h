@@ -19,12 +19,27 @@ __BEGIN_EXTERN_C
 
 int wasi_instance_create(struct mem_context *mctx,
                          struct wasi_instance **instp);
+void wasi_instance_destroy(struct wasi_instance *inst);
+
+/*
+ * wasi_instance_set_memory specifies a memory instance to be used
+ * by this wasi instance. that is, memory addresses passed to this
+ * wasi instance are interpreted as offsets in the specified memory
+ * instance.
+ *
+ * note: an embedder can use cconv_memory() to find the appropriate
+ * memory instance.
+ */
 void wasi_instance_set_memory(struct wasi_instance *inst, struct meminst *mem);
+
+/*
+ * specify the array for wasi command line arguments and
+ * environment variables.
+ */
 void wasi_instance_set_args(struct wasi_instance *inst, int argc,
                             const char *const *argv);
 void wasi_instance_set_environ(struct wasi_instance *inst, int nenvs,
                                const char *const *envs);
-void wasi_instance_destroy(struct wasi_instance *inst);
 
 /*
  * wasi_instance_prestat_add specifies a host directory to expose to
