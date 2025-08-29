@@ -5,6 +5,11 @@
 
 __BEGIN_EXTERN_C
 
+/*
+ * helper functions for backends which don't support iovec-like
+ * scatter-gather operations. eg. littlefs.
+ */
+
 /* for writev */
 int wasi_iovec_flatten(const struct iovec *iov, int iovcnt, void **bufp,
                        size_t *lenp);
