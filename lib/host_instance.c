@@ -245,11 +245,38 @@ schedule_call_from_hostfunc(struct exec_context *ctx,
         const struct functype *ft = funcinst_functype(func);
         hf->func = ctx->event_u.call.func; /* caller hostfunc */
         assert(hf->func->is_host);
+
+        /*
+         * update the bottom of the stack so that return_to_hostfunc
+         * will be called when returning from this call.
+         */
         hf->saved_bottom = ctx->bottom;
+        ctx->bottom = ctx->frames.lsize;
+
+        /*
+         * stack adjustment
+         *
+         * return_to_hostfunc adjusts the operand stack pointer by
+         * this value so that the callee host function can still access
+         * its parameters after a restart.
+         *
+         * the caller hostfunc can pop the return values of `func`
+         * as the following:
+         *
+         *    ctx->stack.lsize += hf->stack_adj;
+         *    exec_pop_vals(ctx, &ft->result, r);
+         */
         hf->stack_adj = resulttype_cellsize(&ft->result);
+
+        /*
+         * make restart possibly nest
+         */
+        ctx->restarts.lsize++;
+
+        /*
+         * schedule_call
+         */
         ctx->event_u.call.func = func;
         ctx->event = EXEC_EVENT_CALL;
-        ctx->bottom = ctx->frames.lsize;
-        ctx->restarts.lsize++; /* make restart possibly nest */
         return ETOYWASMRESTART;
 }

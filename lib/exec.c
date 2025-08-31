@@ -449,6 +449,10 @@ do_host_call(struct exec_context *ctx, const struct funcinst *finst)
                 }
                 return ret;
         }
+        /*
+         * Note: we don't actually "pop" the parameters until here.
+         * see the above comment about restartable errors.
+         */
         ctx->stack.lsize -= nparams;
         ctx->stack.lsize += nresults;
         assert(ctx->stack.lsize <= ctx->stack.psize);
@@ -1239,6 +1243,11 @@ return_to_hostfunc(struct exec_context *ctx)
         assert(restart->restart_type == RESTART_HOSTFUNC);
         struct restart_hostfunc *hf = &restart->restart_u.hostfunc;
         assert(ctx->bottom >= hf->saved_bottom);
+        /*
+         * at this point, the operand stack has the return values
+         * from the function. it's the caller's (hf->func's)
+         * responsibility to pop them.
+         */
         assert(ctx->stack.lsize >= hf->stack_adj);
         ctx->bottom = hf->saved_bottom;
         ctx->stack.lsize -= hf->stack_adj;
