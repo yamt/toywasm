@@ -254,14 +254,14 @@ schedule_call_from_hostfunc(struct exec_context *ctx,
         ctx->bottom = ctx->frames.lsize;
 
         /*
-         * stack adjustment
+         * a note aboutstack adjustment
          *
          * return_to_hostfunc adjusts the operand stack pointer by
-         * this value so that the callee host function can still access
+         * this value so that the caller host function can still access
          * its parameters after a restart.
          *
-         * the caller hostfunc can pop the return values of `func`
-         * as the following:
+         * the caller hostfunc can pop the return values of the callee
+         * function (`func`) as the following:
          *
          *    ctx->stack.lsize += hf->stack_adj;
          *    exec_pop_vals(ctx, &ft->result, r);
