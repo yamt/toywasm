@@ -14,6 +14,15 @@ struct funcframe;
 struct exec_context;
 struct val;
 
+/*
+ * a cell represents host memory to store a wasm value. (struct val)
+ *
+ * a value can be represented by multiple consecutive cells, depending on
+ * the configuration and the type of the value.
+ *
+ * cells do not necessarily have the same alignment as the corresponding
+ * value. you might need to use memcpy equivalent between them.
+ */
 struct cell {
 #if defined(TOYWASM_USE_SMALL_CELLS)
         uint32_t x;
