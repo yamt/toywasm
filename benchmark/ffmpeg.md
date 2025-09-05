@@ -19,6 +19,12 @@ measures the time taken.
   2.2 GHz 6-Core Intel Core i7
   ```
 
+  ```
+  ProductName:            macOS
+  ProductVersion:         15.6.1
+  BuildVersion:           24G90
+  ```
+
 * [Raw values](./ffmpeg.txt)
 
 * Plotted with [tocsv-ffmpeg.awk](./tocsv-ffmpeg.awk) and

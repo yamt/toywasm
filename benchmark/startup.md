@@ -19,6 +19,12 @@ print the `-version` message)
   2.2 GHz 6-Core Intel Core i7
   ```
 
+  ```
+  ProductName:            macOS
+  ProductVersion:         15.6.1
+  BuildVersion:           24G90
+  ```
+
 * [Raw values](./startup.csv)
 
 * Plotted with [plot.py](./plot.py).
