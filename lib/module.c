@@ -1040,6 +1040,7 @@ read_locals(const uint8_t **pp, const uint8_t *ep, struct func *func,
 
         uint32_t i;
         struct localchunk *chunk = chunks;
+        struct localchunk *prev = NULL;
         for (i = 0; i < vec_count; i++) {
                 uint32_t count;
                 uint8_t u8;
@@ -1068,9 +1069,45 @@ read_locals(const uint8_t **pp, const uint8_t *ep, struct func *func,
                          */
                         continue;
                 }
+                /*
+                 * some tools (wasm-opt?) sometimes generate
+                 * locals like:
+                 *
+                 * 00aac9 func[31]:
+                 * 00aaca: 01 7f                      | local[16] type=i32
+                 * 00aacc: 01 7f                      | local[17] type=i32
+                 * 00aace: 01 7f                      | local[18] type=i32
+                 * 00aad0: 01 7f                      | local[19] type=i32
+                 * 00aad2: 01 7f                      | local[20] type=i32
+                 * 00aad4: 01 7f                      | local[21] type=i32
+                 * 00aad6: 01 7f                      | local[22] type=i32
+                 * 00aad8: 01 7f                      | local[23] type=i32
+                 * 00aada: 01 7f                      | local[24] type=i32
+                 * 00aadc: 01 7f                      | local[25] type=i32
+                 *
+                 * the following logic is intended to pack it.
+                 */
+                if (prev != NULL && prev->type == u8 &&
+                    UINT32_MAX - prev->n >= count) {
+                        prev->n += count;
+                        continue;
+                }
                 chunk->n = count;
                 chunk->type = u8;
+                prev = chunk;
                 chunk++;
+        }
+        assert(chunk <= chunks + vec_count);
+        /*
+         * shrink the array in case we "packed" locals above.
+         * REVISIT: is this worth a realloc?
+         */
+        if (chunk < chunks + vec_count) {
+                void *shrinked =
+                        realloc(chunks, (uintptr_t)chunk - (uintptr_t)chunks);
+                if (shrinked != NULL) {
+                        chunks = shrinked;
+                }
         }
         lt->localchunks = chunks;
         lt->nlocals = nlocals;
