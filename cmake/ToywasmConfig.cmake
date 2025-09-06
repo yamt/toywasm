@@ -305,7 +305,7 @@ if(CMAKE_C_COMPILER_ID MATCHES "Clang")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pedantic -Wno-gnu-statement-expression")
 endif()
 if(CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_COMPILER_ID STREQUAL GNU)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wvla -Werror")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wvla -Wdouble-promotion -Werror")
 endif()
 if(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
 # C4018: '>': signed/unsigned mismatch
