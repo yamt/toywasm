@@ -212,7 +212,7 @@ static double
 wasm_fmin(double a, double b)
 {
         if (isnan(a) || isnan(b)) {
-                return NAN;
+                return (double)NAN;
         }
         if (a == b) {
                 return signbit(a) ? a : b;
@@ -224,7 +224,7 @@ static double
 wasm_fmax(double a, double b)
 {
         if (isnan(a) || isnan(b)) {
-                return NAN;
+                return (double)NAN;
         }
         if (a == b) {
                 return signbit(a) ? b : a;
