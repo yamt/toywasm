@@ -113,3 +113,17 @@ fail:
         *usererrorp = ret;
         return host_ret;
 }
+
+int
+wasi_validate_fstflags(uint32_t fstflags)
+{
+        if ((fstflags & WASI_FSTFLAG_ATIM_NOW) != 0 &&
+            (fstflags & WASI_FSTFLAG_ATIM) != 0) {
+                return EINVAL;
+        }
+        if ((fstflags & WASI_FSTFLAG_MTIM_NOW) != 0 &&
+            (fstflags & WASI_FSTFLAG_MTIM) != 0) {
+                return EINVAL;
+        }
+        return 0;
+}

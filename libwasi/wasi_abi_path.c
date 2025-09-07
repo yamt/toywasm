@@ -490,8 +490,12 @@ wasi_path_filestat_set_times(struct exec_context *ctx,
         uint64_t mtim = HOST_FUNC_PARAM(ft, params, 5, i64);
         uint32_t fstflags = HOST_FUNC_PARAM(ft, params, 6, i32);
         struct path_info pi = PATH_INITIALIZER;
-        int host_ret;
-        int ret = 0;
+        int host_ret = 0;
+        int ret;
+        ret = wasi_validate_fstflags(fstflags);
+        if (ret != 0) {
+                goto fail;
+        }
         host_ret = wasi_copyin_and_convert_path(ctx, wasi, dirwasifd, path,
                                                 pathlen, &pi, &ret);
         if (host_ret != 0 || ret != 0) {
