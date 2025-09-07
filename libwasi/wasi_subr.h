@@ -13,3 +13,4 @@ int wasi_userfd_reject_directory(struct wasi_fdinfo *fdinfo);
 int wasi_copyin_iovec(struct exec_context *ctx, struct meminst *mem,
                       uint32_t iov_uaddr, uint32_t iov_count,
                       struct iovec **resultp, int *usererrorp);
+int wasi_validate_fstflags(uint32_t fstflags);

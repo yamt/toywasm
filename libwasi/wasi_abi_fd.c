@@ -1055,6 +1055,10 @@ wasi_fd_filestat_set_times(struct exec_context *ctx, struct host_instance *hi,
         uint32_t fstflags = HOST_FUNC_PARAM(ft, params, 3, i32);
         struct wasi_fdinfo *fdinfo = NULL;
         int ret;
+        ret = wasi_validate_fstflags(fstflags);
+        if (ret != 0) {
+                goto fail;
+        }
         ret = wasi_userfd_lookup(wasi, wasifd, &fdinfo);
         if (ret != 0) {
                 goto fail;
