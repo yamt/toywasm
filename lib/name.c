@@ -160,6 +160,22 @@ parse_name_section(struct nametable *table, const struct module *m)
                                 goto fail;
                         }
                         break;
+                case NAME_KIND_GLOBAL:
+                        xlog_trace("name section: found NAME_KIND_GLOBAL "
+                                   "subsection");
+                        ret = parse_namemap(table, &table->globals, m, p, ep);
+                        if (ret != 0) {
+                                goto fail;
+                        }
+                        break;
+                case NAME_KIND_DATA:
+                        xlog_trace("name section: found NAME_KIND_DATA "
+                                   "subsection");
+                        ret = parse_namemap(table, &table->datas, m, p, ep);
+                        if (ret != 0) {
+                                goto fail;
+                        }
+                        break;
                 case NAME_KIND_LOCAL:
                         /*
                          * REVISIT: is it worth implementing local names?
@@ -242,6 +258,8 @@ nametable_init(struct nametable *table)
 #if defined(TOYWASM_ENABLE_WASM_NAME_SECTION)
         mem_context_init(&table->mctx);
         namemap_init(&table->funcs);
+        namemap_init(&table->globals);
+        namemap_init(&table->datas);
         table->module_name.data = NULL;
         table->module = NULL;
 #endif
@@ -281,6 +299,8 @@ nametable_clear(struct nametable *table)
 {
 #if defined(TOYWASM_ENABLE_WASM_NAME_SECTION)
         namemap_clear(table, &table->funcs);
+        namemap_clear(table, &table->globals);
+        namemap_clear(table, &table->datas);
         table->module_name.data = NULL;
         table->module = NULL;
         mem_context_clear(&table->mctx);
@@ -295,6 +315,39 @@ nametable_lookup_func(struct nametable *table, const struct module *m,
         nametable_add_module(table, m);
         if (table->module == m) {
                 namemap_lookup(table->module, &table->funcs, funcidx, name);
+        } else {
+                set_name_cstr(name, unknown_name);
+        }
+#else
+        set_name_cstr(name, unknown_name);
+#endif
+}
+
+void
+nametable_lookup_global(struct nametable *table, const struct module *m,
+                        uint32_t globalidx, struct name *name)
+{
+#if defined(TOYWASM_ENABLE_WASM_NAME_SECTION)
+        nametable_add_module(table, m);
+        if (table->module == m) {
+                namemap_lookup(table->module, &table->globals, globalidx,
+                               name);
+        } else {
+                set_name_cstr(name, unknown_name);
+        }
+#else
+        set_name_cstr(name, unknown_name);
+#endif
+}
+
+void
+nametable_lookup_data(struct nametable *table, const struct module *m,
+                      uint32_t dataidx, struct name *name)
+{
+#if defined(TOYWASM_ENABLE_WASM_NAME_SECTION)
+        nametable_add_module(table, m);
+        if (table->module == m) {
+                namemap_lookup(table->module, &table->datas, dataidx, name);
         } else {
                 set_name_cstr(name, unknown_name);
         }
