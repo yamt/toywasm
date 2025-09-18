@@ -492,7 +492,7 @@ jobs:
     - name: Test "runwasi" example with the library we built
       if: matrix.arch == 'native'
       run: |
-        wat2wasm wat/wasi/hello.wat
+        wat2wasm --debug-names wat/wasi/hello.wat
         ./test/build-example.sh runwasi ${{env.builddir}}/toywasm-v*.tgz build
         ./examples/runwasi/build/runwasi $(pwd)/hello.wasm
 
@@ -538,7 +538,7 @@ jobs:
     - name: Test "layout" example with the library we built
       if: matrix.arch == 'native'
       run: |
-        wat2wasm wat/wasi/hello.wat
+        wat2wasm --debug-names wat/wasi/hello.wat
         ./test/build-example.sh layout ${{env.builddir}}/toywasm-v*.tgz build
         ./examples/layout/build/layout $(pwd)/hello.wasm
 
