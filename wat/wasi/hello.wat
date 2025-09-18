@@ -16,6 +16,6 @@
   (memory (export "memory") 1)
 
   ;; iov_base = 0x100, iov_len = 6
-  (data (i32.const 0) "\00\01\00\00\06\00\00\00")
-  (data (i32.const 0x100) "hello\n")
+  (data $iovec (i32.const 0) "\00\01\00\00\06\00\00\00")
+  (data $hello (i32.const 0x100) "hello\n")
 )
