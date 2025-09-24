@@ -218,6 +218,10 @@ main(int argc, char **argv)
                 me->me_idx = i;
                 me->me_u.u_data.size = data->init_size;
         }
+        /*
+         * globals are typically offsets in the default memory.
+         * (notable exceptions: __tls_size etc)
+         */
         for (i = m->nimportedglobals; i < m->nimportedglobals + m->nglobals;
              i++) {
                 const struct global *g = &m->globals[i];
