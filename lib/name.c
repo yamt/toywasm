@@ -221,7 +221,7 @@ namemap_clear(struct nametable *table, struct namemap *map)
         map->entries = NULL;
 }
 
-void
+static int
 namemap_lookup(const struct module *m, const struct namemap *map,
                uint32_t funcidx, struct name *name)
 {
@@ -240,7 +240,7 @@ namemap_lookup(const struct module *m, const struct namemap *map,
                         const uint8_t *p = m->bin + offset;
                         name->nbytes = read_leb_u32_nocheck(&p);
                         name->data = (const char *)p;
-                        return;
+                        return 0;
                 }
                 if (naming->idx < funcidx) {
                         left = mid + 1;
@@ -248,7 +248,7 @@ namemap_lookup(const struct module *m, const struct namemap *map,
                         right = mid;
                 }
         }
-        set_name_cstr(name, unknown_name);
+        return ENOENT;
 }
 #endif /* defined(TOYWASM_ENABLE_WASM_NAME_SECTION) */
 
@@ -307,20 +307,37 @@ nametable_clear(struct nametable *table)
 #endif
 }
 
+static int
+exports_lookup(const struct module *m, enum externtype type, uint32_t idx,
+               struct name *name)
+{
+        uint32_t i;
+        for (i = 0; i < m->nexports; i++) {
+                const struct wasm_export *e = &m->exports[i];
+                if (e->desc.type == type && e->desc.idx == idx) {
+                        *name = e->name;
+                        return 0;
+                }
+        }
+        return ENOENT;
+}
+
 void
 nametable_lookup_func(struct nametable *table, const struct module *m,
                       uint32_t funcidx, struct name *name)
 {
 #if defined(TOYWASM_ENABLE_WASM_NAME_SECTION)
         nametable_add_module(table, m);
-        if (table->module == m) {
-                namemap_lookup(table->module, &table->funcs, funcidx, name);
-        } else {
-                set_name_cstr(name, unknown_name);
+        if (table->module == m &&
+            namemap_lookup(table->module, &table->funcs, funcidx, name) == 0) {
+                return;
         }
-#else
-        set_name_cstr(name, unknown_name);
 #endif
+        /* use exported name as a fallback */
+        if (exports_lookup(m, EXTERNTYPE_FUNC, funcidx, name) == 0) {
+                return;
+        }
+        set_name_cstr(name, unknown_name);
 }
 
 void
@@ -329,15 +346,17 @@ nametable_lookup_global(struct nametable *table, const struct module *m,
 {
 #if defined(TOYWASM_ENABLE_WASM_NAME_SECTION)
         nametable_add_module(table, m);
-        if (table->module == m) {
-                namemap_lookup(table->module, &table->globals, globalidx,
-                               name);
-        } else {
-                set_name_cstr(name, unknown_name);
+        if (table->module == m &&
+            namemap_lookup(table->module, &table->globals, globalidx, name) ==
+                    0) {
+                return;
         }
-#else
-        set_name_cstr(name, unknown_name);
 #endif
+        /* use exported name as a fallback */
+        if (exports_lookup(m, EXTERNTYPE_GLOBAL, globalidx, name) == 0) {
+                return;
+        }
+        set_name_cstr(name, unknown_name);
 }
 
 void
@@ -346,14 +365,12 @@ nametable_lookup_data(struct nametable *table, const struct module *m,
 {
 #if defined(TOYWASM_ENABLE_WASM_NAME_SECTION)
         nametable_add_module(table, m);
-        if (table->module == m) {
-                namemap_lookup(table->module, &table->datas, dataidx, name);
-        } else {
-                set_name_cstr(name, unknown_name);
+        if (table->module == m &&
+            namemap_lookup(table->module, &table->datas, dataidx, name) == 0) {
+                return;
         }
-#else
-        set_name_cstr(name, unknown_name);
 #endif
+        set_name_cstr(name, unknown_name);
 }
 
 void
@@ -364,10 +381,8 @@ nametable_lookup_module(struct nametable *table, const struct module *m,
         nametable_add_module(table, m);
         if (table->module == m && table->module_name.data != NULL) {
                 *name = table->module_name;
-        } else {
-                set_name_cstr(name, unknown_name);
+                return;
         }
-#else
-        set_name_cstr(name, unknown_name);
 #endif
+        set_name_cstr(name, unknown_name);
 }
