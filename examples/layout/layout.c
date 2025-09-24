@@ -241,9 +241,11 @@ main(int argc, char **argv)
 
         for (memidx = 0; memidx < ntotalmems; memidx++) {
                 const struct memtype *mt = module_memtype(m, memidx);
-                printf("memory [%" PRIu32 "] min %" PRIu32 " max %" PRIu32
+                const uint32_t page_shift = memtype_page_shift(mt);
+                printf("memory [%" PRIu32 "] min %08" PRIx64 " max %08" PRIx64
                        "\n",
-                       memidx, mt->lim.min, mt->lim.max);
+                       memidx, (uint64_t)mt->lim.min << page_shift,
+                       (uint64_t)mt->lim.max << page_shift);
                 struct meminfo *mi = &mis[memidx];
                 meminfo_sort(mi);
                 meminfo_print(mi);
