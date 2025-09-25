@@ -19,5 +19,5 @@ set(sources
 )
 
 add_executable(log-execution ${sources})
-target_link_libraries(log-execution toywasm-lib-core toywasm-lib-wasi m)
+target_link_libraries(log-execution toywasm::toywasm-lib-core toywasm::toywasm-lib-wasi m)
 target_include_directories(log-execution PRIVATE "../runwasi")
