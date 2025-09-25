@@ -50,7 +50,7 @@ cp wasm3 ~/bin
 ### wasm-micro-runtime
 
 ```
-git checkout WAMR-1.3.2
+git checkout WAMR-2.4.1
 cd product-mini/platforms/darwin
 ```
 
@@ -63,8 +63,8 @@ installed with homebrew.
 ### wasmi
 
 ```
-git checkout v0.32.0-beta.7
-cargo build --profile bench
+git checkout v0.51.0
+cargo build --package wasmi_cli --profile bench
 cp target/release/wasmi_cli ~/bin
 ```
 
@@ -72,7 +72,7 @@ cp target/release/wasmi_cli ~/bin
 
 ```
 brew uninstall spdlog
-git checkout 0.13.5
+git checkout 0.15.0
 mkdir build
 cd build
 cmake \
@@ -82,6 +82,7 @@ cmake \
 -DWASMEDGE_BUILD_STATIC_LIB=ON \
 -DWASMEDGE_LINK_TOOLS_STATIC=ON \
 -DWASMEDGE_BUILD_PLUGINS=OFF \
+-DWASMEDGE_USE_LLVM=OFF \
 ..
 make
 cp ./tools/wasmedge/wasmedge ~/bin
