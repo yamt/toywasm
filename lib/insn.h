@@ -39,7 +39,5 @@ struct instruction_desc {
 #define INSN_FLAG_EXTENDED_CONST 0
 #endif
 
-extern const struct exec_instruction_desc exec_instructions[];
-
 extern const struct instruction_desc instructions[];
 extern const size_t instructions_size;
