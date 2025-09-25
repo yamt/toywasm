@@ -214,36 +214,36 @@ jobs:
             TOYWASM_ENABLE_WASI_THREADS: OFF
             TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: OFF
             TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: OFF
-          #- name: ubuntu-22.04-armhf
-          #  os: ubuntu-22.04
-          #  compiler: clang
-          #  arch: armhf
-          #  BUILD_TYPE: Release
-          #  TOYWASM_USE_SEPARATE_EXECUTE: ON
-          #  TOYWASM_USE_TAILCALL: ON
-          #  TOYWASM_ENABLE_TRACING: OFF
-          #  TOYWASM_USE_SMALL_CELLS: ON
-          #  TOYWASM_USE_SEPARATE_LOCALS: ON
-          #  MISC_FEATURES: OFF
-          #  TOYWASM_ENABLE_WASM_THREADS: OFF
-          #  TOYWASM_ENABLE_WASI_THREADS: OFF
-          #  TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: OFF
-          #  TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: OFF
-          #- name: ubuntu-22.04-s390x
-          #  os: ubuntu-22.04
-          #  compiler: clang
-          #  arch: s390x
-          #  BUILD_TYPE: Release
-          #  TOYWASM_USE_SEPARATE_EXECUTE: ON
-          #  TOYWASM_USE_TAILCALL: ON
-          #  TOYWASM_ENABLE_TRACING: OFF
-          #  TOYWASM_USE_SMALL_CELLS: ON
-          #  TOYWASM_USE_SEPARATE_LOCALS: ON
-          #  MISC_FEATURES: OFF
-          #  TOYWASM_ENABLE_WASM_THREADS: OFF
-          #  TOYWASM_ENABLE_WASI_THREADS: OFF
-          #  TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: OFF
-          #  TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: OFF
+          - name: ubuntu-22.04-armhf
+            os: ubuntu-22.04
+            compiler: clang
+            arch: armhf
+            BUILD_TYPE: Release
+            TOYWASM_USE_SEPARATE_EXECUTE: ON
+            TOYWASM_USE_TAILCALL: ON
+            TOYWASM_ENABLE_TRACING: OFF
+            TOYWASM_USE_SMALL_CELLS: ON
+            TOYWASM_USE_SEPARATE_LOCALS: ON
+            MISC_FEATURES: OFF
+            TOYWASM_ENABLE_WASM_THREADS: OFF
+            TOYWASM_ENABLE_WASI_THREADS: OFF
+            TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: OFF
+            TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: OFF
+          - name: ubuntu-22.04-s390x
+            os: ubuntu-22.04
+            compiler: clang
+            arch: s390x
+            BUILD_TYPE: Release
+            TOYWASM_USE_SEPARATE_EXECUTE: ON
+            TOYWASM_USE_TAILCALL: ON
+            TOYWASM_ENABLE_TRACING: OFF
+            TOYWASM_USE_SMALL_CELLS: ON
+            TOYWASM_USE_SEPARATE_LOCALS: ON
+            MISC_FEATURES: OFF
+            TOYWASM_ENABLE_WASM_THREADS: OFF
+            TOYWASM_ENABLE_WASI_THREADS: OFF
+            TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: OFF
+            TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: OFF
           - name: ubuntu-22.04-riscv64
             os: ubuntu-22.04
             compiler: clang
@@ -291,37 +291,37 @@ jobs:
             TOYWASM_ENABLE_WASI_THREADS: ON
             TOYWASM_ENABLE_WASI_LITTLEFS: ON
             TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: ON
-          #- name: full-ubuntu-22.04-armhf
-          #  os: ubuntu-22.04
-          #  compiler: clang
-          #  arch: armhf
-          #  BUILD_TYPE: Release
-          #  TOYWASM_USE_SEPARATE_EXECUTE: ON
-          #  TOYWASM_USE_TAILCALL: ON
-          #  TOYWASM_ENABLE_TRACING: OFF
-          #  TOYWASM_USE_SMALL_CELLS: ON
-          #  TOYWASM_USE_SEPARATE_LOCALS: ON
-          #  MISC_FEATURES: ON
-          #  TOYWASM_ENABLE_WASM_THREADS: ON
-          #  TOYWASM_ENABLE_WASI_THREADS: ON
-          #  TOYWASM_ENABLE_WASI_LITTLEFS: ON
-          #  TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: ON
-          #- name: full-ubuntu-22.04-s390x
-          #  os: ubuntu-22.04
-          #  compiler: clang
-          #  arch: s390x
-          #  BUILD_TYPE: Release
-          #  TOYWASM_USE_SEPARATE_EXECUTE: ON
-          #  TOYWASM_USE_TAILCALL: ON
-          #  TOYWASM_ENABLE_TRACING: OFF
-          #  TOYWASM_USE_SMALL_CELLS: ON
-          #  TOYWASM_USE_SEPARATE_LOCALS: ON
-          #  MISC_FEATURES: ON
-          #  TOYWASM_ENABLE_WASM_THREADS: ON
-          #  TOYWASM_ENABLE_WASI_THREADS: ON
-          #  TOYWASM_ENABLE_WASI_LITTLEFS: ON
-          #  TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: ON
-          #  TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: ON
+          - name: full-ubuntu-22.04-armhf
+            os: ubuntu-22.04
+            compiler: clang
+            arch: armhf
+            BUILD_TYPE: Release
+            TOYWASM_USE_SEPARATE_EXECUTE: ON
+            TOYWASM_USE_TAILCALL: ON
+            TOYWASM_ENABLE_TRACING: OFF
+            TOYWASM_USE_SMALL_CELLS: ON
+            TOYWASM_USE_SEPARATE_LOCALS: ON
+            MISC_FEATURES: ON
+            TOYWASM_ENABLE_WASM_THREADS: ON
+            TOYWASM_ENABLE_WASI_THREADS: ON
+            TOYWASM_ENABLE_WASI_LITTLEFS: ON
+            TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: ON
+          - name: full-ubuntu-22.04-s390x
+            os: ubuntu-22.04
+            compiler: clang
+            arch: s390x
+            BUILD_TYPE: Release
+            TOYWASM_USE_SEPARATE_EXECUTE: ON
+            TOYWASM_USE_TAILCALL: ON
+            TOYWASM_ENABLE_TRACING: OFF
+            TOYWASM_USE_SMALL_CELLS: ON
+            TOYWASM_USE_SEPARATE_LOCALS: ON
+            MISC_FEATURES: ON
+            TOYWASM_ENABLE_WASM_THREADS: ON
+            TOYWASM_ENABLE_WASI_THREADS: ON
+            TOYWASM_ENABLE_WASI_LITTLEFS: ON
+            TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: ON
+            TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: ON
           - name: full-ubuntu-22.04-riscv64
             os: ubuntu-22.04
             compiler: clang
@@ -447,7 +447,12 @@ jobs:
 
     - name: Install QEMU
       if: matrix.arch != 'native' && matrix.arch != 'i386'
+      # install newer qemu from
+      # https://launchpad.net/%7Ecanonical-server/+archive/ubuntu/server-backports/
+      # https://github.com/yamt/toywasm/pull/53#issuecomment-1605899935
       run: |
+        sudo apt-get update && sudo apt-get install -y software-properties-common
+        sudo add-apt-repository -y ppa:canonical-server/server-backports
         sudo apt-get update && sudo apt-get install -y qemu-user-static
 
     - name: toywasm --version
@@ -690,15 +695,15 @@ jobs:
         name: ubuntu-22.04-arm64
         path: release_assets
 
-    #- uses: actions/download-artifact@v4
-    #  with:
-    #    name: ubuntu-22.04-armhf
-    #    path: release_assets
+    - uses: actions/download-artifact@v4
+      with:
+        name: ubuntu-22.04-armhf
+        path: release_assets
 
-    #- uses: actions/download-artifact@v4
-    #  with:
-    #    name: ubuntu-22.04-s390x
-    #    path: release_assets
+    - uses: actions/download-artifact@v4
+      with:
+        name: ubuntu-22.04-s390x
+        path: release_assets
 
     - uses: actions/download-artifact@v4
       with:
@@ -715,15 +720,15 @@ jobs:
         name: full-ubuntu-22.04-arm64
         path: release_assets
 
-    #- uses: actions/download-artifact@v4
-    #  with:
-    #    name: full-ubuntu-22.04-armhf
-    #    path: release_assets
+    - uses: actions/download-artifact@v4
+      with:
+        name: full-ubuntu-22.04-armhf
+        path: release_assets
 
-    #- uses: actions/download-artifact@v4
-    #  with:
-    #    name: full-ubuntu-22.04-s390x
-    #    path: release_assets
+    - uses: actions/download-artifact@v4
+      with:
+        name: full-ubuntu-22.04-s390x
+        path: release_assets
 
     - uses: actions/download-artifact@v4
       with:
