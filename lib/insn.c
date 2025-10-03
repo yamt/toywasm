@@ -967,6 +967,9 @@ const struct instruction_desc instructions[256] = {
 #endif /* defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING) */
 };
 
+#undef INSTRUCTION
+#undef INSTRUCTION_INDIRECT
+
 const size_t instructions_size = ARRAYCOUNT(instructions);
 
 #if defined(TOYWASM_USE_SEPARATE_EXECUTE) &&                                  \
@@ -995,6 +998,7 @@ instruction_name(const struct exec_instruction_desc *exec_table, uint32_t op)
 #endif /* defined(TOYWASM_USE_SEPARATE_EXECUTE) &&                            \
           defined(TOYWASM_ENABLE_TRACING_INSN) */
 
+#if 0
 int
 fetch_exec_next_insn(const uint8_t *p, struct cell *stack,
                      struct exec_context *ctx)
@@ -1031,3 +1035,43 @@ fetch_exec_next_insn(const uint8_t *p, struct cell *stack,
         return desc->process(&ctx->p, NULL, &common_ctx);
 #endif
 }
+#else
+
+#define INSTRUCTION(b, n, f, FLAGS)                                           \
+        case b:                                                               \
+                __musttail return fetch_exec_##f(p, stack, ctx);
+
+#define INSTRUCTION_INDIRECT(b, n)                                            \
+        case b:                                                               \
+                __musttail return fetch_exec_next_insn_##n(p, stack, ctx);
+
+int
+fetch_exec_next_insn(const uint8_t *p, struct cell *stack,
+                     struct exec_context *ctx)
+{
+#if !(defined(TOYWASM_USE_SEPARATE_EXECUTE) && defined(TOYWASM_USE_TAILCALL))
+        assert(ctx->p == p);
+#endif
+        assert(ctx->event == EXEC_EVENT_NONE);
+        assert(ctx->frames.lsize > 0);
+#if defined(TOYWASM_ENABLE_TRACING_INSN)
+        uint32_t pc = ptr2pc(ctx->instance->module, p);
+#endif
+        uint32_t op = *p++;
+        xlog_trace_insn("exec %06" PRIx32 ": %s (%02" PRIx32 ")", pc,
+                        instructions[op].name, op);
+        switch (op) {
+#include "insn_list_base.h"
+#if defined(TOYWASM_ENABLE_WASM_TAILCALL)
+#include "insn_list_tailcall.h"
+#endif /* defined(TOYWASM_ENABLE_WASM_TAILCALL) */
+#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
+#include "insn_list_eh.h"
+#endif /* defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING) */
+        }
+        __builtin_assume(false);
+}
+
+#undef INSTRUCTION
+#undef INSTRUCTION_INDIRECT
+#endif
