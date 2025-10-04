@@ -136,7 +136,7 @@ endif()
 endif()
 
 # random things to experiment
-#target_compile_options(toywasm-lib-core PUBLIC "SHELL:-Xclang -fmerge-functions" "SHELL:-mllvm -mergefunc-use-aliases")
+target_compile_options(toywasm-lib-core PUBLIC "SHELL:-Xclang -fmerge-functions" "SHELL:-mllvm -mergefunc-use-aliases")
 #target_compile_options(toywasm-lib-core PUBLIC "SHELL:-mllvm -enable-machine-outliner")
 #target_compile_options(toywasm-lib-core PUBLIC "SHELL:-mllvm -hot-cold-split")
 #target_compile_options(toywasm-lib-core PUBLIC "SHELL:-mllvm --enable-gvn-hoist")
