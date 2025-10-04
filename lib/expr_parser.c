@@ -22,17 +22,7 @@ void
 parse_expr(const uint8_t **pp, struct parse_expr_context *pctx)
 {
         const uint8_t *p = *pp;
-        struct context ctx;
-        memset(&ctx, 0, sizeof(ctx));
-        uint32_t op = *p++;
-        const struct instruction_desc *desc = &instructions[op];
-        if (desc->next_table != NULL) {
-                uint32_t op2 = read_leb_u32_nocheck(&p);
-                desc = &desc->next_table[op2];
-        }
-        assert(desc->process != NULL);
-        int ret = desc->process(&p, NULL, &ctx);
-        assert(ret == 0);
+        uint32_t op = read_insn(&p);
         switch (op) {
         case FRAME_OP_BLOCK:
         case FRAME_OP_LOOP:

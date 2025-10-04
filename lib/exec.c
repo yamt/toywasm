@@ -1403,8 +1403,6 @@ bool
 skip_expr(const uint8_t **pp, bool goto_else)
 {
         const uint8_t *p = *pp;
-        struct context ctx;
-        memset(&ctx, 0, sizeof(ctx));
         uint32_t block_level = 0;
         if (goto_else) {
                 assert(*p == FRAME_OP_IF);
@@ -1413,16 +1411,7 @@ skip_expr(const uint8_t **pp, bool goto_else)
                        *p == FRAME_OP_IF || *p == FRAME_OP_TRY_TABLE);
         }
         while (true) {
-                uint32_t op = *p++;
-                const struct instruction_desc *desc = &instructions[op];
-                if (desc->next_table != NULL) {
-                        uint32_t op2 = read_leb_u32_nocheck(&p);
-                        desc = &desc->next_table[op2];
-                }
-                assert(desc->process != NULL);
-                xlog_trace_insn("skipping %s", desc->name);
-                int ret = desc->process(&p, NULL, &ctx);
-                assert(ret == 0);
+                uint32_t op = read_insn(&p);
                 switch (op) {
                 case FRAME_OP_BLOCK:
                 case FRAME_OP_LOOP:
