@@ -1411,7 +1411,7 @@ skip_expr(const uint8_t **pp, bool goto_else)
                        *p == FRAME_OP_IF || *p == FRAME_OP_TRY_TABLE);
         }
         while (true) {
-                uint32_t op = read_insn(&p);
+                uint32_t op = read_insn_nocheck(&p);
                 switch (op) {
                 case FRAME_OP_BLOCK:
                 case FRAME_OP_LOOP:
