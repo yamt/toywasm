@@ -1064,7 +1064,7 @@ fetch_exec_next_insn(const uint8_t *p, struct cell *stack,
 }
 
 uint32_t
-read_insn(const uint8_t **pp)
+read_insn_nocheck(const uint8_t **pp)
 {
         const uint8_t *p = *pp;
         struct context ctx;
