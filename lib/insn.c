@@ -27,6 +27,18 @@
 #include "validation.h"
 #include "xlog.h"
 
+/*
+ * some of wasm instructions have one-byte prefix.
+ * note: the prefix is just u8, NOT leb128.
+ *
+ * prefix  our list of instructions
+ * ------- ------------------------
+ * 0xfc    insn_list_fc.h
+ * 0xfd    insn_list_simd.h
+ * 0xfe    insn_list_threads.h
+ * <none>  insn_list_noprefix.h
+ */
+
 struct exec_instruction_desc {
         /*
          * fetch_exec is called after fetching the first byte of
@@ -866,13 +878,7 @@ const static struct exec_instruction_desc
 #endif
 
 const struct exec_instruction_desc exec_instructions[] __exec_table_align = {
-#include "insn_list_base.h"
-#if defined(TOYWASM_ENABLE_WASM_TAILCALL)
-#include "insn_list_tailcall.h"
-#endif /* defined(TOYWASM_ENABLE_WASM_TAILCALL) */
-#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
-#include "insn_list_eh.h"
-#endif /* defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING) */
+#include "insn_list_noprefix.h"
 };
 
 #undef INSTRUCTION
@@ -989,13 +995,7 @@ const static struct instruction_desc instructions_fe[] = {
  * a few optimizations in the parser by allowing full uint8_t index.
  */
 static const struct instruction_desc instructions[256] = {
-#include "insn_list_base.h"
-#if defined(TOYWASM_ENABLE_WASM_TAILCALL)
-#include "insn_list_tailcall.h"
-#endif /* defined(TOYWASM_ENABLE_WASM_TAILCALL) */
-#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
-#include "insn_list_eh.h"
-#endif /* defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING) */
+#include "insn_list_noprefix.h"
 };
 
 static const size_t instructions_size = ARRAYCOUNT(instructions);
