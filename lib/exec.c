@@ -1034,43 +1034,6 @@ do_branch(struct exec_context *ctx, uint32_t labelidx, bool goto_else)
         rewind_stack(ctx, height, arity);
 }
 
-int
-fetch_exec_next_insn(const uint8_t *p, struct cell *stack,
-                     struct exec_context *ctx)
-{
-#if !(defined(TOYWASM_USE_SEPARATE_EXECUTE) && defined(TOYWASM_USE_TAILCALL))
-        assert(ctx->p == p);
-#endif
-        assert(ctx->event == EXEC_EVENT_NONE);
-        assert(ctx->frames.lsize > 0);
-#if defined(TOYWASM_ENABLE_TRACING_INSN)
-        uint32_t pc = ptr2pc(ctx->instance->module, p);
-#endif
-        uint32_t op = *p++;
-#if defined(TOYWASM_USE_SEPARATE_EXECUTE)
-        xlog_trace_insn("exec %06" PRIx32 ": %s (%02" PRIx32 ")", pc,
-                        instructions[op].name, op);
-        const struct exec_instruction_desc *desc = &exec_instructions[op];
-#if defined(TOYWASM_USE_TAILCALL)
-        __musttail
-#endif
-                return desc->fetch_exec(p, stack, ctx);
-#else
-        const struct instruction_desc *desc = &instructions[op];
-        if (__predict_false(desc->next_table != NULL)) {
-                op = read_leb_u32_nocheck(&p);
-                desc = &desc->next_table[op];
-        }
-        xlog_trace_insn("exec %06" PRIx32 ": %s", pc, desc->name);
-        assert(desc->process != NULL);
-        struct context common_ctx;
-        memset(&common_ctx, 0, sizeof(common_ctx));
-        common_ctx.exec = ctx;
-        ctx->p = p;
-        return desc->process(&ctx->p, NULL, &common_ctx);
-#endif
-}
-
 static int
 restart_insn(struct exec_context *ctx)
 {
@@ -1440,8 +1403,6 @@ bool
 skip_expr(const uint8_t **pp, bool goto_else)
 {
         const uint8_t *p = *pp;
-        struct context ctx;
-        memset(&ctx, 0, sizeof(ctx));
         uint32_t block_level = 0;
         if (goto_else) {
                 assert(*p == FRAME_OP_IF);
@@ -1450,16 +1411,7 @@ skip_expr(const uint8_t **pp, bool goto_else)
                        *p == FRAME_OP_IF || *p == FRAME_OP_TRY_TABLE);
         }
         while (true) {
-                uint32_t op = *p++;
-                const struct instruction_desc *desc = &instructions[op];
-                if (desc->next_table != NULL) {
-                        uint32_t op2 = read_leb_u32_nocheck(&p);
-                        desc = &desc->next_table[op2];
-                }
-                assert(desc->process != NULL);
-                xlog_trace_insn("skipping %s", desc->name);
-                int ret = desc->process(&p, NULL, &ctx);
-                assert(ret == 0);
+                uint32_t op = read_insn_nocheck(&p);
                 switch (op) {
                 case FRAME_OP_BLOCK:
                 case FRAME_OP_LOOP:
