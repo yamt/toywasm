@@ -54,7 +54,7 @@ jobs:
       fail-fast: false
       matrix:
         name: [noname]
-        os: [ubuntu-22.04, macos-13]
+        os: [ubuntu-22.04, macos-14]
         compiler: [clang, gcc]
         arch: [native]
         BUILD_TYPE: [Release, Debug]
@@ -70,7 +70,7 @@ jobs:
         TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: [ON, OFF]
         exclude:
           # I haven't used gcc for macos
-          - os: macos-13
+          - os: macos-14
             compiler: gcc
           # tailcall doesn't make sense w/o separate execute
           - TOYWASM_USE_SEPARATE_EXECUTE: OFF
@@ -152,8 +152,8 @@ jobs:
             TOYWASM_ENABLE_WASI_LITTLEFS: ON
             TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: ON
             TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: ON
-          - name: macos-13.0
-            os: macos-13
+          - name: macos-14.0
+            os: macos-14
             compiler: clang
             arch: native
             BUILD_TYPE: Release
@@ -167,8 +167,8 @@ jobs:
             TOYWASM_ENABLE_WASI_THREADS: OFF
             TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: OFF
             TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: OFF
-          - name: full-macos-13.0
-            os: macos-13
+          - name: full-macos-14.0
+            os: macos-14
             compiler: clang
             arch: native
             BUILD_TYPE: Release
@@ -563,7 +563,7 @@ jobs:
       fail-fast: false
       matrix:
         name: [wasm32-wasi, full-wasm32-wasi]
-        os: [ubuntu-22.04, macos-13]
+        os: [ubuntu-22.04, macos-14]
         compiler: [clang]
         include:
           - name: full-wasm32-wasi
@@ -662,12 +662,12 @@ jobs:
     steps:
     - uses: actions/download-artifact@v4
       with:
-        name: macos-13.0
+        name: macos-14.0
         path: release_assets
 
     - uses: actions/download-artifact@v4
       with:
-        name: full-macos-13.0
+        name: full-macos-14.0
         path: release_assets
 
     - uses: actions/download-artifact@v4
