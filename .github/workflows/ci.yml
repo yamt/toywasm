@@ -121,6 +121,22 @@ jobs:
             TOYWASM_ENABLE_WASI_THREADS: OFF
             TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: OFF
             TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: OFF
+          - name: noname
+            os: macos-15-intel
+            compiler: clang
+            arch: native
+            BUILD_TYPE: Release
+            TOYWASM_USE_SEPARATE_EXECUTE: ON
+            TOYWASM_USE_TAILCALL: ON
+            TOYWASM_ENABLE_TRACING: OFF
+            TOYWASM_USE_SMALL_CELLS: ON
+            TOYWASM_USE_SEPARATE_LOCALS: ON
+            MISC_FEATURES: ON
+            TOYWASM_ENABLE_WASM_THREADS: ON
+            TOYWASM_ENABLE_WASI_THREADS: ON
+            TOYWASM_ENABLE_WASI_LITTLEFS: ON
+            TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING: ON
+            TOYWASM_ENABLE_WASM_CUSTOM_PAGE_SIZES: ON
           - name: ubuntu-22.04-amd64
             os: ubuntu-22.04
             compiler: clang
