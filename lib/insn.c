@@ -28,6 +28,49 @@
 #include "xlog.h"
 
 /*
+ * some of wasm instructions have one-byte prefix.
+ * note: the prefix is just u8, NOT leb128.
+ *
+ * prefix  our list of instructions
+ * ------- ------------------------
+ * 0xfc    insn_list_fc.h
+ * 0xfd    insn_list_simd.h
+ * 0xfe    insn_list_threads.h
+ * <none>  insn_list_noprefix.h
+ */
+
+struct exec_instruction_desc {
+        /*
+         * fetch_exec is called after fetching the first byte of
+         * the instrution. '*p' points to the second byte.
+         * it fetches and decodes the rest of the instrution,
+         * and then executes it.
+         */
+        int (*fetch_exec)(const uint8_t *p, struct cell *stack,
+                          struct exec_context *ctx);
+};
+
+struct instruction_desc {
+        const char *name;
+        int (*process)(const uint8_t **pp, const uint8_t *ep,
+                       struct context *ctx);
+#if defined(TOYWASM_USE_SEPARATE_VALIDATE)
+        int (*validate)(const uint8_t *p, const uint8_t *ep,
+                        struct validation_context *vctx);
+#endif
+        const struct instruction_desc *next_table;
+        unsigned int next_table_size;
+        unsigned int flags;
+};
+
+#define INSN_FLAG_CONST 1
+#if defined(TOYWASM_ENABLE_WASM_EXTENDED_CONST)
+#define INSN_FLAG_EXTENDED_CONST INSN_FLAG_CONST
+#else
+#define INSN_FLAG_EXTENDED_CONST 0
+#endif
+
+/*
  * https://webassembly.github.io/spec/core/binary/instructions.html
  * https://webassembly.github.io/spec/core/appendix/index-instructions.html
  * https://webassembly.github.io/spec/core/appendix/algorithm.html
@@ -835,13 +878,7 @@ const static struct exec_instruction_desc
 #endif
 
 const struct exec_instruction_desc exec_instructions[] __exec_table_align = {
-#include "insn_list_base.h"
-#if defined(TOYWASM_ENABLE_WASM_TAILCALL)
-#include "insn_list_tailcall.h"
-#endif /* defined(TOYWASM_ENABLE_WASM_TAILCALL) */
-#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
-#include "insn_list_eh.h"
-#endif /* defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING) */
+#include "insn_list_noprefix.h"
 };
 
 #undef INSTRUCTION
@@ -957,17 +994,11 @@ const static struct instruction_desc instructions_fe[] = {
  * 0xff below doesn't waste much space. on the other hand, it might allow
  * a few optimizations in the parser by allowing full uint8_t index.
  */
-const struct instruction_desc instructions[256] = {
-#include "insn_list_base.h"
-#if defined(TOYWASM_ENABLE_WASM_TAILCALL)
-#include "insn_list_tailcall.h"
-#endif /* defined(TOYWASM_ENABLE_WASM_TAILCALL) */
-#if defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING)
-#include "insn_list_eh.h"
-#endif /* defined(TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING) */
+static const struct instruction_desc instructions[256] = {
+#include "insn_list_noprefix.h"
 };
 
-const size_t instructions_size = ARRAYCOUNT(instructions);
+static const size_t instructions_size = ARRAYCOUNT(instructions);
 
 #if defined(TOYWASM_USE_SEPARATE_EXECUTE) &&                                  \
         defined(TOYWASM_ENABLE_TRACING_INSN)
@@ -994,3 +1025,180 @@ instruction_name(const struct exec_instruction_desc *exec_table, uint32_t op)
 }
 #endif /* defined(TOYWASM_USE_SEPARATE_EXECUTE) &&                            \
           defined(TOYWASM_ENABLE_TRACING_INSN) */
+
+int
+fetch_exec_next_insn(const uint8_t *p, struct cell *stack,
+                     struct exec_context *ctx)
+{
+#if !(defined(TOYWASM_USE_SEPARATE_EXECUTE) && defined(TOYWASM_USE_TAILCALL))
+        assert(ctx->p == p);
+#endif
+        assert(ctx->event == EXEC_EVENT_NONE);
+        assert(ctx->frames.lsize > 0);
+#if defined(TOYWASM_ENABLE_TRACING_INSN)
+        uint32_t pc = ptr2pc(ctx->instance->module, p);
+#endif
+        uint32_t op = *p++;
+#if defined(TOYWASM_USE_SEPARATE_EXECUTE)
+        xlog_trace_insn("exec %06" PRIx32 ": %s (%02" PRIx32 ")", pc,
+                        instructions[op].name, op);
+        const struct exec_instruction_desc *desc = &exec_instructions[op];
+#if defined(TOYWASM_USE_TAILCALL)
+        __musttail
+#endif
+                return desc->fetch_exec(p, stack, ctx);
+#else
+        const struct instruction_desc *desc = &instructions[op];
+        if (__predict_false(desc->next_table != NULL)) {
+                op = read_leb_u32_nocheck(&p);
+                desc = &desc->next_table[op];
+        }
+        xlog_trace_insn("exec %06" PRIx32 ": %s", pc, desc->name);
+        assert(desc->process != NULL);
+        struct context common_ctx;
+        memset(&common_ctx, 0, sizeof(common_ctx));
+        common_ctx.exec = ctx;
+        ctx->p = p;
+        return desc->process(&ctx->p, NULL, &common_ctx);
+#endif
+}
+
+uint32_t
+read_insn_nocheck(const uint8_t **pp)
+{
+        const uint8_t *p = *pp;
+        struct context ctx;
+        memset(&ctx, 0, sizeof(ctx));
+
+        uint32_t op = *p++;
+        const struct instruction_desc *desc = &instructions[op];
+        if (desc->next_table != NULL) {
+                uint32_t op2 = read_leb_u32_nocheck(&p);
+                desc = &desc->next_table[op2];
+        }
+        assert(desc->process != NULL);
+        int ret = desc->process(&p, NULL, &ctx);
+        assert(ret == 0);
+        *pp = p;
+        return op;
+}
+
+static int
+read_insn_and_get_desc(const uint8_t **pp, const uint8_t *ep,
+                       const struct instruction_desc **descp,
+                       struct validation_context *vctx)
+{
+        const struct instruction_desc *table = instructions;
+        size_t table_size = instructions_size;
+        const char *group = "base";
+        int ret;
+        uint8_t inst8;
+        uint32_t inst;
+
+#if defined(TOYWASM_ENABLE_TRACING_INSN)
+        uint32_t pc = ptr2pc(vctx->module, *pp);
+#endif
+        ret = read_u8(pp, ep, &inst8);
+        if (ret != 0) {
+                goto fail;
+        }
+        inst = inst8;
+        while (true) {
+                const struct instruction_desc *desc;
+                if (inst >= table_size) {
+                        goto invalid_inst;
+                }
+                desc = &table[inst];
+                if (desc->next_table != NULL) {
+                        table = desc->next_table;
+                        table_size = desc->next_table_size;
+                        group = desc->name;
+                        /*
+                         * Note: wasm "sub" opcodes are LEB128.
+                         * cf. https://github.com/WebAssembly/spec/issues/1228
+                         */
+                        ret = read_leb_u32(pp, ep, &inst);
+                        if (ret != 0) {
+                                goto fail;
+                        }
+                        continue;
+                }
+                if (desc->name == NULL) {
+invalid_inst:
+                        ret = validation_failure(
+                                vctx,
+                                "unimplemented instruction %02" PRIx32
+                                " in group '%s'",
+                                inst, group);
+                        goto fail;
+                }
+                *descp = desc;
+                xlog_trace_insn("inst %06" PRIx32 " %s", pc, desc->name);
+                break;
+        }
+        ret = 0;
+fail:
+        return ret;
+}
+
+static int
+check_const_instruction(const struct instruction_desc *desc,
+                        struct validation_context *vctx)
+{
+        if (vctx->const_expr && (desc->flags & INSN_FLAG_CONST) == 0) {
+                return validation_failure(vctx,
+                                          "instruction \"%s\" not "
+                                          "allowed in a const expr",
+                                          desc->name);
+        }
+        return 0;
+}
+
+#if defined(TOYWASM_USE_SEPARATE_VALIDATE)
+int
+fetch_validate_next_insn(const uint8_t *p, const uint8_t *ep,
+                         struct validation_context *vctx)
+{
+        xassert(ep != NULL);
+        const struct instruction_desc *desc;
+        int ret;
+
+        ret = read_insn_and_get_desc(&p, ep, &desc, vctx);
+        if (ret != 0) {
+                goto fail;
+        }
+        ret = check_const_instruction(desc, vctx);
+        if (ret != 0) {
+                goto fail;
+        }
+#if defined(TOYWASM_USE_TAILCALL)
+        __musttail
+#endif
+                return desc->validate(p, ep, vctx);
+fail:
+        return ret;
+}
+#else
+int
+fetch_process_next_insn(const uint8_t **pp, const uint8_t *ep,
+                        struct context *ctx)
+{
+        xassert(ep != NULL);
+        struct validation_context *vctx = ctx->validation;
+
+        const struct instruction_desc *desc;
+        int ret;
+
+        ret = read_insn_and_get_desc(pp, ep, &desc, vctx);
+        if (ret != 0) {
+                goto fail;
+        }
+        ret = check_const_instruction(desc, vctx);
+        if (ret != 0) {
+                goto fail;
+        }
+        return desc->process(pp, ep, ctx);
+fail:
+        return ret;
+}
+#endif /* defined(TOYWASM_USE_SEPARATE_VALIDATE) */

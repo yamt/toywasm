@@ -67,5 +67,7 @@ const uint8_t *pc2ptr(const struct module *m, uint32_t pc) __purefunc;
 int resulttype_alloc(struct mem_context *mctx, uint32_t ntypes,
                      const enum valtype *types, struct resulttype **resultp);
 void resulttype_free(struct mem_context *mctx, struct resulttype *p);
+int fetch_process_next_insn(const uint8_t **pp, const uint8_t *ep,
+                            struct context *ctx);
 
 __END_EXTERN_C
