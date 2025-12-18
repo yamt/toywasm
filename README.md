@@ -26,13 +26,13 @@ A WebAssembly interpreter written in C.
 |Feature                 | cmake config                           | Notes    |
 | ---------------------- | -------------------------------------- | -------- |
 |[WebAssembly]           |                                        |`2.0 (Draft 2022-06-27)`|
-|`mutable-global`        |                                        |Always enabled|
-|`nontrapping-float-to-int-conversions` |                         |Always enabled|
-|`sign-extension-ops`    |                                        |Always enabled|
-|`multi-value`           |                                        |Always enabled|
-|`reference-types`       |                                        |Always enabled|
-|`bulk-memory-operations`|                                        |Always enabled|
-|`simd`                  |`TOYWASM_ENABLE_WASM_SIMD`              |          |
+|[mutable-global]        |                                        |Always enabled|
+|[nontrapping-float-to-int-conversions]|                         |Always enabled|
+|[sign-extension-ops]    |                                        |Always enabled|
+|[multi-value]           |                                        |Always enabled|
+|[reference-types]       |                                        |Always enabled|
+|[bulk-memory-operations]|                                        |Always enabled|
+|[simd]                  |`TOYWASM_ENABLE_WASM_SIMD`              |          |
 |[extended-const]        |`TOYWASM_ENABLE_WASM_EXTENDED_CONST`    |          |
 |[exception-handling]    |`TOYWASM_ENABLE_WASM_EXCEPTION_HANDLING`|See [the top comment in insn_impl_eh.h]|
 |[multi-memory]          |`TOYWASM_ENABLE_WASM_MULTI_MEMORY`      |          |
@@ -45,6 +45,13 @@ A WebAssembly interpreter written in C.
 |[littlefs for WASI]     |`TOYWASM_ENABLE_WASI_LITTLEFS`          |          |
 
 [WebAssembly]: https://github.com/WebAssembly/spec
+[mutable-global]: https://github.com/WebAssembly/mutable-global
+[nontrapping-float-to-int-conversions]: https://github.com/WebAssembly/nontrapping-float-to-int-conversions
+[sign-extension-ops]: https://github.com/WebAssembly/sign-extension-ops
+[multi-value]: https://github.com/WebAssembly/multi-value
+[reference-types]: https://github.com/WebAssembly/reference-types
+[bulk-memory-operations]: https://github.com/WebAssembly/bulk-memory-operations
+[simd]: https://github.com/WebAssembly/simd
 [extended-const]: https://github.com/WebAssembly/extended-const
 [exception-handling]: https://github.com/WebAssembly/exception-handling
 [multi-memory]: https://github.com/WebAssembly/multi-memory
