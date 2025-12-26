@@ -53,4 +53,5 @@ install(TARGETS toywasm-lib-wasi
         EXPORT toywasm-lib-wasi-config
         PUBLIC_HEADER DESTINATION include/toywasm)
 install(EXPORT toywasm-lib-wasi-config
+        NAMESPACE toywasm::
         DESTINATION lib/cmake/toywasm-lib-wasi)
