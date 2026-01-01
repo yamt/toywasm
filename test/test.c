@@ -7,6 +7,15 @@
 
 #include <cmocka.h>
 
+/*
+ * note: we can't use cmocka_version.h for our purpose because
+ * cmoca_version.h and assert_uint_in_range were introduced
+ * together by cmocka-2.0.0.
+ */
+#if !defined(assert_uint_in_range)
+#define assert_uint_in_range(a, b, c) assert_in_range(a, b, c)
+#endif
+
 #include "endian.h"
 #include "idalloc.h"
 #include "leb128.h"
