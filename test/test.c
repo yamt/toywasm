@@ -475,15 +475,15 @@ test_idalloc(void **state)
         /* allocate all slots */
         ret = idalloc_alloc(&a, &id, mctx);
         assert_int_equal(ret, 0);
-        assert_in_range(id, 1, 3);
+        assert_uint_in_range(id, 1, 3);
         bm |= 1 << id;
         ret = idalloc_alloc(&a, &id, mctx);
         assert_int_equal(ret, 0);
-        assert_in_range(id, 1, 3);
+        assert_uint_in_range(id, 1, 3);
         bm |= 1 << id;
         ret = idalloc_alloc(&a, &id, mctx);
         assert_int_equal(ret, 0);
-        assert_in_range(id, 1, 3);
+        assert_uint_in_range(id, 1, 3);
         bm |= 1 << id;
         assert_int_equal(bm, 14);
 
