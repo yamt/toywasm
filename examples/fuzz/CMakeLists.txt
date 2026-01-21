@@ -24,6 +24,6 @@ set(app_sources
 
 add_executable(fuzz-instantiate ${app_sources})
 target_link_libraries(fuzz-instantiate
-	toywasm-lib-core
-	$<$<BOOL:${FUZZ_WASI}>:toywasm-lib-wasi>
+	toywasm::toywasm-lib-core
+	$<$<BOOL:${FUZZ_WASI}>:toywasm::toywasm-lib-wasi>
 	m)
