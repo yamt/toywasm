@@ -989,6 +989,7 @@ const static struct instruction_desc instructions_fe[] = {
 };
 #endif
 
+#if !defined(TOYWASM_PROCESS_INSN_WITH_SWITCH)
 /*
  * Note: as 0xfc is occupied unconditionally anyway, allocating up to
  * 0xff below doesn't waste much space. on the other hand, it might allow
@@ -999,6 +1000,10 @@ static const struct instruction_desc instructions[256] = {
 };
 
 static const size_t instructions_size = ARRAYCOUNT(instructions);
+#endif
+
+#undef INSTRUCTION
+#undef INSTRUCTION_INDIRECT
 
 #if defined(TOYWASM_USE_SEPARATE_EXECUTE) &&                                  \
         defined(TOYWASM_ENABLE_TRACING_INSN)
@@ -1066,6 +1071,12 @@ fetch_exec_next_insn(const uint8_t *p, struct cell *stack,
 uint32_t
 read_insn_nocheck(const uint8_t **pp)
 {
+#if defined(TOYWASM_PROCESS_INSN_WITH_SWITCH)
+        /* notyet */
+        assert(false);
+        __builtin_trap();
+        return 0;
+#else
         const uint8_t *p = *pp;
         struct context ctx;
         memset(&ctx, 0, sizeof(ctx));
@@ -1081,8 +1092,10 @@ read_insn_nocheck(const uint8_t **pp)
         assert(ret == 0);
         *pp = p;
         return op;
+#endif
 }
 
+#if !defined(TOYWASM_PROCESS_INSN_WITH_SWITCH)
 static int
 read_insn_and_get_desc(const uint8_t **pp, const uint8_t *ep,
                        const struct instruction_desc **descp,
@@ -1140,6 +1153,7 @@ invalid_inst:
 fail:
         return ret;
 }
+#endif
 
 static int
 check_const_instruction(const struct instruction_desc *desc,
@@ -1179,10 +1193,81 @@ fail:
         return ret;
 }
 #else
+
+#if defined(TOYWASM_PROCESS_INSN_WITH_SWITCH)
+static int
+fetch_process_multibyte(const uint8_t **pp, const uint8_t *ep,
+                        struct context *ctx,
+                        const struct instruction_desc *table,
+                        const char *group)
+{
+        struct validation_context *vctx = ctx->validation;
+        uint32_t inst;
+        int ret;
+
+        ret = read_leb_u32(pp, ep, &inst);
+        if (ret != 0) {
+                goto fail;
+        }
+        const struct instruction_desc *desc = &table[inst];
+        if (desc->name == NULL) {
+                ret = validation_failure(vctx,
+                                         "unimplemented instruction %02" PRIx32
+                                         " in group '%s'",
+                                         inst, group);
+                goto fail;
+        }
+        ret = check_const_instruction(desc, vctx);
+        if (ret != 0) {
+                goto fail;
+        }
+        ret = desc->process(pp, ep, ctx);
+fail:
+        return ret;
+}
+
+static int
+fetch_process_next_insn_fc(const uint8_t **pp, const uint8_t *ep,
+                           struct context *ctx)
+{
+        return fetch_process_multibyte(pp, ep, ctx, instructions_fc, "fc");
+}
+#if defined(TOYWASM_ENABLE_WASM_SIMD)
+static int
+fetch_process_next_insn_fd(const uint8_t **pp, const uint8_t *ep,
+                           struct context *ctx)
+{
+        return fetch_process_multibyte(pp, ep, ctx, instructions_fd, "fd");
+}
+#endif
+#if defined(TOYWASM_ENABLE_WASM_THREADS)
+static int
+fetch_process_next_insn_fe(const uint8_t **pp, const uint8_t *ep,
+                           struct context *ctx)
+{
+        return fetch_process_multibyte(pp, ep, ctx, instructions_fe, "fe");
+}
+#endif
+
+#define INSTRUCTION(opcode, opname, opfunc, opflags)                          \
+        case opcode:                                                          \
+                if ((opflags & INSN_FLAG_CONST) == 0 && vctx->const_expr) {   \
+                        failed_opname = opname;                               \
+                        goto const_check_fail;                                \
+                }                                                             \
+                return process_##opfunc(pp, ep, ctx);
+
+#define INSTRUCTION_INDIRECT(opcode, groupname)                               \
+        case opcode:                                                          \
+                return fetch_process_next_insn_##groupname(pp, ep, ctx);
+
+#endif /* defined(TOYWASM_PROCESS_INSN_WITH_SWITCH) */
+
 int
 fetch_process_next_insn(const uint8_t **pp, const uint8_t *ep,
                         struct context *ctx)
 {
+#if !defined(TOYWASM_PROCESS_INSN_WITH_SWITCH)
         xassert(ep != NULL);
         struct validation_context *vctx = ctx->validation;
 
@@ -1200,5 +1285,34 @@ fetch_process_next_insn(const uint8_t **pp, const uint8_t *ep,
         return desc->process(pp, ep, ctx);
 fail:
         return ret;
+#else
+        xassert(ep != NULL);
+        struct validation_context *vctx = ctx->validation;
+        const char *failed_opname;
+        uint8_t inst8;
+        int ret;
+
+        ret = read_u8(pp, ep, &inst8);
+        if (ret != 0) {
+                goto fail;
+        }
+        switch (inst8) {
+#include "insn_list_noprefix.h"
+        default:
+                break;
+        }
+        ret = validation_failure(
+                vctx, "unimplemented instruction %02" PRIx32 " in group '%s'",
+                inst8, "base");
+        goto fail;
+const_check_fail:
+        ret = validation_failure(vctx,
+                                 "instruction \"%s\" not "
+                                 "allowed in a const expr",
+                                 failed_opname);
+        goto fail;
+fail:
+        return ret;
+#endif
 }
 #endif /* defined(TOYWASM_USE_SEPARATE_VALIDATE) */
