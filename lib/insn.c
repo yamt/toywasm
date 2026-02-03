@@ -1000,7 +1000,7 @@ static const struct instruction_desc instructions[256] = {
 };
 
 static const size_t instructions_size = ARRAYCOUNT(instructions);
-#endif
+#endif /* !defined(TOYWASM_PROCESS_INSN_WITH_SWITCH) */
 
 #undef INSTRUCTION
 #undef INSTRUCTION_INDIRECT
