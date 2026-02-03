@@ -1052,7 +1052,7 @@ fetch_exec_next_insn(const uint8_t *p, struct cell *stack,
         __musttail
 #endif
                 return desc->fetch_exec(p, stack, ctx);
-#else
+#else /* defined(TOYWASM_USE_SEPARATE_EXECUTE) */
         const struct instruction_desc *desc = &instructions[op];
         if (__predict_false(desc->next_table != NULL)) {
                 op = read_leb_u32_nocheck(&p);
@@ -1065,7 +1065,7 @@ fetch_exec_next_insn(const uint8_t *p, struct cell *stack,
         common_ctx.exec = ctx;
         ctx->p = p;
         return desc->process(&ctx->p, NULL, &common_ctx);
-#endif
+#endif /* defined(TOYWASM_USE_SEPARATE_EXECUTE) */
 }
 
 uint32_t
