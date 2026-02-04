@@ -1226,20 +1226,27 @@ fail:
         return ret;
 }
 
-#define DEFINE_FETCH_PROCESS_NEXT_INSN_GROUP(grp)                             \
-        static int fetch_process_next_insn_##grp(                             \
-                const uint8_t **pp, const uint8_t *ep, struct context *ctx)   \
-        {                                                                     \
-                return fetch_process_multibyte(pp, ep, ctx,                   \
-                                               instructions_##grp, #grp);     \
-        }
-
-DEFINE_FETCH_PROCESS_NEXT_INSN_GROUP(fc)
+static int
+fetch_process_next_insn_fc(const uint8_t **pp, const uint8_t *ep,
+                           struct context *ctx)
+{
+        return fetch_process_multibyte(pp, ep, ctx, instructions_fc, "fc");
+}
 #if defined(TOYWASM_ENABLE_WASM_SIMD)
-DEFINE_FETCH_PROCESS_NEXT_INSN_GROUP(fd)
+static int
+fetch_process_next_insn_fd(const uint8_t **pp, const uint8_t *ep,
+                           struct context *ctx)
+{
+        return fetch_process_multibyte(pp, ep, ctx, instructions_fd, "fd");
+}
 #endif
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
-DEFINE_FETCH_PROCESS_NEXT_INSN_GROUP(fe)
+static int
+fetch_process_next_insn_fe(const uint8_t **pp, const uint8_t *ep,
+                           struct context *ctx)
+{
+        return fetch_process_multibyte(pp, ep, ctx, instructions_fe, "fe");
+}
 #endif
 
 #define INSTRUCTION(opcode, opname, opfunc, opflags)                          \
