@@ -973,6 +973,7 @@ fetch_exec_next_insn_fe(const uint8_t *p, struct cell *stack,
                 .next_table_size = ARRAYCOUNT(instructions_##n),              \
         },
 
+#if !defined(TOYWASM_PROCESS_INSN_WITH_SWITCH)
 const static struct instruction_desc instructions_fc[] = {
 #include "insn_list_fc.h"
 };
@@ -989,7 +990,6 @@ const static struct instruction_desc instructions_fe[] = {
 };
 #endif
 
-#if !defined(TOYWASM_PROCESS_INSN_WITH_SWITCH)
 /*
  * Note: as 0xfc is occupied unconditionally anyway, allocating up to
  * 0xff below doesn't waste much space. on the other hand, it might allow
@@ -1155,6 +1155,7 @@ fail:
 }
 #endif
 
+#if !defined(TOYWASM_PROCESS_INSN_WITH_SWITCH)
 static int
 check_const_instruction(const struct instruction_desc *desc,
                         struct validation_context *vctx)
@@ -1167,6 +1168,7 @@ check_const_instruction(const struct instruction_desc *desc,
         }
         return 0;
 }
+#endif
 
 #if defined(TOYWASM_USE_SEPARATE_VALIDATE)
 int
@@ -1195,59 +1197,6 @@ fail:
 #else
 
 #if defined(TOYWASM_PROCESS_INSN_WITH_SWITCH)
-static int
-fetch_process_multibyte(const uint8_t **pp, const uint8_t *ep,
-                        struct context *ctx,
-                        const struct instruction_desc *table,
-                        const char *group)
-{
-        struct validation_context *vctx = ctx->validation;
-        uint32_t inst;
-        int ret;
-
-        ret = read_leb_u32(pp, ep, &inst);
-        if (ret != 0) {
-                goto fail;
-        }
-        const struct instruction_desc *desc = &table[inst];
-        if (desc->name == NULL) {
-                ret = validation_failure(vctx,
-                                         "unimplemented instruction %02" PRIx32
-                                         " in group '%s'",
-                                         inst, group);
-                goto fail;
-        }
-        ret = check_const_instruction(desc, vctx);
-        if (ret != 0) {
-                goto fail;
-        }
-        ret = desc->process(pp, ep, ctx);
-fail:
-        return ret;
-}
-
-static int
-fetch_process_next_insn_fc(const uint8_t **pp, const uint8_t *ep,
-                           struct context *ctx)
-{
-        return fetch_process_multibyte(pp, ep, ctx, instructions_fc, "fc");
-}
-#if defined(TOYWASM_ENABLE_WASM_SIMD)
-static int
-fetch_process_next_insn_fd(const uint8_t **pp, const uint8_t *ep,
-                           struct context *ctx)
-{
-        return fetch_process_multibyte(pp, ep, ctx, instructions_fd, "fd");
-}
-#endif
-#if defined(TOYWASM_ENABLE_WASM_THREADS)
-static int
-fetch_process_next_insn_fe(const uint8_t **pp, const uint8_t *ep,
-                           struct context *ctx)
-{
-        return fetch_process_multibyte(pp, ep, ctx, instructions_fe, "fe");
-}
-#endif
 
 #define INSTRUCTION(opcode, opname, opfunc, opflags)                          \
         case opcode:                                                          \
@@ -1260,6 +1209,56 @@ fetch_process_next_insn_fe(const uint8_t **pp, const uint8_t *ep,
 #define INSTRUCTION_INDIRECT(opcode, groupname)                               \
         case opcode:                                                          \
                 return fetch_process_next_insn_##groupname(pp, ep, ctx);
+
+#define FETCH_PROCESS_MULTIBYTE_PROLOGUE(GRP)                                 \
+        static int fetch_process_next_insn_##GRP(                             \
+                const uint8_t **pp, const uint8_t *ep, struct context *ctx)   \
+        {                                                                     \
+                xassert(ep != NULL);                                          \
+                struct validation_context *vctx = ctx->validation;            \
+                const char *failed_opname;                                    \
+                uint32_t inst;                                                \
+                int ret;                                                      \
+                                                                              \
+                ret = read_leb_u32(pp, ep, &inst);                            \
+                if (ret != 0) {                                               \
+                        goto fail;                                            \
+                }                                                             \
+                switch (inst) {
+
+#define FETCH_PROCESS_MULTIBYTE_EPILOGUE(GRP)                                 \
+        default:                                                              \
+                break;                                                        \
+                }                                                             \
+                ret = validation_failure(                                     \
+                        vctx,                                                 \
+                        "unimplemented instruction %02" PRIx32                \
+                        " in group '%s'",                                     \
+                        inst, #GRP);                                          \
+                goto fail;                                                    \
+const_check_fail:                                                             \
+                ret = validation_failure(vctx,                                \
+                                         "instruction \"%s\" not "            \
+                                         "allowed in a const expr",           \
+                                         failed_opname);                      \
+                goto fail;                                                    \
+fail:                                                                         \
+                return ret;                                                   \
+                }
+
+FETCH_PROCESS_MULTIBYTE_PROLOGUE(fc)
+#include "insn_list_fc.h"
+FETCH_PROCESS_MULTIBYTE_EPILOGUE(fc)
+#if defined(TOYWASM_ENABLE_WASM_SIMD)
+FETCH_PROCESS_MULTIBYTE_PROLOGUE(fd)
+#include "insn_list_simd.h"
+FETCH_PROCESS_MULTIBYTE_EPILOGUE(fd)
+#endif
+#if defined(TOYWASM_ENABLE_WASM_THREADS)
+FETCH_PROCESS_MULTIBYTE_PROLOGUE(fe)
+#include "insn_list_threads.h"
+FETCH_PROCESS_MULTIBYTE_EPILOGUE(fe)
+#endif
 
 #endif /* defined(TOYWASM_PROCESS_INSN_WITH_SWITCH) */
 
