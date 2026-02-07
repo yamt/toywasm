@@ -832,7 +832,8 @@ typedef int (*exec_func_t)(const uint8_t *, struct cell *,
 
 #if defined(TOYWASM_ENABLE_TRACING_INSN)
 static const char *
-instruction_name(const struct exec_instruction_desc *exec_table, uint32_t op);
+exec_instruction_name(const struct exec_instruction_desc *exec_table,
+                      uint32_t op);
 #endif /* defined(TOYWASM_ENABLE_TRACING_INSN) */
 
 static int fetch_exec_next_insn_fc(const uint8_t *p, struct cell *stack,
@@ -899,7 +900,7 @@ fetch_multibyte_opcode(const uint8_t **pp, struct exec_context *ctx,
         uint32_t op = read_leb_u32_nocheck(pp);
         const struct exec_instruction_desc *desc = &table[op];
         xlog_trace_insn("exec %06" PRIx32 ": %s (2nd byte %02" PRIx32 ")", pc,
-                        instruction_name(table, op), op);
+                        exec_instruction_name(table, op), op);
         return desc->fetch_exec;
 }
 
@@ -1007,26 +1008,85 @@ static const size_t instructions_size = ARRAYCOUNT(instructions);
 
 #if defined(TOYWASM_USE_SEPARATE_EXECUTE) &&                                  \
         defined(TOYWASM_ENABLE_TRACING_INSN)
+
+#define INSTRUCTION(CODE, NAME, FUNC, FLAGS)                                  \
+        case CODE:                                                            \
+                return NAME;
+
+#define INSTRUCTION_INDIRECT(CODE, NAME)
+
 static const char *
-instruction_name(const struct exec_instruction_desc *exec_table, uint32_t op)
+instruction_name(uint8_t group, uint32_t op)
 {
-        const struct instruction_desc *table;
+        switch (group) {
+        case 0:
+                switch (op) {
+#include "insn_list_noprefix.h"
+                default:
+                        xassert(false);
+                }
+                break;
+        case 0xfc:
+                switch (op) {
+#include "insn_list_fc.h"
+                default:
+                        xassert(false);
+                }
+                break;
+#if defined(TOYWASM_ENABLE_WASM_SIMD)
+        case 0xfd:
+                switch (op) {
+#include "insn_list_simd.h"
+                default:
+                        xassert(false);
+                }
+                break;
+#endif
+#if defined(TOYWASM_ENABLE_WASM_THREADS)
+        case 0xfe:
+                switch (op) {
+#include "insn_list_threads.h"
+                default:
+                        xassert(false);
+                }
+                break;
+#endif
+        }
+        xassert(false);
+}
+
+#undef INSTRUCTION
+#undef INSTRUCTION_INDIRECT
+
+static uint8_t
+exec_instruction_table_to_group(const struct exec_instruction_desc *exec_table)
+{
+        uint8_t group;
         if (exec_table == exec_instructions) {
-                table = instructions;
+                group = 0;
         } else if (exec_table == exec_instructions_fc) {
-                table = instructions_fc;
+                group = 0xfc;
 #if defined(TOYWASM_ENABLE_WASM_SIMD)
         } else if (exec_table == exec_instructions_fd) {
-                table = instructions_fd;
+                group = 0xfd;
 #endif /* defined(TOYWASM_ENABLE_WASM_SIMD) */
 #if defined(TOYWASM_ENABLE_WASM_THREADS)
         } else if (exec_table == exec_instructions_fe) {
-                table = instructions_fe;
+                group = 0xfe;
 #endif /* defined(TOYWASM_ENABLE_WASM_THREADS) */
         } else {
-                return "unknown";
+                assert(false);
+                group = 0xff;
         }
-        return table[op].name;
+        return group;
+}
+
+static const char *
+exec_instruction_name(const struct exec_instruction_desc *exec_table,
+                      uint32_t op)
+{
+        return instruction_name(exec_instruction_table_to_group(exec_table),
+                                op);
 }
 #endif /* defined(TOYWASM_USE_SEPARATE_EXECUTE) &&                            \
           defined(TOYWASM_ENABLE_TRACING_INSN) */
@@ -1046,7 +1106,7 @@ fetch_exec_next_insn(const uint8_t *p, struct cell *stack,
         uint32_t op = *p++;
 #if defined(TOYWASM_USE_SEPARATE_EXECUTE)
         xlog_trace_insn("exec %06" PRIx32 ": %s (%02" PRIx32 ")", pc,
-                        instructions[op].name, op);
+                        instruction_name(0, op), op);
         const struct exec_instruction_desc *desc = &exec_instructions[op];
 #if defined(TOYWASM_USE_TAILCALL)
         __musttail
