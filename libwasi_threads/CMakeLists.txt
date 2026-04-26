@@ -30,4 +30,5 @@ install(TARGETS toywasm-lib-wasi-threads
         EXPORT toywasm-lib-wasi-threads-config
         PUBLIC_HEADER DESTINATION include/toywasm)
 install(EXPORT toywasm-lib-wasi-threads-config
+        NAMESPACE toywasm::
         DESTINATION lib/cmake/toywasm-lib-wasi-threads)
