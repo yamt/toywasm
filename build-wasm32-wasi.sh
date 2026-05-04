@@ -11,7 +11,10 @@ set -e
 MAJOR=${WASI_SDK_MAJOR:-33}
 MINOR=${WASI_SDK_MINOR:-0}
 WASI_SDK_DIR=${WASI_SDK_DIR:-$(pwd)/.wasi-sdk-${MAJOR}.${MINOR}}
-CMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE:-${WASI_SDK_DIR}/share/cmake/wasi-sdk.cmake}
+CMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE:-${WASI_SDK_DIR}/share/cmake/wasi-sdk-p1.cmake}
+if [ ! -e ${WASI_SDK_DIR}/share/cmake/wasi-sdk-p1.cmake ]; then
+    CMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE:-${WASI_SDK_DIR}/share/cmake/wasi-sdk.cmake}
+fi
 DIST_DIR=.dist
 
 BUILD_DIR=${BUILD_DIR:-build.wasm}
