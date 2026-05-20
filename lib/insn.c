@@ -1134,7 +1134,9 @@ read_insn_nocheck(const uint8_t **pp)
 #if defined(TOYWASM_PROCESS_INSN_WITH_SWITCH)
         /* notyet */
         assert(false);
+#if __has_builtin(__builtin_trap)
         __builtin_trap();
+#endif
         return 0;
 #else
         const uint8_t *p = *pp;
