@@ -1128,35 +1128,6 @@ fetch_exec_next_insn(const uint8_t *p, struct cell *stack,
 #endif /* defined(TOYWASM_USE_SEPARATE_EXECUTE) */
 }
 
-uint32_t
-read_insn_nocheck(const uint8_t **pp)
-{
-#if defined(TOYWASM_PROCESS_INSN_WITH_SWITCH)
-        /* notyet */
-        assert(false);
-#if __has_builtin(__builtin_trap)
-        __builtin_trap();
-#endif
-        return 0;
-#else
-        const uint8_t *p = *pp;
-        struct context ctx;
-        memset(&ctx, 0, sizeof(ctx));
-
-        uint32_t op = *p++;
-        const struct instruction_desc *desc = &instructions[op];
-        if (desc->next_table != NULL) {
-                uint32_t op2 = read_leb_u32_nocheck(&p);
-                desc = &desc->next_table[op2];
-        }
-        assert(desc->process != NULL);
-        int ret = desc->process(&p, NULL, &ctx);
-        assert(ret == 0);
-        *pp = p;
-        return op;
-#endif
-}
-
 #if !defined(TOYWASM_PROCESS_INSN_WITH_SWITCH)
 static int
 read_insn_and_get_desc(const uint8_t **pp, const uint8_t *ep,
@@ -1230,7 +1201,7 @@ check_const_instruction(const struct instruction_desc *desc,
         }
         return 0;
 }
-#endif
+#endif /* !defined(TOYWASM_PROCESS_INSN_WITH_SWITCH) */
 
 #if defined(TOYWASM_USE_SEPARATE_VALIDATE)
 int
@@ -1256,7 +1227,7 @@ fetch_validate_next_insn(const uint8_t *p, const uint8_t *ep,
 fail:
         return ret;
 }
-#else
+#else /* defined(TOYWASM_USE_SEPARATE_VALIDATE) */
 
 #if defined(TOYWASM_PROCESS_INSN_WITH_SWITCH)
 
@@ -1346,7 +1317,7 @@ fetch_process_next_insn(const uint8_t **pp, const uint8_t *ep,
         return desc->process(pp, ep, ctx);
 fail:
         return ret;
-#else
+#else /* !defined(TOYWASM_PROCESS_INSN_WITH_SWITCH) */
         xassert(ep != NULL);
         struct validation_context *vctx = ctx->validation;
         const char *failed_opname;
@@ -1374,6 +1345,84 @@ const_check_fail:
         goto fail;
 fail:
         return ret;
+#endif /* !defined(TOYWASM_PROCESS_INSN_WITH_SWITCH) */
+}
+#undef INSTRUCTION
+#undef INSTRUCTION_INDIRECT
+#endif /* defined(TOYWASM_USE_SEPARATE_VALIDATE) */
+
+#if defined(TOYWASM_PROCESS_INSN_WITH_SWITCH)
+
+static struct context skip_ctx;
+
+#define INSTRUCTION(opcode, opname, opfunc, opflags)                          \
+        case opcode:                                                          \
+                process_##opfunc(pp, NULL, &skip_ctx);                        \
+                break;
+
+#define INSTRUCTION_INDIRECT(opcode, groupname)                               \
+        case opcode:                                                          \
+                skip_next_insn_##groupname(pp);                               \
+                break;
+
+#define SKIP_MULTIBYTE_PROLOGUE(GRP)                                          \
+        static void skip_next_insn_##GRP(const uint8_t **pp)                  \
+        {                                                                     \
+                uint32_t inst = read_leb_u32_nocheck(pp);                     \
+                switch (inst) {
+
+#define SKIP_MULTIBYTE_EPILOGUE(GRP)                                          \
+        default:                                                              \
+                break;                                                        \
+                }                                                             \
+                }
+
+SKIP_MULTIBYTE_PROLOGUE(fc)
+#include "insn_list_fc.h"
+SKIP_MULTIBYTE_EPILOGUE(fc)
+#if defined(TOYWASM_ENABLE_WASM_SIMD)
+SKIP_MULTIBYTE_PROLOGUE(fd)
+#include "insn_list_simd.h"
+SKIP_MULTIBYTE_EPILOGUE(fd)
+#endif
+#if defined(TOYWASM_ENABLE_WASM_THREADS)
+SKIP_MULTIBYTE_PROLOGUE(fe)
+#include "insn_list_threads.h"
+SKIP_MULTIBYTE_EPILOGUE(fe)
+#endif
+
+#endif /* defined(TOYWASM_PROCESS_INSN_WITH_SWITCH) */
+
+uint32_t
+read_insn_nocheck(const uint8_t **pp)
+{
+#if defined(TOYWASM_PROCESS_INSN_WITH_SWITCH)
+        uint8_t inst8 = *(*pp)++;
+        switch (inst8) {
+#include "insn_list_noprefix.h"
+        default:
+                xlog_error("unimplemented opcode %02x", inst8);
+                __builtin_trap();
+                break;
+        }
+        return inst8;
+#undef INSTRUCTION
+#undef INSTRUCTION_INDIRECT
+#else
+        const uint8_t *p = *pp;
+        struct context ctx;
+        memset(&ctx, 0, sizeof(ctx));
+
+        uint32_t op = *p++;
+        const struct instruction_desc *desc = &instructions[op];
+        if (desc->next_table != NULL) {
+                uint32_t op2 = read_leb_u32_nocheck(&p);
+                desc = &desc->next_table[op2];
+        }
+        assert(desc->process != NULL);
+        int ret = desc->process(&p, NULL, &ctx);
+        assert(ret == 0);
+        *pp = p;
+        return op;
 #endif
 }
-#endif /* defined(TOYWASM_USE_SEPARATE_VALIDATE) */
