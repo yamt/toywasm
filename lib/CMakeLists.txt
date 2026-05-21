@@ -151,5 +151,5 @@ install(TARGETS toywasm-lib-core
         EXPORT toywasm-lib-core-config
         PUBLIC_HEADER DESTINATION include/toywasm)
 install(EXPORT toywasm-lib-core-config
+        NAMESPACE toywasm::
         DESTINATION lib/cmake/toywasm-lib-core)
-

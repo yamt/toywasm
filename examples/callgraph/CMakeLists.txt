@@ -19,4 +19,4 @@ set(app_sources
 add_executable(callgraph ${app_sources})
 target_include_directories(callgraph PRIVATE ${JANSSON_INCLUDE_DIRS})
 target_link_directories(callgraph PRIVATE ${JANSSON_LIBRARY_DIRS})
-target_link_libraries(callgraph toywasm-lib-core m ${JANSSON_LIBRARIES})
+target_link_libraries(callgraph toywasm::toywasm-lib-core m ${JANSSON_LIBRARIES})
