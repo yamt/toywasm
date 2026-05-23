@@ -21,8 +21,8 @@ print the `-version` message)
 
   ```
   ProductName:            macOS
-  ProductVersion:         15.6.1
-  BuildVersion:           24G90
+  ProductVersion:         15.7.7
+  BuildVersion:           24G720
   ```
 
 * [Raw values](./startup.csv)
