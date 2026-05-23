@@ -50,7 +50,7 @@ cp wasm3 ~/bin
 ### wasm-micro-runtime
 
 ```
-git checkout WAMR-2.4.1
+git checkout WAMR-2.4.4
 cd product-mini/platforms/darwin
 ```
 
