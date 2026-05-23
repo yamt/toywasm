@@ -1,18 +1,18 @@
-toywasm (default),0.18,0.17,0.00,39632896
-toywasm (no annotations),0.17,0.16,0.00,39309312
-toywasm (no annotations, fixed cells),0.16,0.15,0.00,36388864
-wasm3 (default),0.04,0.02,0.01,35061760
-wasm3 (no lazy),0.42,0.38,0.04,134967296
-wamr (classic interp),0.19,0.17,0.01,36864000
-wamr (fast interp),0.71,0.67,0.03,100155392
-wasmi (eager),0.31,0.28,0.02,59961344
-wasmi (lazy-translation),0.15,0.12,0.02,49385472
-wasmi (lazy),0.04,0.02,0.02,46649344
-wazero (interp),0.95,1.04,0.19,645517312
-wasmedge (interp),1.02,0.83,0.18,557985792
-wamr (fast jit),1.21,3.77,0.15,159596544
-wamr (fast jit no lazy),1.23,3.90,0.13,154361856
-wasmer (first run),4.52,39.39,2.49,541933568
-wasmer (cached),0.49,0.38,0.10,255705088
-wasmtime (first run),4.70,41.51,2.57,550313984
-wasmtime (cached),0.27,0.20,0.06,203739136
+"toywasm (default)",0.18,0.17,0.00,40525824
+"toywasm (no annotations)",0.17,0.16,0.00,37957632
+"toywasm (no annotations, fixed cells)",0.16,0.15,0.00,36265984
+"wasm3 (default)",0.03,0.02,0.01,35094528
+"wasm3 (no lazy)",0.41,0.37,0.03,134909952
+"wamr (classic interp)",0.19,0.17,0.01,36675584
+"wamr (fast interp)",0.70,0.66,0.03,100003840
+"wasmi (eager)",0.30,0.28,0.02,61042688
+"wasmi (lazy-translation)",0.15,0.12,0.01,49254400
+"wasmi (lazy)",0.04,0.02,0.02,49156096
+"wazero (interp)",0.96,1.07,0.19,644874240
+"wasmedge (interp)",1.00,0.82,0.18,557801472
+"wamr (fast jit)",1.18,3.64,0.14,158740480
+"wamr (fast jit no lazy)",1.21,3.83,0.13,154087424
+"wasmer (first run)",4.56,39.24,2.48,534913024
+"wasmer (cached)",0.48,0.37,0.09,255389696
+"wasmtime (first run)",4.87,40.94,2.44,554524672
+"wasmtime (cached)",0.27,0.20,0.06,202731520
