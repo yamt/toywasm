@@ -1407,7 +1407,7 @@ read_insn_nocheck(const uint8_t **pp)
 #include "insn_list_noprefix.h"
         default:
                 xlog_error("unimplemented opcode %02x", inst8);
-                __builtin_trap();
+                assert(false);
                 break;
         }
         return inst8;
