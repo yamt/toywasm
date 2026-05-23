@@ -70,6 +70,11 @@ struct instruction_desc {
 #define INSN_FLAG_EXTENDED_CONST 0
 #endif
 
+#if !defined(TOYWASM_USE_SEPARATE_EXECUTE) &&                                 \
+        defined(TOYWASM_PROCESS_INSN_WITH_SWITCH)
+#error unimplemented configuration
+#endif
+
 /*
  * https://webassembly.github.io/spec/core/binary/instructions.html
  * https://webassembly.github.io/spec/core/appendix/index-instructions.html
