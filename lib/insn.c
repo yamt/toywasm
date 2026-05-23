@@ -1058,6 +1058,7 @@ instruction_name(uint8_t group, uint32_t op)
 #endif
         }
         xassert(false);
+        return NULL;
 }
 
 #undef INSTRUCTION
