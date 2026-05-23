@@ -1,87 +1,87 @@
 Wasmer cache cleaned successfully.
 +++++++++++ Interpreters +++++++++++
-===== toywasm v43.0.0 (default configuration)
+===== toywasm v72.0.0-12-g72b555c3 (default configuration)
 ----- ./b/toywasm --wasi --wasi-dir .video --
-       65.72 real        65.68 user         0.03 sys
-            83165184  maximum resident set size
-        734226689946  instructions retired
-            63275008  peak memory footprint
-===== toywasm v43.0.0 (128-bit fixed cells)
+       65.02 real        64.96 user         0.04 sys
+            75100160  maximum resident set size
+        692648664434  instructions retired
+            55427072  peak memory footprint
+===== toywasm v72.0.0-12-g72b555c3 (128-bit fixed cells)
 ----- ./b.fix/toywasm --wasi --wasi-dir .video --
-       50.23 real        50.19 user         0.02 sys
-            84369408  maximum resident set size
-        446072497100  instructions retired
-            64475136  peak memory footprint
-===== toywasm v43.0.0 (64-bit fixed cells, SIMD disabled)
+       52.38 real        52.33 user         0.03 sys
+            83898368  maximum resident set size
+        438474528550  instructions retired
+            64249856  peak memory footprint
+===== toywasm v72.0.0-12-g72b555c3 (64-bit fixed cells, SIMD disabled)
 ----- ./b.fix.nosimd/toywasm --wasi --wasi-dir .video --
-       49.38 real        49.34 user         0.02 sys
-            84230144  maximum resident set size
-        436276335250  instructions retired
-            64348160  peak memory footprint
-===== toywasm v43.0.0 (annotations disabled, very slow)
+       49.95 real        49.91 user         0.03 sys
+            83824640  maximum resident set size
+        428938507109  instructions retired
+            64176128  peak memory footprint
+===== toywasm v72.0.0-12-g72b555c3 (annotations disabled, very slow)
 ----- ./b/toywasm --wasi --wasi-dir .video --disable-jump-table --disable-localtype-cellidx --disable-resulttype-cellidx --
-      543.74 real       543.54 user         0.12 sys
-            84488192  maximum resident set size
-       4285102463323  instructions retired
-            64602112  peak memory footprint
+      623.98 real       623.70 user         0.17 sys
+            74694656  maximum resident set size
+       4616485220937  instructions retired
+            55021568  peak memory footprint
 ===== Wasm3 v0.5.0 on x86_64
 ----- wasm3 --dir .video --
-       18.49 real        18.45 user         0.02 sys
-            84795392  maximum resident set size
-        116714920760  instructions retired
-            84160512  peak memory footprint
-===== iwasm 1.3.2 (fast interpreter)
+       18.43 real        18.39 user         0.03 sys
+            85032960  maximum resident set size
+        116733678294  instructions retired
+            84627456  peak memory footprint
+===== iwasm 2.4.4 (fast interpreter)
 ----- iwasm.fast --dir=.video
-       21.17 real        21.12 user         0.04 sys
-           142503936  maximum resident set size
-        145493272137  instructions retired
-           141803520  peak memory footprint
-===== iwasm 1.3.2 (classic interpreter)
+       23.14 real        23.09 user         0.05 sys
+           144216064  maximum resident set size
+        144565135623  instructions retired
+           143781888  peak memory footprint
+===== iwasm 2.4.4 (classic interpreter)
 ----- iwasm.classic --dir=.video
-      207.37 real       207.21 user         0.09 sys
-            80519168  maximum resident set size
-        930585690248  instructions retired
-            79888384  peak memory footprint
-===== wasmedge version 0.13.5 (interpreter)
+      210.58 real       210.46 user         0.07 sys
+            80928768  maximum resident set size
+       1085299220118  instructions retired
+            80535552  peak memory footprint
+===== wasmedge version 0.17.0 (interpreter)
 ----- wasmedge --dir .video --
-      207.52 real       207.13 user         0.36 sys
-           602030080  maximum resident set size
-       2134083603886  instructions retired
-           574488576  peak memory footprint
-===== wasmi_cli 0.32.0-beta.7
+      198.75 real       198.48 user         0.23 sys
+           602185728  maximum resident set size
+       2086813149209  instructions retired
+           581492736  peak memory footprint
+===== wasmi_cli 0.51.5
 ----- wasmi_cli --dir .video --
-       31.75 real        31.69 user         0.03 sys
-           101830656  maximum resident set size
-        254373203966  instructions retired
-            80654336  peak memory footprint
-===== wazero 1.6.0 (interpreter)
+       29.56 real        29.52 user         0.03 sys
+            91365376  maximum resident set size
+        172517764052  instructions retired
+            68841472  peak memory footprint
+===== wazero 1.11.0 (interpreter)
 ----- wazero run -interpreter -mount .video --
-      152.26 real       152.48 user         0.47 sys
-          1125650432  maximum resident set size
-       1690587254401  instructions retired
-          1122721792  peak memory footprint
+      173.08 real       173.16 user         0.62 sys
+          1083572224  maximum resident set size
+       1832705156802  instructions retired
+          1081196544  peak memory footprint
 +++++++++++ JIT ++++++++++++++++++++
-===== iwasm 1.3.2 (fast jit)
+===== iwasm 2.4.4 (fast jit)
 ----- iwasm.fast-jit --dir=.video --jit-codecache-size=100000000
-        3.43 real         6.09 user         0.13 sys
-           148844544  maximum resident set size
-         56615680925  instructions retired
-           138526720  peak memory footprint
-===== wasmer 4.2.6
------ wasmer run --mapdir .video::.video --
-        5.34 real        35.67 user         1.51 sys
-           613113856  maximum resident set size
-        162749582307  instructions retired
-           536535040  peak memory footprint
-===== wasmtime-cli 18.0.2 (90db6e99f 2024-02-28)
------ wasmtime run --mapdir .video::.video --
-        6.32 real        42.45 user         2.06 sys
-           673558528  maximum resident set size
-        188851737544  instructions retired
-           514019328  peak memory footprint
-===== wazero 1.6.0
+        3.54 real         6.17 user         0.16 sys
+           200007680  maximum resident set size
+         52145504334  instructions retired
+           188801024  peak memory footprint
+===== wasmer 7.1.0
+----- wasmer run --volume .video:.video --
+        5.87 real        39.88 user         2.44 sys
+           584372224  maximum resident set size
+        150466683420  instructions retired
+           511279104  peak memory footprint
+===== wasmtime 45.0.0 (377cd917a 2026-05-21)
+----- wasmtime run --dir .video --
+        5.87 real        40.76 user         2.38 sys
+           583655424  maximum resident set size
+        149377542937  instructions retired
+           461062144  peak memory footprint
+===== wazero 1.11.0
 ----- wazero run -mount .video --
-        7.64 real         7.86 user         0.21 sys
-           477995008  maximum resident set size
-         76589689657  instructions retired
-           474865664  peak memory footprint
+       11.89 real        11.94 user         0.21 sys
+           578641920  maximum resident set size
+        107214188453  instructions retired
+           575737856  peak memory footprint
