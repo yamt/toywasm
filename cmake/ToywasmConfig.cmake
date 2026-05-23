@@ -10,7 +10,14 @@ option(TOYWASM_USE_SEPARATE_EXECUTE "Use separate execute callback" ON)
 option(TOYWASM_USE_SEPARATE_VALIDATE "Use separate validation callback" OFF)
 
 # TOYWASM_PROCESS_INSN_WITH_SWITCH
-option(TOYWASM_PROCESS_INSN_WITH_SWITCH "Use C switch for insn dispatch" ON)
+# note: the main purpose of TOYWASM_PROCESS_INSN_WITH_SWITCH is to allow
+# the compiler (clang) to merge identical validation logic. it doesn't
+# make much sense without TOYWASM_USE_SEPARATE_EXECUTE.
+cmake_dependent_option(TOYWASM_PROCESS_INSN_WITH_SWITCH
+    "Use C switch for insn dispatch"
+    ON
+    "TOYWASM_USE_SEPARATE_EXECUTE"
+    OFF)
 
 # TOYWASM_USE_TAILCALL=ON
 #   enable -mtail-call for wasm target
