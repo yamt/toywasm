@@ -72,7 +72,7 @@ cp target/release/wasmi_cli ~/bin
 
 ```
 brew uninstall spdlog
-git checkout 0.15.0
+git checkout 0.17.0
 mkdir build
 cd build
 cmake \
