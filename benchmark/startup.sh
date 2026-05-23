@@ -3,7 +3,7 @@
 set -e
 
 run() {
-    printf "$1,"
+    printf "\"$1\","
     shift
     OUTPUT=$(mktemp)
 
