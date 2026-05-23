@@ -35,7 +35,7 @@ print the `-version` message)
   best. However, it's mainly because of their lazy compilation/validation.
   With lazy compilation/validation disabled, they have certain
   compilation/validation overhead as shown in the `wasm3 (no lazy)` and
-  `wasmi` rows.
+  `wasmi (eager)` rows.
 
   Note: While lazy validation is
   [explicitly allowed by the spec](https://webassembly.github.io/spec/core/appendix/implementation.html#validation),
