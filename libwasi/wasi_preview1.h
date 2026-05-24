@@ -1,3 +1,11 @@
+/*
+ * Note: NetBSD has sched_yield macro. POSIX-wise it seems ok.
+ * ("may also be defined as macros.")
+ * we undef it as we don't want the following definition of
+ * WASI sched_yield expanded to the OS sched_yield definition.
+ */
+#undef sched_yield
+
 /* clang-format off */
 
 /* args */
