@@ -558,6 +558,13 @@ jobs:
         ./test/build-example.sh layout ${{env.builddir}}/toywasm-v*.tgz build
         ./examples/layout/build/layout $(pwd)/hello.wasm
 
+    - name: Test "count-instructions" example with the library we built
+      if: matrix.arch == 'native'
+      run: |
+        wat2wasm --debug-names wat/wasi/hello.wat
+        ./test/build-example.sh count-instructions ${{env.builddir}}/toywasm-v*.tgz build
+        ./examples/count-instructions/build/count-instructions $(pwd)/hello.wasm
+
     - name: Upload artifacts
       if: matrix.name != 'noname'
       uses: actions/upload-artifact@v4
