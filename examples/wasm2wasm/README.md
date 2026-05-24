@@ -9,6 +9,9 @@ a semantically same wasm module.
 % wasm2wasm in.wasm out.wasm
 ```
 
+The sole purpose of this program is to demonstrate the `module_write`
+functionality.
+
 Note: it doesn't necessarily produce the identical file like cp(1).
 
 Note: it doesn't preserve custom sections.
