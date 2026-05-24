@@ -162,11 +162,15 @@ host_func_copyin(struct exec_context *ctx, struct meminst *mem, void *hostaddr,
 {
         void *p;
         int ret;
+        if (len > UINT32_MAX) {
+                return trap_with_id(ctx, TRAP_OUT_OF_BOUNDS_MEMORY_ACCESS,
+                                    "host_func_copyin: len too large");
+        }
         ret = host_func_check_align(ctx, wasmaddr, align);
         if (ret != 0) {
                 return ret;
         }
-        ret = host_func_getptr(ctx, mem, wasmaddr, len, &p);
+        ret = host_func_getptr(ctx, mem, wasmaddr, (uint32_t)len, &p);
         if (ret != 0) {
                 return ret;
         }
@@ -181,11 +185,15 @@ host_func_copyout(struct exec_context *ctx, struct meminst *mem,
 {
         void *p;
         int ret;
+        if (len > UINT32_MAX) {
+                return trap_with_id(ctx, TRAP_OUT_OF_BOUNDS_MEMORY_ACCESS,
+                                    "host_func_copyout: len too large");
+        }
         ret = host_func_check_align(ctx, wasmaddr, align);
         if (ret != 0) {
                 return ret;
         }
-        ret = host_func_getptr(ctx, mem, wasmaddr, len, &p);
+        ret = host_func_getptr(ctx, mem, wasmaddr, (uint32_t)len, &p);
         if (ret != 0) {
                 return ret;
         }
