@@ -162,6 +162,7 @@ host_func_copyin(struct exec_context *ctx, struct meminst *mem, void *hostaddr,
 {
         void *p;
         int ret;
+        assert(len <= UINT32_MAX);
         ret = host_func_check_align(ctx, wasmaddr, align);
         if (ret != 0) {
                 return ret;
@@ -181,6 +182,7 @@ host_func_copyout(struct exec_context *ctx, struct meminst *mem,
 {
         void *p;
         int ret;
+        assert(len <= UINT32_MAX);
         ret = host_func_check_align(ctx, wasmaddr, align);
         if (ret != 0) {
                 return ret;
