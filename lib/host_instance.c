@@ -225,6 +225,15 @@ host_func_getptr2(struct exec_context *ctx, struct meminst *mem, uint32_t ptr,
 }
 
 int
+host_func_mul_size(uint32_t a, uint32_t b, uint32_t *resultp)
+{
+        if (MUL_U32_OVERFLOW(a, b, resultp)) {
+                return EOVERFLOW;
+        }
+        return 0;
+}
+
+int
 host_func_trap(struct exec_context *ctx, const char *fmt, ...)
 {
         int ret;
