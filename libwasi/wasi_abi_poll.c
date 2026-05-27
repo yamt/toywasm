@@ -40,9 +40,16 @@ wasi_poll_oneoff(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         void *p;
-        size_t insize = nsubscriptions * sizeof(struct wasi_subscription);
-        if (insize > UINT32_MAX) {
-                ret = EOVERFLOW;
+        uint32_t insize;
+        ret = host_func_mul_size(nsubscriptions,
+                                 sizeof(struct wasi_subscription), &insize);
+        if (ret != 0) {
+                goto fail;
+        }
+        uint32_t outsize;
+        ret = host_func_mul_size(nsubscriptions, sizeof(struct wasi_event),
+                                 &outsize);
+        if (ret != 0) {
                 goto fail;
         }
 retry:
@@ -56,7 +63,6 @@ retry:
         }
         subscriptions = p;
         bool moved = false;
-        size_t outsize = nsubscriptions * sizeof(struct wasi_event);
         host_ret = host_func_check_align(ctx, in, WASI_EVENT_ALIGN);
         if (host_ret != 0) {
                 goto fail;
