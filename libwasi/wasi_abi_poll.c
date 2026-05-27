@@ -63,7 +63,7 @@ retry:
         }
         subscriptions = p;
         bool moved = false;
-        host_ret = host_func_check_align(ctx, in, WASI_EVENT_ALIGN);
+        host_ret = host_func_check_align(ctx, out, WASI_EVENT_ALIGN);
         if (host_ret != 0) {
                 goto fail;
         }
