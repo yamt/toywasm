@@ -181,6 +181,7 @@
 
 #if __has_builtin(__builtin_mul_overflow)
 #define MUL_SIZE_OVERFLOW(a, b, c) __builtin_mul_overflow(a, b, c)
+#define MUL_U32_OVERFLOW(a, b, c) __builtin_mul_overflow(a, b, c)
 #else
 /*
  * Note: (floor(x) < b) == (x < b) where
@@ -188,6 +189,8 @@
  */
 #define MUL_SIZE_OVERFLOW(a, b, c)                                            \
         (a != 0 && (SIZE_MAX / a < b) ? 1 : (*c = a * b, 0))
+#define MUL_U32_OVERFLOW(a, b, c)                                             \
+        (a != 0 && (UINT32_MAX / a < b) ? 1 : (*c = a * b, 0))
 #endif
 
 #if __STDC_VERSION__ < 201112L || defined(__STDC_NO_ATOMICS__)
