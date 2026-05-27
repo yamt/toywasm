@@ -71,6 +71,12 @@ wasi_copyin_iovec(struct exec_context *ctx, struct meminst *mem,
                 ret = EINVAL;
                 goto fail;
         }
+        uint32_t iov_bytes;
+        ret = host_func_mul_size(iov_count, sizeof(struct wasi_iov),
+                                 &iov_bytes);
+        if (ret != 0) {
+                goto fail;
+        }
         hostiov = calloc(iov_count, sizeof(*hostiov));
         if (hostiov == NULL) {
                 ret = ENOMEM;
@@ -81,8 +87,7 @@ retry:
         if (host_ret != 0) {
                 goto fail;
         }
-        host_ret = host_func_getptr(ctx, mem, iov_uaddr,
-                                    iov_count * sizeof(struct wasi_iov), &p);
+        host_ret = host_func_getptr(ctx, mem, iov_uaddr, iov_bytes, &p);
         if (host_ret != 0) {
                 goto fail;
         }
