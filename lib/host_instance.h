@@ -105,6 +105,7 @@ int host_func_getptr(struct exec_context *ctx, struct meminst *mem,
                      uint32_t ptr, uint32_t size, void **pp);
 int host_func_getptr2(struct exec_context *ctx, struct meminst *mem,
                       uint32_t ptr, uint32_t size, void **pp, bool *movedp);
+int host_func_mul_size(uint32_t a, uint32_t b, uint32_t *resultp);
 int host_func_trap(struct exec_context *ctx, const char *fmt, ...)
         __printflike(2, 3);
 struct restart_info;
