@@ -733,6 +733,10 @@ void functype_string_free(char *p);
 void clear_functype(struct mem_context *mctx, struct functype *ft);
 void clear_resulttype(struct mem_context *mctx, struct resulttype *rt);
 
+/*
+ * set_name_cstr:
+ * it's caller's responsibility to ensure strlen(cstr) <= UINT32_MAX
+ */
 void set_name_cstr(struct name *name, const char *cstr);
 void clear_name(struct name *name);
 

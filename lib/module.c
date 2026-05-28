@@ -565,7 +565,9 @@ fail:
 void
 set_name_cstr(struct name *name, const char *cstr)
 {
-        name->nbytes = strlen(cstr);
+        size_t len = strlen(cstr);
+        assert(len <= UINT32_MAX);
+        name->nbytes = (uint32_t)len;
         name->data = cstr;
 }
 
