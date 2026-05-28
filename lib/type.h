@@ -399,9 +399,14 @@ struct name {
                 .data = C,                                                    \
         }
 
+/*
+ * NAME_FROM_CSTR assumes the strlen is <= UINT32_MAX.
+ * it should not be used on untrusted inputs.
+ * for string literals, use NAME_FROM_CSTR_LITERAL instead.
+ */
 #define NAME_FROM_CSTR(C)                                                     \
         {                                                                     \
-                .nbytes = strlen(C),                                          \
+                .nbytes = (uint32_t)strlen(C),                                \
                 .data = C,                                                    \
         }
 
