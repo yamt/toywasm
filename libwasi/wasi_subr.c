@@ -26,7 +26,7 @@ wasi_unstable_convert_filestat(const struct wasi_filestat *wst,
         uwst->dev = wst->dev;
         uwst->ino = wst->ino;
         uwst->type = wst->type;
-        le32_encode(&uwst->linkcount, linkcount);
+        le32_encode(&uwst->linkcount, (uint32_t)linkcount);
         uwst->size = wst->size;
         uwst->atim = wst->atim;
         uwst->mtim = wst->mtim;
