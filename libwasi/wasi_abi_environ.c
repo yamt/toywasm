@@ -88,7 +88,8 @@ args_environ_get(struct exec_context *ctx, struct wasi_instance *wasi,
                 }
                 sz += 1;
                 host_ret = wasi_copyout(ctx, wasi_memory(wasi), argv[i],
-                                        le32_to_host(wasm_argv[i]), sz, 1);
+                                        le32_to_host(wasm_argv[i]),
+                                        (uint32_t)sz, 1);
                 if (host_ret != 0) {
                         goto fail;
                 }
