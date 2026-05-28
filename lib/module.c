@@ -398,7 +398,7 @@ read_limits(const uint8_t **pp, const uint8_t *ep, struct limits *lim,
         } else {
                 lim->max = UINT32_MAX;
                 if (typemax_shifted < lim->max) {
-                        lim->max = typemax_shifted;
+                        lim->max = (uint32_t)typemax_shifted;
                 }
         }
         if (typemax_shifted < lim->min) {
