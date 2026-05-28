@@ -96,11 +96,11 @@ void host_func_dump_params(const struct functype *ft,
 int host_func_check_align(struct exec_context *ctx, uint32_t wasmaddr,
                           size_t align);
 int host_func_copyout(struct exec_context *ctx, struct meminst *mem,
-                      const void *hostaddr, uint32_t wasmaddr, size_t len,
-                      size_t align);
+                      const void *hostaddr, uint32_t wasmaddr, uint32_t len,
+                      uint32_t align);
 int host_func_copyin(struct exec_context *ctx, struct meminst *mem,
-                     void *hostaddr, uint32_t wasmaddr, size_t len,
-                     size_t align);
+                     void *hostaddr, uint32_t wasmaddr, uint32_t len,
+                     uint32_t align);
 int host_func_getptr(struct exec_context *ctx, struct meminst *mem,
                      uint32_t ptr, uint32_t size, void **pp);
 int host_func_getptr2(struct exec_context *ctx, struct meminst *mem,
