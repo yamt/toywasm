@@ -21,6 +21,8 @@
 #include "escape.h"
 #include "type.h"
 
+static unsigned int max_escaped_len = INT_MAX;
+
 static bool
 need_escape(char ch)
 {
@@ -49,30 +51,44 @@ escape_name(struct escaped_string *e, const struct name *n)
         const size_t omitted_size = 2;      /* strlen("..") */
         const char *sp = n->data;
         const char *ep = sp + n->nbytes;
+        bool overflow = false;
         assert(sp <= ep);
+        assert(omitted_size <= sizeof(e->small));
+        assert(sizeof(e->small) <= max_escaped_len);
+        assert(max_escaped_len <= INT_MAX);
 
         const char *p;
         size_t escaped_len = 0;
         for (p = sp; p < ep; p++) {
+                unsigned int needed = 1;
                 if (need_escape(*p)) {
-                        escaped_len += escaped_char_size;
-                } else {
-                        escaped_len++;
+                        needed = escaped_char_size;
                 }
+                if (max_escaped_len - escaped_len < needed) {
+                        overflow = true;
+                        escaped_len = max_escaped_len; /* upper bound */
+                        break;
+                }
+                escaped_len += needed;
         }
+        assert(escaped_len <= max_escaped_len);
         e->orig = sp;
-        e->escaped_len = escaped_len;
-        if (escaped_len == ep - sp) {
+        e->escaped_len = (uint32_t)escaped_len;
+        if (!overflow && escaped_len == ep - sp) {
+                /* no need to escape. use the original string as it is. */
                 e->escaped = (char *)e->orig; /* discard const */
         } else {
-                int lim = INT_MAX;
-                if (escaped_len <= sizeof(e->small)) {
+                unsigned int lim = max_escaped_len;
+                if (!overflow && escaped_len <= sizeof(e->small)) {
+                        assert(!overflow);
                         e->escaped = e->small;
                 } else {
                         e->escaped = malloc(escaped_len);
                         if (e->escaped == NULL) {
                                 e->escaped = e->small;
                                 lim = sizeof(e->small) - omitted_size;
+                        } else if (overflow) {
+                                lim = max_escaped_len - omitted_size;
                         }
                 }
                 char *dp = e->escaped;
@@ -95,13 +111,13 @@ escape_name(struct escaped_string *e, const struct name *n)
                         }
                 }
                 assert(dp - dsp <= lim);
-                if (lim != INT_MAX) {
-                        assert(e->escaped == e->small);
-                        assert(dp + omitted_size <=
-                               e->small + sizeof(e->small));
+                /* add ".." if we omitted something */
+                if (p < ep) {
+                        assert(dp - dsp + omitted_size <= max_escaped_len);
                         *dp++ = '.';
                         *dp++ = '.';
-                        e->escaped_len = dp - e->escaped;
+                        assert(dp - e->escaped <= max_escaped_len);
+                        e->escaped_len = (int)(dp - e->escaped);
                 }
         }
 }
@@ -112,4 +128,11 @@ escaped_string_clear(struct escaped_string *e)
         if (e->escaped != e->orig && e->escaped != e->small) {
                 free(e->escaped);
         }
+}
+
+void
+set_max_escaped_len(int maxlen)
+{
+        assert(sizeof(((struct escaped_string *)0)->small) <= maxlen);
+        max_escaped_len = maxlen;
 }
