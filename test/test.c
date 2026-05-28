@@ -322,7 +322,7 @@ test_endian(void **state)
         poison = 0xa1;
         v = 0x1122334455667788;
         memset(buf, poison, sizeof(buf));
-        le64_encode(buf, v);
+        le64_encode(buf, (uint64_t)v);
         assert_int_equal(buf[0], v & 0xff);
         assert_int_equal(buf[1], (v >> 1 * 8) & 0xff);
         assert_int_equal(buf[2], (v >> 2 * 8) & 0xff);
@@ -338,7 +338,7 @@ test_endian(void **state)
         poison = 0xee;
         v = 0xaabbccdd;
         memset(buf, poison, sizeof(buf));
-        le32_encode(buf, v);
+        le32_encode(buf, (uint32_t)v);
         assert_int_equal(buf[0], v & 0xff);
         assert_int_equal(buf[1], (v >> 1 * 8) & 0xff);
         assert_int_equal(buf[2], (v >> 2 * 8) & 0xff);
@@ -354,7 +354,7 @@ test_endian(void **state)
         poison = 0x11;
         v = 0xabcd;
         memset(buf, poison, sizeof(buf));
-        le16_encode(buf, v);
+        le16_encode(buf, (uint16_t)v);
         assert_int_equal(buf[0], v & 0xff);
         assert_int_equal(buf[1], (v >> 1 * 8) & 0xff);
         assert_int_equal(buf[2], poison);
@@ -370,7 +370,7 @@ test_endian(void **state)
         poison = 0xdc;
         v = 0x77;
         memset(buf, poison, sizeof(buf));
-        le8_encode(buf, v);
+        le8_encode(buf, (uint8_t)v);
         assert_int_equal(buf[0], v & 0xff);
         assert_int_equal(buf[1], poison);
         assert_int_equal(buf[2], poison);
