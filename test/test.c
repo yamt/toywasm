@@ -17,6 +17,7 @@
 #endif
 
 #include "endian.h"
+#include "escape.h"
 #include "idalloc.h"
 #include "leb128.h"
 #include "list.h"
@@ -1187,6 +1188,35 @@ test_xstrnstr(void **state)
         assert_null(xstrnstr(abab, bc, 5));
 }
 
+#define test_escape1(text, len, expected)                                     \
+        do {                                                                  \
+                struct name name = {                                          \
+                        .data = text,                                         \
+                        .nbytes = len,                                        \
+                };                                                            \
+                struct escaped_string e;                                      \
+                size_t expected_len = strlen(expected);                       \
+                escape_name(&e, &name);                                       \
+                assert_int_equal(e.escaped_len, expected_len);                \
+                assert_memory_equal(e.escaped, expected, expected_len);       \
+                escaped_string_clear(&e);                                     \
+        } while (0)
+
+#define TEST_ESCAPE1(a, b) test_escape1(a, sizeof(a) - 1, b)
+
+void
+test_escape(void **state)
+{
+        /* XXX this test assumes malloc doesn't fail */
+
+        TEST_ESCAPE1("short", "short");
+        TEST_ESCAPE1("12345678901234567890", "12345678901234567890");
+        TEST_ESCAPE1("こんにちは", "\\343\\201\\223\\343\\202\\223\\343\\201\\"
+                                   "253\\343\\201\\241\\343\\201\\257");
+        TEST_ESCAPE1("a\nb\nc\nd\ne\nf\ng\nh",
+                     "a\\012b\\012c\\012d\\012e\\012f\\012g\\012h");
+}
+
 int
 main(int argc, char **argv)
 {
@@ -1202,6 +1232,7 @@ main(int argc, char **argv)
                 cmocka_unit_test(test_slist),
                 cmocka_unit_test(test_slist2),
                 cmocka_unit_test(test_xstrnstr),
+                cmocka_unit_test(test_escape),
         };
         return cmocka_run_group_tests(tests, NULL, NULL);
 }
