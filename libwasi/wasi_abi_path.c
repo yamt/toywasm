@@ -276,7 +276,8 @@ wasi_path_readlink(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        uint32_t result = le32_to_host(n);
+        assert(n <= buflen);
+        uint32_t result = le32_to_host((uint32_t)n);
         host_ret = wasi_copyout(ctx, wasi_memory(wasi), &result, retp,
                                 sizeof(result), WASI_U32_ALIGN);
         if (host_ret != 0) {
