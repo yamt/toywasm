@@ -181,7 +181,7 @@ wasi_host_path_readlink(const struct path_info *pi, char *buf, size_t buflen,
 {
         ssize_t ret = readlink(pi->hostpath, buf, buflen);
         if (ret == -1) {
-                return handle_errno(ret);
+                return handle_errno(-1);
         }
         *resultp = ret;
         return 0;
