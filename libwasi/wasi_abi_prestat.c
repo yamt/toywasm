@@ -37,7 +37,12 @@ wasi_fd_prestat_get(struct exec_context *ctx, struct host_instance *hi,
         if (fdinfo_prestat->wasm_path != NULL) {
                 prestat_path = fdinfo_prestat->wasm_path;
         }
-        st.dir_name_len = host_to_le32(strlen(prestat_path));
+        size_t pathlen = strlen(prestat_path);
+        if (pathlen > UINT32_MAX) {
+                ret = EOVERFLOW;
+                goto fail;
+        }
+        st.dir_name_len = host_to_le32((uint32_t)pathlen);
         host_ret = wasi_copyout(ctx, wasi_memory(wasi), &st, retp, sizeof(st),
                                 WASI_PRESTAT_ALIGN);
 fail:
