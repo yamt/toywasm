@@ -3,13 +3,15 @@
 #include "platform.h"
 
 /*
- * we don't bother to support names longer than INT_MAX here because:
+ * we don't bother to support escaped names longer than INT_MAX here because:
  *
  * - this is primarily for logging and error reporting purposes, for which
  *   INT_MAX is already too large.
  *
  * - this is intended to be used to feed printf formats using %.*s, which
  *   takes an int anyway.
+ *
+ * we DO support unescaped names longer than INT_MAX.
  */
 struct escaped_string {
         const char *orig;
@@ -26,5 +28,6 @@ struct name;
 
 void escape_name(struct escaped_string *e, const struct name *n);
 void escaped_string_clear(struct escaped_string *e);
+void set_max_escaped_len(int maxlen);
 
 __END_EXTERN_C
