@@ -1215,6 +1215,55 @@ test_escape(void **state)
                                    "253\\343\\201\\241\\343\\201\\257");
         TEST_ESCAPE1("a\nb\nc\nd\ne\nf\ng\nh",
                      "a\\012b\\012c\\012d\\012e\\012f\\012g\\012h");
+
+        set_max_escaped_len(20);
+
+        TEST_ESCAPE1("short", "short");
+        TEST_ESCAPE1("12345678901234567890", "12345678901234567890");
+        TEST_ESCAPE1("こんにちは", "\\343\\201\\223\\343..");
+        TEST_ESCAPE1("a\nb\nc\nd\ne\nf\ng\nh", "a\\012b\\012c\\012d..");
+
+        set_max_escaped_len(19);
+
+        TEST_ESCAPE1("short", "short");
+        TEST_ESCAPE1("12345678901234567890", "12345678901234567..");
+        TEST_ESCAPE1("こんにちは", "\\343\\201\\223\\343..");
+        TEST_ESCAPE1("a\nb\nc\nd\ne\nf\ng\nh", "a\\012b\\012c\\012d..");
+
+        set_max_escaped_len(18);
+
+        TEST_ESCAPE1("short", "short");
+        TEST_ESCAPE1("12345678901234567890", "1234567890123456..");
+        TEST_ESCAPE1("こんにちは", "\\343\\201\\223\\343..");
+        TEST_ESCAPE1("a\nb\nc\nd\ne\nf\ng\nh", "a\\012b\\012c\\012d..");
+
+        set_max_escaped_len(17);
+
+        TEST_ESCAPE1("short", "short");
+        TEST_ESCAPE1("12345678901234567890", "123456789012345..");
+        TEST_ESCAPE1("こんにちは", "\\343\\201\\223..");
+        TEST_ESCAPE1("a\nb\nc\nd\ne\nf\ng\nh", "a\\012b\\012c\\012..");
+
+        set_max_escaped_len(16);
+
+        TEST_ESCAPE1("short", "short");
+        TEST_ESCAPE1("12345678901234567890", "12345678901234..");
+        TEST_ESCAPE1("こんにちは", "\\343\\201\\223..");
+        TEST_ESCAPE1("a\nb\nc\nd\ne\nf\ng\nh", "a\\012b\\012c..");
+
+        set_max_escaped_len(15);
+
+        TEST_ESCAPE1("short", "short");
+        TEST_ESCAPE1("12345678901234567890", "1234567890123..");
+        TEST_ESCAPE1("こんにちは", "\\343\\201\\223..");
+        TEST_ESCAPE1("a\nb\nc\nd\ne\nf\ng\nh", "a\\012b\\012c..");
+
+        set_max_escaped_len(14);
+
+        TEST_ESCAPE1("short", "short");
+        TEST_ESCAPE1("12345678901234567890", "123456789012..");
+        TEST_ESCAPE1("こんにちは", "\\343\\201\\223..");
+        TEST_ESCAPE1("a\nb\nc", "a\\012b\\012c");
 }
 
 int
