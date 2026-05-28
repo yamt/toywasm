@@ -264,7 +264,7 @@ resulttype_from_string(struct mem_context *mctx, const char *p, const char *ep,
         if (ntypes > UINT32_MAX) {
                 return EOVERFLOW;
         }
-        t->ntypes = ntypes;
+        t->ntypes = (uint32_t)ntypes;
         if (ntypes > 0) {
                 t->types = mem_alloc(mctx, ntypes * sizeof(*t->types));
                 if (t->types == NULL) {
