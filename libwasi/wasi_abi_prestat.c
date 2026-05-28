@@ -88,7 +88,7 @@ wasi_fd_prestat_dir_name(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         host_ret = wasi_copyout(ctx, wasi_memory(wasi), prestat_path, path,
-                                len, 1);
+                                (uint32_t)len, 1);
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
         if (host_ret == 0) {
