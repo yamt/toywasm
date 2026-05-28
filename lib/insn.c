@@ -354,7 +354,7 @@ wasm_clz64(uint64_t v)
         }
         uint32_t high = v >> 32;
         if (high == 0) {
-                return 32 + clz(v);
+                return 32 + clz((uint32_t)v);
         }
         return clz(high);
 }
