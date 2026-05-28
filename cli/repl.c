@@ -860,6 +860,11 @@ toywasm_repl_register(struct repl_state *state, const char *modname,
         struct instance *inst = mod->inst;
         assert(inst != NULL);
         struct import_object *im;
+        size_t namelen = strlen(register_name);
+        if (namelen > UINT32_MAX) {
+                ret = EOVERFLOW;
+                goto fail;
+        }
         char *register_modname1 = strdup(register_name);
         struct registered_name *rname = malloc(sizeof(*rname));
         if (register_modname1 == NULL || rname == NULL) {
@@ -921,14 +926,20 @@ arg_conv(enum valtype type, const char *s, struct val *result)
         case TYPE_f32:
                 ret = str_to_uint(s, 0, &u);
                 if (ret == 0) {
-                        result->u.i32 = u;
+                        if (u > UINT32_MAX) {
+                                break;
+                        }
+                        result->u.i32 = (uint32_t)u;
                 }
                 break;
         case TYPE_i64:
         case TYPE_f64:
                 ret = str_to_uint(s, 0, &u);
                 if (ret == 0) {
-                        result->u.i64 = u;
+                        if (u > UINT64_MAX) {
+                                break;
+                        }
+                        result->u.i64 = (uint64_t)u;
                 }
                 break;
 #if defined(TOYWASM_ENABLE_WASM_SIMD)
@@ -1188,9 +1199,13 @@ toywasm_repl_invoke(struct repl_state *state, const char *modname,
                 xlog_error("failed to unescape funcname");
                 goto fail;
         }
+        if (len > UINT32_MAX) {
+                ret = EOVERFLOW;
+                goto fail;
+        }
         struct name funcname_name;
         funcname_name.data = funcname;
-        funcname_name.nbytes = len;
+        funcname_name.nbytes = (uint32_t)len;
         struct repl_module_state_u *mod_u;
         ret = find_mod_u(state, modname, &mod_u);
         if (ret != 0) {
@@ -1331,9 +1346,13 @@ repl_global_get(struct repl_state *state, const char *modname,
                 xlog_error("failed to unescape name");
                 goto fail;
         }
+        if (len > UINT32_MAX) {
+                ret = EOVERFLOW;
+                goto fail;
+        }
         struct name name;
         name.data = name1;
-        name.nbytes = len;
+        name.nbytes = (uint32_t)len;
         struct repl_module_state *mod;
         ret = find_mod(state, modname, &mod);
         if (ret != 0) {
@@ -1516,13 +1535,14 @@ int
 toywasm_repl(struct repl_state *state)
 {
         char *line = NULL;
-        size_t linecap = 0;
-        int ret;
         while (true) {
+                int ret;
+
                 nbio_printf("%s> ", state->opts.prompt);
                 fflush(stdout);
-                ret = nbio_getline(&line, &linecap, stdin);
-                if (ret == -1) {
+                size_t linecap = 0;
+                ssize_t ssz = nbio_getline(&line, &linecap, stdin);
+                if (ssz == -1) {
                         break;
                 }
                 xlog_printf("repl cmd '%s'\n", line);
