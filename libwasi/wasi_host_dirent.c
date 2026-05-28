@@ -123,11 +123,17 @@ wasi_host_dir_read(struct wasi_fdinfo *fdinfo, struct wasi_dirent *wde,
 #else
         le64_encode(&wde->d_ino, d->d_ino);
 #endif
-        uint32_t namlen = strlen(d->d_name);
-        le32_encode(&wde->d_namlen, namlen);
+        size_t namlen = strlen(d->d_name);
+        if (namlen > UINT32_MAX) { /* XXX should use a smaller limit? */
+                ret = ENAMETOOLONG;
+                goto fail;
+        }
+        le32_encode(&wde->d_namlen, (uint32_t)namlen);
         wde->d_type = wasi_convert_dirent_filetype(d->d_type);
+#if 0
         xlog_trace("fd_readdir: ino %" PRIu64 " nam %.*s",
                    le64_decode(&wde->d_ino), (int)namlen, d->d_name);
+#endif
         *namep = (const void *)d->d_name;
         return 0;
 fail:
