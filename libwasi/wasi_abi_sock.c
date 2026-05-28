@@ -155,7 +155,7 @@ retry:
                 ret = EOVERFLOW;
                 goto fail;
         }
-        uint32_t r = host_to_le32(n);
+        uint32_t r = host_to_le32((uint32_t)n);
         host_ret = wasi_copyout(ctx, wasi_memory(wasi), &r, retp, sizeof(r),
                                 WASI_U32_ALIGN);
         if (host_ret != 0) {
@@ -228,7 +228,7 @@ retry:
                 ret = EOVERFLOW;
                 goto fail;
         }
-        uint32_t r = host_to_le32(n);
+        uint32_t r = host_to_le32((uint32_t)n);
         host_ret = wasi_copyout(ctx, wasi_memory(wasi), &r, retp, sizeof(r),
                                 WASI_U32_ALIGN);
         ret = 0;
