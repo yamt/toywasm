@@ -34,7 +34,7 @@ str_to_u32(const char *s, int base, uint32_t *resultp)
         if (u > UINT32_MAX) {
                 return EOVERFLOW;
         }
-        *resultp = u;
+        *resultp = (uint32_t)u;
         return 0;
 }
 
