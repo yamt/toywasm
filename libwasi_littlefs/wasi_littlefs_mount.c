@@ -150,7 +150,12 @@ wasi_littlefs_mount_file(const char *path,
                 ret = EINVAL;
                 goto fail;
         }
-        lfs_size_t block_count = st.st_size / block_size;
+        ctassert(sizeof(lfs_size_t) == sizeof(uint32_t));
+        if (st.st_size / block_size > UINT32_MAX) {
+                ret = EOVERFLOW;
+                goto fail;
+        }
+        lfs_size_t block_count = (uint32_t)(st.st_size / block_size);
         assert(block_count * block_size == st.st_size);
 
         struct lfs_config *lfs_config = &vfs_lfs->lfs_config;
