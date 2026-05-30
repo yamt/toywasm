@@ -21,8 +21,7 @@ import_object_alloc(struct mem_context *mctx, uint32_t nentries,
         }
         im->nentries = nentries;
         if (nentries > 0) {
-                im->entries =
-                        mem_calloc(mctx, nentries, sizeof(*im->entries));
+                im->entries = mem_calloc(mctx, nentries, sizeof(*im->entries));
                 if (im->entries == NULL) {
                         mem_free(mctx, im, sizeof(*im));
                         return ENOMEM;
