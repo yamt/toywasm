@@ -73,9 +73,8 @@ wasi_path_open(struct exec_context *ctx, struct host_instance *hi,
         }
         fdinfo = NULL;
         xlog_trace("-> new wasi fd %" PRIu32, wasifd);
-        uint32_t r = host_to_le32(wasifd);
-        host_ret = wasi_copyout(ctx, wasi_memory(wasi), &r, retp, sizeof(r),
-                                WASI_U32_ALIGN);
+        host_ret =
+                wasi_copyout_result_fd(ctx, wasi_memory(wasi), retp, wasifd);
         if (host_ret != 0) {
                 /* XXX close wasifd? */
                 goto fail;
@@ -277,9 +276,7 @@ wasi_path_readlink(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
         assert(n <= buflen);
-        uint32_t result = le32_to_host((uint32_t)n);
-        host_ret = wasi_copyout(ctx, wasi_memory(wasi), &result, retp,
-                                sizeof(result), WASI_U32_ALIGN);
+        host_ret = wasi_copyout_result_i32(ctx, wasi_memory(wasi), retp, n);
         if (host_ret != 0) {
                 goto fail;
         }

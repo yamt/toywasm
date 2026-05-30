@@ -70,9 +70,8 @@ retry:
                 goto fail;
         }
         fdinfo_child = NULL;
-        uint32_t r = host_to_le32(wasichildfd);
-        host_ret = wasi_copyout(ctx, wasi_memory(wasi), &r, retp, sizeof(r),
-                                WASI_U32_ALIGN);
+        host_ret = wasi_copyout_result_fd(ctx, wasi_memory(wasi), retp,
+                                          wasichildfd);
         if (host_ret != 0) {
                 /* XXX close wasichildfd? */
                 goto fail;
@@ -155,9 +154,7 @@ retry:
                 ret = EOVERFLOW;
                 goto fail;
         }
-        uint32_t r = host_to_le32((uint32_t)n);
-        host_ret = wasi_copyout(ctx, wasi_memory(wasi), &r, retp, sizeof(r),
-                                WASI_U32_ALIGN);
+        host_ret = wasi_copyout_result_i32(ctx, wasi_memory(wasi), retp, n);
         if (host_ret != 0) {
                 goto fail;
         }
@@ -228,9 +225,7 @@ retry:
                 ret = EOVERFLOW;
                 goto fail;
         }
-        uint32_t r = host_to_le32((uint32_t)n);
-        host_ret = wasi_copyout(ctx, wasi_memory(wasi), &r, retp, sizeof(r),
-                                WASI_U32_ALIGN);
+        host_ret = wasi_copyout_result_i32(ctx, wasi_memory(wasi), retp, n);
         ret = 0;
 fail:
         wasi_fdinfo_release(wasi, fdinfo);

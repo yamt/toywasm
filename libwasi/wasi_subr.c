@@ -8,8 +8,7 @@
 #include <string.h>
 
 #include "endian.h"
-#include "host_instance.h"
-#include "wasi_abi.h"
+#include "wasi_impl.h"
 #include "wasi_subr.h"
 #include "wasi_vfs.h"
 #include "xlog.h"
@@ -117,6 +116,33 @@ fail:
         free(hostiov);
         *usererrorp = ret;
         return host_ret;
+}
+
+int
+wasi_copyout_result_i32(struct exec_context *ctx, struct meminst *mem,
+                        uint32_t retp, uint32_t result)
+{
+        xlog_trace("copyout 32-bit result %" PRIu32 "\n", result);
+        uint32_t r = host_to_le32(result);
+        return wasi_copyout(ctx, mem, &r, retp, sizeof(r), WASI_U32_ALIGN);
+}
+
+int
+wasi_copyout_result_fd(struct exec_context *ctx, struct meminst *mem,
+                       uint32_t retp, uint32_t result)
+{
+        xlog_trace("copyout new fd %" PRIu32 "\n", result);
+        uint32_t r = host_to_le32(result);
+        return wasi_copyout(ctx, mem, &r, retp, sizeof(r), WASI_U32_ALIGN);
+}
+
+int
+wasi_copyout_result_i64(struct exec_context *ctx, struct meminst *mem,
+                        uint32_t retp, uint64_t result)
+{
+        xlog_trace("copyout 64-bit result %" PRIu64 "\n", result);
+        uint64_t r = host_to_le64(result);
+        return wasi_copyout(ctx, mem, &r, retp, sizeof(r), WASI_U64_ALIGN);
 }
 
 int

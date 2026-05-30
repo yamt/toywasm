@@ -7,6 +7,7 @@
 #include "endian.h"
 #include "wasi_host_subr.h"
 #include "wasi_impl.h"
+#include "wasi_subr.h"
 #include "xlog.h"
 
 int
@@ -33,9 +34,9 @@ wasi_clock_res_get(struct exec_context *ctx, struct host_instance *hi,
                 assert(ret > 0);
                 goto fail;
         }
-        uint64_t result = host_to_le64(timespec_to_ns(&ts));
-        host_ret = wasi_copyout(ctx, wasi_memory(wasi), &result, retp,
-                                sizeof(result), WASI_U64_ALIGN);
+        uint64_t ts_ns = timespec_to_ns(&ts);
+        host_ret =
+                wasi_copyout_result_i64(ctx, wasi_memory(wasi), retp, ts_ns);
 fail:
         if (host_ret == 0) {
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
@@ -72,9 +73,9 @@ wasi_clock_time_get(struct exec_context *ctx, struct host_instance *hi,
                 assert(ret > 0);
                 goto fail;
         }
-        uint64_t result = host_to_le64(timespec_to_ns(&ts));
-        host_ret = wasi_copyout(ctx, wasi_memory(wasi), &result, retp,
-                                sizeof(result), WASI_U64_ALIGN);
+        uint64_t ts_ns = timespec_to_ns(&ts);
+        host_ret =
+                wasi_copyout_result_i64(ctx, wasi_memory(wasi), retp, ts_ns);
 fail:
         if (host_ret == 0) {
                 HOST_FUNC_RESULT_SET(ft, results, 0, i32,
