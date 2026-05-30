@@ -419,7 +419,7 @@ jobs:
       with:
         repository: littlefs-project/littlefs
         path: littlefs
-        ref: v2.10.2
+        ref: v2.11.3
         fetch-depth: 0
 
     - name: Install dependencies (ubuntu native)
@@ -619,7 +619,7 @@ jobs:
       with:
         repository: littlefs-project/littlefs
         path: littlefs
-        ref: v2.10.2
+        ref: v2.11.3
         fetch-depth: 0
 
     - name: Build and test
