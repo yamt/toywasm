@@ -10,7 +10,7 @@
 #include "xlog.h"
 
 int
-import_object_alloc(struct mem_context *mctx, uint32_t nentries,
+import_object_alloc(struct mem_context *mctx, size_t nentries,
                     struct import_object **resultp)
 {
         struct import_object *im;

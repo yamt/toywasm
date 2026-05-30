@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 #include "platform.h"
@@ -124,7 +125,7 @@ int import_object_create_for_exports(struct mem_context *mctx,
                                      const struct name *module_name,
                                      struct import_object **resultp);
 void import_object_destroy(struct mem_context *mctx, struct import_object *im);
-int import_object_alloc(struct mem_context *mctx, uint32_t nentries,
+int import_object_alloc(struct mem_context *mctx, size_t nentries,
                         struct import_object **resultp);
 int import_object_find_entry(
         const struct import_object *impobj, const struct import *im,

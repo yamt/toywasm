@@ -17,8 +17,8 @@ _dtor(struct mem_context *mctx, struct import_object *im)
 {
         struct funcinst *fis = im->dtor_arg;
         if (fis != NULL) {
-                uint32_t nfuncs = im->nentries;
-                uint32_t i;
+                size_t nfuncs = im->nentries;
+                size_t i;
                 for (i = 0; i < nfuncs; i++) {
                         struct funcinst *fi = &fis[i];
                         if (fi->u.host.type != NULL) {
@@ -56,7 +56,7 @@ import_object_create_for_host_funcs(struct mem_context *mctx,
         if (ret != 0) {
                 goto fail;
         }
-        fis = mem_zalloc(mctx, nfuncs * sizeof(*fis));
+        fis = mem_calloc(mctx, nfuncs, sizeof(*fis));
         if (fis == NULL) {
                 ret = ENOMEM;
                 goto fail;
