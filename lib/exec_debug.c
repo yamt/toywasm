@@ -246,7 +246,7 @@ print_memory(const struct exec_context *ctx, const struct instance *inst,
         }
         if (mi->allocated - addr < count) {
                 nbio_printf("%s: dump truncated\n", __func__);
-                count = mi->allocated - addr;
+                count = (uint32_t)(mi->allocated - addr);
         }
         const uint8_t *p = mi->data + addr;
         const char *sep = "";
