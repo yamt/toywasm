@@ -133,7 +133,7 @@ ptr2pc(const struct module *m, const uint8_t *p)
 {
         assert(p >= m->bin);
         assert(p - m->bin <= UINT32_MAX);
-        return p - m->bin;
+        return (uint32_t)(p - m->bin);
 }
 
 const uint8_t *
