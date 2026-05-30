@@ -10,6 +10,7 @@
 #include "restart.h"
 #include "wasi_impl.h"
 #include "wasi_poll_subr.h"
+#include "wasi_subr.h"
 #include "xlog.h"
 
 int
@@ -226,9 +227,8 @@ retry:
                 }
         }
         assert(events + nevents == ev);
-        uint32_t result = host_to_le32(nevents);
-        host_ret = wasi_copyout(ctx, wasi_memory(wasi), &result, retp,
-                                sizeof(result), WASI_U32_ALIGN);
+        host_ret =
+                wasi_copyout_result_i32(ctx, wasi_memory(wasi), retp, nevents);
         ret = 0;
 fail:
         for (i = 0; i < nfdinfos; i++) {

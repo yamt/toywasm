@@ -13,4 +13,10 @@ int wasi_userfd_reject_directory(struct wasi_fdinfo *fdinfo);
 int wasi_copyin_iovec(struct exec_context *ctx, struct meminst *mem,
                       uint32_t iov_uaddr, uint32_t iov_count,
                       struct iovec **resultp, int *usererrorp);
+int wasi_copyout_result_i32(struct exec_context *ctx, struct meminst *mem,
+                            uint32_t retp, uint32_t result);
+int wasi_copyout_result_fd(struct exec_context *ctx, struct meminst *mem,
+                           uint32_t retp, uint32_t result);
+int wasi_copyout_result_i64(struct exec_context *ctx, struct meminst *mem,
+                            uint32_t retp, uint64_t result);
 int wasi_validate_fstflags(uint32_t fstflags);
