@@ -168,7 +168,7 @@ push_label(const uint8_t *p, struct cell *stack, struct exec_context *ctx)
         struct label *l = VEC_PUSH(ctx->labels);
         l->pc = pc;
         assert(ctx->stack.p <= stack);
-        assert(stack < ctx->stack.p + ctx->stack.psize);
+        assert(stack <= ctx->stack.p + ctx->stack.psize);
         l->height = (uint32_t)(stack - ctx->stack.p);
 }
 
