@@ -167,7 +167,9 @@ push_label(const uint8_t *p, struct cell *stack, struct exec_context *ctx)
         uint32_t pc = ptr2pc(ctx->instance->module, p - 1);
         struct label *l = VEC_PUSH(ctx->labels);
         l->pc = pc;
-        l->height = stack - ctx->stack.p;
+        assert(ctx->stack.p <= stack);
+        assert(stack < ctx->stack.p + ctx->stack.psize);
+        l->height = (uint32_t)(stack - ctx->stack.p);
 }
 
 static struct cell *
@@ -740,7 +742,7 @@ schedule_exception(struct exec_context *ectx)
 #define LOAD_PC const uint8_t *p0 __unused = p
 #define SAVE_PC
 #define RELOAD_PC p = ctx->p
-#define SAVE_STACK_PTR ctx->stack.lsize = stack - ctx->stack.p
+#define SAVE_STACK_PTR ctx->stack.lsize = (uint32_t)(stack - ctx->stack.p)
 #define LOAD_STACK_PTR stack = &VEC_NEXTELEM(ctx->stack)
 #define ORIG_PC p0
 #if defined(TOYWASM_USE_TAILCALL) &&                                          \
