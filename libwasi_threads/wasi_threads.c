@@ -183,13 +183,11 @@ wasi_threads_instance_set_thread_spawn_args(
         struct wasi_threads_instance *inst, struct module *m,
         const struct import_object *imports)
 {
-        const char *funcname = "wasi_thread_start";
+        static const struct name funcname_name =
+                NAME_FROM_CSTR_LITERAL("wasi_thread_start");
         uint32_t funcidx;
         int ret;
 
-        struct name funcname_name;
-        funcname_name.data = funcname;
-        funcname_name.nbytes = strlen(funcname);
         ret = module_find_export(m, &funcname_name, EXTERNTYPE_FUNC, &funcidx);
         if (ret != 0) {
                 xlog_trace("%s: start func not found %d", __func__, ret);
