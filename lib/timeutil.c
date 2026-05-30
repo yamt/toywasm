@@ -191,8 +191,8 @@ abstime_to_reltime_ms_roundup(clockid_t id, const struct timespec *abstime,
                 ret = EOVERFLOW;
                 goto fail;
         }
-        int msec = reltime.tv_sec * 1000;
-        int msec2 = (reltime.tv_nsec + 999999) / 1000000;
+        int msec = (int)(reltime.tv_sec * 1000);
+        int msec2 = (int)((reltime.tv_nsec + 999999) / 1000000);
         if (INT_MAX - msec < msec2) {
                 ret = EOVERFLOW;
                 goto fail;
