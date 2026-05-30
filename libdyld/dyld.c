@@ -974,7 +974,8 @@ memtype_max(uint64_t limit_in_bytes, uint32_t page_shift)
                  */
                 return UINT32_MAX;
         }
-        return limit_in_bytes >> page_shift;
+        assert(limit_in_bytes >> page_shift <= UINT32_MAX);
+        return (uint32_t)(limit_in_bytes >> page_shift);
 }
 
 static int
