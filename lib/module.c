@@ -1380,6 +1380,7 @@ struct read_element_init_expr_context {
         struct element *elem;
 };
 
+WRONG_FUNC_TYPE
 static int
 read_element_init_expr(const uint8_t **pp, const uint8_t *ep, uint32_t idx,
                        struct expr *e, void *vctx)
