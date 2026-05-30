@@ -45,6 +45,9 @@ import_object_create_for_host_funcs(struct mem_context *mctx,
         nfuncs = 0;
         for (i = 0; i < n; i++) {
                 const struct host_module *hm = &modules[i];
+                if (SIZE_MAX - nfuncs < hm->nfuncs) {
+                        return EOVERFLOW;
+                }
                 nfuncs += hm->nfuncs;
         }
 
