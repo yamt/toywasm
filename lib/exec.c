@@ -62,8 +62,8 @@ frame_locals(const struct exec_context *ctx, const struct funcframe *frame)
 static int
 stack_prealloc(struct exec_context *ctx, uint32_t count)
 {
-        uint32_t needed = ctx->stack.lsize + count;
-        if (needed > ctx->options.max_stackcells) {
+        xassert(ctx->stack.lsize <= ctx->options.max_stackcells);
+        if (ctx->options.max_stackcells - ctx->stack.lsize < count) {
                 return trap_with_id(ctx, TRAP_TOO_MANY_STACKCELLS,
                                     "too many values on the operand stack");
         }
