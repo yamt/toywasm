@@ -1,0 +1,12 @@
+{
+    "WASI C tests": {
+        "pwrite-with-append": "https://github.com/bytecodealliance/wasm-micro-runtime/issues/2828#issuecomment-1833122530"
+    },
+    "WASI Rust tests": {
+        "symlink_loop": "see wasmtime-wasi-tests-blacklist-NetBSD.txt",
+        "nofollow_errors": "see wasmtime-wasi-tests-blacklist-NetBSD.txt",
+        "fd_advise": "see wasmtime-wasi-tests-blacklist-NetBSD.txt",
+        "dangling_symlink": "see wasmtime-wasi-tests-blacklist-NetBSD.txt",
+        "file_allocate": "see wasmtime-wasi-tests-blacklist-NetBSD.txt"
+    }
+}
