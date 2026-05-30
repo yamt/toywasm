@@ -378,6 +378,33 @@ wasm_popcount64(uint64_t v)
         return wasm_popcount((uint32_t)v) + wasm_popcount((uint32_t)(v >> 32));
 }
 
+/*
+ * note on wasm_llneg/wasm_llabs:
+ *
+ * in C, -(-INT64_MIN) is not representable with 2's complement int64_t,
+ * which we assume. thus undefined behavior. (and UBSAN complains on
+ * it correctly.)
+ *
+ * in wasm simd, -(-INT64_MIN) is -INT64_MIN.
+ * cf.
+ * https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md#integer-negation
+ */
+
+static uint64_t
+wasm_llneg(uint64_t v)
+{
+        return -v;
+}
+
+static int64_t
+wasm_llabs(int64_t v)
+{
+        if (v < 0) {
+                return wasm_llneg(v);
+        }
+        return v;
+}
+
 static int
 get_functype(struct module *m, uint32_t typeidx, struct functype **ftp)
 {

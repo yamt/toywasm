@@ -1081,8 +1081,8 @@ SIMD_FOREACH_LANES_OP2(i16x8_avgr_u, i, 16, LANE_AVGR)
 #define LANE_NEAREST(I_OR_F, LS, a, b, I)                                     \
         LANE_OP2_SIMPLE(I_OR_F, LS, a, b, I, rint)
 
-#define INT_ABS(LS, n) (uint##LS##_t) llabs((int##LS##_t)n)
-#define INT_NEG(LS, n) (uint##LS##_t) - n
+#define INT_ABS(LS, n) (uint##LS##_t) wasm_llabs((int##LS##_t)n)
+#define INT_NEG(LS, n) (uint##LS##_t) wasm_llneg(n)
 
 #define LANE_ABS(I_OR_F, LS, a, b, I) LANE_OP2(I_OR_F, LS, a, b, I, INT_ABS)
 #define LANE_NEG(I_OR_F, LS, a, b, I) LANE_OP2(I_OR_F, LS, a, b, I, INT_NEG)
