@@ -123,12 +123,15 @@ wasi_lfs_fd_ftruncate(struct wasi_fdinfo *fdinfo, wasi_off_t size)
 {
         struct wasi_vfs_lfs *lfs;
         lfs_file_t *file;
+        if ((lfs_off_t)size != size) {
+                return EOVERFLOW;
+        }
         int ret = fdinfo_to_lfs_file(fdinfo, &lfs, &file);
         if (ret != 0) {
                 return ret;
         }
         LOCK(lfs);
-        ret = lfs_file_truncate(&lfs->lfs, file, size);
+        ret = lfs_file_truncate(&lfs->lfs, file, (lfs_off_t)size);
         UNLOCK(lfs);
         return lfs_error_to_errno(ret);
 }
@@ -149,6 +152,10 @@ wasi_lfs_fd_writev(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
         if (ret != 0) {
                 goto fail;
         }
+        if ((lfs_size_t)buflen != buflen) {
+                ret = EOVERFLOW;
+                goto fail;
+        }
         LOCK(lfs);
         if (wasi_fdinfo_to_lfs(fdinfo)->u.file.append) {
                 /*
@@ -161,7 +168,8 @@ wasi_lfs_fd_writev(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
                         goto fail;
                 }
         }
-        lfs_ssize_t ssz = lfs_file_write(&lfs->lfs, file, buf, buflen);
+        lfs_ssize_t ssz =
+                lfs_file_write(&lfs->lfs, file, buf, (lfs_size_t)buflen);
         UNLOCK(lfs);
         if (ssz < 0) {
                 ret = lfs_error_to_errno(ssz);
@@ -180,6 +188,9 @@ wasi_lfs_fd_pwritev(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
 {
         struct wasi_vfs_lfs *lfs;
         lfs_file_t *file;
+        if ((lfs_off_t)off != off) {
+                return EOVERFLOW;
+        }
         int ret = fdinfo_to_lfs_file(fdinfo, &lfs, &file);
         if (ret != 0) {
                 return ret;
@@ -190,6 +201,10 @@ wasi_lfs_fd_pwritev(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
         if (ret != 0) {
                 goto fail;
         }
+        if ((lfs_size_t)buflen != buflen) {
+                ret = EOVERFLOW;
+                goto fail;
+        }
         LOCK(lfs);
         lfs_soff_t origoff = lfs_file_tell(&lfs->lfs, file);
         if (origoff < 0) {
@@ -197,13 +212,14 @@ wasi_lfs_fd_pwritev(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
                 ret = lfs_error_to_errno(origoff);
                 goto fail;
         }
-        ret = lfs_file_seek(&lfs->lfs, file, off, LFS_SEEK_SET);
+        ret = lfs_file_seek(&lfs->lfs, file, (lfs_off_t)off, LFS_SEEK_SET);
         if (ret < 0) {
                 UNLOCK(lfs);
                 ret = lfs_error_to_errno(ret);
                 goto fail;
         }
-        lfs_ssize_t ssz = lfs_file_write(&lfs->lfs, file, buf, buflen);
+        lfs_ssize_t ssz =
+                lfs_file_write(&lfs->lfs, file, buf, (lfs_size_t)buflen);
         if (ssz < 0) {
                 UNLOCK(lfs);
                 ret = lfs_error_to_errno(ssz);
@@ -258,8 +274,13 @@ wasi_lfs_fd_readv(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
         if (ret != 0) {
                 goto fail;
         }
+        if ((lfs_size_t)buflen != buflen) {
+                ret = EOVERFLOW;
+                goto fail;
+        }
         LOCK(lfs);
-        lfs_ssize_t ssz = lfs_file_read(&lfs->lfs, file, buf, buflen);
+        lfs_ssize_t ssz =
+                lfs_file_read(&lfs->lfs, file, buf, (lfs_size_t)buflen);
         UNLOCK(lfs);
         if (ssz < 0) {
                 ret = lfs_error_to_errno(ssz);
@@ -279,6 +300,9 @@ wasi_lfs_fd_preadv(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
 {
         struct wasi_vfs_lfs *lfs;
         lfs_file_t *file;
+        if ((lfs_off_t)off != off) {
+                return EOVERFLOW;
+        }
         int ret = fdinfo_to_lfs_file(fdinfo, &lfs, &file);
         if (ret != 0) {
                 return ret;
@@ -289,6 +313,10 @@ wasi_lfs_fd_preadv(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
         if (ret != 0) {
                 goto fail;
         }
+        if ((lfs_size_t)buflen != buflen) {
+                ret = EOVERFLOW;
+                goto fail;
+        }
         LOCK(lfs);
         lfs_soff_t origoff = lfs_file_tell(&lfs->lfs, file);
         if (origoff < 0) {
@@ -296,13 +324,14 @@ wasi_lfs_fd_preadv(struct wasi_fdinfo *fdinfo, const struct iovec *iov,
                 ret = lfs_error_to_errno(origoff);
                 goto fail;
         }
-        ret = lfs_file_seek(&lfs->lfs, file, off, LFS_SEEK_SET);
+        ret = lfs_file_seek(&lfs->lfs, file, (lfs_off_t)off, LFS_SEEK_SET);
         if (ret < 0) {
                 UNLOCK(lfs);
                 ret = lfs_error_to_errno(ret);
                 goto fail;
         }
-        lfs_ssize_t ssz = lfs_file_read(&lfs->lfs, file, buf, buflen);
+        lfs_ssize_t ssz =
+                lfs_file_read(&lfs->lfs, file, buf, (lfs_size_t)buflen);
         if (ssz < 0) {
                 UNLOCK(lfs);
                 ret = lfs_error_to_errno(ssz);
@@ -356,6 +385,9 @@ wasi_lfs_fd_lseek(struct wasi_fdinfo *fdinfo, wasi_off_t offset, int whence,
 {
         struct wasi_vfs_lfs *lfs;
         lfs_file_t *file;
+        if ((lfs_off_t)offset != offset) {
+                return EOVERFLOW;
+        }
         int ret = fdinfo_to_lfs_file(fdinfo, &lfs, &file);
         if (ret == EISDIR) {
                 return 0;
@@ -375,7 +407,7 @@ wasi_lfs_fd_lseek(struct wasi_fdinfo *fdinfo, wasi_off_t offset, int whence,
                 return EINVAL;
         }
         LOCK(lfs);
-        ret = lfs_file_seek(&lfs->lfs, file, offset, lfs_whence);
+        ret = lfs_file_seek(&lfs->lfs, file, (lfs_off_t)offset, lfs_whence);
         UNLOCK(lfs);
         if (ret < 0) {
                 return lfs_error_to_errno(ret);
@@ -452,6 +484,9 @@ wasi_lfs_dir_seek(struct wasi_fdinfo *fdinfo, uint64_t offset)
 {
         struct wasi_vfs_lfs *lfs;
         lfs_dir_t *dir;
+        if ((lfs_off_t)offset != offset) {
+                return EOVERFLOW;
+        }
         int ret = fdinfo_to_lfs_dir(fdinfo, &lfs, &dir);
         if (ret != 0) {
                 return ret;
@@ -459,7 +494,7 @@ wasi_lfs_dir_seek(struct wasi_fdinfo *fdinfo, uint64_t offset)
         xlog_trace("%s: path %s offset %" PRIu64, __func__,
                    fdinfo_path(fdinfo), offset);
         LOCK(lfs);
-        ret = lfs_dir_seek(&lfs->lfs, dir, offset);
+        ret = lfs_dir_seek(&lfs->lfs, dir, (lfs_off_t)offset);
         UNLOCK(lfs);
         return lfs_error_to_errno(ret);
 }
@@ -504,7 +539,11 @@ wasi_lfs_dir_read(struct wasi_fdinfo *fdinfo, struct wasi_dirent *wde,
                 assert(info->type == LFS_TYPE_DIR);
                 wde->d_type = WASI_FILETYPE_DIRECTORY;
         }
-        wde->d_namlen = host_to_le32(strlen(info->name));
+        size_t len = strlen(info->name);
+        if (len > UINT32_MAX) {
+                return ENAMETOOLONG;
+        }
+        wde->d_namlen = host_to_le32((uint32_t)len);
         *namep = (uint8_t *)info->name;
         *eod = false;
         xlog_trace("%s: path %s -> name %s next %" PRIu64, __func__,
