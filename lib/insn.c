@@ -380,6 +380,7 @@ wasm_popcount64(uint64_t v)
         return wasm_popcount((uint32_t)v) + wasm_popcount((uint32_t)(v >> 32));
 }
 
+#if defined(TOYWASM_ENABLE_WASM_SIMD)
 /*
  * note on wasm_llneg/wasm_llabs:
  *
@@ -406,6 +407,7 @@ wasm_llabs(int64_t v)
         }
         return v;
 }
+#endif /* defined(TOYWASM_ENABLE_WASM_SIMD) */
 
 static int
 get_functype(struct module *m, uint32_t typeidx, struct functype **ftp)
