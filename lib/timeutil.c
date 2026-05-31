@@ -56,7 +56,7 @@ timespec_add(const struct timespec *a, const struct timespec *b,
 {
         assert_normalized(a);
         assert_normalized(b);
-        c->tv_nsec = (uint64_t)a->tv_nsec + b->tv_nsec;
+        c->tv_nsec = a->tv_nsec + b->tv_nsec;
         time_t ovfl = 0;
         if (c->tv_nsec >= 1000000000) {
                 c->tv_nsec -= 1000000000;
