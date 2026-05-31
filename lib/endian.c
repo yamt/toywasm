@@ -28,7 +28,7 @@ le16_to_host(uint16_t v)
                 uint16_t u16;
         } u;
         u.u16 = v;
-        return ((uint16_t)u.u8[1] << 8) | u.u8[0];
+        return (uint16_t)(((uint16_t)u.u8[1] << 8) | u.u8[0]);
 }
 
 uint32_t
