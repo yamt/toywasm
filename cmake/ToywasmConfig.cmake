@@ -313,6 +313,8 @@ endif() # TOYWASM_ENABLE_WASM_THREADS AND NOT TOYWASM_USE_USER_SCHED
 # GCC doesn't seem to have a way to only allow statement expressions
 if(CMAKE_C_COMPILER_ID MATCHES "Clang")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pedantic -Wno-gnu-statement-expression")
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wimplicit-int-conversion")
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wshorten-64-to-32")
 endif()
 if(CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_COMPILER_ID STREQUAL GNU)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wvla -Wdouble-promotion -Werror")
