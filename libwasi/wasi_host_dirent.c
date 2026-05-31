@@ -77,11 +77,14 @@ wasi_host_dir_seek(struct wasi_fdinfo *fdinfo, uint64_t offset)
 {
         DIR *dir;
         int ret;
+        if ((long)offset != offset) {
+                return EOVERFLOW;
+        }
         ret = wasi_host_dir_init(fdinfo, &dir);
         if (ret != 0) {
                 return ret;
         }
-        seekdir(dir, offset);
+        seekdir(dir, (long)offset);
         return 0;
 }
 
