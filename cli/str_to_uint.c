@@ -49,6 +49,6 @@ str_to_size(const char *s, int base, size_t *resultp)
         if (u > SIZE_MAX) {
                 return EOVERFLOW;
         }
-        *resultp = u;
+        *resultp = (size_t)u;
         return 0;
 }
