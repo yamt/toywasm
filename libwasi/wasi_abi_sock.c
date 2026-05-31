@@ -154,7 +154,8 @@ retry:
                 ret = EOVERFLOW;
                 goto fail;
         }
-        host_ret = wasi_copyout_result_i32(ctx, wasi_memory(wasi), retp, n);
+        host_ret = wasi_copyout_result_i32(ctx, wasi_memory(wasi), retp,
+                                           (uint32_t)n);
         if (host_ret != 0) {
                 goto fail;
         }
@@ -225,7 +226,8 @@ retry:
                 ret = EOVERFLOW;
                 goto fail;
         }
-        host_ret = wasi_copyout_result_i32(ctx, wasi_memory(wasi), retp, n);
+        host_ret = wasi_copyout_result_i32(ctx, wasi_memory(wasi), retp,
+                                           (uint32_t)n);
         ret = 0;
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
