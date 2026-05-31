@@ -297,7 +297,7 @@ wasi_instance_exit_code(struct wasi_instance *wasi)
 void
 wasi_instance_destroy(struct wasi_instance *inst)
 {
-        unsigned int i;
+        enum wasi_table_idx i;
         for (i = 0; i < WASI_NTABLES; i++) {
                 wasi_table_clear(inst, i);
         }
