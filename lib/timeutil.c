@@ -106,7 +106,7 @@ timespec_from_ns(struct timespec *a, uint64_t ns)
                 return EOVERFLOW;
         }
         a->tv_sec = sec;
-        a->tv_nsec = nsec;
+        a->tv_nsec = (long)nsec;
         assert_normalized(a);
         return 0;
 }
