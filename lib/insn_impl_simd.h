@@ -43,10 +43,10 @@
 #define READ_LANEIDX32_TO(VAR) READ_LANEIDX_TO(VAR, 32)
 
 /* aliases just for convenience in this file */
-#define lei8_encode(a, b) le8_encode(a, b)
-#define lei16_encode(a, b) le16_encode(a, b)
-#define lei32_encode(a, b) le32_encode(a, b)
-#define lei64_encode(a, b) le64_encode(a, b)
+#define lei8_encode(a, b) le8_encode(a, (uint8_t)b)
+#define lei16_encode(a, b) le16_encode(a, (uint16_t)b)
+#define lei32_encode(a, b) le32_encode(a, (uint32_t)b)
+#define lei64_encode(a, b) le64_encode(a, (uint64_t)b)
 #define lei8_decode(a) le8_decode(a)
 #define lei16_decode(a) le16_decode(a)
 #define lei32_decode(a) le32_decode(a)
