@@ -57,7 +57,11 @@ map_file(const char *path, void **pp, size_t *sizep)
                 close(fd);
                 return ret;
         }
-        size = st.st_size;
+        if (st.st_size > SIZE_MAX) {
+                close(fd);
+                return EOVERFLOW;
+        }
+        size = (size_t)st.st_size;
 #else
         off_t off;
         off = lseek(fd, 0, SEEK_END);
@@ -68,7 +72,11 @@ map_file(const char *path, void **pp, size_t *sizep)
                 close(fd);
                 return ret;
         }
-        size = off;
+        if (off > SIZE_MAX) {
+                close(fd);
+                return EOVERFLOW;
+        }
+        size = (size_t)off;
         off = lseek(fd, 0, SEEK_SET);
         if (off == -1) {
                 ret = errno;
