@@ -5,6 +5,7 @@ if(NOT CMAKE_TOOLCHAIN_FILE)
 # Don't prefer homebrew clang on the CI because we want
 # to produce universal binaries there.
 # cf. https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/store-information-in-variables#default-environment-variables
+if(NOT USE_DEFAULT_TOOLCHAIN)
 if(NOT DEFINED ENV{CI})
 if(NOT DEFINED CUSTOM_LLVM_HOME)
 # Note: The recent macOS SDKs (eg. math.h from macOS SDK 15) assume that
@@ -12,6 +13,7 @@ if(NOT DEFINED CUSTOM_LLVM_HOME)
 # recent versions of the ABI. In case of LLVM, the support has been added
 # for LLVM>=15.
 set(CUSTOM_LLVM_HOME /usr/local/opt/llvm@22)
+endif()
 endif()
 endif()
 endif()
