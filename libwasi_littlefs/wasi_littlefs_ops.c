@@ -385,7 +385,7 @@ wasi_lfs_fd_lseek(struct wasi_fdinfo *fdinfo, wasi_off_t offset, int whence,
 {
         struct wasi_vfs_lfs *lfs;
         lfs_file_t *file;
-        if ((lfs_off_t)offset != offset) {
+        if ((lfs_soff_t)offset != offset) {
                 return EOVERFLOW;
         }
         int ret = fdinfo_to_lfs_file(fdinfo, &lfs, &file);
@@ -407,7 +407,7 @@ wasi_lfs_fd_lseek(struct wasi_fdinfo *fdinfo, wasi_off_t offset, int whence,
                 return EINVAL;
         }
         LOCK(lfs);
-        ret = lfs_file_seek(&lfs->lfs, file, (lfs_off_t)offset, lfs_whence);
+        ret = lfs_file_seek(&lfs->lfs, file, (lfs_soff_t)offset, lfs_whence);
         UNLOCK(lfs);
         if (ret < 0) {
                 return lfs_error_to_errno(ret);
