@@ -187,27 +187,26 @@ memory_instance_create(struct mem_context *mctx, struct meminst **mip,
                 uint32_t page_shift = memtype_page_shift(mt);
                 uint64_t need_in_bytes = need_in_pages << page_shift;
                 if (need_in_bytes > SIZE_MAX) {
-                        mem_free(mctx, mp, sizeof(*mp));
                         ret = EOVERFLOW;
-                        goto fail;
+                        goto fail1;
                 }
                 mp->shared = mem_zalloc(mctx, sizeof(*mp->shared));
                 if (mp->shared == NULL) {
-                        mem_free(mctx, mp, sizeof(*mp));
                         ret = ENOMEM;
-                        goto fail;
+                        goto fail1;
                 }
                 if (need_in_bytes > 0) {
-                        mp->data = mem_zalloc(mctx, need_in_bytes);
+                        if (need_in_bytes > SIZE_MAX) {
+                                ret = EOVERFLOW;
+                                goto fail2;
+                        }
+                        mp->data = mem_zalloc(mctx, (size_t)need_in_bytes);
                         if (mp->data == NULL) {
-                                mem_free(mctx, mp->shared,
-                                         sizeof(*mp->shared));
-                                mem_free(mctx, mp, sizeof(*mp));
                                 ret = ENOMEM;
-                                goto fail;
+                                goto fail2;
                         }
                 }
-                mp->allocated = need_in_bytes;
+                mp->allocated = (size_t)need_in_bytes;
                 waiter_list_table_init(&mp->shared->tab);
                 toywasm_mutex_init(&mp->shared->lock);
         }
@@ -217,6 +216,12 @@ memory_instance_create(struct mem_context *mctx, struct meminst **mip,
         mp->mctx = mctx;
         *mip = mp;
         return 0;
+#if defined(TOYWASM_ENABLE_WASM_THREADS)
+fail2:
+        mem_free(mctx, mp->shared, sizeof(*mp->shared));
+fail1:
+        mem_free(mctx, mp, sizeof(*mp));
+#endif
 fail:
         return ret;
 }
