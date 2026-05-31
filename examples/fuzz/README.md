@@ -51,3 +51,20 @@ For examples,
 * https://github.com/bytecodealliance/wasmtime-libfuzzer-corpus
 
 * https://github.com/wasmx/wasm-fuzzing-corpus
+
+# cli options
+
+## show options
+
+```shell
+./build/build-app/fuzz-instantiate -help=1
+```
+
+## shrink corpus
+
+```shell
+m
+mv corpus/* o
+./build/build-app/fuzz-instantiate -merge=1 corpus o
+rm -r o
+```
