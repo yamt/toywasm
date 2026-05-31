@@ -55,7 +55,7 @@ wasi_sock_accept(struct exec_context *ctx, struct host_instance *hi,
                 goto fail;
         }
 retry:
-        ret = wasi_vfs_sock_accept(fdinfo, fdflags, fdinfo_child);
+        ret = wasi_vfs_sock_accept(fdinfo, (uint16_t)fdflags, fdinfo_child);
         if (ret != 0) {
                 if (emulate_blocking(ctx, fdinfo, POLLIN, ret, &host_ret,
                                      &ret)) {
@@ -141,8 +141,8 @@ wasi_sock_recv(struct exec_context *ctx, struct host_instance *hi,
         uint16_t roflags;
         size_t n;
 retry:
-        ret = wasi_vfs_sock_recv(fdinfo, hostiov, iov_count, riflags, &roflags,
-                                 &n);
+        ret = wasi_vfs_sock_recv(fdinfo, hostiov, iov_count, (uint16_t)riflags,
+                                 &roflags, &n);
         if (ret != 0) {
                 if (emulate_blocking(ctx, fdinfo, POLLIN, ret, &host_ret,
                                      &ret)) {
@@ -214,7 +214,8 @@ wasi_sock_send(struct exec_context *ctx, struct host_instance *hi,
         }
         size_t n;
 retry:
-        ret = wasi_vfs_sock_send(fdinfo, hostiov, iov_count, siflags, &n);
+        ret = wasi_vfs_sock_send(fdinfo, hostiov, iov_count, (uint16_t)siflags,
+                                 &n);
         if (ret != 0) {
                 if (emulate_blocking(ctx, fdinfo, POLLOUT, ret, &host_ret,
                                      &ret)) {
@@ -256,7 +257,11 @@ wasi_sock_shutdown(struct exec_context *ctx, struct host_instance *hi,
         if (ret != 0) {
                 goto fail;
         }
-        ret = wasi_vfs_sock_shutdown(fdinfo, sdflags);
+        if ((sdflags & ~(WASI_SDFLAG_RD | WASI_SDFLAG_WR)) != 0) {
+                ret = EINVAL;
+                goto fail;
+        }
+        ret = wasi_vfs_sock_shutdown(fdinfo, (uint16_t)sdflags);
 fail:
         wasi_fdinfo_release(wasi, fdinfo);
         HOST_FUNC_RESULT_SET(ft, results, 0, i32, wasi_convert_errno(ret));
