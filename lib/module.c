@@ -175,7 +175,8 @@ populate_resulttype_cellidx(struct mem_context *mctx, struct resulttype *rt)
                         goto fail;
                 }
                 off += csz;
-                idxes[i + 1] = off;
+                assert(off <= UINT16_MAX);
+                idxes[i + 1] = (uint16_t)off;
         }
         rt->cellidx.cellidxes = idxes;
         return 0;
@@ -380,7 +381,8 @@ read_limits(const uint8_t **pp, const uint8_t *ep, struct limits *lim,
                         ret = EINVAL;
                         goto fail;
                 }
-                shift = u32;
+                assert(u32 <= UINT8_MAX);
+                shift = (uint8_t)u32;
         } else {
                 shift = default_shift;
         }
@@ -1005,7 +1007,8 @@ populate_localtype_cellidx(struct mem_context *mctx, struct localtype *lt)
                         goto fail;
                 }
                 off += csz;
-                idxes[i + 1] = off;
+                assert(off <= UINT16_MAX);
+                idxes[i + 1] = (uint16_t)off;
                 n--;
         }
         lt->cellidx.cellidxes = idxes;
@@ -2174,7 +2177,7 @@ struct section_type {
         const char *name;
         int (*read)(const uint8_t **pp, const uint8_t *ep,
                     struct load_context *ctx);
-        int order;
+        uint8_t order;
 };
 
 /*
