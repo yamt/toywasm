@@ -32,10 +32,18 @@ futimes(int fd, const struct timeval *tvp)
         struct timespec ts[2];
         const struct timespec *tsp;
         if (tvp != NULL) {
+                if (tvp[0].tv_usec < 0 || 999999 < tvp[0].tv_usec) {
+                        errno = EINVAL;
+                        return -1;
+                }
+                if (tvp[1].tv_usec < 0 || 999999 < tvp[1].tv_usec) {
+                        errno = EINVAL;
+                        return -1;
+                }
                 ts[0].tv_sec = tvp[0].tv_sec;
-                ts[0].tv_nsec = tvp[0].tv_usec * 1000;
+                ts[0].tv_nsec = (long)(tvp[0].tv_usec * 1000);
                 ts[1].tv_sec = tvp[1].tv_sec;
-                ts[1].tv_nsec = tvp[1].tv_usec * 1000;
+                ts[1].tv_nsec = (long)(tvp[1].tv_usec * 1000);
                 tsp = ts;
         } else {
                 tsp = NULL;
