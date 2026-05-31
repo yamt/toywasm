@@ -4,8 +4,13 @@
 #include "wasi_littlefs_impl.h"
 #include "wasi_vfs_impl_littlefs.h"
 
+/*
+ * note: lfs_error is typically in a range of enum lfs_error.
+ * however, we made this function take an int because most of
+ * lfs api functions (eg. lfs_mount) return an int.
+ */
 int
-lfs_error_to_errno(enum lfs_error lfs_error)
+lfs_error_to_errno(int lfs_error)
 {
         assert(lfs_error <= 0);
         int error = 0;
