@@ -11,7 +11,7 @@ if(NOT DEFINED CUSTOM_LLVM_HOME)
 # _Float16 is available. In case of x86, it's only available for the
 # recent versions of the ABI. In case of LLVM, the support has been added
 # for LLVM>=15.
-set(CUSTOM_LLVM_HOME /usr/local/opt/llvm@15)
+set(CUSTOM_LLVM_HOME /usr/local/opt/llvm@22)
 endif()
 endif()
 endif()
