@@ -213,11 +213,17 @@ retry:
                                  * matches wasi-libc.
                                  */
                                 if ((pfd->revents & POLLNVAL) != 0) {
-                                        ev->error = wasi_convert_errno(EBADF);
+                                        ev->error =
+                                                (uint16_t)wasi_convert_errno(
+                                                        EBADF);
                                 } else if ((pfd->revents & POLLHUP) != 0) {
-                                        ev->error = wasi_convert_errno(EPIPE);
+                                        ev->error =
+                                                (uint16_t)wasi_convert_errno(
+                                                        EPIPE);
                                 } else if ((pfd->revents & POLLERR) != 0) {
-                                        ev->error = wasi_convert_errno(EIO);
+                                        ev->error =
+                                                (uint16_t)wasi_convert_errno(
+                                                        EIO);
                                 }
                                 ev++;
                         }
