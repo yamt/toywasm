@@ -2,7 +2,7 @@
 
 ## What's this
 
-[A simple benchmark with ffmpeg](./benchmark/ffmpeg.sh), intended to
+[A simple benchmark with ffmpeg](./ffmpeg.sh), intended to
 measure computation performance with a real application.
 
 For each runtimes, it converts a video frame with `ffmpeg.wasm` and
