@@ -9,6 +9,7 @@
 #include <string.h>
 
 #define TOYWASM_CELL_INLINE
+#define TOYWASM_GETPTR_INLINE
 #define TOYWASM_LEB128_INLINE
 
 #include "bitmap.h"

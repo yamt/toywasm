@@ -139,9 +139,13 @@ int memory_instance_create(struct mem_context *mctx, struct meminst **mip,
                            const struct memtype *mt);
 void memory_instance_destroy(struct mem_context *mctx, struct meminst *mi);
 uint32_t memory_grow(struct meminst *mi, uint32_t sz);
+#if defined(TOYWASM_GETPTR_INLINE)
+#include "getptr_i.h"
+#else
 int memory_instance_getptr2(struct meminst *meminst, uint32_t ptr,
                             uint32_t offset, uint32_t size, void **pp,
                             bool *movedp);
+#endif
 
 struct globalinst;
 struct globaltype;
