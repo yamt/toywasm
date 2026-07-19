@@ -45,12 +45,11 @@ uint32_t localtype_cellidx(const struct localtype *lt, uint32_t idx,
                            uint32_t *cszp);
 uint32_t localtype_cellsize(const struct localtype *lt);
 
-uint32_t frame_locals_cellidx(struct exec_context *ctx, uint32_t localidx,
-                              uint32_t *cszp);
-
 #if defined(TOYWASM_CELL_INLINE)
 #include "cell_i.h"
 #else
+uint32_t frame_locals_cellidx(struct exec_context *ctx, uint32_t localidx,
+                              uint32_t *cszp);
 uint32_t valtype_cellsize(enum valtype t) __constfunc;
 void val_to_cells(const struct val *val, struct cell *cells, uint32_t ncells);
 void val_from_cells(struct val *val, const struct cell *cells,

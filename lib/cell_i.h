@@ -1,4 +1,5 @@
 #include "cell.h"
+#include "exec_context.h"
 #include "type.h"
 
 #if defined(TOYWASM_CELL_INLINE)
@@ -91,6 +92,68 @@ val_from_cells(struct val *val, const struct cell *cells, uint32_t ncells)
 {
         assert(ncells <= ARRAYCOUNT(val->u.cells));
         cells_copy(val->u.cells, cells, ncells);
+}
+
+TOYWASM_INLINE uint32_t
+cellidx_lookup(const uint16_t *p, uint32_t idx, uint32_t *cszp)
+{
+        p += idx;
+        uint16_t cidx = *p;
+        if (cszp != NULL) {
+                uint16_t next_cidx = p[1];
+                *cszp = next_cidx - cidx;
+        }
+        return cidx;
+}
+
+#if defined(TOYWASM_USE_LOCALS_FAST_PATH)
+TOYWASM_INLINE uint32_t
+frame_locals_cellidx_fast(struct exec_context *ctx, uint32_t localidx,
+                          uint32_t *cszp)
+{
+        xassert(cszp != NULL);
+        const struct local_info_fast *fast = &ctx->local_u.fast;
+        xassert(fast->paramtype_cellidxes != NULL);
+        xassert(fast->localtype_cellidxes != NULL);
+        uint32_t cidx;
+        uint32_t nparams = fast->nparams;
+        if (localidx < nparams) {
+                cidx = cellidx_lookup(fast->paramtype_cellidxes, localidx,
+                                      cszp);
+        } else {
+                cidx = fast->paramcsz;
+                cidx += cellidx_lookup(fast->localtype_cellidxes,
+                                       localidx - nparams, cszp);
+        }
+        return cidx;
+}
+#endif
+
+/*
+ * frame_locals_cellidx: calculate the index and size of a local
+ * for the given localidx
+ *
+ * as this is called on every `local.get`, it is one of
+ * the most performance critical code in the interpreter.
+ */
+TOYWASM_INLINE uint32_t
+frame_locals_cellidx(struct exec_context *ctx, uint32_t localidx,
+                     uint32_t *cszp)
+{
+        xassert(cszp != NULL);
+#if defined(TOYWASM_USE_SMALL_CELLS)
+#if defined(TOYWASM_USE_LOCALS_FAST_PATH)
+        if (__predict_true(ctx->fast)) {
+                return frame_locals_cellidx_fast(ctx, localidx, cszp);
+        }
+#endif
+        uint32_t frame_locals_cellidx_slow(struct exec_context * ctx,
+                                           uint32_t localidx, uint32_t *cszp);
+        return frame_locals_cellidx_slow(ctx, localidx, cszp);
+#else  /* defined(TOYWASM_USE_SMALL_CELLS) */
+        *cszp = 1;
+        return localidx;
+#endif /* defined(TOYWASM_USE_SMALL_CELLS) */
 }
 
 #undef TOYWASM_INLINE
