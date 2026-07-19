@@ -8,6 +8,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define TOYWASM_CELL_INLINE
+
 #include "bitmap.h"
 #include "context.h"
 #include "decode.h"
