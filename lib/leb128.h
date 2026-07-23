@@ -28,5 +28,5 @@ int read_leb_s(const uint8_t **pp, const uint8_t *ep, unsigned int bits,
 uint32_t read_leb_u32_nocheck(const uint8_t **pp);
 uint32_t read_leb_i32_nocheck(const uint8_t **pp);
 uint64_t read_leb_i64_nocheck(const uint8_t **pp);
-#endif
 int64_t read_leb_s33_nocheck(const uint8_t **pp);
+#endif

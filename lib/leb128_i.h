@@ -167,4 +167,15 @@ read_leb_i64_nocheck(const uint8_t **pp)
         return r;
 }
 
+TOYWASM_INLINE int64_t
+read_leb_s33_nocheck(const uint8_t **pp)
+{
+        uint64_t r;
+        int ret;
+
+        ret = read_leb(pp, NULL, 33, true, &r);
+        assert(ret == 0);
+        return (int64_t)r;
+}
+
 #undef TOYWASM_INLINE

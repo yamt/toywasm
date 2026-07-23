@@ -142,14 +142,3 @@ read_leb_s(const uint8_t **pp, const uint8_t *ep, unsigned int bits,
         *resultp = (int64_t)r;
         return 0;
 }
-
-int64_t
-read_leb_s33_nocheck(const uint8_t **pp)
-{
-        uint64_t r;
-        int ret;
-
-        ret = read_leb(pp, NULL, 33, true, &r);
-        assert(ret == 0);
-        return (int64_t)r;
-}
