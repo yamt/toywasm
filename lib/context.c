@@ -7,6 +7,9 @@
 #include "mem.h"
 #include "type.h"
 
+/* provide non-inline version */
+#include "context_i.h"
+
 static int
 resulttype_bytesize(uint32_t ntypes, size_t *resultp)
 {
@@ -126,14 +129,6 @@ resulttype_free(struct mem_context *mctx, struct resulttype *p)
         int ret = resulttype_bytesize(p->ntypes, &bytesize);
         assert(ret == 0);
         mem_free(mctx, p, bytesize);
-}
-
-uint32_t
-ptr2pc(const struct module *m, const uint8_t *p)
-{
-        assert(p >= m->bin);
-        assert(p - m->bin <= UINT32_MAX);
-        return (uint32_t)(p - m->bin);
 }
 
 const uint8_t *
