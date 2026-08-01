@@ -42,7 +42,7 @@ void lef64_encode(void *p, double v);
  * here we avoid the ABI problem by inlining the functions.
  */
 #if defined(__i386__)
-__attribute__((always_inline, used)) static float
+__always_inline __unused static float
 lef32_decode(const void *p)
 {
         union {
@@ -57,7 +57,7 @@ float lef32_decode(const void *p);
 #endif
 
 #if defined(__i386__)
-__attribute__((always_inline, used)) static double
+__always_inline __unused static double
 lef64_decode(const void *p)
 {
         union {
