@@ -2,6 +2,7 @@
 #include <errno.h>
 
 #include "endian.h"
+#include "platform.h"
 #include "wasi_littlefs_impl.h"
 #include "wasi_littlefs_mount.h"
 #include "wasi_path_subr.h"
@@ -39,7 +40,7 @@ wasi_lfs_fs_unlock(struct wasi_vfs_lfs *lfs) RELEASES(&lfs->lock)
         toywasm_mutex_unlock(&lfs->lock);
 }
 
-__attribute__((unused)) static char *
+__unused static char *
 fdinfo_path(struct wasi_fdinfo *fdinfo)
 {
         return wasi_fdinfo_to_lfs(fdinfo)->user.path;
