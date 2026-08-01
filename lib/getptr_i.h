@@ -1,11 +1,12 @@
 #if !defined(_TOYWASM_GETPTR_I_H)
 #define _TOYWASM_GETPTR_I_H
 
+#include "platform.h"
 #include "mem.h"
 #include "xlog.h"
 
 #if defined(TOYWASM_GETPTR_INLINE)
-#define TOYWASM_INLINE __attribute__((always_inline)) static inline
+#define TOYWASM_INLINE __always_inline static inline
 #else
 #define TOYWASM_INLINE
 #endif
