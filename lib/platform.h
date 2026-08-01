@@ -144,6 +144,14 @@
 #endif
 #endif /* !defined(__noinline) */
 
+#if !defined(__always_inline)
+#if __has_attribute(always_inline)
+#define __always_inline __attribute__((always_inline))
+#else
+#define __always_inline
+#endif
+#endif /* !defined(__always_inline) */
+
 #if !defined(__printflike)
 #if __has_attribute(__format__)
 #define __printflike(a, b) __attribute__((__format__(__printf__, a, b)))
