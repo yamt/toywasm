@@ -29,6 +29,7 @@
 #include "load_context.h"
 #include "mem.h"
 #include "module.h"
+#include "platform.h"
 #include "slist.h"
 #include "type.h"
 #include "util.h"
@@ -1224,7 +1225,7 @@ dyld_register_funcinst(struct dyld *d, struct dyld_object *obj,
         return 0;
 }
 
-__attribute__((unused)) static const char *
+__unused static const char *
 symtype_str(enum symtype symtype)
 {
         switch (symtype) {
