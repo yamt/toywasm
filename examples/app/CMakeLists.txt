@@ -13,4 +13,4 @@ set(app_sources
 )
 
 add_executable(app ${app_sources})
-target_link_libraries(app toywasm-lib-core m)
+target_link_libraries(app toywasm::toywasm-lib-core m)

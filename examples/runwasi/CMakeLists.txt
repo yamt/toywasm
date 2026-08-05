@@ -16,4 +16,4 @@ set(sources
 )
 
 add_executable(runwasi ${sources})
-target_link_libraries(runwasi toywasm-lib-core toywasm-lib-wasi m)
+target_link_libraries(runwasi toywasm::toywasm-lib-core toywasm::toywasm-lib-wasi m)
