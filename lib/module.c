@@ -2337,7 +2337,11 @@ module_load_into(struct module *m, const uint8_t *p, const uint8_t *ep,
          * a crafted input.
          * cf. https://www.cs.dartmouth.edu/~doug/mdmspe.pdf
          */
-        qsort(m->exports, m->nexports, sizeof(*m->exports), cmp_export);
+        if (m->nexports > 0) {
+                /* qsort's array argument is declared nonnull. */
+                qsort(m->exports, m->nexports, sizeof(*m->exports),
+                      cmp_export);
+        }
         uint32_t i;
         for (i = 0; i < m->nexports; i++) {
                 if (i + 1 < m->nexports &&
