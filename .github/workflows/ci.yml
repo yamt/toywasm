@@ -567,7 +567,7 @@ jobs:
         ./examples/callgraph/build/callgraph $(pwd)/recursive_hello_arg.wasm
 
     - name: Test "wasm2wasm" example with the library we built
-      if: matrix.arch == 'native' and matrix.TOYWASM_ENABLE_WRITER == 'ON'
+      if: matrix.arch == 'native' && matrix.TOYWASM_ENABLE_WRITER == 'ON'
       run: |
         ./test/build-example.sh wasm2wasm ${{env.builddir}}/toywasm-v*.tgz build
         wat2wasm --debug-names wat/wasi/recursive_hello_arg.wat
