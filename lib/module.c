@@ -2485,9 +2485,7 @@ module_print_stats(const struct module *m)
         nbio_printf("=== module memory usage statistics ===\n");
         uint32_t i;
         size_t jump_table_size = 0;
-#if defined(TOYWASM_ENABLE_WRITER)
         size_t code_size = 0;
-#endif
         size_t type_annotation_size = 0;
         size_t localtype_cellidx_size = 0;
         size_t resulttype_cellidx_size = 0;
