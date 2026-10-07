@@ -6,7 +6,6 @@
 #include <toywasm/load_context.h>
 #include <toywasm/mem.h>
 #include <toywasm/module.h>
-#include <toywasm/module_writer.h>
 #include <toywasm/xlog.h>
 
 #include "cstruct.h"
