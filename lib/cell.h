@@ -62,7 +62,7 @@ void vals_from_cells(struct val *vals, const struct cell *cells,
                      const struct resulttype *rt);
 
 void cells_zero(struct cell *cells, uint32_t ncells);
-void cells_copy(struct cell *dst, const struct cell *src, uint32_t ncells);
+void cells_copy(struct cell *restrict dst, const struct cell *restrict src, uint32_t ncells);
 void cells_move(struct cell *dst, const struct cell *src, uint32_t ncells);
 
 __END_EXTERN_C
