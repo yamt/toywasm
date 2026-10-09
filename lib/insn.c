@@ -8,6 +8,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define TOYWASM_PTR2PC_INLINE
+#define TOYWASM_CELL_INLINE
+#define TOYWASM_GETPTR_INLINE
+#define TOYWASM_LEB128_INLINE
+
 #include "bitmap.h"
 #include "context.h"
 #include "decode.h"

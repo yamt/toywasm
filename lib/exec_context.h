@@ -1,3 +1,6 @@
+#if !defined(_TOYWASM_EXEC_CONTEXT_H)
+#define _TOYWASM_EXEC_CONTEXT_H
+
 #if __STDC_VERSION__ >= 201112L && !defined(__STDC_NO_ATOMICS__)
 #include <stdatomic.h>
 #endif
@@ -357,3 +360,5 @@ int trap_with_id(struct exec_context *ctx, enum trapid id, const char *fmt,
                  ...) __printflike(3, 4);
 
 __END_EXTERN_C
+
+#endif /* !defined(_TOYWASM_EXEC_CONTEXT_H) */

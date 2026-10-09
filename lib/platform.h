@@ -148,7 +148,7 @@
 #if __has_attribute(always_inline)
 #define __always_inline __attribute__((always_inline))
 #else
-#define __always_inline
+#define __always_inline inline
 #endif
 #endif /* !defined(__always_inline) */
 

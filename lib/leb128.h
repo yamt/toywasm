@@ -22,7 +22,11 @@ int read_leb_s(const uint8_t **pp, const uint8_t *ep, unsigned int bits,
                int64_t *resultp);
 
 /* "nocheck" variations for commonly used ones */
+#if defined(TOYWASM_LEB128_INLINE)
+#include "leb128_i.h"
+#else
 uint32_t read_leb_u32_nocheck(const uint8_t **pp);
 uint32_t read_leb_i32_nocheck(const uint8_t **pp);
 uint64_t read_leb_i64_nocheck(const uint8_t **pp);
 int64_t read_leb_s33_nocheck(const uint8_t **pp);
+#endif

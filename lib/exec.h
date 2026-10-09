@@ -52,10 +52,14 @@ void rewind_stack(struct exec_context *ctx, uint32_t height, uint32_t arity);
 int invoke(struct funcinst *finst, const struct resulttype *paramtype,
            const struct resulttype *resulttype, struct exec_context *ctx);
 
+#if defined(TOYWASM_GETPTR_INLINE)
+#include "getptr_i.h"
+#else
 int memory_getptr(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
                   uint32_t offset, uint32_t size, void **pp);
 int memory_getptr2(struct exec_context *ctx, uint32_t memidx, uint32_t ptr,
                    uint32_t offset, uint32_t size, void **pp, bool *movedp);
+#endif
 struct toywasm_mutex;
 int memory_atomic_getptr(struct exec_context *ctx, uint32_t memidx,
                          uint32_t ptr, uint32_t offset, uint32_t size,

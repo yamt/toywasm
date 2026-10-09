@@ -61,7 +61,11 @@ __BEGIN_EXTERN_C
  * Besides logging, we use it in a few places to save space as it's
  * smaller than host pointers on 64-bit archs.
  */
+#if defined(TOYWASM_PTR2PC_INLINE)
+#include "context_i.h"
+#else
 uint32_t ptr2pc(const struct module *m, const uint8_t *p) __purefunc;
+#endif
 const uint8_t *pc2ptr(const struct module *m, uint32_t pc) __purefunc;
 
 int resulttype_alloc(struct mem_context *mctx, uint32_t ntypes,
