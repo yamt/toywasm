@@ -11,7 +11,10 @@
 #include "report.h"
 #include "xlog.h"
 
-#if defined(_WIN32)
+/*
+ * mingw-w64 provides its own vasprintf in <stdio.h>.
+ */
+#if defined(_WIN32) && !defined(__MINGW32__)
 int
 vasprintf(char **resultp, const char *fmt, va_list ap)
 {
