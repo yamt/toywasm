@@ -273,6 +273,10 @@ vals_from_cells(struct val *vals, const struct cell *cells,
 void
 cells_zero(struct cell *cells, uint32_t ncells)
 {
+        /* cells can be NULL if ncells is 0; memset's is nonnull. */
+        if (__predict_false(ncells == 0)) {
+                return;
+        }
         memset(cells, 0, sizeof(*cells) * ncells);
 }
 
@@ -280,6 +284,10 @@ void
 cells_copy(struct cell *restrict dst, const struct cell *restrict src,
            uint32_t ncells)
 {
+        /* dst/src can be NULL if ncells is 0; memcpy's are nonnull. */
+        if (__predict_false(ncells == 0)) {
+                return;
+        }
 #if 0
         /*
          * ncells is usually 1 or 2 here.
